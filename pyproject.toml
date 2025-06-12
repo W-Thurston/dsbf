@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "dsbf"
+version = "0.1.0"
+description = "Automate the data science workflow from post–problem-framing through deployment and monitoring. Serve as a transparent, white-box alternative to traditional AutoML tools. Act as an automated checklist and "first pass" system for building pipelines in new data science projects. "
+authors = ["Will Thurston"]
+packages = [{ include = "dsbf", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
