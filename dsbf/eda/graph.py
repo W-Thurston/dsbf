@@ -7,21 +7,31 @@ EDA tasks.  Includes support for dependency resolution, error handling, and DAG
 visualization.
 """
 
-import matplotlib.pyplot as plt
+from typing import Dict, List, Optional, Tuple, cast
+
 import networkx as nx
-from matplotlib.patches import Patch
-from networkx.drawing.nx_pydot import graphviz_layout
+
+from dsbf.utils.dag_layout import assign_waterfall_positions, draw_dag, topo_sort_levels
 
 
 class Task:
-    def __init__(self, name, func, requires=None):
+    def __init__(self, name: str, func, requires: Optional[List[str]] = None):
+        """
+        Represents a single task in the execution graph.
+
+        Args:
+            name (str): Unique task name.
+            func (callable): Task function.
+            requires (List[str], optional): List of task names this task depends on.
+        """
         self.name = name
         self.func = func
         self.requires = requires or []
         self.result = None
         self.status = "pending"  # → "success" or "failed"
 
-    def run(self, context):
+    def run(self, context: dict):
+        """Executes the task using the given context for dependencies."""
         args = [context[dep] for dep in self.requires]
         try:
             self.result = self.func(*args)
@@ -34,54 +44,48 @@ class Task:
 
 
 class ExecutionGraph:
-    def __init__(self, tasks):
+    def __init__(self, tasks: List[Task]):
+        """
+        Container for managing and executing a DAG of tasks.
+
+        Args:
+            tasks (List[Task]): List of Task instances forming a DAG.
+        """
         self.tasks = tasks
 
-    def run(self):
+    def run(self) -> dict:
+        """Runs all tasks in the graph in topological order."""
         context = {}
         for task in self.tasks:
             task.run(context)
         return context
 
-    def visualize(self, output_path):
-        G = nx.DiGraph()
-        color_map = {"success": "#8BC34A", "failed": "#F44336", "pending": "#B0BEC5"}
+    def visualize(self, output_path: str):
+        """
+        Visualizes the execution graph with node coloring by task status.
 
+        Args:
+            output_path (str): Path to save the visualization image.
+        """
+        G = nx.DiGraph()
         for task in self.tasks:
             G.add_node(task.name)
             for dep in task.requires:
                 G.add_edge(dep, task.name)
 
         try:
-            G.graph["graph"] = {"rankdir": "TB"}  # Left-to-right layout
-            pos = graphviz_layout(G, prog="dot")
+            levels, _ = topo_sort_levels(G)
+            pos = assign_waterfall_positions(levels)
         except Exception as e:
-            print(
-                f"[Warning] Graphviz layout failed: {e}. Falling back to spring layout."
-            )
+            print(f"[Warning] Layout fallback triggered: {e}")
             pos = nx.spring_layout(G, seed=42)
 
-        node_colors = [color_map.get(task.status, "#B0BEC5") for task in self.tasks]
-
-        plt.figure(figsize=(8, 10))  # Taller for top-down flow
-        nx.draw(
+        status_dict = {task.name: task.status for task in self.tasks}
+        pos = cast(Dict[str, Tuple[int, int]], pos)
+        draw_dag(
             G,
             pos,
-            with_labels=True,
-            node_color=node_colors,
-            edge_color="gray",
-            node_size=2000,
-            font_size=10,
-            font_weight="bold",
-            arrows=True,
+            status=status_dict,
+            title="Task Execution Graph",
+            save_path=output_path,
         )
-
-        legend_elements = [
-            Patch(facecolor=color_map["success"], edgecolor="k", label="Success"),
-            Patch(facecolor=color_map["failed"], edgecolor="k", label="Failed"),
-            Patch(facecolor=color_map["pending"], edgecolor="k", label="Pending"),
-        ]
-        plt.legend(handles=legend_elements, loc="lower center", ncol=3, frameon=False)
-        plt.title("Task Execution Graph")
-        plt.savefig(output_path, bbox_inches="tight")
-        plt.close()
