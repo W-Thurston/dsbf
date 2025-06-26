@@ -1,36 +1,40 @@
 # dsbf/eda/tasks/summarize_unique.py
 
+from typing import Any, Dict
+
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def summarize_unique(df) -> TaskResult:
+class SummarizeUnique(BaseTask):
     """
-    Returns the number of unique values per column.
+    Computes the number of unique values for each column in the DataFrame.
 
-    Args:
-        df (pd.DataFrame or pl.DataFrame): Input dataset.
-
-    Returns:
-        TaskResult: Unique counts per column.
+    Supports both Pandas and Polars input.
     """
-    try:
-        if is_polars(df):
-            result = {col: df[col].n_unique() for col in df.columns}
-        else:
-            result = df.nunique().to_dict()
 
-        return TaskResult(
-            name="summarize_unique",
-            status="success",
-            summary=f"Computed unique counts for {len(result)} columns.",
-            data=result,
-        )
-    except Exception as e:
-        return TaskResult(
-            name="summarize_unique",
-            status="failed",
-            summary=str(e),
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+
+            if is_polars(df):
+                result: Dict[str, int] = {col: df[col].n_unique() for col in df.columns}
+            else:
+                result = df.nunique().to_dict()
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Computed unique counts for {len(result)} columns.",
+                data=result,
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=str(e),
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

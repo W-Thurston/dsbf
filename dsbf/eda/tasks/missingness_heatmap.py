@@ -5,46 +5,55 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def missingness_heatmap(df: Any, output_dir: str = "outputs") -> TaskResult:
+class MissingnessHeatmap(BaseTask):
     """
-    Generates a missingness heatmap and saves it to disk.
+    Generates and saves a missingness heatmap using missingno.
 
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-        output_dir (str): Directory where the image will be saved.
-
-    Returns:
-        TaskResult: File path to saved heatmap or error message.
+    Converts Polars to Pandas if needed. Saves output image to disk.
     """
-    try:
-        import missingno as msno
 
-        if is_polars(df):
-            df = df.to_pandas()
+    def __init__(self, output_dir: str = "dsbf/outputs"):
+        super().__init__()
+        self.output_dir = output_dir
 
-        fig_path = os.path.join(output_dir, "missingness_heatmap.png")
-        os.makedirs(os.path.dirname(fig_path), exist_ok=True)
+    def run(self) -> None:
+        try:
+            import missingno as msno
 
-        msno.heatmap(df)
-        plt.savefig(fig_path, bbox_inches="tight")
-        plt.close()
+            df: Any = self.input_data
 
-        return TaskResult(
-            name="missingness_heatmap",
-            status="success",
-            summary="Saved missingness heatmap to disk.",
-            data={"image_path": fig_path},
-        )
+            # Convert to pandas if needed
+            if is_polars(df):
+                df = df.to_pandas()
 
-    except Exception as e:
-        return TaskResult(
-            name="missingness_heatmap",
-            status="failed",
-            summary=f"missingness_heatmap failed: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            # Ensure the output directory exists
+            fig_dir = os.path.join(self.output_dir, "figs")
+            os.makedirs(fig_dir, exist_ok=True)
+
+            fig_path = os.path.join(fig_dir, "missingness_heatmap.png")
+
+            # Generate and save the heatmap
+            msno.heatmap(df)
+            plt.savefig(fig_path, bbox_inches="tight")
+            plt.close()
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary="Saved missingness heatmap to disk.",
+                data={"image_path": fig_path},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Missingness heatmap failed: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

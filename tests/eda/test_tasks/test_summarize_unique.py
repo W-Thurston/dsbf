@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_unique import summarize_unique
+from dsbf.eda.tasks.summarize_unique import SummarizeUnique
 
 
 def test_summarize_unique_expected_output():
@@ -11,7 +11,10 @@ def test_summarize_unique_expected_output():
         {"a": [1, 2, 2, 3], "b": ["x", "x", "y", "z"], "c": [True, False, True, True]}
     )
 
-    result = summarize_unique(df)
+    task = SummarizeUnique()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

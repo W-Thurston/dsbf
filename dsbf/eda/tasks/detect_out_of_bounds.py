@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
@@ -15,52 +16,51 @@ DEFAULT_RULES: Dict[str, Tuple[float, float]] = {
 }
 
 
-def detect_out_of_bounds(
-    df: Any, custom_bounds: Optional[Dict[str, Tuple[float, float]]] = None
-) -> TaskResult:
+class DetectOutOfBounds(BaseTask):
     """
-    Detects numeric columns with values outside expected bounds.
-
-    Args:
-        df (DataFrame): Input Pandas or Polars DataFrame.
-        custom_bounds (dict): Optional dictionary of column-specific bounds.
-
-    Returns:
-        TaskResult: Dictionary of out-of-bounds values per column.
+    Detects numeric columns with values outside expected or domain-specific bounds.
     """
-    try:
-        if is_polars(df):
-            df = df.to_pandas()
 
-        bounds = {**DEFAULT_RULES, **(custom_bounds or {})}
-        flagged: Dict[str, Dict[str, Any]] = {}
+    def __init__(self, custom_bounds: Optional[Dict[str, Tuple[float, float]]] = None):
+        super().__init__()
+        self.custom_bounds = custom_bounds or {}
 
-        for col in df.select_dtypes(include=np.number).columns:
-            if col in bounds:
-                lower, upper = bounds[col]
-                series = df[col].dropna()
-                violations = series[(series < lower) | (series > upper)]
-                if not violations.empty:
-                    flagged[col] = {
-                        "count": int(violations.count()),
-                        "min_violation": float(violations.min()),
-                        "max_violation": float(violations.max()),
-                        "expected_range": (float(lower), float(upper)),
-                    }
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+            if is_polars(df):
+                df = df.to_pandas()
 
-        return TaskResult(
-            name="detect_out_of_bounds",
-            status="success",
-            summary=f"Detected {len(flagged)} column(s) with out-of-bounds values.",
-            data=flagged,
-            metadata={"rule_columns": list(bounds.keys())},
-        )
+            bounds = {**DEFAULT_RULES, **self.custom_bounds}
+            flagged: Dict[str, Dict[str, Any]] = {}
 
-    except Exception as e:
-        return TaskResult(
-            name="detect_out_of_bounds",
-            status="failed",
-            summary=f"Error during bounds checking: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            for col in df.select_dtypes(include=np.number).columns:
+                if col in bounds:
+                    lower, upper = bounds[col]
+                    series = df[col].dropna()
+                    violations = series[(series < lower) | (series > upper)]
+
+                    if not violations.empty:
+                        flagged[col] = {
+                            "count": int(violations.count()),
+                            "min_violation": float(violations.min()),
+                            "max_violation": float(violations.max()),
+                            "expected_range": (float(lower), float(upper)),
+                        }
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Detected {len(flagged)} column(s) with out-of-bounds values.",
+                data=flagged,
+                metadata={"rule_columns": list(bounds.keys())},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during bounds checking: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

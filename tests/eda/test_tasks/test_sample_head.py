@@ -3,13 +3,16 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.sample_head import sample_head
+from dsbf.eda.tasks.sample_head import SampleHead
 
 
 def test_sample_head_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
-    result = sample_head(df, n=3)
+    task = SampleHead(n=3)
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

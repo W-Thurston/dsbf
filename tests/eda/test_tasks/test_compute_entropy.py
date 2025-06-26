@@ -3,19 +3,26 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.compute_entropy import compute_entropy
+from dsbf.eda.tasks.compute_entropy import ComputeEntropy
 
 
 def test_compute_entropy_expected_output():
+    """
+    Test that ComputeEntropy returns entropy values for text columns.
+    """
     df = pd.DataFrame(
         {
             "cat": ["a", "a", "b", "b", "b", "c", "c", "c", "c"],
-            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Should be ignored
         }
     )
 
-    result = compute_entropy(df)
+    task = ComputeEntropy()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
+    assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None

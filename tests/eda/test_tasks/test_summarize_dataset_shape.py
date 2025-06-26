@@ -3,13 +3,16 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_dataset_shape import summarize_dataset_shape
+from dsbf.eda.tasks.summarize_dataset_shape import SummarizeDatasetShape
 
 
 def test_summarize_dataset_shape_expected_output():
     df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", None]})
 
-    result = summarize_dataset_shape(df)
+    task = SummarizeDatasetShape()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_value_counts import summarize_value_counts
+from dsbf.eda.tasks.summarize_value_counts import SummarizeValueCounts
 
 
 def test_summarize_value_counts_expected_output():
@@ -15,12 +15,14 @@ def test_summarize_value_counts_expected_output():
         }
     )
 
-    result = summarize_value_counts(df, top_k=2)
+    task = SummarizeValueCounts(top_k=2)
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None
-
     assert "cat" in result.data
     assert isinstance(result.data["cat"], dict)
     assert len(result.data["cat"]) <= 2

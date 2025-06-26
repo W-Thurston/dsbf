@@ -1,53 +1,55 @@
 # dsbf/eda/tasks/detect_skewness.py
 
-from typing import Any
+from typing import Any, Dict
 
+import numpy as np
+from scipy.stats import skew
+
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def detect_skewness(df: Any) -> TaskResult:
+class DetectSkewness(BaseTask):
     """
-    Computes the skewness for all numeric columns.
-
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-
-    Returns:
-        TaskResult: Dictionary of columns and their skewness values.
+    Computes skewness for all numeric columns in a dataset.
+    Skewness quantifies the asymmetry of a distribution.
     """
-    try:
-        skewness = {}
 
-        if is_polars(df):
-            import numpy as np
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+            skewness: Dict[str, float] = {}
 
-            for col in df.columns:
-                if df[col].dtype in ("i64", "f64"):
-                    series = df[col].to_numpy()
-                    mean = np.mean(series)
-                    std = np.std(series)
-                    if std != 0:
-                        skew = np.mean(((series - mean) / std) ** 3)
-                        skewness[col] = skew
-        else:
-            from scipy.stats import skew
+            if is_polars(df):
+                # Use manual skewness computation for Polars
+                for col in df.columns:
+                    if df[col].dtype in ("i64", "f64"):
+                        series = df[col].to_numpy()
+                        mean = np.mean(series)
+                        std = np.std(series)
+                        if std != 0:
+                            skew_val = float(np.mean(((series - mean) / std) ** 3))
+                            skewness[col] = skew_val
+            else:
+                # Use scipy's skew for Pandas
+                numeric_df = df.select_dtypes(include="number")
+                for col in numeric_df.columns:
+                    skew_val = skew(numeric_df[col].dropna())
+                    skewness[col] = float(skew_val)
 
-            numeric = df.select_dtypes(include="number")
-            skewness = {col: skew(numeric[col].dropna()) for col in numeric.columns}
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Computed skewness for {len(skewness)} numeric column(s).",
+                data=skewness,
+            )
 
-        return TaskResult(
-            name="detect_skewness",
-            status="success",
-            summary=f"Computed skewness for {len(skewness)} columns.",
-            data=skewness,
-        )
-
-    except Exception as e:
-        return TaskResult(
-            name="detect_skewness",
-            status="failed",
-            summary=f"Error during skewness detection: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during skewness detection: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

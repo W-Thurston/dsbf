@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.detect_outliers import detect_outliers
+from dsbf.eda.tasks.detect_outliers import DetectOutliers
 
 
 def test_detect_outliers_expected_output():
@@ -14,7 +14,10 @@ def test_detect_outliers_expected_output():
         }
     )
 
-    result = detect_outliers(df)
+    task = DetectOutliers()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -27,4 +30,5 @@ def test_detect_outliers_expected_output():
     assert "outlier_col" in counts
     assert counts["outlier_col"] >= 1
     assert flags["outlier_col"] is True
+    assert isinstance(rows["outlier_col"], list)
     assert any(idx in rows["outlier_col"] for idx in range(len(df)))

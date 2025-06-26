@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.infer_types import infer_types
+from dsbf.eda.tasks.infer_types import InferTypes
 
 
 def test_infer_types_expanded_output():
@@ -17,7 +17,10 @@ def test_infer_types_expanded_output():
         }
     )
 
-    result = infer_types(df)
+    task = InferTypes()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.detect_single_dominant_value import detect_single_dominant_value
+from dsbf.eda.tasks.detect_single_dominant_value import DetectSingleDominantValue
 
 
 def test_detect_single_dominant_value_expected_output():
@@ -15,7 +15,10 @@ def test_detect_single_dominant_value_expected_output():
         }
     )
 
-    result = detect_single_dominant_value(df, dominance_threshold=0.9)
+    task = DetectSingleDominantValue(dominance_threshold=0.9)
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

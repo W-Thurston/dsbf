@@ -3,14 +3,28 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.detect_constant_columns import detect_constant_columns
+from dsbf.eda.tasks.detect_constant_columns import DetectConstantColumns
 
 
 def test_detect_constant_columns_expected_output():
-    df = pd.DataFrame({"a": [1, 1, 1], "b": [1, 2, 3], "c": ["x", "x", "x"]})
+    """
+    Test that DetectConstantColumns correctly identifies columns
+    with only one unique value.
+    """
+    df = pd.DataFrame(
+        {
+            "a": [1, 1, 1],  # Constant
+            "b": [1, 2, 3],  # Varying
+            "c": ["x", "x", "x"],  # Constant
+        }
+    )
 
-    result = detect_constant_columns(df)
+    task = DetectConstantColumns()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
+    assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None

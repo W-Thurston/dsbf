@@ -3,20 +3,24 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_modes import summarize_modes
+from dsbf.eda.tasks.summarize_modes import SummarizeModes
 
 
 def test_summarize_modes_expected_output():
     df = pd.DataFrame({"a": [1, 1, 2, 3], "b": ["x", "y", "x", "z"]})
 
-    result = summarize_modes(df)
+    task = SummarizeModes()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None
-    assert result.data["a"] == 1 or (
-        isinstance(result.data["a"], list) and 1 in result.data["a"]
-    )
-    assert result.data["b"] == "x" or (
-        isinstance(result.data["b"], list) and "x" in result.data["b"]
-    )
+
+    # Accept either scalar or multimodal list
+    a_mode = result.data["a"]
+    assert a_mode == 1 or (isinstance(a_mode, list) and 1 in a_mode)
+
+    b_mode = result.data["b"]
+    assert b_mode == "x" or (isinstance(b_mode, list) and "x" in b_mode)

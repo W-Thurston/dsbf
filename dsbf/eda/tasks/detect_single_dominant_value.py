@@ -2,50 +2,56 @@
 
 from typing import Any, Dict
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def detect_single_dominant_value(
-    df: Any, dominance_threshold: float = 0.95
-) -> TaskResult:
+class DetectSingleDominantValue(BaseTask):
     """
-    Detects columns where a single value dominates the distribution.
-
-    Args:
-        df (DataFrame): Input Pandas or Polars DataFrame.
-        dominance_threshold (float): Proportion above which a single value is
-            considered dominant.
-
-    Returns:
-        TaskResult: Flagged columns and their dominant value stats.
+    Detects columns where a single value dominates the distribution,
+    such as binary features with a heavy skew or categorical columns
+    where nearly all values are the same.
     """
-    try:
-        if is_polars(df):
-            df = df.to_pandas()
 
-        results: Dict[str, Dict[str, Any]] = {}
-        for col in df.columns:
-            vc = df[col].value_counts(dropna=False, normalize=True)
-            if not vc.empty and vc.iloc[0] >= dominance_threshold:
-                results[col] = {
-                    "dominant_value": vc.index[0],
-                    "proportion": float(vc.iloc[0]),
-                }
+    def __init__(self, dominance_threshold: float = 0.95):
+        """
+        Args:
+            dominance_threshold (float): Proportion above which a single value
+                is considered dominant (e.g., 0.95 means 95% or more).
+        """
+        super().__init__()
+        self.dominance_threshold = dominance_threshold
 
-        return TaskResult(
-            name="detect_single_dominant_value",
-            status="success",
-            summary=f"Detected {len(results)} column(s) with dominant values.",
-            data=results,
-            metadata={"dominance_threshold": dominance_threshold},
-        )
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+            if is_polars(df):
+                df = df.to_pandas()
 
-    except Exception as e:
-        return TaskResult(
-            name="detect_single_dominant_value",
-            status="failed",
-            summary=f"Error during dominant value detection: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            results: Dict[str, Dict[str, Any]] = {}
+
+            for col in df.columns:
+                vc = df[col].value_counts(dropna=False, normalize=True)
+                if not vc.empty and vc.iloc[0] >= self.dominance_threshold:
+                    results[col] = {
+                        "dominant_value": vc.index[0],
+                        "proportion": float(vc.iloc[0]),
+                    }
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Detected {len(results)} column(s) with dominant values.",
+                data=results,
+                metadata={"dominance_threshold": self.dominance_threshold},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during dominant value detection: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

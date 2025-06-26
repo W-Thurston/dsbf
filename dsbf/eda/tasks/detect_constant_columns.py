@@ -1,39 +1,49 @@
 # dsbf/eda/tasks/detect_constant_columns.py
 
-from typing import Any
+from typing import List
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def detect_constant_columns(df: Any) -> TaskResult:
+class DetectConstantColumns(BaseTask):
     """
-    Identifies columns with only one unique value.
+    Identifies columns with only one unique value in the dataset.
 
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-
-    Returns:
-        TaskResult: List of constant columns.
+    Works for both Polars and Pandas DataFrames.
     """
-    try:
-        if is_polars(df):
-            result = [col for col in df.columns if df[col].n_unique() == 1]
-        else:
-            result = [col for col in df.columns if df[col].nunique() == 1]
 
-        return TaskResult(
-            name="detect_constant_columns",
-            status="success",
-            summary=f"Found {len(result)} constant columns.",
-            data={"constant_columns": result},
-        )
+    def run(self) -> None:
+        """
+        Executes the constant column detection logic.
+        Produces a TaskResult with a list of constant column names.
+        """
+        try:
+            df = self.input_data
+            constant_columns: List[str]
 
-    except Exception as e:
-        return TaskResult(
-            name="detect_constant_columns",
-            status="failed",
-            summary=f"Error during constant column detection: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            if is_polars(df):
+                # Use Polars' n_unique per column
+                constant_columns = [
+                    col for col in df.columns if df[col].n_unique() == 1
+                ]
+            else:
+                # Pandas variant
+                constant_columns = [col for col in df.columns if df[col].nunique() == 1]
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Found {len(constant_columns)} constant column(s).",
+                data={"constant_columns": constant_columns},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during constant column detection: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

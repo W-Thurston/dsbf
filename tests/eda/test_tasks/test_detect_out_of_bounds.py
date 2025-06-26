@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.detect_out_of_bounds import detect_out_of_bounds
+from dsbf.eda.tasks.detect_out_of_bounds import DetectOutOfBounds
 
 
 def test_detect_out_of_bounds_expected_output():
@@ -16,7 +16,10 @@ def test_detect_out_of_bounds_expected_output():
         }
     )
 
-    result = detect_out_of_bounds(df)
+    task = DetectOutOfBounds()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -26,4 +29,4 @@ def test_detect_out_of_bounds_expected_output():
     assert result.data["age"]["count"] == 2
     assert "score" in result.data
     assert "percent" in result.data
-    assert "weight" not in result.data
+    assert "weight" not in result.data  # no default rule for weight

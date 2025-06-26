@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_nulls import summarize_nulls
+from dsbf.eda.tasks.summarize_nulls import SummarizeNulls
 
 
 def test_summarize_nulls_expanded_output():
@@ -11,7 +11,10 @@ def test_summarize_nulls_expanded_output():
         {"a": [None, 1, None, 1], "b": [1, None, None, 1], "c": [1, 1, 1, 1]}
     )
 
-    result = summarize_nulls(df)
+    task = SummarizeNulls()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

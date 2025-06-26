@@ -2,41 +2,44 @@
 
 from typing import Any
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.backend import is_polars
 
 
-def sample_head(df: Any, n: int = 5) -> TaskResult:
+class SampleHead(BaseTask):
     """
-    Returns the first n rows of the dataset as a sample.
-
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-        n (int): Number of rows to return.
-
-    Returns:
-        TaskResult: Sampled head of the dataset.
+    Returns the first N rows of the dataset for preview.
+    Works with both Pandas and Polars.
     """
-    try:
-        df_head = df.head(n)
-        result = (
-            df_head.to_dict(as_series=False)
-            if hasattr(df_head, "to_dict")
-            else df_head.rows()
-        )
 
-        return TaskResult(
-            name="sample_head",
-            status="success",
-            summary=f"Returned first {n} rows.",
-            data={"sample": result},
-            metadata={"n": n},
-        )
+    def __init__(self, n: int = 5):
+        super().__init__()
+        self.n = n
 
-    except Exception as e:
-        return TaskResult(
-            name="sample_head",
-            status="failed",
-            summary="Unable to compute sample_head",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+            df_head = df.head(self.n)
+
+            if is_polars(df_head):
+                result = df_head.to_pandas().to_dict(orient="list")
+            else:
+                result = df_head.to_dict(orient="list")
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Returned first {self.n} rows.",
+                data={"sample": result},
+                metadata={"n": self.n},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary="Unable to compute sample_head",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

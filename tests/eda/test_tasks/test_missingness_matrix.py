@@ -5,14 +5,17 @@ import os
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.missingness_matrix import missingness_matrix
+from dsbf.eda.tasks.missingness_matrix import MissingnessMatrix
 
 
 def test_missingness_matrix_creates_image(tmp_path):
     df = pd.DataFrame({"x": [1, None, 3], "y": [None, 2, 3]})
 
     output_dir = tmp_path / "figs"
-    result = missingness_matrix(df, output_dir=str(output_dir))
+    task = MissingnessMatrix(output_dir=str(output_dir))
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

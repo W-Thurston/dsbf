@@ -2,38 +2,43 @@
 
 from typing import Any
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def detect_duplicates(df: Any) -> TaskResult:
+class DetectDuplicates(BaseTask):
     """
-    Counts the number of duplicate rows in the dataset.
-
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-
-    Returns:
-        TaskResult: Total number of duplicate rows.
+    Detects and counts duplicate rows in the dataset.
     """
-    try:
-        if is_polars(df):
-            duplicates = df.shape[0] - df.unique().shape[0]
-        else:
-            duplicates = df.duplicated().sum()
 
-        return TaskResult(
-            name="detect_duplicates",
-            status="success",
-            summary=f"Found {duplicates} duplicate rows.",
-            data={"duplicate_count": duplicates},
-        )
+    def run(self) -> None:
+        """
+        Run the duplicate detection logic.
 
-    except Exception as e:
-        return TaskResult(
-            name="detect_duplicates",
-            status="failed",
-            summary=f"Error during duplicate detection: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+        Sets output to a TaskResult with the count of duplicate rows.
+        """
+        try:
+            df: Any = self.input_data
+            if is_polars(df):
+                # In Polars, duplicates = total rows - unique rows
+                duplicate_count = df.shape[0] - df.unique().shape[0]
+            else:
+                # In Pandas, use .duplicated() to count duplicate rows
+                duplicate_count = df.duplicated().sum()
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Found {duplicate_count} duplicate row(s).",
+                data={"duplicate_count": duplicate_count},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during duplicate detection: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

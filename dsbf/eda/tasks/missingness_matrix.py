@@ -5,46 +5,51 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def missingness_matrix(df: Any, output_dir: str = "outputs") -> TaskResult:
+class MissingnessMatrix(BaseTask):
     """
-    Generates a missingness matrix plot and saves it to disk.
+    Generates and saves a missingness matrix plot using missingno.
 
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-        output_dir (str): Directory where the image will be saved.
-
-    Returns:
-        TaskResult: File path to saved matrix plot or error message.
+    Converts Polars to Pandas if needed. Saves image to disk.
     """
-    try:
-        import missingno as msno
 
-        if is_polars(df):
-            df = df.to_pandas()
+    def __init__(self, output_dir: str = "dsbf/outputs"):
+        super().__init__()
+        self.output_dir = output_dir
 
-        fig_path = os.path.join(output_dir, "missingness_matrix.png")
-        os.makedirs(os.path.dirname(fig_path), exist_ok=True)
+    def run(self) -> None:
+        try:
+            import missingno as msno
 
-        msno.matrix(df)
-        plt.savefig(fig_path, bbox_inches="tight")
-        plt.close()
+            df: Any = self.input_data
 
-        return TaskResult(
-            name="missingness_matrix",
-            status="success",
-            summary="Saved missingness matrix plot to disk.",
-            data={"image_path": fig_path},
-        )
+            if is_polars(df):
+                df = df.to_pandas()
 
-    except Exception as e:
-        return TaskResult(
-            name="missingness_matrix",
-            status="failed",
-            summary=f"missingness_matrix failed: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            fig_dir = os.path.join(self.output_dir, "figs")
+            os.makedirs(fig_dir, exist_ok=True)
+            fig_path = os.path.join(fig_dir, "missingness_matrix.png")
+
+            msno.matrix(df)
+            plt.savefig(fig_path, bbox_inches="tight")
+            plt.close()
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary="Saved missingness matrix plot to disk.",
+                data={"image_path": fig_path},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Missingness matrix failed: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

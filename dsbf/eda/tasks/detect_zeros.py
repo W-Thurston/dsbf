@@ -4,64 +4,63 @@ from typing import Any, Dict
 
 import numpy as np
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-def detect_zeros(df: Any, flag_threshold: float = 0.1) -> TaskResult:
+class DetectZeros(BaseTask):
     """
-    Detects columns with a large number of zero values.
-
-    Args:
-        df (DataFrame): Input Pandas or Polars DataFrame.
-        flag_threshold (float): Proportion of zeros above which a column is flagged.
-
-    Returns:
-        TaskResult: Zero counts, flags, and percentages per numeric column.
+    Detects numeric columns with a high proportion of zero values.
+    Flags columns where zeros exceed a specified threshold.
     """
-    try:
-        if not hasattr(df, "shape"):
-            raise ValueError("Input is not a valid dataframe.")
 
-        n_rows = df.shape[0]
-        zero_counts: Dict[str, int] = {}
-        zero_percentages: Dict[str, float] = {}
-        zero_flags: Dict[str, bool] = {}
+    def run(self, flag_threshold: float = 0.1) -> None:
+        try:
+            df: Any = self.input_data
+            if is_polars(df):
+                df = df.to_pandas()
 
-        if is_polars(df):
-            df = df.to_pandas()
+            if not hasattr(df, "shape"):
+                raise ValueError("Input is not a valid dataframe.")
 
-        numeric_df = df.select_dtypes(include=[np.number])
+            n_rows = df.shape[0]
+            zero_counts: Dict[str, int] = {}
+            zero_percentages: Dict[str, float] = {}
+            zero_flags: Dict[str, bool] = {}
 
-        for col in numeric_df.columns:
-            count = (numeric_df[col] == 0).sum()
-            pct = count / n_rows
-            zero_counts[col] = int(count)
-            zero_percentages[col] = pct
-            zero_flags[col] = pct > flag_threshold
+            numeric_df = df.select_dtypes(include=[np.number])
 
-        return TaskResult(
-            name="detect_zeros",
-            status="success",
-            summary=(
-                f"Flagged {sum(zero_flags.values())} " f"columns with high zero counts."
-            ),
-            data={
-                "zero_counts": zero_counts,
-                "zero_percentages": zero_percentages,
-                "zero_flags": zero_flags,
-            },
-            metadata={
-                "threshold_pct": flag_threshold,
-                "total_rows": n_rows,
-            },
-        )
+            for col in numeric_df.columns:
+                count = int((numeric_df[col] == 0).sum())
+                pct = count / n_rows
+                zero_counts[col] = count
+                zero_percentages[col] = pct
+                zero_flags[col] = pct > flag_threshold
 
-    except Exception as e:
-        return TaskResult(
-            name="detect_zeros",
-            status="failed",
-            summary=f"Error during zero detection: {e}",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=(
+                    f"Flagged {sum(zero_flags.values())}"
+                    f"column(s) with high zero counts."
+                ),
+                data={
+                    "zero_counts": zero_counts,
+                    "zero_percentages": zero_percentages,
+                    "zero_flags": zero_flags,
+                },
+                metadata={
+                    "threshold_pct": flag_threshold,
+                    "total_rows": n_rows,
+                },
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary=f"Error during zero detection: {e}",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )

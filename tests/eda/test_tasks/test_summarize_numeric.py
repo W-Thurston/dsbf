@@ -3,7 +3,7 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.summarize_numeric import summarize_numeric
+from dsbf.eda.tasks.summarize_numeric import SummarizeNumeric
 
 
 def test_summarize_numeric_expected_output():
@@ -15,7 +15,10 @@ def test_summarize_numeric_expected_output():
         }
     )
 
-    result = summarize_numeric(df)
+    task = SummarizeNumeric()
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

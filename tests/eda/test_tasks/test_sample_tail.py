@@ -3,13 +3,16 @@
 import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.sample_tail import sample_tail
+from dsbf.eda.tasks.sample_tail import SampleTail
 
 
 def test_sample_tail_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
-    result = sample_tail(df, n=3)
+    task = SampleTail(n=3)
+    task.set_input(df)
+    task.run()
+    result = task.get_output()
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

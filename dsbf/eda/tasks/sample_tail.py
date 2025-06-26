@@ -2,41 +2,44 @@
 
 from typing import Any
 
+from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.backend import is_polars
 
 
-def sample_tail(df: Any, n: int = 5) -> TaskResult:
+class SampleTail(BaseTask):
     """
-    Returns the last n rows of the dataset as a sample.
-
-    Args:
-        df (DataFrame): Input Polars or Pandas DataFrame.
-        n (int): Number of rows to return.
-
-    Returns:
-        TaskResult: Sampled tail of the dataset.
+    Returns the last N rows of the dataset for preview.
+    Works with both Pandas and Polars.
     """
-    try:
-        df_tail = df.tail(n)
-        result = (
-            df_tail.to_dict(as_series=False)
-            if hasattr(df_tail, "to_dict")
-            else df_tail.rows()
-        )
 
-        return TaskResult(
-            name="sample_tail",
-            status="success",
-            summary=f"Returned last {n} rows.",
-            data={"sample": result},
-            metadata={"n": n},
-        )
+    def __init__(self, n: int = 5):
+        super().__init__()
+        self.n = n
 
-    except Exception as e:
-        return TaskResult(
-            name="sample_tail",
-            status="failed",
-            summary="Unable to compute sample_tail",
-            data=None,
-            metadata={"exception": type(e).__name__},
-        )
+    def run(self) -> None:
+        try:
+            df: Any = self.input_data
+            df_tail = df.tail(self.n)
+
+            if is_polars(df_tail):
+                result = df_tail.to_pandas().to_dict(orient="list")
+            else:
+                result = df_tail.to_dict(orient="list")
+
+            self.output = TaskResult(
+                name=self.name,
+                status="success",
+                summary=f"Returned last {self.n} rows.",
+                data={"sample": result},
+                metadata={"n": self.n},
+            )
+
+        except Exception as e:
+            self.output = TaskResult(
+                name=self.name,
+                status="failed",
+                summary="Unable to compute sample_tail",
+                data=None,
+                metadata={"exception": type(e).__name__},
+            )
