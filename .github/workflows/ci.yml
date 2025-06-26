@@ -29,15 +29,6 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - name: Run Black
-        run: poetry run black --check .
-
-      - name: Run isort
-        run: poetry run isort --check-only .
-
-      - name: Run Flake8
-        run: poetry run flake8 .
-
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
 

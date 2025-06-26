@@ -33,7 +33,7 @@ def topo_sort_levels(G: nx.DiGraph) -> Tuple[Dict[int, List[str]], Dict[str, int
 
 
 def assign_waterfall_positions(
-    levels: Dict[int, List[str]]
+    levels: Dict[int, List[str]],
 ) -> Dict[str, Tuple[int, int]]:
     """
     Assign (x, y) positions for visualization:
