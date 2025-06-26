@@ -1,0 +1,114 @@
+{
+  "title": "DSBF EDA Report Layout",
+  "version": "1.0",
+  "layout": [
+    {
+      "row": [
+        {
+          "id": "summarize_nulls",
+          "width": 100
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "summarize_numeric",
+          "width": 100
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "summarize_unique",
+          "width": 50
+        },
+        {
+          "id": "summarize_modes",
+          "width": 50
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "sample_head",
+          "width": 50
+        },
+        {
+          "id": "sample_tail",
+          "width": 50
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "missingness_matrix",
+          "width": 100
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "categorical_length_stats",
+          "width": 100
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "summarize_text_fields",
+          "width": 100
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "detect_constant_columns",
+          "width": 50
+        },
+        {
+          "id": "detect_duplicates",
+          "width": 50
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "detect_id_columns",
+          "width": 50
+        },
+        {
+          "id": "detect_high_cardinality",
+          "width": 50
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "compute_correlations",
+          "width": 50
+        },
+        {
+          "id": "compute_entropy",
+          "width": 50
+        }
+      ]
+    },
+    {
+      "row": [
+        {
+          "id": "detect_skewness",
+          "width": 100
+        }
+      ]
+    }
+  ]
+}

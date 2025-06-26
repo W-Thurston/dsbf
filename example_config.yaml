@@ -1,0 +1,20 @@
+engine: ProfileEngine
+output_format: ["md", "json"]
+
+# dataset: "sample_data.csv"  # ← Uncomment to load from file
+dataset_name: "titanic"
+dataset_source: "seaborn"
+
+backend: polars # pandas | polars
+
+message_verbosity: debug      # Controls logging        -> quiet | info | debug
+profiling_depth: full         # Controls taks inclusion -> basic | standard | full
+
+visualize_dag: true
+
+layout_name: default # change to filename if you want a custom layout
+
+stage_inference:
+  null_ratio_raw_threshold: 0.4
+  percent_numeric_for_model_ready: 0.7
+  high_cardinality_threshold: 50

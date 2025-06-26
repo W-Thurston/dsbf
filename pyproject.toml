@@ -1,16 +1,57 @@
 [tool.poetry]
 name = "dsbf"
 version = "0.1.0"
-description = "Automate the data science workflow from post–problem-framing through deployment and monitoring. Serve as a transparent, white-box alternative to traditional AutoML tools. Act as an automated checklist and "first pass" system for building pipelines in new data science projects. "
-authors = ["Will Thurston"]
-packages = [{ include = "dsbf", from = "src" }]
+description = "Data Scientist's Best Friend — transparent AutoML pipeline"
+authors = ["Will Thurston <WilliamD.Thurston@gmail.com>"]
+packages = [{ include = "dsbf" }]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
+pyyaml = "^6.0.1"
+pandas = "^2.3.0"
+pytest = "^8.4.0"
+seaborn = "^0.13.2"
+scikit-learn = "^1.7.0"
+polars = "^1.30.0"
+pyarrow = "^20.0.0"
+networkx = "^3.5"
+matplotlib = "^3.10.3"
+graphviz = "^0.21"
+pydot = "^4.0.1"
+missingno = "^0.5.2"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.0"
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+black = "^25.1.0"
+flake8 = "^7.3.0"
+pre-commit = "^4.2.0"
+isort = "^6.0.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.venv
+  | build
+  | dist
+  | dsbf/outputs
+)/
+'''
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+
+[tool.isort]
+profile = "black"
+line_length = 88

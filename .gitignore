@@ -3,3 +3,13 @@ __pycache__/
 .env
 .venv
 .poetry
+.mypy_cache/
+.pytest_cache/
+.DS_Store
+*.egg-info/
+
+project_log.md
+
+dsbf/outputs/
+
+dsbf_run.json
