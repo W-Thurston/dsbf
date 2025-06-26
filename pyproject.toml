@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dsbf"
-version = "0.1.0"
+version = "0.2.0"
 description = "Data Scientist's Best Friend — transparent AutoML pipeline"
 authors = ["Will Thurston <WilliamD.Thurston@gmail.com>"]
 packages = [{ include = "dsbf" }]
@@ -19,6 +19,7 @@ matplotlib = "^3.10.3"
 graphviz = "^0.21"
 pydot = "^4.0.1"
 missingno = "^0.5.2"
+statsmodels = "^0.14.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
