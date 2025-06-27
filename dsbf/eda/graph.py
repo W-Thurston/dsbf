@@ -7,7 +7,8 @@ EDA tasks.  Includes support for dependency resolution, error handling, and DAG
 visualization.
 """
 
-from typing import Dict, List, Optional
+import time
+from typing import Callable, Dict, List, Optional
 
 import networkx as nx
 
@@ -62,9 +63,79 @@ class ExecutionGraph:
         _, self.node_levels = topo_sort_levels(self.graph)
         self.tasks_sorted = sorted(tasks, key=lambda t: self.node_levels[t.name])
 
-    def run(self, context: AnalysisContext) -> Dict[str, TaskResult]:
+    def run(
+        self,
+        context: AnalysisContext,
+        log_fn: Optional[Callable[[str, str], None]] = None,
+    ) -> Dict[str, TaskResult]:
+        task_outcomes = {
+            "success": [],
+            "failed": [],
+            "skipped": [],
+        }
+
         for task in self.tasks_sorted:
-            task.run(context)  # calls AnalysisContext.run_task(task.task_instance)
+            deps = task.requires
+            if deps:
+                dep_statuses = [f"{dep}: {self.task_map[dep].status}" for dep in deps]
+                if log_fn:
+                    log_fn(
+                        (
+                            f"[DEBUG] Starting task: {task.name}"
+                            f" (depends on: {', '.join(dep_statuses)})"
+                        ),
+                        "debug",
+                    )
+            else:
+                if log_fn:
+                    log_fn(
+                        f"[DEBUG] Starting task: {task.name} (no dependencies)", "debug"
+                    )
+
+            failed_deps = [
+                dep for dep in deps if self.task_map[dep].status != "success"
+            ]
+            if failed_deps:
+                task.status = "skipped"
+                task_outcomes["skipped"].append(task.name)
+                if log_fn:
+                    log_fn(
+                        (
+                            f"Skipping task '{task.name}'"
+                            f" due to failed dependency: {failed_deps}"
+                        ),
+                        "debug",
+                    )
+                continue
+
+            # Try running the task
+            start_time = time.time()
+            try:
+                _ = task.run(context)
+                duration = time.time() - start_time
+                if log_fn:
+                    log_fn(
+                        (
+                            f"[DEBUG] Completed task: {task.name} in"
+                            f" {duration:.2f}s (status: {task.status})"
+                        ),
+                        "debug",
+                    )
+                task_outcomes["success"].append(task.name)
+            except Exception as e:
+                duration = time.time() - start_time
+                if log_fn:
+                    log_fn(
+                        (
+                            f"[ERROR] Task {task.name} failed after"
+                            f" {duration:.2f}s with error: {e}"
+                        ),
+                        "debug",
+                    )
+                task_outcomes["failed"].append(task.name)
+
+        # Save results to context
+        context.metadata["task_outcomes"] = task_outcomes
         return context.results
 
     def visualize(

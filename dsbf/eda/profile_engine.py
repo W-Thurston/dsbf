@@ -16,44 +16,65 @@ from dsbf.utils.data_loader import load_dataset
 
 
 class ProfileEngine(BaseEngine):
+    """
+    Orchestrates EDA profiling via task-based DAG execution.
+    Loads data, constructs task graph, runs analysis, and exports report.
+    """
+
     def __init__(self, config: dict):
         super().__init__(config)
         self.context: Optional[AnalysisContext] = None
+        self.results: dict = {}
+        self.inferred_stage: Optional[str] = None
+
+    def get_result(self, task_name: str):
+        return self.results.get(task_name)
+
+    def get_all_results(self):
+        return self.results
 
     def run(self):
         self._log("Starting profiling...", level="info")
 
-        # --- Load dataset ---
         df = self._load_data()
-        self.context = AnalysisContext(df, config=self.config)
 
-        # --- Load and register all tasks ---
+        self.context = AnalysisContext(
+            data=df,
+            config=self.config,
+            output_dir=self.output_dir,
+            run_metadata=self.run_metadata,
+        )
+
+        # Load tasks into the global registry
         load_all_tasks()
 
-        # --- Infer stage ---
+        # Infer stage
         from dsbf.eda.stage_inference import infer_stage
 
         self.inferred_stage = infer_stage(df, self.config)
+        self.context.stage = self.inferred_stage
         self.run_metadata["inferred_stage"] = self.inferred_stage
         self._log(f"Inferred data stage: {self.inferred_stage}", level="info")
 
-        # --- Build graph ---
+        # Build graph and run tasks
         self._log("Building execution graph...", level="debug")
         graph = self.build_graph(self.config)
+        self.results = graph.run(self.context, log_fn=self._log)
 
-        # --- Run graph ---
-        results = graph.run(self.context)
-
-        # --- Visualize DAG ---
+        # Optional DAG visualization
         if self.config.get("visualize_dag", False):
+            self._log("Visualizing task DAG...", level="debug")
             fig_path = os.path.join(self.fig_path, "dag.png")
             os.makedirs(os.path.dirname(fig_path), exist_ok=True)
-            graph.visualize(save_path=fig_path)
+            status_dict = {name: result.status for name, result in self.results.items()}
+            graph.visualize(save_path=fig_path, status=status_dict)
 
-        # --- Render report ---
+        # Export report
         self._log("Rendering JSON report...", level="debug")
         render_json(
-            results, self.run_metadata, os.path.join(self.output_dir, "report.json")
+            self.results,
+            self.run_metadata,
+            os.path.join(self.output_dir, "report.json"),
         )
         self.record_run()
 
@@ -74,16 +95,20 @@ class ProfileEngine(BaseEngine):
         return load_dataset(name=dataset_name, source=dataset_source, backend=backend)
 
     def build_graph(self, config) -> ExecutionGraph:
-        from dsbf.eda.depth_levels import (
-            DEPTH_LEVELS,
-        )
+        from dsbf.eda.depth_levels import DEPTH_LEVELS
 
         depth = config.get("profiling_depth", "standard")
         task_specs = DEPTH_LEVELS.get(depth, [])
 
         tasks = []
         for task_name, deps in task_specs:
-            task_cls = get_task_by_name(task_name)
+            try:
+                task_cls = get_task_by_name(task_name)
+            except KeyError:
+                self._log(
+                    f"[ERROR] Task '{task_name}' not found in registry.", level="error"
+                )
+                raise
             tasks.append(Task(name=task_name, task_instance=task_cls, requires=deps))
 
         return ExecutionGraph(tasks)
