@@ -3,10 +3,12 @@
 from typing import Dict
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class DetectDataLeakage(BaseTask):
     """
     Detects potential data leakage by identifying highly correlated numeric features.

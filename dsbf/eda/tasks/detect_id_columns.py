@@ -3,10 +3,12 @@
 from typing import Any, Dict
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task("detect_id_columns")
 class DetectIDColumns(BaseTask):
     """
     Detects columns likely to be unique identifiers (e.g., user IDs, UUIDs).

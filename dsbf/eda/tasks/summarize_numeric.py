@@ -5,10 +5,12 @@ from typing import Any, Dict
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class SummarizeNumeric(BaseTask):
     """
     Produces extended summary statistics for all numeric columns.
@@ -33,25 +35,27 @@ class SummarizeNumeric(BaseTask):
                 series = numeric_df[col].dropna()
 
                 # Compute descriptive stats with extended percentiles
-                desc = series.describe(percentiles=[0.01, 0.05, 0.95, 0.99])
+                desc = series.describe(
+                    percentiles=[0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
+                )
 
                 # Custom variance check for near-constant features
                 variance = np.var(series)
-                near_zero_var = variance < 1e-4
+                near_zero_var = bool(variance < 1e-4)
 
                 extended_stats[col] = {
-                    "count": desc["count"],
-                    "mean": desc["mean"],
-                    "std": desc["std"],
-                    "min": desc["min"],
-                    "1%": desc["1%"],
-                    "5%": desc["5%"],
-                    "25%": desc["25%"],
-                    "50%": desc["50%"],
-                    "75%": desc["75%"],
-                    "95%": desc["95%"],
-                    "99%": desc["99%"],
-                    "max": desc["max"],
+                    "count": desc.get("count", np.nan),
+                    "mean": desc.get("mean", np.nan),
+                    "std": desc.get("std", np.nan),
+                    "min": desc.get("min", np.nan),
+                    "1%": desc.get("1%", np.nan),
+                    "5%": desc.get("5%", np.nan),
+                    "25%": desc.get("25%", np.nan),
+                    "50%": desc.get("50%", np.nan),
+                    "75%": desc.get("75%", np.nan),
+                    "95%": desc.get("95%", np.nan),
+                    "99%": desc.get("99%", np.nan),
+                    "max": desc.get("max", np.nan),
                     "near_zero_variance": near_zero_var,
                 }
 

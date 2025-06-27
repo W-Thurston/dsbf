@@ -1,27 +1,28 @@
 # tests/test_tasks/test_check_datetime_consistency.py
 
 import pandas as pd
+import pytest
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.check_datetime_consistency import CheckDatetimeConsistency
 
 
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_check_datetime_consistency_expected_output():
     """
     Ensure CheckDatetimeConsistency correctly parses and flags datetime columns.
     """
     df = pd.DataFrame(
         {
-            "dates_good": pd.date_range("2022-01-01", periods=10, freq="D"),
+            "dates_good": pd.date_range("2022-01-01", periods=12, freq="D"),
             "dates_bad": ["notadate", "2020-01-01", "???", "2000-12-31"] * 3,
             "non_date": [1, 2, 3, 4] * 3,
         }
     )
 
-    task = CheckDatetimeConsistency()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(CheckDatetimeConsistency())
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

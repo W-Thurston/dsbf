@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_duplicates import DetectDuplicates
 
@@ -17,10 +18,8 @@ def test_detect_duplicates_expected_output():
         }
     )
 
-    task = DetectDuplicates()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectDuplicates())
 
     assert result is not None
     assert isinstance(result, TaskResult)

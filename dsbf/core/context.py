@@ -1,0 +1,64 @@
+# dsbf/core/context.py
+
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+from dsbf.eda.task_result import TaskResult
+
+if TYPE_CHECKING:
+    from dsbf.core.base_task import BaseTask
+
+
+class AnalysisContext:
+    """
+    Shared context object for DSBF runs.
+    Holds the main input dataframe, global config, task results, and metadata.
+    """
+
+    def __init__(
+        self,
+        df: Any,
+        config: Optional[Dict[str, Any]] = None,
+        output_dir: Optional[str] = None,
+    ):
+        self.df = df  # Could be pandas or polars
+        self.config = config or {}
+        self.output_dir = output_dir
+
+        self.results: Dict[str, TaskResult] = {}
+        self.metadata: Dict[str, Any] = {}
+        self.stage: Optional[str] = None  # Set later by stage inference
+
+    def get_config(self, key: str, default=None):
+        return self.config.get(key, default)
+
+    def set_result(self, task_name: str, result: TaskResult):
+        self.results[task_name] = result
+
+    def get_result(self, task_name: str) -> Optional[TaskResult]:
+        return self.results.get(task_name)
+
+    def has_result(self, task_name: str) -> bool:
+        return task_name in self.results
+
+    def __repr__(self):
+        return (
+            f"<AnalysisContext df=({type(self.df).__name__}), "
+            f"config_keys={list(self.config.keys())}, "
+            f"tasks={list(self.results.keys())}>"
+        )
+
+    def run_task(self, task: "BaseTask") -> TaskResult:
+        task.set_input(self.df)
+        task.config.update(self.config)
+
+        if hasattr(self, "output_dir"):
+            task.output_dir = self.output_dir  # type: ignore
+
+        task.run()
+
+        result = task.get_output()
+        if result is None:
+            raise RuntimeError(f"Task '{task.name}' did not produce a TaskResult.")
+
+        self.set_result(task.name, result)
+        return result

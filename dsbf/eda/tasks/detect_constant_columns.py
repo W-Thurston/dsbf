@@ -3,10 +3,12 @@
 from typing import List
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class DetectConstantColumns(BaseTask):
     """
     Identifies columns with only one unique value in the dataset.

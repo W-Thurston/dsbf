@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.sample_head import SampleHead
 
@@ -9,10 +10,8 @@ from dsbf.eda.tasks.sample_head import SampleHead
 def test_sample_head_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
-    task = SampleHead(n=3)
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(SampleHead(n=3))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

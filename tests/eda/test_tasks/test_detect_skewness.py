@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_skewness import DetectSkewness
 
@@ -14,10 +15,8 @@ def test_detect_skewness_expected_output():
         }
     )
 
-    task = DetectSkewness()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectSkewness())
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

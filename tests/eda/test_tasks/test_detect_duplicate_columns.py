@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_duplicate_columns import DetectDuplicateColumns
 
@@ -18,10 +19,8 @@ def test_detect_duplicate_columns_expected_output():
         }
     )
 
-    task = DetectDuplicateColumns()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectDuplicateColumns())
 
     assert result is not None
     assert isinstance(result, TaskResult)

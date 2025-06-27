@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compute_correlations import ComputeCorrelations
 
@@ -20,10 +21,8 @@ def test_compute_correlations_with_categorical():
         }
     )
 
-    task = ComputeCorrelations()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(ComputeCorrelations())
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
@@ -32,7 +31,7 @@ def test_compute_correlations_with_categorical():
 
     # Pearson check
     assert any("x|y" in key for key in result.data)
-    assert abs(result.data["x|y"] - 1.0) > 0.99  # Perfect correlation
+    assert abs(result.data["x|y"] - 1.0) < 1e-2  # Perfect correlation
 
     # Cramér’s V check
     assert "cat1|cat2" in result.data

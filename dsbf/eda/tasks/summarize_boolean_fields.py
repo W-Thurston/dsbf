@@ -1,16 +1,22 @@
-# dsbf/eda/tasks/summarize_boolean_fields.py
-
 from typing import Any, Dict
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+def is_boolean_column(series) -> bool:
+    """Identify columns that only contain True/False or nulls."""
+    non_null_vals = series.dropna().unique()
+    return set(non_null_vals).issubset({True, False})
+
+
+@register_task()
 class SummarizeBooleanFields(BaseTask):
     """
     Summarizes boolean columns by computing proportions of True, False, and
-        missing values.
+    missing values.
     """
 
     def run(self) -> None:
@@ -20,13 +26,13 @@ class SummarizeBooleanFields(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            bool_cols = df.select_dtypes(include="bool").columns.tolist()
+            bool_cols = [col for col in df.columns if is_boolean_column(df[col])]
             result: Dict[str, Dict[str, float]] = {}
 
             for col in bool_cols:
-                total = df[col].shape[0]
-                true_count = df[col].sum()
-                false_count = (~df[col]).sum()
+                total = len(df[col])
+                true_count = (df[col] == True).sum()  # noqa: E712
+                false_count = (df[col] == False).sum()  # noqa: E712
                 null_count = df[col].isnull().sum()
 
                 result[col] = {

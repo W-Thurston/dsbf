@@ -6,10 +6,12 @@ from typing import Any
 import matplotlib.pyplot as plt
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class MissingnessMatrix(BaseTask):
     """
     Generates and saves a missingness matrix plot using missingno.
@@ -17,9 +19,9 @@ class MissingnessMatrix(BaseTask):
     Converts Polars to Pandas if needed. Saves image to disk.
     """
 
-    def __init__(self, output_dir: str = "dsbf/outputs"):
+    def __init__(self):
         super().__init__()
-        self.output_dir = output_dir
+        self.output_dir = None
 
     def run(self) -> None:
         try:
@@ -30,8 +32,10 @@ class MissingnessMatrix(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            fig_dir = os.path.join(self.output_dir, "figs")
+            base_dir = self.output_dir or "dsbf/outputs/latest"
+            fig_dir = os.path.join(base_dir, "figs")
             os.makedirs(fig_dir, exist_ok=True)
+
             fig_path = os.path.join(fig_dir, "missingness_matrix.png")
 
             msno.matrix(df)

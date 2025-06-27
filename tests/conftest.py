@@ -1,7 +1,7 @@
-# tests/conftest.py
 import json
 import os
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -10,22 +10,41 @@ import pytest
 def clean_engine_run(tmp_path):
     """
     Fixture to create and clean up a ProfileEngine run.
-    Returns a tuple (config, cleanup_fn).
+    Only removes new folders added to dsbf/outputs during test.
     """
-    outputs_dir = "dsbf/outputs"
+    outputs_dir = Path("dsbf/outputs")
+    outputs_dir.mkdir(parents=True, exist_ok=True)
+
+    # Snapshot existing folders before the test
+    preexisting = {p.name for p in outputs_dir.iterdir() if p.is_dir()}
+
+    # Snapshot dsbf_run.json
+    dsbf_run_path = Path("dsbf_run.json")
     previous_runs = []
-    if os.path.exists("dsbf_run.json"):
-        with open("dsbf_run.json", "r") as f:
-            previous_runs = json.load(f)
+    if dsbf_run_path.exists():
+        previous_runs = json.loads(dsbf_run_path.read_text())
 
-    yield tmp_path  # Let the test run
+    yield tmp_path  # Run the test
 
-    # Cleanup dsbf/outputs/
-    for item in os.listdir(outputs_dir):
-        full_path = os.path.join(outputs_dir, item)
-        if os.path.isdir(full_path):
-            shutil.rmtree(full_path, ignore_errors=True)
+    # Cleanup: remove only new folders
+    for p in outputs_dir.iterdir():
+        if p.is_dir() and p.name not in preexisting:
+            shutil.rmtree(p, ignore_errors=True)
 
-    # Restore dsbf_run.json to previous state
-    with open("dsbf_run.json", "w") as f:
-        json.dump(previous_runs, f, indent=2)
+    # Restore dsbf_run.json
+    dsbf_run_path.write_text(json.dumps(previous_runs, indent=2))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def clean_outputs_latest_after_tests():
+    yield  # Let all tests run first
+
+    latest_dir = os.path.join("dsbf", "outputs", "latest")
+    if os.path.exists(latest_dir):
+        for fname in os.listdir(latest_dir):
+            fpath = os.path.join(latest_dir, fname)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+            elif os.path.isdir(fpath):
+                shutil.rmtree(fpath, ignore_errors=True)
+    shutil.rmtree(latest_dir, ignore_errors=True)

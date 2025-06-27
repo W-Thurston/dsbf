@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.sample_tail import SampleTail
 
@@ -9,10 +10,8 @@ from dsbf.eda.tasks.sample_tail import SampleTail
 def test_sample_tail_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
-    task = SampleTail(n=3)
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(SampleTail(3))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

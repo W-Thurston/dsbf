@@ -7,85 +7,87 @@ EDA tasks.  Includes support for dependency resolution, error handling, and DAG
 visualization.
 """
 
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional
 
 import networkx as nx
 
+from dsbf.core.base_task import BaseTask
+from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_result import TaskResult
 from dsbf.utils.dag_layout import assign_waterfall_positions, draw_dag, topo_sort_levels
 
 
 class Task:
-    def __init__(self, name: str, func, requires: Optional[List[str]] = None):
-        """
-        Represents a single task in the execution graph.
-
-        Args:
-            name (str): Unique task name.
-            func (callable): Task function.
-            requires (List[str], optional): List of task names this task depends on.
-        """
+    def __init__(
+        self, name: str, task_instance: BaseTask, requires: Optional[List[str]] = None
+    ):
         self.name = name
-        self.func = func
+        self.task_instance = task_instance
         self.requires = requires or []
-        self.result = None
-        self.status = "pending"  # → "success" or "failed"
+        self.result: Optional[TaskResult] = None
+        self.status = "pending"  # "success" or "failed"
 
-    def run(self, context: dict):
-        """Executes the task using the given context for dependencies."""
-        args = [context[dep] for dep in self.requires]
+    def run(self, context: AnalysisContext) -> TaskResult:
         try:
-            self.result = self.func(*args)
+            result = context.run_task(self.task_instance)
+            self.result = result
             self.status = "success"
         except Exception as e:
             self.status = "failed"
-            raise e
-        context[self.name] = self.result
+            raise RuntimeError(f"Task '{self.name}' failed: {e}") from e
         return self.result
+
+    def __repr__(self):
+        return (
+            f"<Task name={self.name}, requires={self.requires}, status={self.status}>"
+        )
 
 
 class ExecutionGraph:
     def __init__(self, tasks: List[Task]):
-        """
-        Container for managing and executing a DAG of tasks.
+        self.task_map = {task.name: task for task in tasks}
+        self.graph = nx.DiGraph()
 
-        Args:
-            tasks (List[Task]): List of Task instances forming a DAG.
-        """
-        self.tasks = tasks
-
-    def run(self) -> dict:
-        """Runs all tasks in the graph in topological order."""
-        context = {}
-        for task in self.tasks:
-            task.run(context)
-        return context
-
-    def visualize(self, output_path: str):
-        """
-        Visualizes the execution graph with node coloring by task status.
-
-        Args:
-            output_path (str): Path to save the visualization image.
-        """
-        G = nx.DiGraph()
-        for task in self.tasks:
-            G.add_node(task.name)
+        # Build DAG structure
+        for task in tasks:
+            self.graph.add_node(task.name)
             for dep in task.requires:
-                G.add_edge(dep, task.name)
+                if dep not in self.task_map:
+                    raise ValueError(
+                        f"Task '{task.name}' depends on unknown task '{dep}'"
+                    )
+                self.graph.add_edge(dep, task.name)
 
-        try:
-            levels, _ = topo_sort_levels(G)
-            pos = assign_waterfall_positions(levels)
-        except Exception as e:
-            print(f"[Warning] Layout fallback triggered: {e}")
-            pos = nx.spring_layout(G, seed=42)
+        # Compute topological order
+        _, self.node_levels = topo_sort_levels(self.graph)
+        self.tasks_sorted = sorted(tasks, key=lambda t: self.node_levels[t.name])
 
-        status_dict = {task.name: task.status for task in self.tasks}
-        pos = cast(Dict[str, Tuple[int, int]], pos)
+    def run(self, context: AnalysisContext) -> Dict[str, TaskResult]:
+        for task in self.tasks_sorted:
+            task.run(context)  # calls AnalysisContext.run_task(task.task_instance)
+        return context.results
+
+    def visualize(
+        self,
+        status: Optional[Dict[str, str]] = None,
+        title: Optional[str] = None,
+        save_path: Optional[str] = None,
+    ):
+        """
+        Visualize the execution DAG with optional node status and save to file.
+
+        Args:
+            status (Optional[Dict[str, str]]): Task statuses
+                (e.g., {"infer_types": "success"}).
+            title (Optional[str]): Plot title.
+            save_path (Optional[str]): Optional path to save the plot.
+        """
+        levels, _ = topo_sort_levels(self.graph)
+        pos = assign_waterfall_positions(levels)
         draw_dag(
-            G,
+            self.graph,
             pos,
-            status=status_dict,
-            title="Task Execution Graph",
-            save_path=output_path,
+            status=status,
+            title=title or "DSBF Execution DAG",
+            save_path=save_path,
         )

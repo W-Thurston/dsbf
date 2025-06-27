@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_outliers import DetectOutliers
 
@@ -14,10 +15,8 @@ def test_detect_outliers_expected_output():
         }
     )
 
-    task = DetectOutliers()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectOutliers())
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

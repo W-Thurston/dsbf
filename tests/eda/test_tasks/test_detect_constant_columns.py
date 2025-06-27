@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_constant_columns import DetectConstantColumns
 
@@ -19,10 +20,8 @@ def test_detect_constant_columns_expected_output():
         }
     )
 
-    task = DetectConstantColumns()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectConstantColumns())
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

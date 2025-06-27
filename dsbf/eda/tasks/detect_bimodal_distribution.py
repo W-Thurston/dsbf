@@ -6,10 +6,12 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class DetectBimodalDistribution(BaseTask):
     """
     Uses Gaussian Mixture Models to flag numeric columns likely to follow

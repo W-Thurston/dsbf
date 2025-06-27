@@ -6,10 +6,12 @@ import numpy as np
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class DetectCollinearFeatures(BaseTask):
     """
     Detects multicollinearity among numeric features using

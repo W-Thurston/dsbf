@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_single_dominant_value import DetectSingleDominantValue
 
@@ -15,10 +16,8 @@ def test_detect_single_dominant_value_expected_output():
         }
     )
 
-    task = DetectSingleDominantValue(dominance_threshold=0.9)
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectSingleDominantValue(dominance_threshold=0.9))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

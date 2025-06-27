@@ -3,10 +3,12 @@
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
 
 
+@register_task()
 class CategoricalLengthStats(BaseTask):
     """
     Computes string length statistics (mean, min, max) for all text-like categorical

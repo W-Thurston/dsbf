@@ -1,11 +1,16 @@
 # tests/test_tasks/test_detect_collinear_features.py
 
 import pandas as pd
+import pytest
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_collinear_features import DetectCollinearFeatures
 
 
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in scalar divide:RuntimeWarning"
+)
 def test_detect_collinear_features_expected_output():
     """
     Test that DetectCollinearFeatures returns expected VIF flags
@@ -19,10 +24,8 @@ def test_detect_collinear_features_expected_output():
         }
     )
 
-    task = DetectCollinearFeatures(config={"vif_threshold": 5})
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectCollinearFeatures(config={"vif_threshold": 5}))
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

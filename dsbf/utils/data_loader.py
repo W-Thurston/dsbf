@@ -6,8 +6,10 @@ Provides flexible dataset loading for local files, sklearn built-ins,
 seaborn demos, and OpenML, with backend-agnostic support for pandas and polars.
 """
 import inspect
+from typing import Union
 
 import pandas as pd
+import polars as pl
 import seaborn as sns
 from sklearn import datasets as sklearn_datasets
 from sklearn.datasets import fetch_openml
@@ -18,7 +20,7 @@ def load_dataset(
     source: str = "sklearn",
     as_frame: bool = True,
     backend: str = "pandas",
-):
+) -> Union[pd.DataFrame, pl.DataFrame]:
     """
     Load a standard dataset for testing or demonstration.
 

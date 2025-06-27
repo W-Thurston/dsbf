@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_data_leakage import DetectDataLeakage
 
@@ -18,10 +19,8 @@ def test_detect_data_leakage_expected_output():
         }
     )
 
-    task = DetectDataLeakage(config={"correlation_threshold": 0.99})
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectDataLeakage(config={"correlation_threshold": 0.99}))
 
     assert result is not None
     assert isinstance(result, TaskResult)

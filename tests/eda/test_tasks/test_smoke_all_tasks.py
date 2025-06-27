@@ -1,47 +1,35 @@
 # tests/test_tasks/test_smoke_all_tasks.py
 
-import importlib
-import inspect
-
 import polars as pl
+import pytest
 
+from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_registry import TASK_REGISTRY
 from dsbf.eda.task_result import TaskResult
 
-# List of task module paths (without .py)
-task_modules = [
-    "dsbf.eda.tasks.compute_entropy",
-    "dsbf.eda.tasks.detect_constant_columns",
-    "dsbf.eda.tasks.compute_correlations",
-    "dsbf.eda.tasks.detect_duplicates",
-    "dsbf.eda.tasks.detect_id_columns",
-    "dsbf.eda.tasks.detect_high_cardinality",
-    "dsbf.eda.tasks.detect_skewness",
-    "dsbf.eda.tasks.missingness_heatmap",
-    "dsbf.eda.tasks.infer_types",
-    "dsbf.eda.tasks.sample_head",
-]
 
-# Simple test dataframe
-df = pl.DataFrame(
-    {
-        "a": [1, 2, 3, 4, 5],
-        "b": [5, 4, 3, 2, 1],
-        "c": ["x", "y", "z", "x", "y"],
-        "d": [None, 2, 3, None, 5],
-    }
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in scalar divide:RuntimeWarning"
 )
-
-
 def test_all_tasks_smoke():
-    for module_path in task_modules:
-        mod = importlib.import_module(module_path)
-        task_fns = [f for name, f in inspect.getmembers(mod, inspect.isfunction)]
-        for fn in task_fns:
-            result = fn(df)
-            assert isinstance(
-                result, TaskResult
-            ), f"{fn.__name__} did not return TaskResult"
-            assert result.status in (
-                "success",
-                "skipped",
-            ), f"{fn.__name__} returned status {result.status}"
+    df = pl.DataFrame(
+        {
+            "a": [1, 2, 3, 4, 5],
+            "b": [5, 4, 3, 2, 1],
+            "c": ["x", "y", "z", "x", "y"],
+            "d": [None, 2, 3, None, 5],
+        }
+    )
+
+    context = AnalysisContext(df)
+
+    for task_name, task_cls in TASK_REGISTRY.items():
+        task = task_cls()
+        result = context.run_task(task)
+
+        assert isinstance(result, TaskResult), f"{task_name} did not return TaskResult"
+        assert result.status in (
+            "success",
+            "skipped",
+        ), f"{task_name} status: {result.status}"

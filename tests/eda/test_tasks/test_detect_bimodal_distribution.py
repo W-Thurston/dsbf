@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_bimodal_distribution import DetectBimodalDistribution
 
@@ -22,10 +23,8 @@ def test_detect_bimodal_distribution_expected_output():
         }
     )
 
-    task = DetectBimodalDistribution(config={"bic_threshold": 5.0})
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectBimodalDistribution(config={"bic_threshold": 5.0}))
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

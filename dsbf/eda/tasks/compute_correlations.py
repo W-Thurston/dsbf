@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.stats import chi2_contingency
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
@@ -30,6 +31,7 @@ def cramers_v(x: pd.Series, y: pd.Series) -> float:
     return np.sqrt(phi2 / min(k - 1, r - 1)) if min(k - 1, r - 1) > 0 else 0.0
 
 
+@register_task()
 class ComputeCorrelations(BaseTask):
     """
     Computes pairwise correlations for numeric and categorical columns.

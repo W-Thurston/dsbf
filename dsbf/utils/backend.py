@@ -14,6 +14,9 @@ def is_text_polars(column):
 def is_text_pandas(series):
     import pandas as pd
 
-    return pd.api.types.is_string_dtype(series) or isinstance(
-        series.dtype, pd.CategoricalDtype
+    non_null = series.dropna()
+    return (
+        pd.api.types.is_string_dtype(series)
+        or isinstance(series.dtype, pd.CategoricalDtype)
+        or (series.dtype == object and non_null.map(type).eq(str).mean() > 0.8)
     )

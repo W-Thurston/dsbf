@@ -5,10 +5,12 @@ from typing import Any, Dict
 import pandas as pd
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class CheckDatetimeConsistency(BaseTask):
     """
     Checks datetime columns for:
@@ -35,16 +37,16 @@ class CheckDatetimeConsistency(BaseTask):
             for col in df.columns:
                 try:
                     # Attempt to coerce column to datetime
-                    parsed = pd.to_datetime(df[col], errors="coerce")
+                    parsed = pd.to_datetime(df[col], errors="coerce", format="ISO8601")
 
                     # Compute parseability and monotonicity
-                    is_monotonic = (
+                    is_monotonic = bool(
                         parsed.is_monotonic_increasing or parsed.is_monotonic_decreasing
                     )
                     null_pct = parsed.isnull().mean()
 
                     results[col] = {
-                        "parseable": parsed.notnull().mean() > 0.95,
+                        "parseable": bool(parsed.notnull().mean() > 0.95),
                         "monotonic": is_monotonic,
                         "null_pct_after_parse": null_pct,
                     }

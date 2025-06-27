@@ -5,10 +5,12 @@ from typing import Any, Dict
 import pandas as pd
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class InferTypes(BaseTask):
     """
     Infers data types for each column and assigns a smart tag
@@ -42,7 +44,9 @@ class InferTypes(BaseTask):
                 elif pd.api.types.is_string_dtype(df[col]):
                     # Try parsing to datetime to detect patterns like ISO strings
                     try:
-                        parsed = pd.to_datetime(df[col], errors="coerce")
+                        parsed = pd.to_datetime(
+                            df[col], errors="coerce", format="ISO8601"
+                        )
                         if parsed.notnull().mean() > 0.9:
                             tag = "likely_datetime_string"
                         else:

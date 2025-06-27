@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Tuple
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
@@ -16,6 +17,7 @@ DEFAULT_RULES: Dict[str, Tuple[float, float]] = {
 }
 
 
+@register_task()
 class DetectOutOfBounds(BaseTask):
     """
     Detects numeric columns with values outside expected or domain-specific bounds.

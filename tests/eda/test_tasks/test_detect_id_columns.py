@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_id_columns import DetectIDColumns
 
@@ -15,10 +16,8 @@ def test_detect_id_columns_expected_output():
         }
     )
 
-    task = DetectIDColumns(threshold_ratio=0.95)
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectIDColumns(threshold_ratio=0.95))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

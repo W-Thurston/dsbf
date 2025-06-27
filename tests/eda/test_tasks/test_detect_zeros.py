@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_zeros import DetectZeros
 
@@ -14,10 +15,8 @@ def test_detect_zeros_expected_output():
         }
     )
 
-    task = DetectZeros()
-    task.set_input(df)
-    task.run(flag_threshold=0.3)
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectZeros(flag_threshold=0.3))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

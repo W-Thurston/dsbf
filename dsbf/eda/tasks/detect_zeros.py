@@ -5,17 +5,25 @@ from typing import Any, Dict
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class DetectZeros(BaseTask):
     """
     Detects numeric columns with a high proportion of zero values.
     Flags columns where zeros exceed a specified threshold.
     """
 
-    def run(self, flag_threshold: float = 0.1) -> None:
+    def __init__(self, flag_threshold: float = 0.95):
+        super().__init__()
+        self.flag_threshold = flag_threshold
+
+    def run(
+        self,
+    ) -> None:
         try:
             df: Any = self.input_data
             if is_polars(df):
@@ -36,7 +44,7 @@ class DetectZeros(BaseTask):
                 pct = count / n_rows
                 zero_counts[col] = count
                 zero_percentages[col] = pct
-                zero_flags[col] = pct > flag_threshold
+                zero_flags[col] = pct > self.flag_threshold
 
             self.output = TaskResult(
                 name=self.name,
@@ -51,7 +59,7 @@ class DetectZeros(BaseTask):
                     "zero_flags": zero_flags,
                 },
                 metadata={
-                    "threshold_pct": flag_threshold,
+                    "threshold_pct": self.flag_threshold,
                     "total_rows": n_rows,
                 },
             )

@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_high_cardinality import DetectHighCardinality
 
@@ -17,10 +18,8 @@ def test_detect_high_cardinality_expected_output():
         }
     )
 
-    task = DetectHighCardinality(threshold=50)
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(DetectHighCardinality(threshold=50))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

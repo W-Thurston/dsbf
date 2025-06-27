@@ -7,10 +7,12 @@ import polars as pl
 from scipy.stats import entropy as scipy_entropy
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class ComputeEntropy(BaseTask):
     """
     Computes the entropy of string-based columns to quantify categorical disorder.

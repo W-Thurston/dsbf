@@ -1,11 +1,14 @@
 # tests/test_tasks/test_infer_types.py
 
 import pandas as pd
+import pytest
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.infer_types import InferTypes
 
 
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_infer_types_expanded_output():
     df = pd.DataFrame(
         {
@@ -17,10 +20,8 @@ def test_infer_types_expanded_output():
         }
     )
 
-    task = InferTypes()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(InferTypes())
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

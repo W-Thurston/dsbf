@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_modes import SummarizeModes
 
@@ -9,10 +10,8 @@ from dsbf.eda.tasks.summarize_modes import SummarizeModes
 def test_summarize_modes_expected_output():
     df = pd.DataFrame({"a": [1, 1, 2, 3], "b": ["x", "y", "x", "z"]})
 
-    task = SummarizeModes()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeModes())
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

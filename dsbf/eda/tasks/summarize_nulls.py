@@ -3,10 +3,12 @@
 from typing import Any, Dict, List
 
 from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
+@register_task()
 class SummarizeNulls(BaseTask):
     """
     Identifies and summarizes missing values in a dataset.
@@ -32,8 +34,11 @@ class SummarizeNulls(BaseTask):
             null_percentages: Dict[str, float] = {
                 col: null_counts[col] / n_rows for col in df.columns
             }
+
+            threshold = self.config.get("null_threshold", 0.5)
+
             high_null_columns: List[str] = [
-                col for col, pct in null_percentages.items() if pct > 0.5
+                col for col, pct in null_percentages.items() if pct >= threshold
             ]
 
             # Row-wise null pattern frequency (e.g., "101" means null in cols 1 and 3)

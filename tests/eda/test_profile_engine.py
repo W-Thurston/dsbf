@@ -1,8 +1,10 @@
-# tests/eda/test_profile_engine.py
 import json
 import os
 
+import pytest
+
 from dsbf.eda.profile_engine import ProfileEngine
+from dsbf.eda.task_result import TaskResult
 
 
 def test_profile_engine_runs_with_file(clean_engine_run):
@@ -47,8 +49,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run):
     try:
         __import__("polars")
     except ImportError:
-        print("[Test] Skipping polars test — polars not installed.")
-        return
+        pytest.skip("Polars not installed — skipping test.")
 
     config = {
         "engine": "ProfileEngine",
@@ -69,7 +70,6 @@ def test_profile_engine_runs_with_polars(clean_engine_run):
 
 
 def test_metadata_structure_and_keys(clean_engine_run):
-    # Run a new engine with config
     config = {
         "engine": "ProfileEngine",
         "dataset_name": "iris",
@@ -112,3 +112,25 @@ def test_metadata_structure_and_keys(clean_engine_run):
         assert (
             key in metadata["config"] or key in metadata
         ), f"Missing key in config: {key}"
+
+
+def test_task_output_within_profile_engine(clean_engine_run):
+    """
+    Sanity test to confirm that a known task produces results through AnalysisContext.
+    """
+    config = {
+        "engine": "ProfileEngine",
+        "dataset_name": "iris",
+        "dataset_source": "sklearn",
+        "output_format": ["json"],
+    }
+
+    engine = ProfileEngine(config)
+    engine.run()
+
+    # CategoricalLengthStats should always run
+    assert engine.context is not None, "Engine context not initialized"
+    result = engine.context.results.get("CategoricalLengthStats")
+    assert isinstance(result, TaskResult)
+    assert result.status == "success"
+    assert isinstance(result.data, dict)

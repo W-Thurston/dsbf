@@ -2,6 +2,7 @@
 
 import pandas as pd
 
+from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_text_fields import SummarizeTextFields
 
@@ -15,10 +16,8 @@ def test_summarize_text_fields_expected_output():
         }
     )
 
-    task = SummarizeTextFields()
-    task.set_input(df)
-    task.run()
-    result = task.get_output()
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeTextFields())
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
