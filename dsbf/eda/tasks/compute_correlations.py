@@ -31,7 +31,13 @@ def cramers_v(x: pd.Series, y: pd.Series) -> float:
     return np.sqrt(phi2 / min(k - 1, r - 1)) if min(k - 1, r - 1) > 0 else 0.0
 
 
-@register_task()
+@register_task(
+    display_name="Compute Correlations",
+    description="Calculates Pearson/Spearman correlations between numeric columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["numeric", "correlation"],
+)
 class ComputeCorrelations(BaseTask):
     """
     Computes pairwise correlations for numeric and categorical columns.

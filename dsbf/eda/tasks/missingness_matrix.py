@@ -1,6 +1,5 @@
 # dsbf/eda/tasks/missingness_matrix.py
 
-import os
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -11,17 +10,19 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Missingness Matrix",
+    description="Creates a matrix showing co-occurrence of missing values.",
+    depends_on=["infer_types"],
+    stage="report",
+    tags=["missing", "structure", "viz"],
+)
 class MissingnessMatrix(BaseTask):
     """
     Generates and saves a missingness matrix plot using missingno.
 
     Converts Polars to Pandas if needed. Saves image to disk.
     """
-
-    def __init__(self):
-        super().__init__()
-        self.output_dir = None
 
     def run(self) -> None:
         try:
@@ -32,11 +33,7 @@ class MissingnessMatrix(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            base_dir = self.output_dir or "dsbf/outputs/latest"
-            fig_dir = os.path.join(base_dir, "figs")
-            os.makedirs(fig_dir, exist_ok=True)
-
-            fig_path = os.path.join(fig_dir, "missingness_matrix.png")
+            fig_path = self.get_output_path("missingness_matrix.png")
 
             msno.matrix(df)
             plt.savefig(fig_path, bbox_inches="tight")
@@ -50,6 +47,9 @@ class MissingnessMatrix(BaseTask):
             )
 
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             self.output = TaskResult(
                 name=self.name,
                 status="failed",

@@ -12,7 +12,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Compute Entropy",
+    description="Estimates entropy of columns to measure information content.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["info", "distribution"],
+)
 class ComputeEntropy(BaseTask):
     """
     Computes the entropy of string-based columns to quantify categorical disorder.
@@ -36,7 +42,7 @@ class ComputeEntropy(BaseTask):
                     if df[col].dtype == pl.Utf8:
                         try:
                             counts_df = df[col].value_counts()
-                            counts = counts_df["counts"]
+                            counts = counts_df["count"]
                             total = counts.sum()
                             probs = [count / total for count in counts]
                             entropy_val = -sum(p * log2(p) for p in probs if p > 0)

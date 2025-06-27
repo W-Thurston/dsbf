@@ -17,7 +17,7 @@ def test_summarize_value_counts_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(SummarizeValueCounts(top_k=2))
+    result = context.run_task(SummarizeValueCounts(config={"top_k": 2}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

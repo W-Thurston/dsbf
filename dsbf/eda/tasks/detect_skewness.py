@@ -11,7 +11,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Skewness",
+    description="Computes skewness of numeric columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["distribution", "skew"],
+)
 class DetectSkewness(BaseTask):
     """
     Computes skewness for all numeric columns in a dataset.

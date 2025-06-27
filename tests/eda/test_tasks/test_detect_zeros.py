@@ -16,7 +16,7 @@ def test_detect_zeros_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(DetectZeros(flag_threshold=0.3))
+    result = context.run_task(DetectZeros(config={"flag_threshold": 0.3}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

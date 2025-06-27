@@ -12,7 +12,13 @@ def is_boolean_column(series) -> bool:
     return set(non_null_vals).issubset({True, False})
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Boolean Fields",
+    description="Summarizes frequency and distribution of boolean columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["boolean", "summary"],
+)
 class SummarizeBooleanFields(BaseTask):
     """
     Summarizes boolean columns by computing proportions of True, False, and

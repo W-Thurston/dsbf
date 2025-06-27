@@ -17,7 +17,7 @@ def test_detect_id_columns_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(DetectIDColumns(threshold_ratio=0.95))
+    result = context.run_task(DetectIDColumns(config={"threshold_ratio": 0.95}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

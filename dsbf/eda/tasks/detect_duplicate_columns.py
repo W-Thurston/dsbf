@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Duplicate Columns",
+    description="Finds columns that contain identical values.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["redundancy", "duplicates"],
+)
 class DetectDuplicateColumns(BaseTask):
     """
     Detects columns that are exact duplicates of one another.

@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Single Dominant Value",
+    description="Detects columns dominated by a single value.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["redundancy", "skew"],
+)
 class DetectSingleDominantValue(BaseTask):
     """
     Detects columns where a single value dominates the distribution,
@@ -16,26 +22,18 @@ class DetectSingleDominantValue(BaseTask):
     where nearly all values are the same.
     """
 
-    def __init__(self, dominance_threshold: float = 0.95):
-        """
-        Args:
-            dominance_threshold (float): Proportion above which a single value
-                is considered dominant (e.g., 0.95 means 95% or more).
-        """
-        super().__init__()
-        self.dominance_threshold = dominance_threshold
-
     def run(self) -> None:
         try:
             df: Any = self.input_data
             if is_polars(df):
                 df = df.to_pandas()
 
+            dominance_threshold: float = self.config.get("dominance_threshold", 0.95)
             results: Dict[str, Dict[str, Any]] = {}
 
             for col in df.columns:
                 vc = df[col].value_counts(dropna=False, normalize=True)
-                if not vc.empty and vc.iloc[0] >= self.dominance_threshold:
+                if not vc.empty and vc.iloc[0] >= dominance_threshold:
                     results[col] = {
                         "dominant_value": vc.index[0],
                         "proportion": float(vc.iloc[0]),
@@ -46,7 +44,7 @@ class DetectSingleDominantValue(BaseTask):
                 status="success",
                 summary=f"Detected {len(results)} column(s) with dominant values.",
                 data=results,
-                metadata={"dominance_threshold": self.dominance_threshold},
+                metadata={"dominance_threshold": dominance_threshold},
             )
 
         except Exception as e:

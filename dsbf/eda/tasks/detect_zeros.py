@@ -10,16 +10,18 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Zeros",
+    description="Flags columns or rows with high zero concentration.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["zeros", "sparsity"],
+)
 class DetectZeros(BaseTask):
     """
     Detects numeric columns with a high proportion of zero values.
     Flags columns where zeros exceed a specified threshold.
     """
-
-    def __init__(self, flag_threshold: float = 0.95):
-        super().__init__()
-        self.flag_threshold = flag_threshold
 
     def run(
         self,
@@ -32,6 +34,7 @@ class DetectZeros(BaseTask):
             if not hasattr(df, "shape"):
                 raise ValueError("Input is not a valid dataframe.")
 
+            flag_threshold: float = self.config.get("flag_threshold", 0.95)
             n_rows = df.shape[0]
             zero_counts: Dict[str, int] = {}
             zero_percentages: Dict[str, float] = {}
@@ -44,7 +47,7 @@ class DetectZeros(BaseTask):
                 pct = count / n_rows
                 zero_counts[col] = count
                 zero_percentages[col] = pct
-                zero_flags[col] = pct > self.flag_threshold
+                zero_flags[col] = pct > flag_threshold
 
             self.output = TaskResult(
                 name=self.name,
@@ -59,7 +62,7 @@ class DetectZeros(BaseTask):
                     "zero_flags": zero_flags,
                 },
                 metadata={
-                    "threshold_pct": self.flag_threshold,
+                    "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
                 },
             )

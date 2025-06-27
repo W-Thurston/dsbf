@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Constant Columns",
+    description="Flags columns with a single unique value.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["redundancy", "null-equivalent"],
+)
 class DetectConstantColumns(BaseTask):
     """
     Identifies columns with only one unique value in the dataset.

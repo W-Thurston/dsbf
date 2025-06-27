@@ -11,7 +11,7 @@ def test_sample_tail_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
     context = AnalysisContext(df)
-    result = context.run_task(SampleTail(3))
+    result = context.run_task(SampleTail(config={"n": 3}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

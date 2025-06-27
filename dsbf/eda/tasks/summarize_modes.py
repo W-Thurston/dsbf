@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Modes",
+    description="Finds most frequent values per column.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["modes", "summary"],
+)
 class SummarizeModes(BaseTask):
     """
     Summarizes the mode(s) — the most frequent value(s) — for each column.

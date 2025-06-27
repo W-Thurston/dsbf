@@ -10,17 +10,18 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Outliers",
+    description="Uses statistical heuristics to flag outlier values.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["outliers", "numeric"],
+)
 class DetectOutliers(BaseTask):
     """
     Detects numeric outliers using the IQR method. Flags columns exceeding
     a proportion threshold of outliers.
     """
-
-    def __init__(self, method: str = "iqr", flag_threshold: float = 0.01):
-        super().__init__()
-        self.method = method
-        self.flag_threshold = flag_threshold
 
     def run(self) -> None:
         try:
@@ -31,6 +32,8 @@ class DetectOutliers(BaseTask):
             if not hasattr(df, "shape"):
                 raise ValueError("Input is not a valid dataframe.")
 
+            method: str = self.config.get("method", "iqr")
+            flag_threshold: float = self.config.get("flag_threshold", 0.01)
             n_rows = df.shape[0]
             outlier_counts: Dict[str, int] = {}
             outlier_flags: Dict[str, bool] = {}
@@ -50,7 +53,7 @@ class DetectOutliers(BaseTask):
 
                 outlier_counts[col] = len(indices)
                 outlier_rows[col] = indices
-                outlier_flags[col] = len(indices) > self.flag_threshold * n_rows
+                outlier_flags[col] = len(indices) > flag_threshold * n_rows
 
             flagged_cols = [col for col, flagged in outlier_flags.items() if flagged]
 
@@ -64,8 +67,8 @@ class DetectOutliers(BaseTask):
                     "outlier_rows": outlier_rows,
                 },
                 metadata={
-                    "method": self.method,
-                    "threshold_pct": self.flag_threshold,
+                    "method": method,
+                    "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
                 },
             )

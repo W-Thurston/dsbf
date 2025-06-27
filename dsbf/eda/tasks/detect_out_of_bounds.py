@@ -1,6 +1,6 @@
 # dsbf/eda/tasks/detect_out_of_bounds.py
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
 
@@ -17,15 +17,17 @@ DEFAULT_RULES: Dict[str, Tuple[float, float]] = {
 }
 
 
-@register_task()
+@register_task(
+    display_name="Detect Out of Bounds",
+    description="Detects numeric values outside expected or logical ranges.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["bounds", "validation"],
+)
 class DetectOutOfBounds(BaseTask):
     """
     Detects numeric columns with values outside expected or domain-specific bounds.
     """
-
-    def __init__(self, custom_bounds: Optional[Dict[str, Tuple[float, float]]] = None):
-        super().__init__()
-        self.custom_bounds = custom_bounds or {}
 
     def run(self) -> None:
         try:
@@ -33,7 +35,7 @@ class DetectOutOfBounds(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            bounds = {**DEFAULT_RULES, **self.custom_bounds}
+            bounds = {**DEFAULT_RULES, **self.config.get("custom_bounds", {})}
             flagged: Dict[str, Dict[str, Any]] = {}
 
             for col in df.select_dtypes(include=np.number).columns:

@@ -3,6 +3,7 @@
 import os
 from typing import Optional, Union
 
+import networkx as nx
 import pandas as pd
 import polars as pl
 
@@ -11,8 +12,9 @@ from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
 from dsbf.eda.renderers.json_renderer import render as render_json
 from dsbf.eda.task_loader import load_all_tasks
-from dsbf.eda.task_registry import get_task_by_name
+from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs
 from dsbf.utils.data_loader import load_dataset
+from dsbf.utils.task_utils import instantiate_task
 
 
 class ProfileEngine(BaseEngine):
@@ -95,20 +97,43 @@ class ProfileEngine(BaseEngine):
         return load_dataset(name=dataset_name, source=dataset_source, backend=backend)
 
     def build_graph(self, config) -> ExecutionGraph:
-        from dsbf.eda.depth_levels import DEPTH_LEVELS
 
-        depth = config.get("profiling_depth", "standard")
-        task_specs = DEPTH_LEVELS.get(depth, [])
+        selected_depth = config.get("profiling_depth", "full")
+
+        # Optional: filter tasks based on profiling depth
+        all_specs = get_all_task_specs()
+        filtered_specs = [
+            spec
+            for spec in all_specs
+            if spec.experimental is False
+            and (selected_depth == "full" or selected_depth in (spec.tags or []))
+        ]
+
+        G = nx.DiGraph()
+        for spec in filtered_specs:
+            G.add_node(spec.name)
+            for dep in spec.depends_on or []:
+                if dep not in TASK_REGISTRY:
+                    raise ValueError(
+                        f"Task '{spec.name}' depends on unknown task '{dep}'"
+                    )
+                G.add_edge(dep, spec.name)
+
+        sorted_names = list(nx.topological_sort(G))
 
         tasks = []
-        for task_name, deps in task_specs:
+        for task_name in sorted_names:
             try:
-                task_cls = get_task_by_name(task_name)
+                raw_config = config.get("tasks", {}).get(task_name, {})
+                task_instance = instantiate_task(task_name, raw_config)
+                requires = list(G.predecessors(task_name))
+                tasks.append(
+                    Task(name=task_name, task_instance=task_instance, requires=requires)
+                )
             except KeyError:
                 self._log(
                     f"[ERROR] Task '{task_name}' not found in registry.", level="error"
                 )
                 raise
-            tasks.append(Task(name=task_name, task_instance=task_cls, requires=deps))
 
         return ExecutionGraph(tasks)

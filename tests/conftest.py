@@ -39,7 +39,7 @@ def clean_engine_run(tmp_path):
 def clean_outputs_latest_after_tests():
     yield  # Let all tests run first
 
-    latest_dir = os.path.join("dsbf", "outputs", "latest")
+    latest_dir = os.path.join("dsbf", "outputs", "temp_test")
     if os.path.exists(latest_dir):
         for fname in os.listdir(latest_dir):
             fpath = os.path.join(latest_dir, fname)

@@ -17,7 +17,9 @@ def test_detect_single_dominant_value_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(DetectSingleDominantValue(dominance_threshold=0.9))
+    result = context.run_task(
+        DetectSingleDominantValue(config={"dominance_threshold": 0.9})
+    )
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

@@ -11,7 +11,7 @@ def test_sample_head_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
     context = AnalysisContext(df)
-    result = context.run_task(SampleHead(n=3))
+    result = context.run_task(SampleHead(config={"n": 3}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

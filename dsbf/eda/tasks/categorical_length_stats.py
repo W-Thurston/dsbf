@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
 
 
-@register_task()
+@register_task(
+    display_name="Categorical Length Stats",
+    description="Computes string length statistics for text-like categorical columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["categorical", "text", "stats"],
+)
 class CategoricalLengthStats(BaseTask):
     """
     Computes string length statistics (mean, min, max) for all text-like categorical

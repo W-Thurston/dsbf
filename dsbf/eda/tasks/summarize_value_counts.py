@@ -8,23 +8,19 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Value Counts",
+    description="Lists value frequencies for selected columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["categorical", "summary"],
+)
 class SummarizeValueCounts(BaseTask):
     """
     Computes the top-k most frequent values for each column.
 
     Converts Polars to Pandas if needed for consistent functionality.
     """
-
-    def __init__(self, top_k: int = 5) -> None:
-        """
-        Initialize the task with configurable top_k.
-
-        Args:
-            top_k (int): Number of top values to include per column.
-        """
-        super().__init__()
-        self.top_k = top_k
 
     def run(self) -> None:
         """
@@ -38,11 +34,12 @@ class SummarizeValueCounts(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
+            top_k: int = self.config.get("top_k", 5)
             result: Dict[str, Dict[Any, int]] = {}
 
             for col in df.columns:
                 try:
-                    vc = df[col].value_counts(dropna=False).head(self.top_k)
+                    vc = df[col].value_counts(dropna=False).head(top_k)
                     result[col] = vc.to_dict()
                 except Exception:
                     continue  # Skip columns that fail (e.g., unhashable types)
@@ -52,7 +49,7 @@ class SummarizeValueCounts(BaseTask):
                 status="success",
                 summary=f"Computed value counts for {len(result)} columns.",
                 data=result,
-                metadata={"top_k": self.top_k},
+                metadata={"top_k": top_k},
             )
 
         except Exception as e:

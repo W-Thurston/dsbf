@@ -63,10 +63,8 @@ class AnalysisContext:
 
     def run_task(self, task: "BaseTask") -> TaskResult:
         task.set_input(self.data)
-        task.config.update(self.config)
 
-        if hasattr(self, "output_dir"):
-            task.output_dir = self.output_dir  # type: ignore
+        task.context = self
 
         task.run()
 

@@ -19,7 +19,7 @@ def test_detect_high_cardinality_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(DetectHighCardinality(threshold=50))
+    result = context.run_task(DetectHighCardinality(config={"threshold": 50}))
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

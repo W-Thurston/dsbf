@@ -10,7 +10,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Numeric Columns",
+    description="Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["numeric", "summary"],
+)
 class SummarizeNumeric(BaseTask):
     """
     Produces extended summary statistics for all numeric columns.

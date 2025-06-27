@@ -4,8 +4,11 @@ import polars as pl
 import pytest
 
 from dsbf.core.context import AnalysisContext
-from dsbf.eda.task_registry import TASK_REGISTRY
+from dsbf.eda.task_loader import load_all_tasks
+from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_result import TaskResult
+
+load_all_tasks()
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
@@ -21,15 +24,24 @@ def test_all_tasks_smoke():
             "d": [None, 2, 3, None, 5],
         }
     )
+    context = AnalysisContext(df, output_dir="dsbf/outputs/temp_test/")
 
-    context = AnalysisContext(df)
+    assert TASK_REGISTRY, "No tasks registered!"
 
-    for task_name, task_cls in TASK_REGISTRY.items():
-        task = task_cls()
+    for task_name, spec in TASK_REGISTRY.items():
+        assert isinstance(task_name, str), f"Registry key '{task_name}' is not a string"
+        assert isinstance(spec, TaskSpec), f"{task_name} is not a TaskSpec"
+        assert hasattr(spec.cls, "run"), f"{spec.cls.__name__} missing .run() method"
+        assert callable(
+            getattr(spec.cls(), "run", None)
+        ), f"{spec.cls.__name__}.run is not callable"
+
+        # Run smoke test
+        task = spec.cls()
         result = context.run_task(task)
 
         assert isinstance(result, TaskResult), f"{task_name} did not return TaskResult"
         assert result.status in (
             "success",
             "skipped",
-        ), f"{task_name} status: {result.status}"
+        ), f"{task_name} returned unexpected status: {result.status}"

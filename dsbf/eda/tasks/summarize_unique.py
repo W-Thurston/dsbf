@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Unique Values",
+    description="Reports unique value counts per column.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["uniqueness", "summary"],
+)
 class SummarizeUnique(BaseTask):
     """
     Computes the number of unique values for each column in the DataFrame.

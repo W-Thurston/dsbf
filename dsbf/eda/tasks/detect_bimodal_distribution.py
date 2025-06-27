@@ -11,7 +11,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Bimodal Distributions",
+    description="Identifies columns with likely bimodal distributions.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["distribution", "outliers"],
+)
 class DetectBimodalDistribution(BaseTask):
     """
     Uses Gaussian Mixture Models to flag numeric columns likely to follow

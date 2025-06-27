@@ -10,7 +10,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Infer Column Types",
+    description="Infers column types (e.g., categorical, numeric, text) heuristically.",
+    depends_on=[],
+    stage="raw",
+    tags=["typing", "metadata"],
+)
 class InferTypes(BaseTask):
     """
     Infers data types for each column and assigns a smart tag

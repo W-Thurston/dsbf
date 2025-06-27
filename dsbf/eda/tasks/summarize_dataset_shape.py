@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Dataset Shape",
+    description="Summarizes dataset dimensions and memory usage.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["overview", "summary"],
+)
 class SummarizeDatasetShape(BaseTask):
     """
     Summarizes dataset shape and structure:

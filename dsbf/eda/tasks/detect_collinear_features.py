@@ -11,7 +11,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Collinear Features",
+    description="Detects highly collinear features that may cause multicollinearity.",
+    depends_on=["infer_types"],
+    stage="modeling",
+    tags=["multicollinearity", "numeric"],
+)
 class DetectCollinearFeatures(BaseTask):
     """
     Detects multicollinearity among numeric features using

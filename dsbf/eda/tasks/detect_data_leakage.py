@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Data Leakage",
+    description="Heuristically detects columns that may leak target information.",
+    depends_on=["infer_types"],
+    stage="modeling",
+    tags=["leakage", "target"],
+)
 class DetectDataLeakage(BaseTask):
     """
     Detects potential data leakage by identifying highly correlated numeric features.

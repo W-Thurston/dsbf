@@ -10,7 +10,15 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
 
 
-@register_task()
+@register_task(
+    display_name="Summarize Text Fields",
+    description=(
+        "Summarizes content of text columns" "(length, frequency, symbols, etc.)."
+    ),
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["text", "summary"],
+)
 class SummarizeTextFields(BaseTask):
     """
     Summarizes text-based columns, computing:

@@ -8,22 +8,25 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task("detect_id_columns")
+@register_task(
+    display_name="Detect ID Columns",
+    description="Flags likely ID-like columns with high uniqueness and low reuse.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["metadata", "id", "index"],
+)
 class DetectIDColumns(BaseTask):
     """
     Detects columns likely to be unique identifiers (e.g., user IDs, UUIDs).
     A column is flagged if its number of unique values exceeds 95% of total rows.
     """
 
-    def __init__(self, threshold_ratio: float = 0.95):
-        super().__init__()
-        self.threshold_ratio = threshold_ratio
-
     def run(self) -> None:
         try:
             df: Any = self.input_data
             n_rows = df.shape[0]
-            threshold = self.threshold_ratio * n_rows
+            threshold_ratio: float = self.config.get("threshold_ratio", 0.95)
+            threshold = threshold_ratio * n_rows
             results: Dict[str, str] = {}
 
             if is_polars(df):
@@ -48,7 +51,7 @@ class DetectIDColumns(BaseTask):
                 status="success",
                 summary=f"Detected {len(results)} likely ID column(s).",
                 data=results,
-                metadata={"rows": n_rows, "threshold_ratio": self.threshold_ratio},
+                metadata={"rows": n_rows, "threshold_ratio": threshold_ratio},
             )
 
         except Exception as e:

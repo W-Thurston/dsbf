@@ -8,7 +8,13 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect Duplicates",
+    description="Detects duplicated rows in the dataset.",
+    depends_on=["infer_types"],
+    stage="raw",
+    tags=["duplicates", "rows"],
+)
 class DetectDuplicates(BaseTask):
     """
     Detects and counts duplicate rows in the dataset.

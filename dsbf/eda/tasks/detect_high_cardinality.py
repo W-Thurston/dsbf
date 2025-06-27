@@ -8,15 +8,17 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
 
 
-@register_task()
+@register_task(
+    display_name="Detect High Cardinality",
+    description="Detects columns with too many unique values.",
+    depends_on=["infer_types"],
+    stage="cleaned",
+    tags=["categorical", "cardinality"],
+)
 class DetectHighCardinality(BaseTask):
     """
     Detects columns with a number of unique values greater than a threshold.
     """
-
-    def __init__(self, threshold: int = 50):
-        super().__init__()
-        self.threshold = threshold
 
     def run(self) -> None:
         """
@@ -25,13 +27,14 @@ class DetectHighCardinality(BaseTask):
         """
         try:
             df: Any = self.input_data
+            threshold: float = self.config.get("threshold", 50)
             results: Dict[str, int] = {}
 
             if is_polars(df):
                 for col in df.columns:
                     try:
                         n_unique = df[col].n_unique()
-                        if n_unique > self.threshold:
+                        if n_unique > threshold:
                             results[col] = n_unique
                     except Exception:
                         continue
@@ -39,7 +42,7 @@ class DetectHighCardinality(BaseTask):
                 for col in df.columns:
                     try:
                         n_unique = df[col].nunique()
-                        if n_unique > self.threshold:
+                        if n_unique > threshold:
                             results[col] = n_unique
                     except Exception:
                         continue
@@ -49,7 +52,7 @@ class DetectHighCardinality(BaseTask):
                 status="success",
                 summary=f"Detected {len(results)} high-cardinality column(s).",
                 data=results,
-                metadata={"threshold": self.threshold},
+                metadata={"threshold": threshold},
             )
 
         except Exception as e:
