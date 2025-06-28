@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -25,10 +25,11 @@ class TaskResult:
 
     name: str
     status: str
-    summary: Union[str, Dict[str, Any]]
+    summary: Dict[str, Any]
     data: Optional[Dict[str, Any]] = None
     plots: Optional[List[Path]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    recommendations: Optional[List[str]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -45,6 +46,7 @@ class TaskResult:
             "data": self.data,
             "plots": [str(p) for p in self.plots] if self.plots else None,
             "metadata": self.metadata,
+            "recommendations": self.recommendations,
         }
 
     def __str__(self) -> str:

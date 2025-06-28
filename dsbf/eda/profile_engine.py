@@ -7,6 +7,7 @@ import networkx as nx
 import pandas as pd
 import polars as pl
 
+from dsbf.config import load_default_config
 from dsbf.core.base_engine import BaseEngine
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
@@ -23,7 +24,8 @@ class ProfileEngine(BaseEngine):
     Loads data, constructs task graph, runs analysis, and exports report.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: Optional[dict] = None):
+        config = config or load_default_config()
         super().__init__(config)
         self.context: Optional[AnalysisContext] = None
         self.results: dict = {}
@@ -60,7 +62,7 @@ class ProfileEngine(BaseEngine):
 
         # Build graph and run tasks
         self._log("Building execution graph...", level="debug")
-        graph = self.build_graph(self.config)
+        graph = self.build_graph()
         self.results = graph.run(self.context, log_fn=self._log)
 
         # Optional DAG visualization
@@ -96,8 +98,9 @@ class ProfileEngine(BaseEngine):
         )
         return load_dataset(name=dataset_name, source=dataset_source, backend=backend)
 
-    def build_graph(self, config) -> ExecutionGraph:
+    def build_graph(self) -> ExecutionGraph:
 
+        config = self.config
         selected_depth = config.get("profiling_depth", "full")
 
         # Optional: filter tasks based on profiling depth
