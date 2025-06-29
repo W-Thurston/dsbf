@@ -20,3 +20,12 @@ def test_missingness_matrix_creates_image(tmp_path):
     assert result.data is not None
     assert "image_path" in result.data
     assert os.path.exists(result.data["image_path"])
+
+
+def test_missingness_matrix_all_null(tmp_path):
+    df = pd.DataFrame({"a": [None, None], "b": [None, None]})
+    context = AnalysisContext(df, output_dir=str(tmp_path))
+    result = context.run_task(MissingnessMatrix())
+    assert result.status == "success"
+    assert result.data is not None
+    assert "image_path" in result.data

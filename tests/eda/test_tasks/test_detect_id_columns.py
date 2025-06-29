@@ -26,3 +26,11 @@ def test_detect_id_columns_expected_output():
     assert "uuid" in result.data
     assert "group" not in result.data
     assert result.metadata["threshold_ratio"] == 0.95
+
+
+def test_detect_id_columns_handles_no_ids():
+    df = pd.DataFrame({"group": [1, 1, 1, 1], "value": [10, 10, 20, 20]})
+    context = AnalysisContext(df)
+    result = context.run_task(DetectIDColumns(config={"threshold_ratio": 0.95}))
+    assert result.status == "success"
+    assert result.data == {}

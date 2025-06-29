@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Numeric Columns",
     description="Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="cleaned",
     tags=["numeric", "summary"],
 )
@@ -29,10 +30,15 @@ class SummarizeNumeric(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
                 df = df.to_pandas()
+                self._log(
+                    "Converting Polars to Pandas for numeric summarization", "debug"
+                )
 
             numeric_df = df.select_dtypes(include=np.number)
             extended_stats: Dict[str, Dict[str, Any]] = {}
@@ -65,10 +71,15 @@ class SummarizeNumeric(BaseTask):
                     "near_zero_variance": near_zero_var,
                 }
 
+            self._log(f"Summarized {len(extended_stats)} numeric columns", "debug")
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Extended summary for {len(extended_stats)} numeric columns.",
+                summary={
+                    "message": (
+                        f"Extended summary for {len(extended_stats)} numeric columns."
+                    )
+                },
                 data=extended_stats,
             )
 
@@ -76,7 +87,7 @@ class SummarizeNumeric(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during numeric summarization: {e}",
+                summary={"message": (f"Error during numeric summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

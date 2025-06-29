@@ -12,6 +12,7 @@ metadata:
 engine:
   engine: ProfileEngine
   backend: polars               # pandas | polars
+  reference_dataset_path: null   # default: disabled unless user sets it
 
   stage_inference:
     null_ratio_raw_threshold: 0.4
@@ -19,9 +20,20 @@ engine:
     high_cardinality_threshold: 50
 
 tasks:
-  detect_mixed_type_columns:
-    min_ratio: 0.05                # Flag if >5% of values deviate in type
-    ignore_null_type: true         # Treat None/NaN as ignorable for mixed type detection
+  compare_with_reference_dataset:
+    enabled: true
+    compare_types: true
+    compare_missingness: true
+    compare_summary_stats: true
+
+  detect_bimodal_distribution:
+    bic_threshold: 10.0
+
+  detect_collinear_features:
+    vif_threshold: 10.0
+
+  detect_data_leakage:
+    correlation_threshold: 0.99
 
   detect_encoded_columns:
     min_entropy: 4.5               # Minimum entropy to consider a string as possibly encoded
@@ -30,11 +42,64 @@ tasks:
     detect_hex: true
     detect_uuid: true
 
+  detect_feature_drift:
+    enabled: true
+    js_threshold: 0.1
+    psi_threshold: 0.1
+    ks_pvalue_threshold: 0.05
+    tvd_threshold: 0.2
+    chi2_pvalue_threshold: 0.05
+    # include_visuals: true       # Optional: support for visual output later
+
+  detect_high_cardinality:
+    cardinality_threshold: 50
+
+  detect_id_columns:
+    threshold_ratio: 0.95
+
+  detect_mixed_type_columns:
+    min_ratio: 0.05                # Flag if >5% of values deviate in type
+    ignore_null_type: true         # Treat None/NaN as ignorable for mixed type detection
+
+  detect_out_of_bounds:
+    custom_bounds: {
+        "age": (0, 120),
+        "temperature": (-100, 150),
+        "percent": (0, 100),
+        "score": (0, 1),
+    }
+
+  detect_outliers:
+    method: "iqr"
+    flag_threshold: 0.01
+
   detect_regex_format_violations:
     match_threshold: 0.6           # % of values that must match pattern to treat as a structured field
-    sample_limit: 5                # Max number of invalid examples to display
-    custom_patterns:
-      zip: "^\\d{5}(-\\d{4})?$"
-      phone: "^\\+?\\d{1,3}?[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$"
-      email: "^[\\w\\.-]+@[\\w\\.-]+\\.\\w{2,}$"
+    max_violations: 5              # Max number of invalid examples to display
+    custom_patterns: {
+      zip: "^\\d{5}(-\\d{4})?$",
+      phone: "^\\+?\\d{1,3}?[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$",
+      email: "^[\\w\\.-]+@[\\w\\.-]+\\.\\w{2,}$",
       url: "^https?://[^\\s]+$"
+    }
+
+  detect_single_dominant_value:
+    dominance_threshold: 0.95
+
+  detect_target_drift:
+    enabled: true
+    psi_threshold: 0.1
+    ks_pvalue_threshold: 0.05
+    chi2_pvalue_threshold: 0.05
+
+  detect_zeros:
+    flag_threshold: 0.95
+
+  sample_head:
+    n: 5
+
+  summarize_nulls:
+    null_threshold: 0.5
+
+  summarize_value_counts:
+    top_k: 5

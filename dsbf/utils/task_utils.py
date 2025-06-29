@@ -11,15 +11,21 @@ load_all_tasks()
 
 def instantiate_task(
     task_name: str,
-    raw_config: Optional[Dict[str, Any]] = None,
+    task_specific_cfg: Optional[Dict[str, Any]] = None,
 ) -> BaseTask:
     """
     Look up a task by name and return an instantiated task with a validated config.
-
     If no config is provided but the task defines a schema, the default config is used.
+
+    Args:
+        task_name (str): The registered name of the task.
+        task_specific_cfg (Optional[dict]): Overrides from config["tasks"][task_name].
+
+    Returns:
+        BaseTask: An instance of the task, with config applied.
     """
     spec = TASK_REGISTRY[task_name]
-    return spec.cls(config=raw_config)
+    return spec.cls(name=task_name, config=task_specific_cfg)
 
 
 def is_integer_polars(series):

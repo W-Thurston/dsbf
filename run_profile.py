@@ -1,10 +1,7 @@
 # run_profile.py
-import yaml
 
+from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
 
-with open("example_config.yaml", "r") as f:
-    config = yaml.safe_load(f)
-
-engine = ProfileEngine(config)
+engine = ProfileEngine(load_default_config())
 engine.run()

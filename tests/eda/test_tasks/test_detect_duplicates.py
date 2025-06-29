@@ -26,3 +26,18 @@ def test_detect_duplicates_expected_output():
     assert result.status == "success"
     assert result.data is not None
     assert result.data["duplicate_count"] == 2
+
+
+def test_detect_duplicates_no_duplicates():
+    """Ensure that a DataFrame with no duplicate rows returns 0."""
+    df = pd.DataFrame(
+        {
+            "a": [1, 2, 3],
+            "b": ["x", "y", "z"],
+        }
+    )
+    context = AnalysisContext(df)
+    result = context.run_task(DetectDuplicates())
+
+    assert result.status == "success"
+    assert result.data["duplicate_count"] == 0

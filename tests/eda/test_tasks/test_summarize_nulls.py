@@ -23,3 +23,11 @@ def test_summarize_nulls_expanded_output():
     assert isinstance(result.data["null_patterns"], dict)
     assert "high_null_columns" in result.data
     assert any(col in ["a", "b"] for col in result.data["high_null_columns"])
+
+
+def test_summarize_nulls_all_null_column():
+    df = pd.DataFrame({"a": [None, None, None]})
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeNulls())
+    assert result.status == "success"
+    assert "a" in result.data.get("high_null_columns", [])

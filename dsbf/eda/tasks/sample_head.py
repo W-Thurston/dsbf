@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/sample_head.py
 
-from typing import Any
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
@@ -12,6 +10,7 @@ from dsbf.utils.backend import is_polars
     display_name="Sample Head",
     description="Returns the first N rows of the dataset.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["preview"],
 )
@@ -23,9 +22,14 @@ class SampleHead(BaseTask):
 
     def run(self) -> None:
         try:
-            df: Any = self.input_data
-            n: int = self.config.get("n", 5)
+
+            # ctx = self.context
+            df = self.input_data
+
+            n = int(self.get_task_param("n") or 5)
+
             df_head = df.head(n)
+            self._log(f"Returning first {n} rows", "debug")
 
             if is_polars(df_head):
                 result = df_head.to_pandas().to_dict(orient="list")
@@ -35,7 +39,7 @@ class SampleHead(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Returned first {n} rows.",
+                summary={"message": (f"Returned first {n} rows.")},
                 data={"sample": result},
                 metadata={"n": n},
             )
@@ -44,7 +48,7 @@ class SampleHead(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary="Unable to compute sample_head",
+                summary={"message": ("Unable to compute sample_head")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

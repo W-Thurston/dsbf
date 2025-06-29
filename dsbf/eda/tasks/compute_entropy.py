@@ -16,6 +16,7 @@ from dsbf.utils.backend import is_polars
     display_name="Compute Entropy",
     description="Estimates entropy of columns to measure information content.",
     depends_on=["infer_types"],
+    profiling_depth="full",
     stage="cleaned",
     tags=["info", "distribution"],
 )
@@ -34,6 +35,8 @@ class ComputeEntropy(BaseTask):
         results: Dict[str, float] = {}
 
         try:
+
+            # ctx = self.context
             df = self.input_data
 
             if is_polars(df):
@@ -48,7 +51,9 @@ class ComputeEntropy(BaseTask):
                             entropy_val = -sum(p * log2(p) for p in probs if p > 0)
                             results[col] = entropy_val
                         except Exception as e:
-                            print(f"[ComputeEntropy] Failed on column {col}: {e}")
+                            self._log(
+                                f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
+                            )
             else:
                 # Pandas fallback: use scipy entropy
                 for col in df.select_dtypes(include="object").columns:
@@ -56,12 +61,14 @@ class ComputeEntropy(BaseTask):
                         counts = df[col].value_counts()
                         results[col] = float(scipy_entropy(counts, base=2))
                     except Exception as e:
-                        print(f"[ComputeEntropy] Failed on column {col}: {e}")
+                        self._log(
+                            f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
+                        )
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed entropy for {len(results)} columns.",
+                summary={"message": (f"Computed entropy for {len(results)} columns.")},
                 data=results,
             )
 
@@ -69,7 +76,7 @@ class ComputeEntropy(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during entropy computation: {e}",
+                summary={"message": (f"Error during entropy computation: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

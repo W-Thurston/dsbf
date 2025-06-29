@@ -18,3 +18,11 @@ def test_sample_head_expected_output():
     assert result.data is not None
     assert len(result.data["sample"]["a"]) == 3
     assert result.data["sample"]["a"] == [0, 1, 2]
+
+
+def test_sample_head_oversample_handled_gracefully():
+    df = pd.DataFrame({"a": [1, 2]})
+    context = AnalysisContext(df)
+    result = context.run_task(SampleHead(config={"n": 10}))
+    assert result.status == "success"
+    assert len(result.data["sample"]["a"]) == 2

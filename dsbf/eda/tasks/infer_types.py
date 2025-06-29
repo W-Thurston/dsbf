@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     display_name="Infer Column Types",
     description="Infers column types (e.g., categorical, numeric, text) heuristically.",
     depends_on=[],
+    profiling_depth="basic",
     stage="raw",
     tags=["typing", "metadata"],
 )
@@ -25,9 +26,10 @@ class InferTypes(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
-            # Ensure we're operating on a Pandas DataFrame
             if is_polars(df):
                 df = df.to_pandas()
 
@@ -65,7 +67,9 @@ class InferTypes(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Inferred types and tags for {len(results)} columns.",
+                summary={
+                    "message": (f"Inferred types and tags for {len(results)} columns.")
+                },
                 data=results,
             )
 
@@ -73,7 +77,7 @@ class InferTypes(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during type inference: {e}",
+                summary={"message": (f"Error during type inference: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

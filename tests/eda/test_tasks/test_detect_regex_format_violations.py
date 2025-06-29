@@ -33,8 +33,8 @@ def test_detects_regex_format_violations():
     config = {
         "tasks": {
             "detect_regex_format_violations": {
-                "patterns": {"email": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
-                "max_violations_to_store": 2,
+                "custom_patterns": {"email": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+                "max_violations": 2,
             }
         }
     }
@@ -49,7 +49,7 @@ def test_detects_regex_format_violations():
 
 def test_ignores_columns_not_in_config():
     df = pl.DataFrame({"some_col": ["123", "456"]})
-    config = {"tasks": {"detect_regex_format_violations": {"patterns": {}}}}
+    config = {"tasks": {"detect_regex_format_violations": {"custom_patterns": {}}}}
     result = run_task(df, config)
     assert result is not None
     assert result.status == "success"

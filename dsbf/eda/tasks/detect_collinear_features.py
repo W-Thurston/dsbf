@@ -15,6 +15,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Collinear Features",
     description="Detects highly collinear features that may cause multicollinearity.",
     depends_on=["infer_types"],
+    profiling_depth="full",
     stage="modeling",
     tags=["multicollinearity", "numeric"],
 )
@@ -34,11 +35,19 @@ class DetectCollinearFeatures(BaseTask):
         - vif_scores: {column: float}
         - collinear_columns: [column names with VIF > threshold]
         """
-        vif_threshold: float = self.config.get("vif_threshold", 10.0)
 
         try:
+
+            # ctx = self.context
             df = self.input_data
+
+            vif_threshold = float(self.get_task_param("vif_threshold") or 10.0)
+
             if is_polars(df):
+                self._log(
+                    "Falling back to Pandas: VIF calculation requires NumPy arrays",
+                    "debug",
+                )
                 df = df.to_pandas()
 
             numeric_df = df.select_dtypes(include=np.number).dropna()
@@ -48,7 +57,9 @@ class DetectCollinearFeatures(BaseTask):
                 self.output = TaskResult(
                     name=self.name,
                     status="success",
-                    summary="Not enough numeric features to compute VIF.",
+                    summary={
+                        "message": ("Not enough numeric features to compute VIF.")
+                    },
                     data={"vif_scores": {}, "collinear_columns": []},
                     metadata={"vif_threshold": vif_threshold},
                 )
@@ -67,10 +78,12 @@ class DetectCollinearFeatures(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=(
-                    f"Flagged {len(collinear_columns)} "
-                    f"column(s) with VIF > {vif_threshold}."
-                ),
+                summary={
+                    "message": (
+                        f"Flagged {len(collinear_columns)} "
+                        f"column(s) with VIF > {vif_threshold}."
+                    )
+                },
                 data={
                     "vif_scores": vif_scores,
                     "collinear_columns": collinear_columns,
@@ -82,7 +95,7 @@ class DetectCollinearFeatures(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during collinearity detection: {e}",
+                summary={"message": (f"Error during collinearity detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

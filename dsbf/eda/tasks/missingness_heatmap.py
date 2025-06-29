@@ -3,6 +3,7 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
+import missingno as msno
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -14,6 +15,7 @@ from dsbf.utils.backend import is_polars
     display_name="Missingness Heatmap",
     description="Visualizes missing values with a heatmap.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="report",
     tags=["missing", "viz"],
 )
@@ -26,8 +28,8 @@ class MissingnessHeatmap(BaseTask):
 
     def run(self) -> None:
         try:
-            import missingno as msno
 
+            # ctx = self.context
             df: Any = self.input_data
 
             # Convert to pandas if needed
@@ -44,7 +46,7 @@ class MissingnessHeatmap(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary="Saved missingness heatmap to disk.",
+                summary={"message": ("Saved missingness heatmap to disk.")},
                 data={"image_path": fig_path},
             )
 
@@ -55,7 +57,7 @@ class MissingnessHeatmap(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Missingness heatmap failed: {e}",
+                summary={"message": (f"Missingness heatmap failed: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -18,6 +18,7 @@ from dsbf.utils.backend import is_polars
     ),
     depends_on=["infer_types"],
     tags=["type", "format", "anomaly"],
+    profiling_depth="standard",
     stage="cleaned",
     inputs=["dataframe"],
     outputs=["TaskResult"],
@@ -32,11 +33,12 @@ class DetectMixedTypeColumns(BaseTask):
     def run(self) -> None:
 
         try:
-            df = self.input_data
-            cfg = self.config.get("tasks", {}).get("detect_mixed_type_columns", {})
 
-            min_ratio: float = cfg.get("min_ratio", 0.05)
-            ignore_null_type: bool = cfg.get("ignore_null_type", True)
+            # ctx = self.context
+            df = self.input_data
+
+            min_ratio = float(self.get_task_param("min_ratio") or 0.05)
+            ignore_null_type = bool(self.get_task_param("ignore_null_type") or True)
 
             flagged_columns = []
             details = {}

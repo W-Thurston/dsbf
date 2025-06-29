@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Duplicate Columns",
     description="Finds columns that contain identical values.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="raw",
     tags=["redundancy", "duplicates"],
 )
@@ -27,8 +28,17 @@ class DetectDuplicateColumns(BaseTask):
         Produces a TaskResult with a list of (col1, col2) tuples for identical columns.
         """
         try:
+
+            # ctx = self.context
             df = self.input_data
             if is_polars(df):
+                self._log(
+                    (
+                        "Falling back to Pandas: duplicate column"
+                        " detection requires `.equals()`"
+                    ),
+                    "debug",
+                )
                 df = df.to_pandas()
 
             duplicate_pairs: List[Tuple[str, str]] = []
@@ -44,15 +54,20 @@ class DetectDuplicateColumns(BaseTask):
                                 duplicate_pairs.append((col1, col2))
                                 seen.add((col1, col2))
                         except Exception as e:
-                            print(
+                            self._log(
                                 f"[DetectDuplicateColumns] Comparison failed for "
-                                f"{col1} and {col2}: {e}"
+                                f"{col1} and {col2}: {e}",
+                                "debug",
                             )
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Found {len(duplicate_pairs)} duplicate column pair(s).",
+                summary={
+                    "message": (
+                        f"Found {len(duplicate_pairs)} duplicate column pair(s)."
+                    )
+                },
                 data={"duplicate_column_pairs": duplicate_pairs},
             )
 
@@ -60,7 +75,7 @@ class DetectDuplicateColumns(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during duplicate column detection: {e}",
+                summary={"message": (f"Error during duplicate column detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

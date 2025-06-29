@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Zeros",
     description="Flags columns or rows with high zero concentration.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="cleaned",
     tags=["zeros", "sparsity"],
 )
@@ -23,18 +24,20 @@ class DetectZeros(BaseTask):
     Flags columns where zeros exceed a specified threshold.
     """
 
-    def run(
-        self,
-    ) -> None:
+    def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
+
+            flag_threshold = float(self.get_task_param("flag_threshold") or 0.95)
+
             if is_polars(df):
                 df = df.to_pandas()
 
             if not hasattr(df, "shape"):
                 raise ValueError("Input is not a valid dataframe.")
 
-            flag_threshold: float = self.config.get("flag_threshold", 0.95)
             n_rows = df.shape[0]
             zero_counts: Dict[str, int] = {}
             zero_percentages: Dict[str, float] = {}
@@ -52,10 +55,12 @@ class DetectZeros(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=(
-                    f"Flagged {sum(zero_flags.values())}"
-                    f"column(s) with high zero counts."
-                ),
+                summary={
+                    "message": (
+                        f"Flagged {sum(zero_flags.values())}"
+                        f"column(s) with high zero counts."
+                    )
+                },
                 data={
                     "zero_counts": zero_counts,
                     "zero_percentages": zero_percentages,
@@ -71,7 +76,7 @@ class DetectZeros(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during zero detection: {e}",
+                summary={"message": (f"Error during zero detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -3,6 +3,7 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
+import missingno as msno
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -14,6 +15,7 @@ from dsbf.utils.backend import is_polars
     display_name="Missingness Matrix",
     description="Creates a matrix showing co-occurrence of missing values.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="report",
     tags=["missing", "structure", "viz"],
 )
@@ -26,8 +28,8 @@ class MissingnessMatrix(BaseTask):
 
     def run(self) -> None:
         try:
-            import missingno as msno
 
+            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
@@ -42,7 +44,7 @@ class MissingnessMatrix(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary="Saved missingness matrix plot to disk.",
+                summary={"message": ("Saved missingness matrix plot to disk.")},
                 data={"image_path": fig_path},
             )
 
@@ -53,7 +55,7 @@ class MissingnessMatrix(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Missingness matrix failed: {e}",
+                summary={"message": (f"Missingness matrix failed: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

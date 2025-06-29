@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Outliers",
     description="Uses statistical heuristics to flag outlier values.",
     depends_on=["infer_types"],
+    profiling_depth="full",
     stage="cleaned",
     tags=["outliers", "numeric"],
 )
@@ -25,15 +26,19 @@ class DetectOutliers(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
+
+            method = str(self.get_task_param("method") or "iqr")
+            flag_threshold = float(self.get_task_param("flag_threshold") or 0.01)
+
             if is_polars(df):
                 df = df.to_pandas()
 
             if not hasattr(df, "shape"):
                 raise ValueError("Input is not a valid dataframe.")
 
-            method: str = self.config.get("method", "iqr")
-            flag_threshold: float = self.config.get("flag_threshold", 0.01)
             n_rows = df.shape[0]
             outlier_counts: Dict[str, int] = {}
             outlier_flags: Dict[str, bool] = {}
@@ -60,7 +65,9 @@ class DetectOutliers(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Detected outliers in {len(flagged_cols)} column(s).",
+                summary={
+                    "message": (f"Detected outliers in {len(flagged_cols)} column(s).")
+                },
                 data={
                     "outlier_counts": outlier_counts,
                     "outlier_flags": outlier_flags,
@@ -77,7 +84,7 @@ class DetectOutliers(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during outlier detection: {e}",
+                summary={"message": (f"Error during outlier detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

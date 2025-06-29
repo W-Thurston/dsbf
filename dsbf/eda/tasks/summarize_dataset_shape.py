@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Dataset Shape",
     description="Summarizes dataset dimensions and memory usage.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["overview", "summary"],
 )
@@ -25,11 +26,16 @@ class SummarizeDatasetShape(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
             # Prefer Polars backend but fallback to Pandas
             if is_polars(df):
                 df = df.to_pandas()
+                self._log(
+                    "Converting Polars to Pandas for memory usage estimation", "debug"
+                )
 
             n_rows, n_cols = df.shape
             total_cells = n_rows * n_cols
@@ -40,7 +46,9 @@ class SummarizeDatasetShape(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Dataset has {n_rows} rows and {n_cols} columns.",
+                summary={
+                    "message": (f"Dataset has {n_rows} rows and {n_cols} columns.")
+                },
                 data={
                     "num_rows": n_rows,
                     "num_columns": n_cols,
@@ -53,7 +61,7 @@ class SummarizeDatasetShape(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during dataset shape summarization: {e}",
+                summary={"message": (f"Error during dataset shape summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
     display_name="Categorical Length Stats",
     description="Computes string length statistics for text-like categorical columns.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="cleaned",
     tags=["categorical", "text", "stats"],
 )
@@ -31,6 +32,8 @@ class CategoricalLengthStats(BaseTask):
         Run the task on input_data and populate self.output as a TaskResult.
         Sets status='success' if the task completes, 'failed' otherwise.
         """
+
+        # ctx = self.context
         df = self.input_data
         results = {}
 
@@ -54,8 +57,12 @@ class CategoricalLengthStats(BaseTask):
                                 }
                         except Exception as e:
                             # Gracefully handle and continue on per-column errors
-                            print(
-                                f"[CategoricalLengthStats] Error in {col} (Polars): {e}"
+                            self._log(
+                                (
+                                    f"[CategoricalLengthStats] Error in {col}"
+                                    f" (Polars): {e}"
+                                ),
+                                "debug",
                             )
                             continue
             else:
@@ -63,7 +70,7 @@ class CategoricalLengthStats(BaseTask):
                 for col in df.columns:
                     if is_text_pandas(df[col]):
                         try:
-                            lengths = df[col].dropna().astype(str).map(len)
+                            lengths = df[col].dropna().str.len()
                             if len(lengths) > 0:
                                 results[col] = {
                                     "mean_length": lengths.mean(),
@@ -71,8 +78,12 @@ class CategoricalLengthStats(BaseTask):
                                     "min_length": lengths.min(),
                                 }
                         except Exception as e:
-                            print(
-                                f"[CategoricalLengthStats] Error in {col} (Pandas): {e}"
+                            self._log(
+                                (
+                                    f"[CategoricalLengthStats] Error in {col}"
+                                    f" (Pandas): {e}"
+                                ),
+                                "debug",
                             )
                             continue
 
@@ -80,7 +91,11 @@ class CategoricalLengthStats(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed string length stats for {len(results)} columns.",
+                summary={
+                    "message": (
+                        f"Computed string length stats for {len(results)} columns."
+                    )
+                },
                 data=results,
             )
 
@@ -88,7 +103,7 @@ class CategoricalLengthStats(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=str(e),
+                summary={"message": str(e)},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

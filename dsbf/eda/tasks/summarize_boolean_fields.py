@@ -16,6 +16,7 @@ def is_boolean_column(series) -> bool:
     display_name="Summarize Boolean Fields",
     description="Summarizes frequency and distribution of boolean columns.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="cleaned",
     tags=["boolean", "summary"],
 )
@@ -27,6 +28,8 @@ class SummarizeBooleanFields(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
@@ -50,7 +53,7 @@ class SummarizeBooleanFields(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Summarized {len(result)} boolean columns.",
+                summary={"message": (f"Summarized {len(result)} boolean columns.")},
                 data=result,
                 metadata={"bool_columns": bool_cols},
             )
@@ -59,7 +62,7 @@ class SummarizeBooleanFields(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during boolean field summarization: {e}",
+                summary={"message": (f"Error during boolean field summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

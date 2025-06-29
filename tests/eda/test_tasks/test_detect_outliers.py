@@ -31,3 +31,11 @@ def test_detect_outliers_expected_output():
     assert flags["outlier_col"] is True
     assert isinstance(rows["outlier_col"], list)
     assert any(idx in rows["outlier_col"] for idx in range(len(df)))
+
+
+def test_detect_outliers_no_outliers():
+    df = pd.DataFrame({"stable": [10, 11, 10, 11, 10, 11, 10]})
+    context = AnalysisContext(df)
+    result = context.run_task(DetectOutliers())
+    assert result.status == "success"
+    assert result.data["outlier_flags"]["stable"] is False

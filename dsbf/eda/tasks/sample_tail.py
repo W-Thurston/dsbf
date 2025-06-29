@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/sample_tail.py
 
-from typing import Any
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
@@ -12,6 +10,7 @@ from dsbf.utils.backend import is_polars
     display_name="Sample Tail",
     description="Returns the last N rows of the dataset.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["preview"],
 )
@@ -23,9 +22,19 @@ class SampleTail(BaseTask):
 
     def run(self) -> None:
         try:
-            df: Any = self.input_data
-            n: int = self.config.get("n", 5)
-            df_tail = df.tail(n)
+            # ctx = self.context
+            df = self.input_data
+
+            n = self.get_task_param("n")
+            if n is None:
+                n = 5
+            else:
+                n = int(n)
+
+            if n == 0:
+                df_tail = df.head(0)
+            else:
+                df_tail = df.tail(n)
 
             if is_polars(df_tail):
                 result = df_tail.to_pandas().to_dict(orient="list")
@@ -35,7 +44,7 @@ class SampleTail(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Returned last {n} rows.",
+                summary={"message": (f"Returned last {n} rows.")},
                 data={"sample": result},
                 metadata={"n": n},
             )
@@ -44,7 +53,7 @@ class SampleTail(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary="Unable to compute sample_tail",
+                summary={"message": ("Unable to compute sample_tail")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -14,6 +14,7 @@ def test_detect_bimodal_distribution_expected_output():
     using Gaussian Mixture Models.
     """
     # Create synthetic bimodal and unimodal distributions
+    np.random.seed(42)
     x1 = np.random.normal(0, 1, 100)
     x2 = np.random.normal(5, 1, 100)
     df = pd.DataFrame(

@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Value Counts",
     description="Lists value frequencies for selected columns.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="cleaned",
     tags=["categorical", "summary"],
 )
@@ -28,26 +29,35 @@ class SummarizeValueCounts(BaseTask):
         frequent `top_k` values including missing/nulls.
         """
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
+
+            top_k = int(self.get_task_param("top_k") or 5)
 
             # Convert Polars to Pandas for compatibility with value_counts
             if is_polars(df):
                 df = df.to_pandas()
+                self._log(
+                    "Converting Polars to Pandas for value count computation", "debug"
+                )
 
-            top_k: int = self.config.get("top_k", 5)
             result: Dict[str, Dict[Any, int]] = {}
 
             for col in df.columns:
                 try:
                     vc = df[col].value_counts(dropna=False).head(top_k)
                     result[col] = vc.to_dict()
+                    self._log(f"Value counts for {col}: {list(vc.index)}", "debug")
                 except Exception:
                     continue  # Skip columns that fail (e.g., unhashable types)
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed value counts for {len(result)} columns.",
+                summary={
+                    "message": (f"Computed value counts for {len(result)} columns.")
+                },
                 data=result,
                 metadata={"top_k": top_k},
             )
@@ -56,7 +66,7 @@ class SummarizeValueCounts(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during value count summarization: {e}",
+                summary={"message": (f"Error during value count summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

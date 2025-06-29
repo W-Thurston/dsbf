@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Nulls",
     description="Reports null value counts per column.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["nulls", "missing"],
 )
@@ -28,7 +29,11 @@ class SummarizeNulls(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
+
+            null_threshold = float(self.get_task_param("null_threshold") or 0.5)
 
             if is_polars(df):
                 df = df.to_pandas()
@@ -41,11 +46,12 @@ class SummarizeNulls(BaseTask):
                 col: null_counts[col] / n_rows for col in df.columns
             }
 
-            threshold = self.config.get("null_threshold", 0.5)
-
             high_null_columns: List[str] = [
-                col for col, pct in null_percentages.items() if pct >= threshold
+                col for col, pct in null_percentages.items() if pct >= null_threshold
             ]
+            self._log(
+                f"Detected {len(high_null_columns)} columns with >50% nulls", "debug"
+            )
 
             # Row-wise null pattern frequency (e.g., "101" means null in cols 1 and 3)
             null_mask_df = df.isnull().astype(int)
@@ -57,7 +63,11 @@ class SummarizeNulls(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"{len(high_null_columns)} column(s) have >50% missing values.",
+                summary={
+                    "message": (
+                        f"{len(high_null_columns)} column(s) have >50% missing values."
+                    )
+                },
                 data={
                     "null_counts": null_counts,
                     "null_percentages": null_percentages,
@@ -71,7 +81,7 @@ class SummarizeNulls(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during null summarization: {e}",
+                summary={"message": (f"Error during null summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -16,6 +16,7 @@ from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
         "Summarizes content of text columns" "(length, frequency, symbols, etc.)."
     ),
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="cleaned",
     tags=["text", "summary"],
 )
@@ -32,6 +33,8 @@ class SummarizeTextFields(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
             results: Dict[str, Dict[str, Any]] = {}
 
@@ -55,6 +58,7 @@ class SummarizeTextFields(BaseTask):
                             top_value = most_common[0][0] if most_common else None
                             has_symbols = any(re.search(r"[^\w\s]", s) for s in strings)
 
+                            self._log(f"Summarized text column: {col}", "debug")
                             results[col] = {
                                 "avg_char_length": sum(char_counts) / len(char_counts),
                                 "avg_word_count": sum(word_counts) / len(word_counts),
@@ -82,6 +86,7 @@ class SummarizeTextFields(BaseTask):
                             top_value = most_common[0][0] if most_common else None
                             has_symbols = any(re.search(r"[^\w\s]", s) for s in texts)
 
+                            self._log(f"Summarized text column: {col}", "debug")
                             results[col] = {
                                 "avg_char_length": char_counts.mean(),
                                 "avg_word_count": word_counts.mean(),
@@ -93,10 +98,11 @@ class SummarizeTextFields(BaseTask):
                         except Exception:
                             continue
 
+            self._log(f"Processed {len(results)} text columns", "debug")
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Summarized {len(results)} text column(s).",
+                summary={"message": (f"Summarized {len(results)} text column(s).")},
                 data=results,
             )
 
@@ -104,7 +110,7 @@ class SummarizeTextFields(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during text field summarization: {e}",
+                summary={"message": (f"Error during text field summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

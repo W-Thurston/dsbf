@@ -15,6 +15,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Skewness",
     description="Computes skewness of numeric columns.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="cleaned",
     tags=["distribution", "skew"],
 )
@@ -26,6 +27,8 @@ class DetectSkewness(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
             skewness: Dict[str, float] = {}
 
@@ -39,17 +42,23 @@ class DetectSkewness(BaseTask):
                         if std != 0:
                             skew_val = float(np.mean(((series - mean) / std) ** 3))
                             skewness[col] = skew_val
+                            self._log(f"{col} skewness: {skew_val:.4f}", "debug")
             else:
                 # Use scipy's skew for Pandas
                 numeric_df = df.select_dtypes(include="number")
                 for col in numeric_df.columns:
                     skew_val = skew(numeric_df[col].dropna())
                     skewness[col] = float(skew_val)
+                    self._log(f"{col} skewness: {skew_val:.4f}", "debug")
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed skewness for {len(skewness)} numeric column(s).",
+                summary={
+                    "message": (
+                        f"Computed skewness for {len(skewness)} numeric column(s)."
+                    )
+                },
                 data=skewness,
             )
 
@@ -57,7 +66,7 @@ class DetectSkewness(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during skewness detection: {e}",
+                summary={"message": (f"Error during skewness detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

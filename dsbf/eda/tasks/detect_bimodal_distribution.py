@@ -15,6 +15,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Bimodal Distributions",
     description="Identifies columns with likely bimodal distributions.",
     depends_on=["infer_types"],
+    profiling_depth="full",
     stage="cleaned",
     tags=["distribution", "outliers"],
 )
@@ -31,14 +32,21 @@ class DetectBimodalDistribution(BaseTask):
         - bimodal_flags: dict of column: bool
         - bic_scores: dict of column: {bic_1_component, bic_2_components}
         """
-        bic_threshold: float = self.config.get("bic_threshold", 10.0)
-        bimodal_flags: Dict[str, bool] = {}
-        bic_scores: Dict[str, Dict[str, float]] = {}
 
         try:
+
+            # ctx = self.context
             df = self.input_data
             if is_polars(df):
+                self._log(
+                    "Falling back to Pandas: sklearn GMM requires numeric arrays",
+                    "debug",
+                )
                 df = df.to_pandas()  # sklearn requires numpy/pandas
+
+            bic_threshold = float(self.get_task_param("bic_threshold") or 10.0)
+            bimodal_flags: Dict[str, bool] = {}
+            bic_scores: Dict[str, Dict[str, float]] = {}
 
             numeric_df = df.select_dtypes(include=np.number)
 
@@ -61,16 +69,18 @@ class DetectBimodalDistribution(BaseTask):
                     }
                     bimodal_flags[col] = bool((bic1 - bic2) > bic_threshold)
                 except Exception as e:
-                    print(f"[DetectBimodalDistribution] Failed on column {col}: {e}")
+                    self._log(f"Failed on column {col}: {e}", "debug")
                     continue
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=(
-                    f"Flagged {sum(bimodal_flags.values())} "
-                    f"column(s) as likely bimodal."
-                ),
+                summary={
+                    "message": (
+                        f"Flagged {sum(bimodal_flags.values())} "
+                        f"column(s) as likely bimodal."
+                    )
+                },
                 data={
                     "bimodal_flags": bimodal_flags,
                     "bic_scores": bic_scores,
@@ -82,7 +92,9 @@ class DetectBimodalDistribution(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during bimodal distribution detection: {e}",
+                summary={
+                    "message": (f"Error during bimodal distribution detection: {e}")
+                },
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

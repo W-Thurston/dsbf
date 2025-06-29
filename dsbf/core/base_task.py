@@ -43,3 +43,35 @@ class BaseTask(ABC):
         fig_dir = os.path.join(self.context.output_dir, "figs")
         os.makedirs(fig_dir, exist_ok=True)
         return os.path.join(fig_dir, filename)
+
+    def get_task_param(self, key: str, default=None):
+        """
+        Get a config parameter defined for this task under config["tasks"][task_name].
+        """
+        return self.config.get(key, default)
+
+    def get_engine_param(self, key: str, default=None):
+        """
+        Get a value from the 'engine' section of the global config.
+        """
+        ctx = self.context
+        if ctx and isinstance(ctx.config, dict):
+            return ctx.config.get("engine", {}).get(key, default)
+        return default
+
+    def get_metadata_param(self, key: str, default=None):
+        """
+        Get a value from the 'metadata' section of the global config.
+        """
+        ctx = self.context
+        if ctx and isinstance(ctx.config, dict):
+            return ctx.config.get("metadata", {}).get(key, default)
+        return default
+
+    def _log(self, msg: str, level: str = "info") -> None:
+        """
+        Safe logging wrapper that uses context._log() if available.
+        Prevents Pylance 'Optional' warnings.
+        """
+        if self.context and hasattr(self.context, "_log"):
+            self.context._log(msg, level)

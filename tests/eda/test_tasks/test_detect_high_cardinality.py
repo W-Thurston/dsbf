@@ -9,7 +9,7 @@ from dsbf.eda.tasks.detect_high_cardinality import DetectHighCardinality
 
 def test_detect_high_cardinality_expected_output():
     """
-    Test detection of high-cardinality columns using threshold=50.
+    Test detection of high-cardinality columns using cardinality_threshold=50.
     """
     df = pd.DataFrame(
         {
@@ -19,11 +19,23 @@ def test_detect_high_cardinality_expected_output():
     )
 
     context = AnalysisContext(df)
-    result = context.run_task(DetectHighCardinality(config={"threshold": 50}))
+    result = context.run_task(
+        DetectHighCardinality(config={"cardinality_threshold": 50})
+    )
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None
     assert "a" in result.data
     assert "b" not in result.data
-    assert result.metadata["threshold"] == 50
+    assert result.metadata["cardinality_threshold"] == 50
+
+
+def test_detect_high_cardinality_with_low_cardinality_column():
+    df = pd.DataFrame({"c": ["x", "x", "y", "z", "x", "y", "z"]})
+    context = AnalysisContext(df)
+    result = context.run_task(
+        DetectHighCardinality(config={"cardinality_threshold": 10})
+    )
+    assert result.status == "success"
+    assert "c" not in result.data

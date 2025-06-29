@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Modes",
     description="Finds most frequent values per column.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="cleaned",
     tags=["modes", "summary"],
 )
@@ -26,6 +27,8 @@ class SummarizeModes(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
@@ -51,7 +54,7 @@ class SummarizeModes(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed mode(s) for {len(result)} columns.",
+                summary={"message": (f"Computed mode(s) for {len(result)} columns.")},
                 data=result,
             )
 
@@ -59,7 +62,7 @@ class SummarizeModes(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during mode summarization: {e}",
+                summary={"message": (f"Error during mode summarization: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

@@ -26,3 +26,12 @@ def test_summarize_value_counts_expected_output():
     assert isinstance(result.data["cat"], dict)
     assert len(result.data["cat"]) <= 2
     assert "a" in result.data["cat"] or "c" in result.data["cat"]
+
+
+def test_summarize_value_counts_high_cardinality():
+    df = pd.DataFrame({"id": [f"id_{i}" for i in range(100)]})
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeValueCounts(config={"top_k": 5}))
+    assert result.status == "success"
+    assert "id" in result.data
+    assert len(result.data["id"]) <= 5

@@ -42,11 +42,24 @@ class ProfileEngine(BaseEngine):
 
         df = self._load_data()
 
+        reference_path = self.config.get("engine", {}).get("reference_dataset_path")
+        if reference_path and os.path.exists(reference_path):
+            self._log(f"Loading reference dataset from: {reference_path}", level="info")
+            reference_df = pd.read_csv(reference_path)
+        else:
+            reference_df = None
+            if reference_path:
+                self._log(
+                    f"[WARNING] Reference path '{reference_path}' not found.",
+                    level="info",
+                )
+
         self.context = AnalysisContext(
             data=df,
             config=self.config,
             output_dir=self.output_dir,
             run_metadata=self.run_metadata,
+            reference_data=reference_df,
         )
 
         # Load tasks into the global registry
@@ -66,7 +79,7 @@ class ProfileEngine(BaseEngine):
         self.results = graph.run(self.context, log_fn=self._log)
 
         # Optional DAG visualization
-        if self.config.get("visualize_dag", False):
+        if self.config.get("metadata", {}).get("visualize_dag", False):
             self._log("Visualizing task DAG...", level="debug")
             fig_path = os.path.join(self.fig_path, "dag.png")
             os.makedirs(os.path.dirname(fig_path), exist_ok=True)
@@ -83,10 +96,13 @@ class ProfileEngine(BaseEngine):
         self.record_run()
 
     def _load_data(self) -> Union[pd.DataFrame, pl.DataFrame]:
-        dataset_path = self.config.get("dataset")
-        dataset_name = self.config.get("dataset_name", "iris")
-        dataset_source = self.config.get("dataset_source", "sklearn")
-        backend = self.config.get("backend", "pandas")
+        dataset_path = self.config.get("metadata", {}).get("dataset_path")
+        dataset_name = self.config.get("metadata", {}).get("dataset_name", "iris")
+        dataset_source = self.config.get("metadata", {}).get(
+            "dataset_source", "sklearn"
+        )
+
+        backend = self.config.get("engine", {}).get("backend", "pandas")
 
         if dataset_path and os.path.exists(dataset_path):
             self._log(f"Loading dataset from: {dataset_path}", level="info")
@@ -100,8 +116,12 @@ class ProfileEngine(BaseEngine):
 
     def build_graph(self) -> ExecutionGraph:
 
-        config = self.config
-        selected_depth = config.get("profiling_depth", "full")
+        selected_depth = self.config.get("metadata", {}).get("profiling_depth", "full")
+        PROFILING_DEPTH = {
+            "basic": 1,
+            "standard": 2,
+            "full": 3,
+        }
 
         # Optional: filter tasks based on profiling depth
         all_specs = get_all_task_specs()
@@ -109,7 +129,11 @@ class ProfileEngine(BaseEngine):
             spec
             for spec in all_specs
             if spec.experimental is False
-            and (selected_depth == "full" or selected_depth in (spec.tags or []))
+            and (
+                selected_depth == "full"
+                or PROFILING_DEPTH[spec.profiling_depth]
+                <= PROFILING_DEPTH[selected_depth]
+            )
         ]
 
         G = nx.DiGraph()
@@ -127,8 +151,8 @@ class ProfileEngine(BaseEngine):
         tasks = []
         for task_name in sorted_names:
             try:
-                raw_config = config.get("tasks", {}).get(task_name, {})
-                task_instance = instantiate_task(task_name, raw_config)
+                task_specific_cfg = self.config.get("tasks", {}).get(task_name, {})
+                task_instance = instantiate_task(task_name, task_specific_cfg)
                 requires = list(G.predecessors(task_name))
                 tasks.append(
                     Task(name=task_name, task_instance=task_instance, requires=requires)

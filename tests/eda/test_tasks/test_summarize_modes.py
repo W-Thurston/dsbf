@@ -23,3 +23,12 @@ def test_summarize_modes_expected_output():
 
     b_mode = result.data["b"]
     assert b_mode == "x" or (isinstance(b_mode, list) and "x" in b_mode)
+
+
+def test_summarize_modes_multimodal_case():
+    df = pd.DataFrame({"x": [1, 1, 2, 2, 3]})
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeModes())
+    assert result.status == "success"
+    assert isinstance(result.data["x"], list)
+    assert set(result.data["x"]) >= {1, 2}

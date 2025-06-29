@@ -13,6 +13,7 @@ from dsbf.core.base_task import BaseTask
 class TaskSpec:
     name: str
     cls: Type[BaseTask]
+    profiling_depth: str = "full"
     display_name: Optional[str] = None
     description: Optional[str] = None
     depends_on: Optional[List[str]] = None
@@ -33,6 +34,7 @@ TASK_REGISTRY: Dict[str, TaskSpec] = {}
 def register_task(
     name: Optional[str] = None,
     *,
+    profiling_depth: str = "full",
     display_name: Optional[str] = None,
     description: Optional[str] = None,
     depends_on: Optional[List[str]] = None,
@@ -69,6 +71,7 @@ def register_task(
             depends_on=depends_on,
             tags=tags,
             stage=stage,
+            profiling_depth=profiling_depth,
             inputs=inputs,
             outputs=outputs,
             experimental=experimental,

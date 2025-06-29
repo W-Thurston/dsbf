@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     display_name="Datetime Consistency Check",
     description="Checks for consistency in datetime columns across the dataset.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="raw",
     tags=["datetime", "validation"],
 )
@@ -35,9 +36,14 @@ class CheckDatetimeConsistency(BaseTask):
         results: Dict[str, Dict[str, Any]] = {}
 
         try:
+
+            # ctx = self.context
             # Polars fallback — convert to Pandas for datetime ops
             df = self.input_data
             if is_polars(df):
+                self._log(
+                    "Falling back to Pandas for datetime parsing robustness", "debug"
+                )
                 df = df.to_pandas()
 
             for col in df.columns:
@@ -63,7 +69,11 @@ class CheckDatetimeConsistency(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Checked datetime consistency for {len(results)} columns.",
+                summary={
+                    "message": (
+                        f"Checked datetime consistency for {len(results)} columns."
+                    )
+                },
                 data=results,
             )
 
@@ -71,7 +81,7 @@ class CheckDatetimeConsistency(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during datetime consistency check: {e}",
+                summary={"message": (f"Error during datetime consistency check: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

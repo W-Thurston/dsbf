@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Data Leakage",
     description="Heuristically detects columns that may leak target information.",
     depends_on=["infer_types"],
+    profiling_depth="full",
     stage="modeling",
     tags=["leakage", "target"],
 )
@@ -29,11 +30,21 @@ class DetectDataLeakage(BaseTask):
         Produces a TaskResult containing:
         - leakage_pairs: dict of "col1|col2" → float correlation
         """
-        correlation_threshold: float = self.config.get("correlation_threshold", 0.99)
 
         try:
+
+            # ctx = self.context
             df = self.input_data
+
+            correlation_threshold = float(
+                self.get_task_param("correlation_threshold") or 0.99
+            )
+
             if is_polars(df):
+                self._log(
+                    "Falling back to Pandas: correlation matrix requires numeric types",
+                    "debug",
+                )
                 df = df.to_pandas()
 
             numeric_df = df.select_dtypes(include="number")
@@ -52,7 +63,11 @@ class DetectDataLeakage(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Found {len(leakage_pairs)} highly correlated feature pairs.",
+                summary={
+                    "message": (
+                        f"Found {len(leakage_pairs)} highly correlated feature pairs."
+                    )
+                },
                 data={"leakage_pairs": leakage_pairs},
                 metadata={"correlation_threshold": correlation_threshold},
             )
@@ -61,7 +76,7 @@ class DetectDataLeakage(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during data leakage detection: {e}",
+                summary={"message": (f"Error during data leakage detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

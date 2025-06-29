@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Duplicates",
     description="Detects duplicated rows in the dataset.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["duplicates", "rows"],
 )
@@ -30,15 +31,19 @@ class DetectDuplicates(BaseTask):
             df: Any = self.input_data
             if is_polars(df):
                 # In Polars, duplicates = total rows - unique rows
-                duplicate_count = df.shape[0] - df.unique().shape[0]
+                total_rows = df.shape[0]
+                unique_rows = df.unique(subset=None, maintain_order=True).shape[0]
+                duplicate_count = total_rows - unique_rows
             else:
                 # In Pandas, use .duplicated() to count duplicate rows
                 duplicate_count = df.duplicated().sum()
 
+            self._log(f"Duplicate count: {duplicate_count}", "debug")
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Found {duplicate_count} duplicate row(s).",
+                summary={"message": f"Found {duplicate_count} duplicate row(s)."},
                 data={"duplicate_count": duplicate_count},
             )
 
@@ -46,7 +51,7 @@ class DetectDuplicates(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during duplicate detection: {e}",
+                summary={"message": f"Error during duplicate detection: {e}"},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

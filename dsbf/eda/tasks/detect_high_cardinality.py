@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect High Cardinality",
     description="Detects columns with too many unique values.",
     depends_on=["infer_types"],
+    profiling_depth="standard",
     stage="cleaned",
     tags=["categorical", "cardinality"],
 )
@@ -26,40 +27,50 @@ class DetectHighCardinality(BaseTask):
             `self.output`.
         """
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
-            threshold: float = self.config.get("threshold", 50)
+
+            cardinality_threshold = float(
+                self.get_task_param("cardinality_threshold") or 50
+            )
+
             results: Dict[str, int] = {}
 
             if is_polars(df):
                 for col in df.columns:
                     try:
                         n_unique = df[col].n_unique()
-                        if n_unique > threshold:
+                        if n_unique > cardinality_threshold:
                             results[col] = n_unique
+                            self._log(f"{col} has {n_unique} unique values", "debug")
                     except Exception:
                         continue
             else:
                 for col in df.columns:
                     try:
                         n_unique = df[col].nunique()
-                        if n_unique > threshold:
+                        if n_unique > cardinality_threshold:
                             results[col] = n_unique
+                            self._log(f"{col} has {n_unique} unique values", "debug")
                     except Exception:
                         continue
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Detected {len(results)} high-cardinality column(s).",
+                summary={
+                    "message": (f"Detected {len(results)} high-cardinality column(s).")
+                },
                 data=results,
-                metadata={"threshold": threshold},
+                metadata={"cardinality_threshold": cardinality_threshold},
             )
 
         except Exception as e:
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during high-cardinality detection: {e}",
+                summary={"message": (f"Error during high-cardinality detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

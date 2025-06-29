@@ -15,6 +15,7 @@ from dsbf.utils.backend import is_text_polars
     ),
     depends_on=["infer_types"],
     tags=["format", "regex", "validation", "anomaly"],
+    profiling_depth="full",
     stage="cleaned",
     inputs=["dataframe"],
     outputs=["TaskResult"],
@@ -33,10 +34,12 @@ class DetectRegexFormatViolations(BaseTask):
 
     def run(self):
         try:
+
+            # ctx = self.context
             df = self.input_data
-            cfg = self.config or {}
-            patterns = cfg.get("patterns", {})
-            max_violations = cfg.get("max_violations_to_store", 5)
+
+            patterns = dict(self.get_task_param("custom_patterns") or {})
+            max_violations = int(self.get_task_param("max_violations") or 5)
 
             summary = {}
             data = {}

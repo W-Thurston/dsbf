@@ -30,3 +30,12 @@ def test_detect_zeros_expected_output():
     assert flags["a"] is True
     assert percentages["a"] == 0.5
     assert flags["b"] is False
+
+
+def test_detect_zeros_all_zeros_or_none():
+    df = pd.DataFrame({"a": [0, 0, 0, 0], "b": [1, 2, 3, 4]})
+    context = AnalysisContext(df)
+    result = context.run_task(DetectZeros(config={"flag_threshold": 0.5}))
+    assert result.status == "success"
+    assert result.data["zero_flags"]["a"] is True
+    assert result.data["zero_flags"]["b"] is False

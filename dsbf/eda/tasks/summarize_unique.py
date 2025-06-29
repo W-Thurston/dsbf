@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Summarize Unique Values",
     description="Reports unique value counts per column.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["uniqueness", "summary"],
 )
@@ -24,17 +25,24 @@ class SummarizeUnique(BaseTask):
 
     def run(self) -> None:
         try:
+
+            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
                 result: Dict[str, int] = {col: df[col].n_unique() for col in df.columns}
+                self._log(
+                    f"Computing unique values for {len(df.columns)} columns", "debug"
+                )
             else:
                 result = df.nunique().to_dict()
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Computed unique counts for {len(result)} columns.",
+                summary={
+                    "message": (f"Computed unique counts for {len(result)} columns.")
+                },
                 data=result,
             )
 
@@ -42,7 +50,7 @@ class SummarizeUnique(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=str(e),
+                summary={"message": str(e)},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

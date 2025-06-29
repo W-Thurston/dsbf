@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     display_name="Detect Constant Columns",
     description="Flags columns with a single unique value.",
     depends_on=["infer_types"],
+    profiling_depth="basic",
     stage="raw",
     tags=["redundancy", "null-equivalent"],
 )
@@ -28,6 +29,8 @@ class DetectConstantColumns(BaseTask):
         Produces a TaskResult with a list of constant column names.
         """
         try:
+
+            # ctx = self.context
             df = self.input_data
             constant_columns: List[str]
 
@@ -43,15 +46,18 @@ class DetectConstantColumns(BaseTask):
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=f"Found {len(constant_columns)} constant column(s).",
+                summary={
+                    "message": (f"Found {len(constant_columns)} constant column(s).")
+                },
                 data={"constant_columns": constant_columns},
+                metadata={"engine": "polars" if is_polars(df) else "pandas"},
             )
 
         except Exception as e:
             self.output = TaskResult(
                 name=self.name,
                 status="failed",
-                summary=f"Error during constant column detection: {e}",
+                summary={"message": (f"Error during constant column detection: {e}")},
                 data=None,
                 metadata={"exception": type(e).__name__},
             )

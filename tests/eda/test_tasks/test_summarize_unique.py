@@ -21,3 +21,11 @@ def test_summarize_unique_expected_output():
     assert result.data["a"] == 3
     assert result.data["b"] == 3
     assert result.data["c"] == 2
+
+
+def test_summarize_unique_empty_column():
+    df = pd.DataFrame({"empty": [None, None, None, None]})
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeUnique())
+    assert result.status == "success"
+    assert result.data["empty"] == 0

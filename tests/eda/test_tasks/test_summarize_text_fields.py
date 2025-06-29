@@ -25,3 +25,16 @@ def test_summarize_text_fields_expected_output():
     assert "comments" in result.data
     assert "codes" in result.data
     assert "numeric" not in result.data
+
+
+def test_summarize_text_fields_diverse_cases():
+    df = pd.DataFrame(
+        {
+            "weird_text": ["👍", "", "🚀" * 50, None],
+            "numeric": [1, 2, 3, 4],
+        }
+    )
+    context = AnalysisContext(df)
+    result = context.run_task(SummarizeTextFields())
+    assert result.status == "success"
+    assert "weird_text" in result.data
