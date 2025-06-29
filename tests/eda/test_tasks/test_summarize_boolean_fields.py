@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_boolean_fields import SummarizeBooleanFields
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_summarize_boolean_fields_expected_output():
@@ -16,8 +16,11 @@ def test_summarize_boolean_fields_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeBooleanFields())
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeBooleanFields,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

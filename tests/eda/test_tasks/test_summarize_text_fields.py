@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_text_fields import SummarizeTextFields
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_summarize_text_fields_expected_output():
@@ -16,8 +16,11 @@ def test_summarize_text_fields_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeTextFields())
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeTextFields,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -34,7 +37,13 @@ def test_summarize_text_fields_diverse_cases():
             "numeric": [1, 2, 3, 4],
         }
     )
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeTextFields())
+
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeTextFields,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result.status == "success"
+    assert result.data is not None
     assert "weird_text" in result.data

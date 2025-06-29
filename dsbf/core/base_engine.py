@@ -17,20 +17,25 @@ MESSAGE_VERBOSITY_LEVELS = {"quiet": 0, "info": 1, "debug": 2}
 class BaseEngine(abc.ABC):
     def __init__(self, config):
         self.config = config
-        self.message_verbosity = self.config.get("metadata", {}).get(
+        self.message_verbosity = config.get("metadata", {}).get(
             "message_verbosity", "info"
         )
         self.verbosity_level = MESSAGE_VERBOSITY_LEVELS.get(self.message_verbosity, 1)
         self.output_dir = self._create_output_dir()
         self.timestamp = os.path.basename(self.output_dir)
         self.fig_path = os.path.join(self.output_dir, "figs")
-        self.layout_name = self.config.get("metadata", {}).get("layout_name", "default")
+        self.layout_name = config.get("metadata", {}).get("layout_name", "default")
 
+        metadata_cfg = config.get("metadata", {})
         self.run_metadata = {
             "engine": self.__class__.__name__,
             "timestamp": self.timestamp,
             "layout_name": self.layout_name,
-            "config": self.config,
+            "dataset_name": metadata_cfg.get("dataset_name", ""),
+            "dataset_source": metadata_cfg.get("dataset_source", ""),
+            "profiling_depth": metadata_cfg.get("profiling_depth", ""),
+            "message_verbosity": metadata_cfg.get("message_verbosity", ""),
+            "visualize_dag": self.config.get("metadata", {}).get("visualize_dag"),
         }
 
     def _log(self, msg, level="info"):

@@ -2,16 +2,18 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.sample_tail import SampleTail
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_sample_tail_expected_output():
     df = pd.DataFrame({"a": list(range(10))})
 
-    context = AnalysisContext(df)
-    result = context.run_task(SampleTail(config={"n": 3}))
+    ctx, task = make_ctx_and_task(
+        task_cls=SampleTail, current_df=df, task_overrides={"n": 3}
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -22,19 +24,25 @@ def test_sample_tail_expected_output():
 
 def test_sample_tail_zero():
     df = pd.DataFrame({"a": [1, 2, 3]})
-    context = AnalysisContext(df)
 
-    result_zero = context.run_task(SampleTail(config={"n": 0}))
-    assert result_zero.status == "success"
-    assert result_zero.data is not None
-    assert len(result_zero.data["sample"]["a"]) == 0
+    ctx, task = make_ctx_and_task(
+        task_cls=SampleTail, current_df=df, task_overrides={"n": 0}
+    )
+    result = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert len(result.data["sample"]["a"]) == 0
 
 
 def test_sample_tail_oversample():
     df = pd.DataFrame({"a": [1, 2, 3]})
-    context = AnalysisContext(df)
 
-    result_oversample = context.run_task(SampleTail(config={"n": 10}))
-    assert result_oversample.status == "success"
-    assert result_oversample.data is not None
-    assert result_oversample.data["sample"]["a"] == [1, 2, 3]
+    ctx, task = make_ctx_and_task(
+        task_cls=SampleTail, current_df=df, task_overrides={"n": 10}
+    )
+    result = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert result.data["sample"]["a"] == [1, 2, 3]

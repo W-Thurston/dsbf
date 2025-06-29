@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_id_columns import DetectIDColumns
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_detect_id_columns_expected_output():
@@ -16,8 +16,12 @@ def test_detect_id_columns_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(DetectIDColumns(config={"threshold_ratio": 0.95}))
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectIDColumns,
+        current_df=df,
+        task_overrides={"threshold_ratio": 0.95},
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -30,7 +34,13 @@ def test_detect_id_columns_expected_output():
 
 def test_detect_id_columns_handles_no_ids():
     df = pd.DataFrame({"group": [1, 1, 1, 1], "value": [10, 10, 20, 20]})
-    context = AnalysisContext(df)
-    result = context.run_task(DetectIDColumns(config={"threshold_ratio": 0.95}))
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectIDColumns,
+        current_df=df,
+        task_overrides={"threshold_ratio": 0.95},
+    )
+    result = ctx.run_task(task)
+
     assert result.status == "success"
     assert result.data == {}

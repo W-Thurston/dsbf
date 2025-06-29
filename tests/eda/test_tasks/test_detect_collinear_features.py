@@ -3,9 +3,9 @@
 import pandas as pd
 import pytest
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_collinear_features import DetectCollinearFeatures
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 @pytest.mark.filterwarnings(
@@ -24,8 +24,12 @@ def test_detect_collinear_features_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(DetectCollinearFeatures(config={"vif_threshold": 5}))
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectCollinearFeatures,
+        current_df=df,
+        task_overrides={"vif_threshold": 5},
+    )
+    result = ctx.run_task(task)
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

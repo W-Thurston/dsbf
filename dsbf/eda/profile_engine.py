@@ -89,9 +89,9 @@ class ProfileEngine(BaseEngine):
         # Export report
         self._log("Rendering JSON report...", level="debug")
         render_json(
-            self.results,
-            self.run_metadata,
-            os.path.join(self.output_dir, "report.json"),
+            results=self.context.results,
+            metadata=self.run_metadata | {"config": self.config},
+            output_path=os.path.join(self.output_dir, "report.json"),
         )
         self.record_run()
 

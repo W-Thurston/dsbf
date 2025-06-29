@@ -3,9 +3,9 @@
 import pandas as pd
 import polars as pl
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_numeric import SummarizeNumeric
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_summarize_numeric_expected_output():
@@ -17,8 +17,11 @@ def test_summarize_numeric_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeNumeric())
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeNumeric,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -39,8 +42,11 @@ def test_summarize_numeric_expected_keys():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeNumeric())
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeNumeric,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

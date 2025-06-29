@@ -3,9 +3,9 @@
 import pandas as pd
 import pytest
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.check_datetime_consistency import CheckDatetimeConsistency
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
@@ -21,8 +21,11 @@ def test_check_datetime_consistency_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(CheckDatetimeConsistency())
+    ctx, task = make_ctx_and_task(
+        task_cls=CheckDatetimeConsistency,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)

@@ -1,16 +1,8 @@
 import polars as pl
 
-from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_encoded_columns import DetectEncodedColumns
-
-
-def run_task(df, config=None):
-    context = AnalysisContext(data=df, config=config or {})
-    task = DetectEncodedColumns(name="detect_encoded_columns", config=config or {})
-    task.set_input(df)
-    task.context = context
-    task.run()
-    return task.get_output()
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_detects_base64_strings():
@@ -30,8 +22,14 @@ def test_detects_base64_strings():
             ]
         }
     )
-    result = run_task(df)
-    print(result)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
+    assert isinstance(result, TaskResult)
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 1
@@ -57,7 +55,13 @@ def test_detects_hex_strings():
             ]
         }
     )
-    result = run_task(df)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 1
@@ -83,7 +87,13 @@ def test_detects_uuid_strings():
             ]
         }
     )
-    result = run_task(df)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 1
@@ -94,7 +104,13 @@ def test_detects_uuid_strings():
 
 def test_ignores_regular_text_columns():
     df = pl.DataFrame({"names": ["alice", "bob", "charlie", "dave"]})
-    result = run_task(df)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 0
@@ -102,7 +118,13 @@ def test_ignores_regular_text_columns():
 
 def test_ignores_low_entropy_text():
     df = pl.DataFrame({"letters": ["aaaa", "bbbb", "cccc", "dddd", "eeee"]})
-    result = run_task(df)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 0
@@ -125,18 +147,20 @@ def test_detects_high_entropy_column_without_regex_match():
             ]
         }
     )
-    config = {
-        "tasks": {
-            "detect_encoded_columns": {
-                "min_entropy": 3.0,
-                "length_std_threshold": 1.0,
-                "detect_base64": False,
-                "detect_hex": False,
-                "detect_uuid": False,
-            }
-        }
-    }
-    result = run_task(df, config=config)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectEncodedColumns,
+        current_df=df,
+        task_overrides={
+            "min_entropy": 3.0,
+            "length_std_threshold": 1.0,
+            "detect_base64": False,
+            "detect_hex": False,
+            "detect_uuid": False,
+        },
+    )
+    result = ctx.run_task(task)
+
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_encoded_columns"] == 1

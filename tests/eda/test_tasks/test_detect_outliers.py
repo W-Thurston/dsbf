@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_outliers import DetectOutliers
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_detect_outliers_expected_output():
@@ -15,8 +15,11 @@ def test_detect_outliers_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(DetectOutliers())
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectOutliers,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -35,7 +38,14 @@ def test_detect_outliers_expected_output():
 
 def test_detect_outliers_no_outliers():
     df = pd.DataFrame({"stable": [10, 11, 10, 11, 10, 11, 10]})
-    context = AnalysisContext(df)
-    result = context.run_task(DetectOutliers())
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectOutliers,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
+    assert isinstance(result, TaskResult)
     assert result.status == "success"
+    assert result.data is not None
     assert result.data["outlier_flags"]["stable"] is False

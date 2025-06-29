@@ -25,6 +25,9 @@ tasks:
     compare_types: true
     compare_missingness: true
     compare_summary_stats: true
+    missing_pct_threshold: 0.3
+    unique_count_ratio_threshold: 0.5
+    minmax_numeric_tolerance: 0.01
 
   detect_bimodal_distribution:
     bic_threshold: 10.0

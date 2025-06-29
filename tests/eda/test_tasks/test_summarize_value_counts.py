@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_value_counts import SummarizeValueCounts
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_summarize_value_counts_expected_output():
@@ -16,8 +16,10 @@ def test_summarize_value_counts_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeValueCounts(config={"top_k": 2}))
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeValueCounts, current_df=df, task_overrides={"top_k": 2}
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -30,8 +32,13 @@ def test_summarize_value_counts_expected_output():
 
 def test_summarize_value_counts_high_cardinality():
     df = pd.DataFrame({"id": [f"id_{i}" for i in range(100)]})
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeValueCounts(config={"top_k": 5}))
+
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeValueCounts, current_df=df, task_overrides={"top_k": 5}
+    )
+    result = ctx.run_task(task)
+
     assert result.status == "success"
+    assert result.data is not None
     assert "id" in result.data
     assert len(result.data["id"]) <= 5

@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.categorical_length_stats import CategoricalLengthStats
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_categorical_length_stats_expected_output():
@@ -20,8 +20,11 @@ def test_categorical_length_stats_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(CategoricalLengthStats())
+    ctx, task = make_ctx_and_task(
+        task_cls=CategoricalLengthStats,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     # Validate TaskResult structure
     assert result is not None, "Task did not produce an output"

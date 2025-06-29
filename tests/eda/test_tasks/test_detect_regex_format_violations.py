@@ -1,21 +1,8 @@
 import polars as pl
 
-from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_regex_format_violations import DetectRegexFormatViolations
-
-
-def run_task(df, config=None):
-    context = AnalysisContext(data=df, config=config or {})
-    task = DetectRegexFormatViolations(
-        name="detect_regex_format_violations",
-        config=(config or {})
-        .get("tasks", {})
-        .get("detect_regex_format_violations", {}),
-    )
-    task.set_input(df)
-    task.context = context
-    task.run()
-    return task.get_output()
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_detects_regex_format_violations():
@@ -30,15 +17,18 @@ def test_detects_regex_format_violations():
             ]
         }
     )
-    config = {
-        "tasks": {
-            "detect_regex_format_violations": {
-                "custom_patterns": {"email": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
-                "max_violations": 2,
-            }
-        }
-    }
-    result = run_task(df, config)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectRegexFormatViolations,
+        current_df=df,
+        task_overrides={
+            "custom_patterns": {"email": r"^[\w\.-]+@[\w\.-]+\.\w+$"},
+            "max_violations": 2,
+        },
+    )
+    result = ctx.run_task(task)
+
+    assert isinstance(result, TaskResult)
     assert result is not None
     assert result.status == "success"
     assert "email" in result.summary["columns"]
@@ -49,8 +39,15 @@ def test_detects_regex_format_violations():
 
 def test_ignores_columns_not_in_config():
     df = pl.DataFrame({"some_col": ["123", "456"]})
-    config = {"tasks": {"detect_regex_format_violations": {"custom_patterns": {}}}}
-    result = run_task(df, config)
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectRegexFormatViolations,
+        current_df=df,
+        task_overrides={"custom_patterns": {}},
+    )
+    result = ctx.run_task(task)
+
+    assert isinstance(result, TaskResult)
     assert result is not None
     assert result.status == "success"
     assert result.summary["num_columns_with_violations"] == 0

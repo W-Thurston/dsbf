@@ -108,22 +108,23 @@ def test_metadata_structure_and_keys(clean_engine_run):
         "metadata": {
             "dataset_name": "titanic",
             "dataset_source": "seaborn",
-            "message_verbosity": "debug",  # quiet | info | debug
-            "profiling_depth": "full",  # basic | standard | full
+            "message_verbosity": "debug",
+            "profiling_depth": "full",
             "output_format": ["md", "json"],
             "visualize_dag": True,
             "layout_name": "default",
         },
         "engine": {
             "engine": "ProfileEngine",
-            "backend": "polars",  # pandas | polars
-            "reference_dataset_path": None,  # default: disabled unless user sets it
+            "backend": "polars",
+            "reference_dataset_path": None,
         },
     }
 
     engine = ProfileEngine(config)
     engine.run()
 
+    # Load most recent run from dsbf_run.json
     with open("dsbf_run.json", "r") as f:
         run_history = json.load(f)
     latest_run = run_history[-1]
@@ -133,22 +134,17 @@ def test_metadata_structure_and_keys(clean_engine_run):
         report = json.load(f)
 
     metadata = report.get("metadata", {})
-    assert "engine" in metadata
+    assert metadata["engine"] == "ProfileEngine"
     assert "timestamp" in metadata
-    assert "inferred_stage" in metadata
     assert "layout_name" in metadata
-    assert "config" in metadata
-    assert isinstance(metadata["config"], dict)
+    assert "dataset_name" in metadata
+    assert "dataset_source" in metadata
+    assert "message_verbosity" in metadata
+    assert "profiling_depth" in metadata
+    assert metadata.get("visualize_dag") is True
 
-    for key in ["dataset_name", "dataset_source"]:
-        assert key in metadata["config"].get(
-            "metadata", {}
-        ), f"Missing key: {key} in metadata"
-
-    for key in ["engine", "backend"]:
-        assert key in metadata["config"].get(
-            "engine", {}
-        ), f"Missing key: {key} in engine config"
+    config_block = report.get("config", {})
+    assert "engine" in config_block
 
 
 def test_task_output_within_profile_engine(clean_engine_run):

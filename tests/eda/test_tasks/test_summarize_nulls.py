@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_nulls import SummarizeNulls
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_summarize_nulls_expanded_output():
@@ -12,8 +12,11 @@ def test_summarize_nulls_expanded_output():
         {"a": [None, 1, None, 1], "b": [1, None, None, 1], "c": [1, 1, 1, 1]}
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeNulls())
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeNulls,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -27,7 +30,13 @@ def test_summarize_nulls_expanded_output():
 
 def test_summarize_nulls_all_null_column():
     df = pd.DataFrame({"a": [None, None, None]})
-    context = AnalysisContext(df)
-    result = context.run_task(SummarizeNulls())
+
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeNulls,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
+
     assert result.status == "success"
+    assert result.data is not None
     assert "a" in result.data.get("high_null_columns", [])

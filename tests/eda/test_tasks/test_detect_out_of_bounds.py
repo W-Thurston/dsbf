@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_out_of_bounds import DetectOutOfBounds
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_detect_out_of_bounds_expected_output():
@@ -17,8 +17,11 @@ def test_detect_out_of_bounds_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(DetectOutOfBounds())
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectOutOfBounds,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"

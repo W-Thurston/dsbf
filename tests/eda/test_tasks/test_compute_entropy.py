@@ -2,9 +2,9 @@
 
 import pandas as pd
 
-from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compute_entropy import ComputeEntropy
+from tests.helpers.context_utils import make_ctx_and_task
 
 
 def test_compute_entropy_expected_output():
@@ -18,8 +18,11 @@ def test_compute_entropy_expected_output():
         }
     )
 
-    context = AnalysisContext(df)
-    result = context.run_task(ComputeEntropy())
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+    )
+    result = ctx.run_task(task)
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
