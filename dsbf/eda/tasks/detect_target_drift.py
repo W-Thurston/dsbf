@@ -6,7 +6,7 @@ from scipy.stats import chisquare, entropy, ks_2samp
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult
+from dsbf.eda.task_result import TaskResult, make_failure_result
 
 
 @register_task(
@@ -85,26 +85,15 @@ class DetectTargetDrift(BaseTask):
 
         try:
             if current_series.dtype.is_numeric():
-                result = self._evaluate_numeric_drift(current_series, reference_series)
+                self.output = self._evaluate_numeric_drift(
+                    current_series, reference_series
+                )
             else:
-                result = self._evaluate_categorical_drift(
+                self.output = self._evaluate_categorical_drift(
                     current_series, reference_series
                 )
         except Exception as e:
-            self.output = TaskResult(
-                name=self.name,
-                status="failed",
-                summary={
-                    "message": (
-                        f"[ERROR] Failed to compute drift for target column: {e}"
-                    )
-                },
-                data={},
-                recommendations=[],
-            )
-            return
-
-        self.output = result
+            self.output = make_failure_result(self.name, e)
 
     def _evaluate_numeric_drift(
         self, current: pl.Series, reference: pl.Series

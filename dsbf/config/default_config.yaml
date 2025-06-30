@@ -32,6 +32,10 @@ tasks:
   detect_bimodal_distribution:
     bic_threshold: 10.0
 
+  detect_class_imbalance:
+    target_column: target
+    imbalance_ratio_threshold: 0.9
+
   detect_collinear_features:
     vif_threshold: 10.0
 
@@ -63,6 +67,9 @@ tasks:
   detect_mixed_type_columns:
     min_ratio: 0.05                # Flag if >5% of values deviate in type
     ignore_null_type: true         # Treat None/NaN as ignorable for mixed type detection
+
+  detect_near_zero_variance:
+    threshold: 1e-4               # Flag numeric columns with variance below this value
 
   detect_out_of_bounds:
     custom_bounds: {
@@ -100,6 +107,18 @@ tasks:
 
   sample_head:
     n: 5
+
+  sample_tail:
+    n: 5
+
+  suggest_categorical_encoding:
+    low_cardinality_threshold: 10
+    high_cardinality_threshold: 50
+    correlation_threshold: 0.1
+    target_column: target
+
+  suggest_numerical_binning:
+    skew_threshold: 1.0
 
   summarize_nulls:
     null_threshold: 0.5

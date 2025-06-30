@@ -7,7 +7,7 @@ from scipy.stats import skew
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult
+from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
 
@@ -63,10 +63,6 @@ class DetectSkewness(BaseTask):
             )
 
         except Exception as e:
-            self.output = TaskResult(
-                name=self.name,
-                status="failed",
-                summary={"message": (f"Error during skewness detection: {e}")},
-                data=None,
-                metadata={"exception": type(e).__name__},
-            )
+            if self.context:
+                raise
+            self.output = make_failure_result(self.name, e)

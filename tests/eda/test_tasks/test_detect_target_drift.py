@@ -1,3 +1,5 @@
+# tests/eda/test_tasks/test_detect_target_drift.py
+
 import polars as pl
 
 from dsbf.eda.task_result import TaskResult
@@ -84,7 +86,8 @@ def test_error_handling_on_invalid_input():
     result = ctx.run_task(task)
 
     assert result.status in {"error", "skipped", "failed"}
-    assert (
-        "error" in result.summary["message"].lower()
-        or "skipped" in result.summary["message"].lower()
+    assert isinstance(result.summary, dict)
+    assert any(
+        kw in result.summary.get("message", "").lower()
+        for kw in ["error", "failed", "skipped"]
     )

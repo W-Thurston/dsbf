@@ -7,7 +7,7 @@ import missingno as msno
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult
+from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
 
@@ -51,13 +51,6 @@ class MissingnessHeatmap(BaseTask):
             )
 
         except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            self.output = TaskResult(
-                name=self.name,
-                status="failed",
-                summary={"message": (f"Missingness heatmap failed: {e}")},
-                data=None,
-                metadata={"exception": type(e).__name__},
-            )
+            if self.context:
+                raise
+            self.output = make_failure_result(self.name, e)

@@ -124,14 +124,32 @@ class ExecutionGraph:
                 task_outcomes["success"].append(task.name)
             except Exception as e:
                 duration = time.time() - start_time
+
+                error_metadata = {
+                    "error_type": type(e).__name__,
+                    "trace_summary": str(e),
+                    "suggested_action": "Check logs or upstream outputs",
+                }
+
+                failed_result = TaskResult(
+                    name=task.name,
+                    status="failed",
+                    summary={"message": "Task failed due to exception."},
+                    error_metadata=error_metadata,
+                )
+
+                task.result = failed_result
+                context.set_result(task.name, failed_result)
+
                 if log_fn:
                     log_fn(
                         (
-                            f"[ERROR] Task {task.name} failed after"
-                            f" {duration:.2f}s with error: {e}"
+                            f"[ERROR] Task {task.name} failed after {duration:.2f}s:"
+                            f" {error_metadata['trace_summary']}"
                         ),
                         "debug",
                     )
+
                 task_outcomes["failed"].append(task.name)
 
         # Save results to context

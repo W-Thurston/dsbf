@@ -1,3 +1,5 @@
+# tests/eda/test_task_result.py
+
 from pathlib import Path
 
 from dsbf.eda.task_result import TaskResult
@@ -42,3 +44,22 @@ def test_task_result_defaults_and_empty_fields():
     assert result_dict["data"] is None
     assert result_dict["plots"] is None
     assert isinstance(result_dict["metadata"], dict)
+
+
+def test_task_result_failure_metadata_fields():
+    result = TaskResult(
+        name="fail_task",
+        status="failed",
+        summary={"message": "Failure during task execution"},
+        error_metadata={
+            "error_type": "KeyError",
+            "trace_summary": "Column 'foo' not found",
+            "suggested_action": "Check for renamed or dropped columns",
+        },
+    )
+
+    assert result.status == "failed"
+    assert result.error_metadata is not None
+    assert result.error_metadata["error_type"] == "KeyError"
+    assert "foo" in result.error_metadata["trace_summary"]
+    assert "Check" in result.error_metadata["suggested_action"]
