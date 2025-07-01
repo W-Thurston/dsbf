@@ -25,9 +25,11 @@ class DetectOutOfBounds(BaseTask):
 
     def run(self) -> None:
         try:
-
-            # ctx = self.context
             df: Any = self.input_data
+
+            # Load shared reliability flags in case we
+            #  want to supplement bounds in the future
+            _ = self.ensure_reliability_flags()
 
             bounds = dict(
                 self.get_task_param("custom_bounds")

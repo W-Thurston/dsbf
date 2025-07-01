@@ -2,7 +2,15 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Protocol, TypedDict
+
+
+class WarningDetail(TypedDict):
+    description: str
+    recommendation: Optional[str]
+
+
+ReliabilityWarning = Dict[str, Dict[str, WarningDetail]]
 
 
 @dataclass
@@ -35,6 +43,7 @@ class TaskResult:
     plots: Optional[List[Path]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     recommendations: Optional[List[str]] = None
+    reliability_warnings: Optional[ReliabilityWarning] = None
     error_metadata: Optional[Dict[str, str]] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -53,6 +62,7 @@ class TaskResult:
             "plots": [str(p) for p in self.plots] if self.plots else None,
             "metadata": self.metadata,
             "recommendations": self.recommendations,
+            "reliability_warnings": self.reliability_warnings,
             "error_metadata": self.error_metadata,
         }
 
@@ -90,3 +100,51 @@ def make_failure_result(task_name: str, error: Exception) -> "TaskResult":
             "suggested_action": "Review task input or parameters",
         },
     )
+
+
+def add_reliability_warning(
+    result: "TaskResult",
+    level: str,
+    code: str,
+    description: str,
+    recommendation: Optional[str] = None,
+) -> None:
+    """
+    Attach a structured warning to the TaskResult
+        under the appropriate reliability tier.
+    """
+    from typing import cast
+
+    if result.reliability_warnings is None:
+        result.reliability_warnings = cast(ReliabilityWarning, {})
+
+    if level not in result.reliability_warnings:
+        result.reliability_warnings[level] = {}
+
+    result.reliability_warnings[level][code] = {
+        "description": description,
+        "recommendation": recommendation,
+    }
+
+
+class LoggingTask(Protocol):
+    name: str
+
+    def _log(self, msg: str, level: str = ...) -> None: ...
+
+
+def log_reliability_warnings(task: LoggingTask, result: "TaskResult") -> None:
+    """
+    Print reliability warnings to console if present (and verbosity = debug).
+    """
+    if not result.reliability_warnings:
+        return
+
+    for level, warnings in result.reliability_warnings.items():
+        for code, info in warnings.items():
+            task._log(
+                f"[{task.name}] {level.upper()} — {code}: {info['description']}",
+                level="debug",
+            )
+            if info.get("recommendation"):
+                task._log(f"    ↪ Suggestion: {info['recommendation']}", level="debug")

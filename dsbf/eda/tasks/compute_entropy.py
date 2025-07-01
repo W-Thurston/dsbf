@@ -8,7 +8,11 @@ from scipy.stats import entropy as scipy_entropy
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.eda.task_result import (
+    TaskResult,
+    add_reliability_warning,
+    make_failure_result,
+)
 from dsbf.utils.backend import is_polars
 
 
@@ -28,19 +32,13 @@ class ComputeEntropy(BaseTask):
     """
 
     def run(self) -> None:
-        """
-        Executes entropy computation on text-like columns.
-        Produces a TaskResult with column-wise entropy scores.
-        """
         results: Dict[str, float] = {}
 
         try:
-
-            # ctx = self.context
             df = self.input_data
+            flags = self.ensure_reliability_flags()
 
             if is_polars(df):
-                # Polars backend: compute entropy manually
                 for col in df.columns:
                     if df[col].dtype == pl.Utf8:
                         try:
@@ -55,7 +53,6 @@ class ComputeEntropy(BaseTask):
                                 f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
                             )
             else:
-                # Pandas fallback: use scipy entropy
                 for col in df.select_dtypes(include="object").columns:
                     try:
                         counts = df[col].value_counts()
@@ -65,12 +62,29 @@ class ComputeEntropy(BaseTask):
                             f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
                         )
 
-            self.output = TaskResult(
+            result = TaskResult(
                 name=self.name,
                 status="success",
-                summary={"message": (f"Computed entropy for {len(results)} columns.")},
+                summary={"message": f"Computed entropy for {len(results)} columns."},
                 data=results,
             )
+
+            if flags["low_row_count"]:
+                add_reliability_warning(
+                    result,
+                    level="heuristic_caution",
+                    code="low_row_count_entropy",
+                    description=(
+                        "Entropy estimates may be unstable"
+                        " with small sample sizes (N < 30)."
+                    ),
+                    recommendation=(
+                        "Interpret entropy values cautiously"
+                        " or validate with resampling."
+                    ),
+                )
+
+            self.output = result
 
         except Exception as e:
             if self.context:

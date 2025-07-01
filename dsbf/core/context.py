@@ -1,8 +1,15 @@
 # dsbf/core/context.py
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+import warnings
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+
+import numpy as np
+import pandas as pd
+import polars as pl
+from scipy.stats import median_abs_deviation, skew
 
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
     from dsbf.core.base_task import BaseTask
@@ -33,6 +40,7 @@ class AnalysisContext:
         self.results: Dict[str, TaskResult] = {}
         self.metadata: Dict[str, Any] = {}
         self.stage: Optional[str] = None
+        self.reliability_flags: Dict[str, Any] = {}
 
     from dsbf.core.base_engine import (  # Import this if not already
         MESSAGE_VERBOSITY_LEVELS,
@@ -93,3 +101,51 @@ class AnalysisContext:
 
         self.set_result(task.name, result)
         return result
+
+    def compute_reliability_flags(self, df: pd.DataFrame | pl.DataFrame) -> None:
+        if self.reliability_flags:  # Already computed
+            return
+
+        if is_polars(df):
+            df = cast(pl.DataFrame, df).to_pandas()
+
+        df = cast(pd.DataFrame, df)
+        numeric_df = df.select_dtypes(include=np.number).dropna()
+
+        n_rows = len(numeric_df)
+        stds = numeric_df.std().to_dict()
+        means = numeric_df.mean().to_dict()
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            skew_vals = dict(
+                zip(numeric_df.columns, skew(numeric_df, nan_policy="omit", bias=False))
+            )
+
+        # Robust outlier detection using median and MAD
+        mad = {
+            col: median_abs_deviation(numeric_df[col], nan_policy="omit")
+            for col in numeric_df.columns
+        }
+        mad = {k: (v if v != 0 else 1e-8) for k, v in mad.items()}
+        robust_z = pd.DataFrame(
+            {
+                col: (numeric_df[col] - numeric_df[col].median()) / mad[col]
+                for col in numeric_df.columns
+            }
+        )
+        has_outliers = (robust_z.abs() > 3).any().any()
+
+        low_var_cols = [
+            col for col, std in stds.items() if std is not None and std < 1e-8
+        ]
+
+        self.reliability_flags = {
+            "n_rows": n_rows,
+            "low_row_count": n_rows < 30,
+            "extreme_outliers": has_outliers,
+            "high_skew": any(abs(s) > 2 for s in skew_vals.values() if s is not None),
+            "zero_variance_cols": low_var_cols,
+            "skew_vals": skew_vals,
+            "stds": stds,
+            "means": means,
+        }

@@ -1,10 +1,12 @@
 # dsbf/eda/tasks/suggest_numerical_binning.py
 
-import polars as pl
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.eda.task_result import (
+    TaskResult,
+    add_reliability_warning,
+    make_failure_result,
+)
 from dsbf.utils.backend import is_polars
 
 
@@ -30,6 +32,10 @@ class SuggestNumericalBinning(BaseTask):
     def run(self) -> None:
         try:
             df = self.input_data
+            flags = self.ensure_reliability_flags()
+            skew_vals = flags.get("skew_vals", {})
+            stds = flags.get("stds", {})
+            # means = flags.get("means", {})
             skew_threshold = float(self.get_task_param("skew_threshold") or 1.0)
 
             if is_polars(df):
@@ -40,30 +46,22 @@ class SuggestNumericalBinning(BaseTask):
             suggestions = {}
 
             for col in numeric_cols:
+                if col not in skew_vals or col not in stds or stds[col] == 0:
+                    continue
+
                 try:
+                    skew = skew_vals[col]
+                    std = stds[col]
+
                     if is_polars(df):
-                        col_expr = pl.col(col).drop_nulls()
-                        skew = df.select(col_expr.skew()).item()
-                        std = df.select(col_expr.std()).item()
-                        min_val = df.select(col_expr.min()).item()
-                        max_val = df.select(col_expr.max()).item()
+                        min_val = df[col].drop_nulls().min()
+                        max_val = df[col].drop_nulls().max()
                     else:
-                        series = df[col].dropna()
-                        skew = float(series.skew())
-                        std = float(series.std())
-                        min_val = float(series.min())
-                        max_val = float(series.max())
+                        min_val = df[col].dropna().min()
+                        max_val = df[col].dropna().max()
 
                     value_range = max_val - min_val
-
-                    if (
-                        skew is None
-                        or pl.Series([skew]).is_nan().any()
-                        or std is None
-                        or std == 0
-                        or value_range is None
-                        or value_range == 0
-                    ):
+                    if value_range is None or value_range == 0:
                         continue
 
                     if skew > skew_threshold:
@@ -81,23 +79,38 @@ class SuggestNumericalBinning(BaseTask):
                 except Exception:
                     continue
 
-            summary = {
-                "message": (
-                    f"Binning suggestions generated for {len(suggestions)}"
-                    " numeric columns."
-                )
-            }
-
-            self.output = TaskResult(
+            result = TaskResult(
                 name=self.name,
                 status="success",
-                summary=summary,
+                summary={
+                    "message": (
+                        f"Binning suggestions generated for {len(suggestions)}"
+                        " numeric columns."
+                    )
+                },
                 data={"binning_suggestions": suggestions},
                 recommendations=[
                     "Use quantile or equal-width binning for non-linear features. "
                     "Apply log transform to reduce high skew."
                 ],
             )
+
+            if flags.get("low_row_count") and flags.get("high_skew"):
+                add_reliability_warning(
+                    result,
+                    level="heuristic_caution",
+                    code="binning_skew_low_n",
+                    description=(
+                        "Skewness-based binning strategies"
+                        " may be unstable with N < 30."
+                    ),
+                    recommendation=(
+                        "Validate binning strategies with"
+                        " visual plots or bootstrapping."
+                    ),
+                )
+
+            self.output = result
 
         except Exception as e:
             if self.context:

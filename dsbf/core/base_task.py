@@ -75,3 +75,12 @@ class BaseTask(ABC):
         """
         if self.context and hasattr(self.context, "_log"):
             self.context._log(msg, level)
+
+    def ensure_reliability_flags(self) -> Dict:
+        if self.context is None:
+            raise RuntimeError("AnalysisContext is not set in this task.")
+
+        if not self.context.reliability_flags:
+            self.context.compute_reliability_flags(self.input_data)
+
+        return self.context.reliability_flags

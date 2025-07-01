@@ -8,21 +8,16 @@ from scipy.stats import chi2_contingency
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.eda.task_result import (
+    TaskResult,
+    add_reliability_warning,
+    log_reliability_warnings,
+    make_failure_result,
+)
 from dsbf.utils.backend import is_polars
 
 
 def cramers_v(x: pd.Series, y: pd.Series) -> float:
-    """
-    Compute Cramér's V (normalized chi-squared) between two categorical columns.
-
-    Args:
-        x (pd.Series): First categorical column.
-        y (pd.Series): Second categorical column.
-
-    Returns:
-        float: Cramér's V score (0–1)
-    """
     contingency = pd.crosstab(x, y)
     chi2 = chi2_contingency(contingency)[0]
     n = contingency.sum().sum()
@@ -40,23 +35,13 @@ def cramers_v(x: pd.Series, y: pd.Series) -> float:
     tags=["numeric", "correlation"],
 )
 class ComputeCorrelations(BaseTask):
-    """
-    Computes pairwise correlations for numeric and categorical columns.
-    - Uses Pearson for numeric-numeric pairs.
-    - Uses Cramér's V for categorical-categorical pairs.
-    """
-
     def run(self) -> None:
-        """
-        Run the correlation task on input_data.
-        Produces a TaskResult with a flat dictionary of correlations.
-        """
-
         try:
             df = self.input_data
             correlations: Dict[str, float] = {}
             backend_used = "polars" if is_polars(df) else "pandas"
 
+            # --- Polars numeric correlation ---
             if is_polars(df):
                 import polars as pl
 
@@ -66,27 +51,17 @@ class ComputeCorrelations(BaseTask):
                         for col in df.columns
                         if df[col].dtype in (pl.Float64, pl.Int64)
                     ]
+                    numeric_df = df.select(numeric_cols)
                     if len(numeric_cols) >= 2:
-                        corr_df = df.select(numeric_cols).corr()
-                        # Parse Polars correlation matrix
+                        corr_df = numeric_df.corr()
                         for i, col1 in enumerate(numeric_cols):
                             for j in range(i + 1, len(numeric_cols)):
                                 col2 = numeric_cols[j]
                                 value = corr_df.select(f"{col1}_{col2}").item()
                                 correlations[f"{col1}|{col2}"] = value
-                        self._log(
-                            (
-                                f"Computed Polars correlation matrix for "
-                                f"{len(numeric_cols)} numeric columns."
-                            ),
-                            "debug",
-                        )
                     else:
                         self._log(
-                            (
-                                "Not enough numeric columns for correlation matrix;"
-                                " skipping numeric pairwise correlations."
-                            ),
+                            "Not enough numeric columns for correlation matrix.",
                             "debug",
                         )
                 except Exception as e:
@@ -97,7 +72,8 @@ class ComputeCorrelations(BaseTask):
                     df = df.to_pandas()
                     backend_used = "pandas"
 
-            if not is_polars(df):  # pandas fallback or already pandas
+            # --- Pandas numeric correlation ---
+            if not is_polars(df):
                 numeric_cols = df.select_dtypes(include=np.number).columns
                 for i, col1 in enumerate(numeric_cols):
                     for j in range(i + 1, len(numeric_cols)):
@@ -105,7 +81,7 @@ class ComputeCorrelations(BaseTask):
                         corr = df[col1].corr(df[col2])
                         correlations[f"{col1}|{col2}"] = corr
 
-            # Always compute categorical correlations using Pandas (Cramér's V)
+            # --- Categorical Cramér’s V correlations ---
             if is_polars(df):
                 df = df.to_pandas()
                 backend_used = "mixed"
@@ -117,32 +93,120 @@ class ComputeCorrelations(BaseTask):
                     v = cramers_v(df[col1], df[col2])
                     correlations[f"{col1}|{col2}"] = v
 
-            self._log(
-                f"Computed correlations for {len(correlations)} column pairs.", "info"
-            )
-
-            self.output = TaskResult(
+            result = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
                     "message": (
-                        f"Computed correlations for"
-                        f" {len(correlations)} column pairs."
+                        f"Computed correlations for "
+                        f"{len(correlations)} column pairs."
                     )
                 },
                 data=correlations,
                 metadata={
                     "backend": backend_used,
                     "numeric_pair_count": sum(
-                        "|" in k and k.split("|")[0] in df.columns
-                        for k in correlations.keys()
+                        "|" in k and k.split("|")[0] in df.columns for k in correlations
                     ),
                     "categorical_pair_count": sum(
-                        "|" in k and k.split("|")[0] in cat_cols
-                        for k in correlations.keys()
+                        "|" in k and k.split("|")[0] in cat_cols for k in correlations
                     ),
                 },
             )
+
+            # --- Add reliability warnings from precomputed flags ---
+            flags = self.ensure_reliability_flags()
+
+            if flags["low_row_count"]:
+                add_reliability_warning(
+                    result,
+                    level="strong_warning",
+                    code="low_row_count",
+                    description=(
+                        "Pearson correlation may be statistically"
+                        " unreliable with fewer than 30 observations."
+                    ),
+                    recommendation=(
+                        "Use bootstrapped confidence intervals" " or collect more data."
+                    ),
+                )
+
+            if flags["zero_variance_cols"]:
+                add_reliability_warning(
+                    result,
+                    level="strong_warning",
+                    code="zero_variance",
+                    description=(
+                        "The following features have near-zero variance: "
+                        f"{flags['zero_variance_cols']}. "
+                        "Correlation is undefined."
+                    ),
+                    recommendation=(
+                        "Drop or impute constant features"
+                        " before computing correlation."
+                    ),
+                )
+
+            if flags["extreme_outliers"]:
+                code = (
+                    "extreme_outliers_low_n"
+                    if flags["low_row_count"]
+                    else "extreme_outliers"
+                )
+                description = (
+                    "Some features contain extreme z-scores (|z| > 3),"
+                    " but sample size is small (N < 30). "
+                    "Outlier estimates may be unreliable."
+                    if flags["low_row_count"]
+                    else (
+                        "Some features contain extreme z-scores (|z| > 3),"
+                        " which may distort Pearson correlation."
+                    )
+                )
+                recommendation = (
+                    (
+                        "Interpret outlier influence with caution"
+                        " or validate using robust statistics."
+                    )
+                    if flags["low_row_count"]
+                    else "Winsorize outliers or use Spearman correlation."
+                )
+                add_reliability_warning(
+                    result,
+                    level="heuristic_caution",
+                    code=code,
+                    description=description,
+                    recommendation=recommendation,
+                )
+
+            if flags["high_skew"]:
+                code = "high_skew_low_n" if flags["low_row_count"] else "high_skew"
+                description = (
+                    (
+                        "High skew was detected, but sample size is small (N < 30)."
+                        " Skew estimates may be unstable."
+                    )
+                    if flags["low_row_count"]
+                    else (
+                        "One or more features are highly skewed,"
+                        " which may distort correlation strength."
+                    )
+                )
+                recommendation = (
+                    "Interpret skewness cautiously or validate with bootstrapping."
+                    if flags["low_row_count"]
+                    else "Use Spearman correlation or log-transform skewed variables."
+                )
+                add_reliability_warning(
+                    result,
+                    level="heuristic_caution",
+                    code=code,
+                    description=description,
+                    recommendation=recommendation,
+                )
+
+            log_reliability_warnings(self, result)
+            self.output = result
 
         except Exception as e:
             if self.context:
