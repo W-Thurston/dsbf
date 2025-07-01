@@ -8,6 +8,7 @@ visualization.
 """
 
 import time
+from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 import networkx as nx
@@ -74,6 +75,10 @@ class ExecutionGraph:
             "skipped": [],
         }
 
+        # Initialize task druations within AnalysisContext
+        context.metadata.setdefault("task_durations", {})
+        run_start = time.time()  # Global start time
+
         for task in self.tasks_sorted:
             deps = task.requires
             if deps:
@@ -112,7 +117,11 @@ class ExecutionGraph:
             start_time = time.time()
             try:
                 _ = task.run(context)
+
+                # Collect and log task duration
                 duration = time.time() - start_time
+                context.metadata["task_durations"][task.name] = duration
+
                 if log_fn:
                     log_fn(
                         (
@@ -122,8 +131,12 @@ class ExecutionGraph:
                         "debug",
                     )
                 task_outcomes["success"].append(task.name)
+
             except Exception as e:
+
+                # Collect and log task duration
                 duration = time.time() - start_time
+                context.metadata["task_durations"][task.name] = duration
 
                 error_metadata = {
                     "error_type": type(e).__name__,
@@ -151,6 +164,13 @@ class ExecutionGraph:
                     )
 
                 task_outcomes["failed"].append(task.name)
+
+        run_end = time.time()  # Global start time
+        context.metadata["run_stats"] = {
+            "start_time": datetime.fromtimestamp(run_start).isoformat(),
+            "end_time": datetime.fromtimestamp(run_end).isoformat(),
+            "total_tasks": len(self.tasks_sorted),
+        }
 
         # Save results to context
         context.metadata["task_outcomes"] = task_outcomes

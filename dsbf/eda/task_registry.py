@@ -6,9 +6,8 @@ from typing import Callable, Dict, List, Optional, Type
 
 from dsbf.core.base_task import BaseTask
 
+
 # -- Metadata container --
-
-
 @dataclass
 class TaskSpec:
     name: str
@@ -25,12 +24,10 @@ class TaskSpec:
 
 
 # -- Global registry --
-
 TASK_REGISTRY: Dict[str, TaskSpec] = {}
 
+
 # -- Decorator --
-
-
 def register_task(
     name: Optional[str] = None,
     *,
@@ -47,13 +44,14 @@ def register_task(
     """
     Decorator factory that registers a BaseTask subclass into the TASK_REGISTRY.
     """
+    VALID_STAGES = ("raw", "cleaned", "modeling", "report", "any")
 
     def decorator(cls: Type[BaseTask]) -> Type[BaseTask]:
         task_name: str = name or _to_snake_case(cls.__name__)
-        if stage and stage not in {"raw", "cleaned", "modeling", "report"}:
+        if stage and stage not in VALID_STAGES:
             raise ValueError(
                 f"Invalid stage '{stage}' for task '{task_name}'. "
-                "Allowed stages are: raw, cleaned, modeling, report."
+                f"Allowed stages are: {VALID_STAGES}"
             )
 
         if task_name in TASK_REGISTRY:

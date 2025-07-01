@@ -7,6 +7,7 @@ from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.task_utils import is_diagnostic_task
 
 load_all_tasks()
 
@@ -38,6 +39,11 @@ def test_all_tasks_smoke():
 
         # Run smoke test
         task = spec.cls()
+        # Inject mock metadata for diagnostic tasks
+        if is_diagnostic_task(task_name):
+            context.metadata["task_durations"] = {"mock_task": 0.5}
+            context.metadata["run_stats"] = {"duration": 0.5}
+
         result = context.run_task(task)
 
         assert isinstance(result, TaskResult), f"{task_name} did not return TaskResult"

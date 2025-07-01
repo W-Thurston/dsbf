@@ -11,10 +11,11 @@ from dsbf.config import load_default_config
 from dsbf.core.base_engine import BaseEngine
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
-from dsbf.eda.renderers.json_renderer import render as render_json
+from dsbf.eda.stage_inference import infer_stage
 from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs
 from dsbf.utils.data_loader import load_dataset
+from dsbf.utils.report_utils import render_user_report, write_metadata_report
 from dsbf.utils.task_utils import instantiate_task
 
 
@@ -66,8 +67,6 @@ class ProfileEngine(BaseEngine):
         load_all_tasks()
 
         # Infer stage
-        from dsbf.eda.stage_inference import infer_stage
-
         self.inferred_stage = infer_stage(df, self.config)
         self.context.stage = self.inferred_stage
         self.run_metadata["inferred_stage"] = self.inferred_stage
@@ -86,13 +85,16 @@ class ProfileEngine(BaseEngine):
             status_dict = {name: result.status for name, result in self.results.items()}
             graph.visualize(save_path=fig_path, status=status_dict)
 
-        # Export report
+        # Export user-facing report (results only)
         self._log("Rendering JSON report...", level="debug")
-        render_json(
+        render_user_report(
             results=self.context.results,
-            metadata=self.run_metadata | {"config": self.config},
             output_path=os.path.join(self.output_dir, "report.json"),
         )
+
+        # Write separate runtime metadata
+        write_metadata_report(self.context)
+
         self.record_run()
 
     def _load_data(self) -> Union[pd.DataFrame, pl.DataFrame]:

@@ -130,10 +130,9 @@ def test_metadata_structure_and_keys(clean_engine_run):
     latest_run = run_history[-1]
     output_dir = os.path.join("dsbf", "outputs", latest_run["timestamp"])
 
-    with open(os.path.join(output_dir, "report.json"), "r") as f:
-        report = json.load(f)
+    with open(os.path.join(output_dir, "metadata_report.json"), "r") as f:
+        metadata = json.load(f)
 
-    metadata = report.get("metadata", {})
     assert metadata["engine"] == "ProfileEngine"
     assert "timestamp" in metadata
     assert "layout_name" in metadata
@@ -142,9 +141,6 @@ def test_metadata_structure_and_keys(clean_engine_run):
     assert "message_verbosity" in metadata
     assert "profiling_depth" in metadata
     assert metadata.get("visualize_dag") is True
-
-    config_block = report.get("config", {})
-    assert "engine" in config_block
 
 
 def test_task_output_within_profile_engine(clean_engine_run):

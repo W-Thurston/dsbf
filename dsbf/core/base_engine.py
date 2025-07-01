@@ -9,12 +9,21 @@ and metadata.
 import abc
 import json
 import os
+import platform
+import subprocess
 from datetime import datetime
 
 MESSAGE_VERBOSITY_LEVELS = {"quiet": 0, "info": 1, "debug": 2}
 
 
 class BaseEngine(abc.ABC):
+    """
+    Initialize the base engine with a given configuration.
+
+    Args:
+        config (dict): Engine and metadata configuration dictionary.
+    """
+
     def __init__(self, config):
         self.config = config
         self.message_verbosity = config.get("metadata", {}).get(
@@ -37,6 +46,17 @@ class BaseEngine(abc.ABC):
             "message_verbosity": metadata_cfg.get("message_verbosity", ""),
             "visualize_dag": self.config.get("metadata", {}).get("visualize_dag"),
         }
+
+        # Append additional runtime environment metadata
+        self.run_metadata.update(
+            {
+                "dsbf_version": "0.1.0",  # TODO: Replace with real version
+                "git_sha": self._get_git_sha(),
+                "host": platform.node(),
+                "os": platform.platform(),
+                "python": platform.python_version(),
+            }
+        )
 
     def _log(self, msg, level="info"):
         if self.verbosity_level >= MESSAGE_VERBOSITY_LEVELS[level]:
@@ -73,3 +93,19 @@ class BaseEngine(abc.ABC):
     @abc.abstractmethod
     def run(self):
         pass
+
+    def _get_git_sha(self) -> str:
+        """
+        Attempt to retrieve the current Git commit SHA (short form).
+
+        Returns:
+            str: Short SHA of the current Git commit, or "unknown" if unavailable.
+        """
+        try:
+            return (
+                subprocess.check_output(["git", "rev-parse", "--short", "HEAD"])
+                .decode("utf-8")
+                .strip()
+            )
+        except Exception:
+            return "unknown"

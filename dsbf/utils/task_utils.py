@@ -28,3 +28,20 @@ def is_integer_polars(series):
         pl.UInt32,
         pl.UInt64,
     }
+
+
+def is_diagnostic_task(task_name: str) -> bool:
+    """
+    Identify whether a task is a diagnostic/runtime/system-level task
+    rather than a data EDA task.
+
+    Args:
+        task_name (str): The name of the task (from context.results)
+
+    Returns:
+        bool: True if task is diagnostic, else False
+    """
+    normalized = task_name.lower().replace("_", "")
+    return normalized.startswith("identifybottleneck") or normalized.startswith(
+        "logresourceusage"
+    )
