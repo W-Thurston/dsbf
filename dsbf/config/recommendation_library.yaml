@@ -1,0 +1,102 @@
+# ===================
+# TRANSFORMATION
+# ===================
+
+mild_skew_transform:
+  condition: "skew > 1 or skew < -1"
+  applicable_to:
+    - detect_skewness
+    - suggest_numerical_binning
+  message: >
+    This feature is moderately skewed. Consider log or power transforms
+    to improve linear model performance or reduce sensitivity to outliers.
+
+high_cardinality_feature:
+  condition: "n_unique > 50"
+  applicable_to:
+    - detect_high_cardinality
+  message: >
+    This feature has high cardinality. Consider using frequency encoding,
+    target encoding, or dimensionality reduction to avoid sparse features.
+
+# ===================
+# LEAKAGE / REDUNDANCY
+# ===================
+
+drop_encoded_column:
+  condition: "match_type in ['base64', 'uuid', 'hex']"
+  applicable_to:
+    - detect_encoded_columns
+  message: >
+    This column appears to be encoded and is unlikely to generalize well.
+    Drop it unless it has domain-specific meaning.
+
+drop_duplicate_column:
+  condition: "correlation_with == 1.0"
+  applicable_to:
+    - detect_duplicate_columns
+  message: >
+    This column is a perfect duplicate of another — remove one to avoid redundant signals.
+
+leaky_feature:
+  condition: "correlation_with_target > 0.99"
+  applicable_to:
+    - detect_data_leakage
+  message: >
+    This feature is nearly identical to the target — likely due to leakage.
+    Drop it unless it was intentionally derived from the target.
+
+drop_constant_column:
+  condition: "n_unique == 1"
+  applicable_to:
+    - detect_constant_columns
+  message: >
+    This feature has the same value for all rows — drop it before modeling.
+
+# ===================
+# LOW INFORMATION VALUE
+# ===================
+
+drop_zero_variance:
+  condition: "variance < 1e-4"
+  applicable_to:
+    - detect_near_zero_variance
+  message: >
+    This feature has near-zero variance and is unlikely to help model performance.
+    Drop it unless it encodes rare but meaningful events.
+
+# ===================
+# COLLINEARITY
+# ===================
+
+high_vif_feature:
+  condition: "vif > 10"
+  applicable_to:
+    - detect_collinear_features
+  message: >
+    This feature has high collinearity with others, which may distort model coefficients.
+    Consider dropping, combining, or using regularization.
+
+# ===================
+# CLASS IMBALANCE
+# ===================
+
+severe_class_imbalance:
+  condition: "majority_ratio >= 0.9"
+  applicable_to:
+    - detect_class_imbalance
+  message: >
+    Your target is highly imbalanced. Use stratified sampling, up/down-sampling,
+    or metrics like ROC-AUC instead of accuracy.
+
+# ===================
+# DRIFT DETECTION
+# ===================
+
+high_drift_score:
+  condition: "psi >= 0.2"
+  applicable_to:
+    - detect_feature_drift
+  message: >
+    This feature shows significant drift vs. the reference dataset.
+    Monitor closely or retrain your model periodically.

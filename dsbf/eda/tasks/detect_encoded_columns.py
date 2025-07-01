@@ -9,6 +9,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars, is_text_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -117,7 +118,7 @@ class DetectEncodedColumns(BaseTask):
                         "sample_values": values[:5],
                     }
                     recommendations.append(
-                        f"Column '{col}' appears to contain {match_type} strings."
+                        f"Column '{col}' appears to contain {match_type} strings. "
                         f"Consider decoding or excluding from modeling."
                     )
 
@@ -126,6 +127,7 @@ class DetectEncodedColumns(BaseTask):
                 "columns": flagged_columns,
             }
 
+            # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -133,6 +135,26 @@ class DetectEncodedColumns(BaseTask):
                 data=details,
                 recommendations=recommendations,
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and flagged_columns:
+                col = flagged_columns[0]  # Focus on the first one flagged
+                result = self.output
+                if result:
+                    match_type = details.get(col, {}).get("match_type", "unknown")
+                    tip = get_recommendation_tip(self.name, {"match_type": match_type})
+                    self.set_ml_signals(
+                        result=result,
+                        score=0.9,
+                        tags=["drop", "check_leakage"],
+                        recommendation=tip
+                        or (
+                            f"Column '{col}' appears to be encoded "
+                            f"(e.g., {match_type}). "
+                            "Consider dropping it to avoid overfitting or leakage."
+                        ),
+                    )
+                    result.summary["column"] = col
 
         except Exception as e:
             if self.context:

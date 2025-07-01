@@ -7,6 +7,7 @@ from scipy.stats import chisquare, entropy, ks_2samp
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -144,7 +145,8 @@ class DetectTargetDrift(BaseTask):
                 "Consider retraining or validating your model due to target drift."
             )
 
-        return TaskResult(
+        # Build TaskResult
+        result = TaskResult(
             name=self.name,
             status="success",
             summary=summary,
@@ -156,6 +158,26 @@ class DetectTargetDrift(BaseTask):
             },
             recommendations=recommendations,
         )
+
+        # Apply ML scoring to self.output
+        if (
+            self.get_engine_param("enable_impact_scoring", True)
+            and drift_severity != "none"
+        ):
+            tip = get_recommendation_tip(self.name, {"drift_rating": drift_severity})
+            self.set_ml_signals(
+                result=result,
+                score=0.8,
+                tags=["monitor"],
+                recommendation=tip
+                or (
+                    f"Target drift detected (severity: {drift_severity}). "
+                    "Consider retraining or validating model performance."
+                ),
+            )
+            result.summary["column"] = self.get_task_param("target")
+
+        return result
 
     def _evaluate_categorical_drift(
         self, current: pl.Series, reference: pl.Series
@@ -220,7 +242,8 @@ class DetectTargetDrift(BaseTask):
                 "Retrain or monitor model performance."
             )
 
-        return TaskResult(
+        # Build TaskResult
+        result = TaskResult(
             name=self.name,
             status="success",
             summary=summary,
@@ -233,3 +256,23 @@ class DetectTargetDrift(BaseTask):
             },
             recommendations=recommendations,
         )
+
+        # Apply ML scoring to self.output
+        if (
+            self.get_engine_param("enable_impact_scoring", True)
+            and drift_severity != "none"
+        ):
+            tip = get_recommendation_tip(self.name, {"drift_rating": drift_severity})
+            self.set_ml_signals(
+                result=result,
+                score=0.8,
+                tags=["monitor"],
+                recommendation=tip
+                or (
+                    f"Target drift detected (severity: {drift_severity}). "
+                    "Consider retraining or validating model performance."
+                ),
+            )
+            result.summary["column"] = self.get_task_param("target")
+
+        return result

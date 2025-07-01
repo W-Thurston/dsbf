@@ -7,6 +7,7 @@ from dsbf.eda.task_result import (
     add_reliability_warning,
     make_failure_result,
 )
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -63,6 +64,24 @@ class DetectNearZeroVariance(BaseTask):
                 )
 
             self.output = result
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and low_variance:
+                col = next(iter(low_variance))
+                var_val = low_variance[col]
+                tip = get_recommendation_tip(self.name, {"variance": var_val})
+                self.set_ml_signals(
+                    result=result,
+                    score=0.85,
+                    tags=["drop"],
+                    recommendation=tip
+                    or (
+                        f"Column '{col}' has near-zero variance (var = {var_val:.2e}). "
+                        "Drop this feature to improve model"
+                        " efficiency and reduce noise."
+                    ),
+                )
+                result.summary["column"] = col
 
         except Exception as e:
             if self.context:

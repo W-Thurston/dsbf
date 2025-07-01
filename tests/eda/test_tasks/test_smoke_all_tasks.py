@@ -16,7 +16,7 @@ load_all_tasks()
 @pytest.mark.filterwarnings(
     "ignore:divide by zero encountered in scalar divide:RuntimeWarning"
 )
-def test_all_tasks_smoke():
+def test_all_tasks_smoke(tmp_path):
     df = pl.DataFrame(
         {
             "a": [1, 2, 3, 4, 5],
@@ -25,7 +25,7 @@ def test_all_tasks_smoke():
             "d": [None, 2, 3, None, 5],
         }
     )
-    context = AnalysisContext(df, output_dir="dsbf/outputs/temp_test/")
+    context = AnalysisContext(df, output_dir=str(tmp_path))
 
     assert TASK_REGISTRY, "No tasks registered!"
 
@@ -37,8 +37,8 @@ def test_all_tasks_smoke():
             getattr(spec.cls(), "run", None)
         ), f"{spec.cls.__name__}.run is not callable"
 
-        # Run smoke test
         task = spec.cls()
+
         # Inject mock metadata for diagnostic tasks
         if is_diagnostic_task(task_name):
             context.metadata["task_durations"] = {"mock_task": 0.5}

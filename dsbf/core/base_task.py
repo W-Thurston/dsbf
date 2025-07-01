@@ -84,3 +84,19 @@ class BaseTask(ABC):
             self.context.compute_reliability_flags(self.input_data)
 
         return self.context.reliability_flags
+
+    def set_ml_signals(
+        self,
+        result: TaskResult,
+        score: float,
+        tags: list[str],
+        recommendation: str,
+    ) -> None:
+        """
+        Attach ML impact metadata to a TaskResult.
+        """
+        result.ml_impact_score = score
+        result.recommendation_tags = tags
+        if result.recommendations is None:
+            result.recommendations = []
+        result.recommendations.append(recommendation)

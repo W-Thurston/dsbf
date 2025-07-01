@@ -6,6 +6,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -43,6 +44,7 @@ class DetectConstantColumns(BaseTask):
                 # Pandas variant
                 constant_columns = [col for col in df.columns if df[col].nunique() == 1]
 
+            # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -52,6 +54,27 @@ class DetectConstantColumns(BaseTask):
                 data={"constant_columns": constant_columns},
                 metadata={"engine": "polars" if is_polars(df) else "pandas"},
             )
+
+            # Apply ML scoring to self.output
+            if (
+                self.get_engine_param("enable_impact_scoring", True)
+                and constant_columns
+            ):
+                col = constant_columns[0]
+                result = self.output
+                if result:
+                    tip = get_recommendation_tip(self.name, {"n_unique": 1})
+                    self.set_ml_signals(
+                        result=result,
+                        score=1.0,
+                        tags=["drop"],
+                        recommendation=tip
+                        or (
+                            f"Column '{col}' has a constant value."
+                            " Drop it to avoid redundant features."
+                        ),
+                    )
+                    result.summary["column"] = col
 
         except Exception as e:
             if self.context:

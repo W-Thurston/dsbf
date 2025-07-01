@@ -8,6 +8,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -169,6 +170,24 @@ class SuggestCategoricalEncoding(BaseTask):
                     " numeric correlation."
                 ],
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and suggestions:
+                col = next(iter(suggestions))
+                strategy = suggestions[col]["suggested_encoding"]
+                score = 0.8 if "target encoding" in strategy else 0.6
+                tip = get_recommendation_tip(self.name, {"strategy": strategy})
+                self.set_ml_signals(
+                    result=self.output,
+                    score=score,
+                    tags=["transform"],
+                    recommendation=tip
+                    or (
+                        f"Column '{col}' is best encoded using: {strategy}. "
+                        "This improves modeling of categorical variables."
+                    ),
+                )
+                self.output.summary["column"] = col
 
         except Exception as e:
             if self.context:

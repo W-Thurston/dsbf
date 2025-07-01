@@ -71,6 +71,25 @@ class DetectDuplicateColumns(BaseTask):
                 data={"duplicate_column_pairs": duplicate_pairs},
             )
 
+            if self.get_engine_param("enable_impact_scoring", True) and duplicate_pairs:
+                col1, col2 = duplicate_pairs[0]
+                result = self.output
+                if result:
+                    from dsbf.utils.reco_engine import get_recommendation_tip
+
+                    tip = get_recommendation_tip(self.name, {"correlation_with": 1.0})
+                    self.set_ml_signals(
+                        result=result,
+                        score=0.85,
+                        tags=["drop"],
+                        recommendation=tip
+                        or (
+                            f"Column '{col2}' is a duplicate of '{col1}'. "
+                            "Drop one to reduce redundancy and avoid overfitting."
+                        ),
+                    )
+                    result.summary["column"] = col2
+
         except Exception as e:
             if self.context:
                 raise

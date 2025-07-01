@@ -6,6 +6,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -71,6 +72,27 @@ class DetectDataLeakage(BaseTask):
                 data={"leakage_pairs": leakage_pairs},
                 metadata={"correlation_threshold": correlation_threshold},
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and leakage_pairs:
+                first_pair = next(iter(leakage_pairs))
+                col1, col2 = first_pair.split("|")
+                corr = leakage_pairs[first_pair]
+                tip = get_recommendation_tip(
+                    self.name, {"correlation_with_target": corr}
+                )
+                self.set_ml_signals(
+                    result=self.output,
+                    score=1.0,
+                    tags=["drop", "check_leakage"],
+                    recommendation=tip
+                    or (
+                        f"Columns '{col1}' and '{col2}' are "
+                        "highly correlated (corr = {corr:.2f}). "
+                        "This may indicate leakage — drop one before modeling."
+                    ),
+                )
+                self.output.summary["column"] = col1
 
         except Exception as e:
             if self.context:

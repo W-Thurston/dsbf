@@ -13,6 +13,7 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -107,6 +108,28 @@ class DetectCollinearFeatures(BaseTask):
                 )
 
             self.output = result
+
+            # Apply ML scoring to self.output
+            if (
+                self.get_engine_param("enable_impact_scoring", True)
+                and collinear_columns
+            ):
+                top_col = collinear_columns[0]
+                top_vif = vif_scores[top_col]
+                score = 0.75 if top_vif < 15 else 0.85
+                tip = get_recommendation_tip(self.name, {"vif": top_vif})
+                self.set_ml_signals(
+                    result=result,
+                    score=score,
+                    tags=["drop", "transform"],
+                    recommendation=tip
+                    or (
+                        f"Column '{top_col}' has high multicollinearity"
+                        f" (VIF = {top_vif:.2f}). "
+                        "Consider dropping this feature or applying regularization/PCA."
+                    ),
+                )
+                result.summary["column"] = top_col
 
         except Exception as e:
             if self.context:

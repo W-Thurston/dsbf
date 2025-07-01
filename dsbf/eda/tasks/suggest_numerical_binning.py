@@ -8,6 +8,7 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -111,6 +112,26 @@ class SuggestNumericalBinning(BaseTask):
                 )
 
             self.output = result
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and suggestions:
+                col = next(iter(suggestions))
+                strategy = suggestions[col]["suggested_binning"]
+                skew_val = suggestions[col].get("skewness", 0.0)
+                tip = get_recommendation_tip(
+                    self.name, {"strategy": strategy, "skew": skew_val}
+                )
+                self.set_ml_signals(
+                    result=result,
+                    score=0.6,
+                    tags=["transform"],
+                    recommendation=tip
+                    or (
+                        f"Column '{col}' shows distribution skew or spread. "
+                        f"Recommended strategy: {strategy}."
+                    ),
+                )
+                result.summary["column"] = col
 
         except Exception as e:
             if self.context:

@@ -10,6 +10,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_text_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -178,6 +179,26 @@ class DetectFeatureDrift(BaseTask):
                 data=drift_results,
                 recommendations=recommendations,
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and high_drift_cols:
+                col = high_drift_cols[0]
+                drift_info = drift_results.get(col, {})
+                metric = "psi" if drift_info.get("type") == "numerical" else "tvd"
+                value = drift_info.get(metric)
+                tip = get_recommendation_tip(self.name, {"psi": value})
+                self.set_ml_signals(
+                    result=self.output,
+                    score=0.7,
+                    tags=["monitor"],
+                    recommendation=tip
+                    or (
+                        f"Column '{col}' shows high drift ({metric} = {value}). "
+                        "This may indicate a shift in data distribution"
+                        " — monitor closely or retrain model."
+                    ),
+                )
+                self.output.summary["column"] = col
 
         except Exception as e:
             if self.context:

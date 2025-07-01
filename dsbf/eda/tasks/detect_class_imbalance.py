@@ -8,6 +8,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -105,6 +106,7 @@ class DetectClassImbalance(BaseTask):
                 "is_imbalanced": is_imbalanced,
             }
 
+            # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -112,6 +114,27 @@ class DetectClassImbalance(BaseTask):
                 data=data,
                 recommendations=recommendations,
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and is_imbalanced:
+                result = self.output
+                if result:
+                    tip = get_recommendation_tip(
+                        self.name, {"majority_ratio": majority_ratio}
+                    )
+                    self.set_ml_signals(
+                        result=result,
+                        score=0.8,
+                        tags=["monitor", "resample"],
+                        recommendation=tip
+                        or (
+                            f"Target column '{target_col}' is highly imbalanced "
+                            f"({majority_ratio:.2%} majority class)."
+                            " Consider resampling, reweighting, "
+                            "or using metrics like AUC/PR instead of accuracy."
+                        ),
+                    )
+                    result.summary["column"] = target_col
 
         except Exception as e:
             if self.context:

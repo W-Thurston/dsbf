@@ -1,3 +1,5 @@
+# tests/eda/test_engine/test_profile_engine.py
+
 import json
 import os
 
@@ -8,8 +10,7 @@ from dsbf.eda.profile_engine import ProfileEngine
 from dsbf.eda.task_result import TaskResult
 
 
-def test_profile_engine_runs_with_file(clean_engine_run):
-    tmp_path = clean_engine_run
+def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -26,10 +27,12 @@ def test_profile_engine_runs_with_file(clean_engine_run):
             "reference_dataset_path": None,  # default: disabled unless user sets it
         },
     }
+
     sample_path = tmp_path / "sample_data.csv"
     sample_path.write_text("a,b\n1,2\n3,4")
     config["metadata"]["dataset"] = str(sample_path)
 
+    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
@@ -44,7 +47,7 @@ def test_profile_engine_runs_with_file(clean_engine_run):
     assert os.path.exists("dsbf_run.json")
 
 
-def test_profile_engine_runs_with_builtin_dataset(clean_engine_run):
+def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -62,6 +65,7 @@ def test_profile_engine_runs_with_builtin_dataset(clean_engine_run):
         },
     }
 
+    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
@@ -71,7 +75,7 @@ def test_profile_engine_runs_with_builtin_dataset(clean_engine_run):
     assert os.path.exists("dsbf_run.json")
 
 
-def test_profile_engine_runs_with_polars(clean_engine_run):
+def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
     try:
         __import__("polars")
     except ImportError:
@@ -94,6 +98,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run):
         },
     }
 
+    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
@@ -103,7 +108,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run):
     assert os.path.exists("dsbf_run.json")
 
 
-def test_metadata_structure_and_keys(clean_engine_run):
+def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -121,6 +126,7 @@ def test_metadata_structure_and_keys(clean_engine_run):
         },
     }
 
+    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
@@ -143,7 +149,7 @@ def test_metadata_structure_and_keys(clean_engine_run):
     assert metadata.get("visualize_dag") is True
 
 
-def test_task_output_within_profile_engine(clean_engine_run):
+def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -161,6 +167,7 @@ def test_task_output_within_profile_engine(clean_engine_run):
         },
     }
 
+    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 

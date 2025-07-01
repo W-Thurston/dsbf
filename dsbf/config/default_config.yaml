@@ -13,6 +13,11 @@ engine:
   engine: ProfileEngine
   backend: polars               # pandas | polars
   reference_dataset_path: null   # default: disabled unless user sets it
+  enable_impact_scoring: true
+  severity_thresholds:
+    low: 0.0
+    moderate: 0.6
+    high: 0.85
 
   stage_inference:
     null_ratio_raw_threshold: 0.4

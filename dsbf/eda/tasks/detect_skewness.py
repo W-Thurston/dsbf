@@ -9,6 +9,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -32,6 +33,7 @@ class DetectSkewness(BaseTask):
             df: Any = self.input_data
             skewness: Dict[str, float] = {}
 
+            # Compute skewness
             if is_polars(df):
                 # Use manual skewness computation for Polars
                 for col in df.columns:
@@ -51,6 +53,7 @@ class DetectSkewness(BaseTask):
                     skewness[col] = float(skew_val)
                     self._log(f"{col} skewness: {skew_val:.4f}", "debug")
 
+            # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -61,6 +64,29 @@ class DetectSkewness(BaseTask):
                 },
                 data=skewness,
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True):
+                for col, skew_val in skewness.items():
+                    abs_skew = abs(skew_val)
+                    if abs_skew <= 1:
+                        continue  # No ML risk
+                    score = 0.6 if abs_skew <= 2 else 0.8
+                    result = self.output
+                    if result:
+                        tip = get_recommendation_tip(self.name, {"skew": skew_val})
+                        self.set_ml_signals(
+                            result=result,
+                            score=score,
+                            tags=["transform"],
+                            recommendation=tip
+                            or (
+                                f"Column '{col}' has high skew "
+                                f"(skew = {skew_val:.2f}). Consider transforming it."
+                            ),
+                        )
+                        result.summary["column"] = col
+                        break
 
         except Exception as e:
             if self.context:

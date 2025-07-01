@@ -42,8 +42,10 @@ class TaskResult:
     data: Optional[Dict[str, Any]] = None
     plots: Optional[List[Path]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    recommendations: Optional[List[str]] = None
+    ml_impact_score: Optional[float] = None  # range: 0.0 to 1.0
     reliability_warnings: Optional[ReliabilityWarning] = None
+    recommendations: Optional[List[str]] = None
+    recommendation_tags: Optional[List[str]] = None  # e.g., ["drop", "transform"]
     error_metadata: Optional[Dict[str, str]] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -61,8 +63,9 @@ class TaskResult:
             "data": self.data,
             "plots": [str(p) for p in self.plots] if self.plots else None,
             "metadata": self.metadata,
-            "recommendations": self.recommendations,
+            "ml_impact_score": self.ml_impact_score,
             "reliability_warnings": self.reliability_warnings,
+            "recommendations": self.recommendations,
             "error_metadata": self.error_metadata,
         }
 

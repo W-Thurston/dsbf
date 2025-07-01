@@ -8,6 +8,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -79,6 +80,24 @@ class DetectOutliers(BaseTask):
                     "total_rows": n_rows,
                 },
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and flagged_cols:
+                col = flagged_cols[0]
+                n_outliers = outlier_counts[col]
+                tip = get_recommendation_tip(self.name, {"n_outliers": n_outliers})
+                self.set_ml_signals(
+                    result=self.output,
+                    score=0.7,
+                    tags=["monitor", "transform"],
+                    recommendation=tip
+                    or (
+                        f"Column '{col}' contains {n_outliers} statistical outliers. "
+                        "Consider log-transforming, winsorizing,"
+                        " or using robust models."
+                    ),
+                )
+                self.output.summary["column"] = col
 
         except Exception as e:
             if self.context:

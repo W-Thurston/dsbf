@@ -8,6 +8,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.reco_engine import get_recommendation_tip
 
 
 @register_task(
@@ -106,6 +107,7 @@ class DetectMixedTypeColumns(BaseTask):
                 "columns": flagged_columns,
             }
 
+            # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -113,6 +115,27 @@ class DetectMixedTypeColumns(BaseTask):
                 data=details,
                 recommendations=recommendations,
             )
+
+            # Apply ML scoring to self.output
+            if self.get_engine_param("enable_impact_scoring", True) and flagged_columns:
+                col = flagged_columns[0]
+                type_info = details[col].get("type_counts", {})
+                result = self.output
+                if result:
+                    tip = get_recommendation_tip(self.name, {"type_counts": type_info})
+                    self.set_ml_signals(
+                        result=result,
+                        score=0.6,
+                        tags=["transform"],
+                        recommendation=tip
+                        or (
+                            f"Column '{col}' contains mixed types "
+                            f"({', '.join(type_info)}). "
+                            "Consider coercing to a single type"
+                            " or cleaning inconsistent entries."
+                        ),
+                    )
+                    result.summary["column"] = col
 
         except Exception as e:
             if self.context:
