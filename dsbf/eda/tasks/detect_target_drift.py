@@ -20,6 +20,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="full",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="slow",
     tags=["drift", "comparison"],
 )
 class DetectTargetDrift(BaseTask):

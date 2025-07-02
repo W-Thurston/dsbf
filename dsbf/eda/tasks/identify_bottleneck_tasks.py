@@ -12,6 +12,8 @@ from dsbf.eda.task_result import TaskResult
     description="Ranks the top-N slowest tasks by runtime duration.",
     profiling_depth="full",
     stage="any",
+    domain="core",
+    runtime_estimate="fast",
     tags=["diagnostic", "runtime", "performance"],
 )
 class IdentifyBottleneckTasks(BaseTask):

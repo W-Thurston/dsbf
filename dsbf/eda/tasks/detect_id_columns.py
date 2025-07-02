@@ -14,6 +14,8 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="raw",
+    domain="core",
+    runtime_estimate="fast",
     tags=["metadata", "id", "index"],
 )
 class DetectIDColumns(BaseTask):

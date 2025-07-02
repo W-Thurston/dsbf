@@ -23,6 +23,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     profiling_depth="standard",
     tags=["format", "encoded", "anomaly"],
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
 )

@@ -18,6 +18,8 @@ def is_boolean_column(series) -> bool:
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     tags=["boolean", "summary"],
 )
 class SummarizeBooleanFields(BaseTask):

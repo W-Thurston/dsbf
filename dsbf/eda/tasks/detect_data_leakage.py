@@ -15,6 +15,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="full",
     stage="modeling",
+    domain="core",
+    runtime_estimate="moderate",
     tags=["leakage", "target"],
 )
 class DetectDataLeakage(BaseTask):

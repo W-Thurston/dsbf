@@ -17,6 +17,8 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="full",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="moderate",
     tags=["distribution", "outliers"],
 )
 class DetectBimodalDistribution(BaseTask):

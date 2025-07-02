@@ -18,6 +18,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     tags=["distribution", "skew"],
 )
 class DetectSkewness(BaseTask):

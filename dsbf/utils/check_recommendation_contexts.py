@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-RECO_PATH = Path("dsbf/config/recommendation_library.yaml")
+RECO_PATH = Path("dsbf/static_metadata/recommendation_library.yaml")
 TASKS_PATH = Path("dsbf/eda/tasks")
 
 

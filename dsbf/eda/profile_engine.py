@@ -15,7 +15,7 @@ from dsbf.eda.stage_inference import infer_stage
 from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs, load_task_group
 from dsbf.utils.data_loader import load_dataset
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
-from dsbf.utils.task_utils import instantiate_task
+from dsbf.utils.task_utils import filter_tasks, instantiate_task
 
 
 class ProfileEngine(BaseEngine):
@@ -128,12 +128,48 @@ class ProfileEngine(BaseEngine):
             "full": 3,
         }
 
-        # Optional: filter tasks based on profiling depth
         all_specs = get_all_task_specs()
+        task_filters = self.config.get("task_selection", {})
+
+        include_domains = task_filters.get("include_domains")
+        exclude_stages = task_filters.get("exclude_stages")
+        max_runtime = task_filters.get("max_runtime_estimate")
+
+        criteria = {}
+        if include_domains:
+            criteria["domain"] = include_domains
+        if max_runtime:
+            runtime_order = ["fast", "moderate", "slow"]
+            allowed_runtimes = runtime_order[: runtime_order.index(max_runtime) + 1]
+            criteria["runtime_estimate"] = allowed_runtimes
+
+        allowed_names = set(filter_tasks(criteria))
+
+        # Remove tasks in excluded stages
+        if exclude_stages:
+            allowed_names = {
+                name
+                for name in allowed_names
+                if TASK_REGISTRY[name].stage not in exclude_stages
+            }
+
+        # Fallback
+        if not allowed_names:
+            self._log(
+                "[WARNING] No tasks matched filters — falling back to core domain",
+                "info",
+            )
+            allowed_names = {
+                spec.name
+                for spec in all_specs
+                if spec.domain == "core" and not spec.experimental
+            }
+
         filtered_specs = [
             spec
             for spec in all_specs
-            if spec.experimental is False
+            if spec.name in allowed_names
+            and not spec.experimental
             and (
                 selected_depth == "full"
                 or PROFILING_DEPTH[spec.profiling_depth]

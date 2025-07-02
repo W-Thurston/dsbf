@@ -17,6 +17,8 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="report",
+    domain="core",
+    runtime_estimate="fast",
     tags=["missing", "structure", "viz"],
 )
 class MissingnessMatrix(BaseTask):

@@ -16,6 +16,8 @@ from dsbf.utils.backend import is_polars
     depends_on=[],
     profiling_depth="basic",
     stage="raw",
+    domain="core",
+    runtime_estimate="fast",
     tags=["typing", "metadata"],
 )
 class InferTypes(BaseTask):

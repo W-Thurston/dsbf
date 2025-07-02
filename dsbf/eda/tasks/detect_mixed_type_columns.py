@@ -21,6 +21,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     tags=["type", "format", "anomaly"],
     profiling_depth="standard",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
 )

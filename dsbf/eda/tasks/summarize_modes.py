@@ -14,6 +14,8 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     tags=["modes", "summary"],
 )
 class SummarizeModes(BaseTask):

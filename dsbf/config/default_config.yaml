@@ -33,6 +33,8 @@ task_groups: # Custom Plugin Loading
   - core
 #   - "dsbf/custom_plugins/example_plugin_domain/" # Example Cutom Plugin path
 
+task_selection:
+  include_domains: ["core"]
 
 tasks:
   compare_with_reference_dataset:

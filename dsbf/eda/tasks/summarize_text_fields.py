@@ -18,6 +18,8 @@ from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     tags=["text", "summary"],
 )
 class SummarizeTextFields(BaseTask):

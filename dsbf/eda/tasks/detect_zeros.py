@@ -16,6 +16,8 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     tags=["zeros", "sparsity"],
 )
 class DetectZeros(BaseTask):

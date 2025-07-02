@@ -15,6 +15,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="raw",
+    domain="core",
+    runtime_estimate="fast",
     tags=["redundancy", "null-equivalent"],
 )
 class DetectConstantColumns(BaseTask):

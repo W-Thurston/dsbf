@@ -12,6 +12,8 @@ from dsbf.eda.task_result import TaskResult
     description="Summarizes overall runtime and per-task execution totals.",
     profiling_depth="full",
     stage="any",
+    domain="core",
+    runtime_estimate="fast",
     tags=["diagnostic", "runtime", "logging"],
 )
 class LogResourceUsage(BaseTask):

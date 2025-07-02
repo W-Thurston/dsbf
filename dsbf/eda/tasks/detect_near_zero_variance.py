@@ -17,6 +17,8 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="modeling",
+    domain="core",
+    runtime_estimate="fast",
     tags=["numeric", "variance", "ml_readiness"],
 )
 class DetectNearZeroVariance(BaseTask):

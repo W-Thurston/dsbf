@@ -17,6 +17,8 @@ from dsbf.utils.backend import is_text_polars
     tags=["format", "regex", "validation", "anomaly"],
     profiling_depth="full",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
 )

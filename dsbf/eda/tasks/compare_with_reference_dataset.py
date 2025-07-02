@@ -19,6 +19,8 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="raw",
+    domain="core",
+    runtime_estimate="fast",
     tags=["schema", "drift", "comparison"],
 )
 class CompareWithReferenceDataset(BaseTask):

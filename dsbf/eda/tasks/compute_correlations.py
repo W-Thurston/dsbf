@@ -32,6 +32,8 @@ def cramers_v(x: pd.Series, y: pd.Series) -> float:
     depends_on=["infer_types"],
     profiling_depth="full",
     stage="cleaned",
+    domain="core",
+    runtime_estimate="moderate",
     tags=["numeric", "correlation"],
 )
 class ComputeCorrelations(BaseTask):

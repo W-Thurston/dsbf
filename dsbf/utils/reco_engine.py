@@ -5,7 +5,7 @@ from typing import Optional
 
 import yaml
 
-RECO_PATH = Path("dsbf/config/recommendation_library.yaml")
+RECO_PATH = Path("dsbf/static_metadata/recommendation_library.yaml")
 RECO_CACHE = None  # cache after load
 
 
