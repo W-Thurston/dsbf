@@ -24,6 +24,16 @@ engine:
     percent_numeric_for_model_ready: 0.7
     high_cardinality_threshold: 50
 
+
+# Uncomment and add paths to enable custom plugin loading.
+# Paths can be:
+#   - Local directories (e.g. "dsbf/custom_plugins/healthcare/")
+#   - Built-in groups (e.g. "core", "finance")
+task_groups: # Custom Plugin Loading
+  - core
+#   - "dsbf/custom_plugins/example_plugin_domain/" # Example Cutom Plugin path
+
+
 tasks:
   compare_with_reference_dataset:
     enabled: true

@@ -12,8 +12,7 @@ from dsbf.core.base_engine import BaseEngine
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
 from dsbf.eda.stage_inference import infer_stage
-from dsbf.eda.task_loader import load_all_tasks
-from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs
+from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs, load_task_group
 from dsbf.utils.data_loader import load_dataset
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
 from dsbf.utils.task_utils import instantiate_task
@@ -64,7 +63,11 @@ class ProfileEngine(BaseEngine):
         )
 
         # Load tasks into the global registry
-        load_all_tasks()
+        task_groups = self.config.get("task_groups", ["core"])
+        self._log(f"Loading task groups: {task_groups}", level="debug")
+
+        for group in task_groups:
+            load_task_group(group)
 
         # Infer stage
         self.inferred_stage = infer_stage(df, self.config)

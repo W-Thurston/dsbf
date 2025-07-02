@@ -10,6 +10,7 @@ from scipy.stats import median_abs_deviation, skew
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
+from dsbf.utils.task_result_validator import validate_task_result
 
 if TYPE_CHECKING:
     from dsbf.core.base_task import BaseTask
@@ -90,14 +91,16 @@ class AnalysisContext:
 
     def run_task(self, task: "BaseTask") -> TaskResult:
         task.set_input(self.data)
-
         task.context = self
-
         task.run()
-
         result = task.get_output()
+
         if result is None:
             raise RuntimeError(f"Task '{task.name}' did not produce a TaskResult.")
+
+        # Validate result before storing it
+        if not validate_task_result(result):
+            self._log(f"[{task.name}] ⚠️ TaskResult validation failed", "debug")
 
         self.set_result(task.name, result)
         return result
