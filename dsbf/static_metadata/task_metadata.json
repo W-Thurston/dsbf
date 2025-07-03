@@ -425,6 +425,21 @@
     "ml_impact_score": null,
     "experimental": false
   },
+  "schema_validation": {
+    "domain": "core",
+    "tags": [
+      "validation",
+      "schema",
+      "contract",
+      "power_user"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "full",
+    "summary": "Validates dataset against a declared schema: required columns, types, ranges, and categories.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
   "suggest_categorical_encoding": {
     "domain": "core",
     "tags": [

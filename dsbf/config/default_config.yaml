@@ -24,6 +24,26 @@ engine:
     percent_numeric_for_model_ready: 0.7
     high_cardinality_threshold: 50
 
+schema_validation:
+  enable_schema_validation: False  # Set to true to enable validation
+  fail_or_warn: "warn"  # Options: "fail" or "warn"
+  schema: # example schema based on Titanic dataset, feel free to modify
+    required_columns: ["survived", "pclass", "sex", "age", "fare"]
+    dtypes:
+      survived: int64
+      pclass: int64
+      sex: str
+      age: float64
+      fare: float64
+    value_ranges:
+      age:
+        min: 0
+        max: 100
+      fare:
+        min: 0
+    categories:
+      sex: ["male", "female"]
+      embarked: ["C", "Q", "S"]
 
 # Uncomment and add paths to enable custom plugin loading.
 # Paths can be:
