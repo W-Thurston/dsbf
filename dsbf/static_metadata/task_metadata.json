@@ -66,6 +66,20 @@
     "ml_impact_score": null,
     "experimental": false
   },
+  "data_quality_scorer": {
+    "domain": "core",
+    "tags": [
+      "scoring",
+      "summary",
+      "meta"
+    ],
+    "stage": "report",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Aggregates profiling results to generate an overall data health score and breakdown.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
   "detect_bimodal_distribution": {
     "domain": "core",
     "tags": [

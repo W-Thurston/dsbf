@@ -69,6 +69,14 @@ tasks:
     unique_count_ratio_threshold: 0.5
     minmax_numeric_tolerance: 0.01
 
+  data_quality_scorer:
+    weights:
+      completeness: 1
+      consistency: 1
+      distribution: 1
+      redundancy: 1
+      drift: 1
+
   detect_bimodal_distribution:
     bic_threshold: 10.0
 

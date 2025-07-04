@@ -11,8 +11,8 @@ from dsbf.eda.task_result import (
 
 @register_task(
     name="validate_plugin_coverage",
-    description="Checks that all loaded plugin files registered at least one task.",
     display_name="Plugin Coverage Check",
+    description="Checks that all loaded plugin files registered at least one task.",
     profiling_depth="basic",
     stage="any",
     domain="core",
