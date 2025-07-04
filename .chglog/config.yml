@@ -4,24 +4,22 @@ info:
   title: CHANGELOG
   repository_url: https://github.com/W-Thurston/dsbf
 options:
-  commits:
-    # filters:
-    #   Type:
-    #     - feat
-    #     - fix
-    #     - perf
-    #     - refactor
-  commit_groups:
-    # title_maps:
-    #   feat: Features
-    #   fix: Bug Fixes
-    #   perf: Performance Improvements
-    #   refactor: Code Refactoring
+  tag_filter_pattern: ^v
+  sort_tags:
+    method: semver
+    order: asc
+  commits: null
+  commit_groups: null
   header:
-    pattern: "^(\\w*)\\:\\s(.*)$"
+    pattern: ^(\w*)\:\s(.*)$
     pattern_maps:
-      - Type
-      - Subject
+    - Type
+    - Subject
   notes:
     keywords:
-      - BREAKING CHANGE
+    - BREAKING CHANGE
+  commit_filters:
+    exclude:
+    - '^Merge '
+templates:
+  tag: '## {{ .Tag.Name }} - {{ datetime "2006-01-02" .Tag.Date }}'
