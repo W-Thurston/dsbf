@@ -58,3 +58,57 @@ def clean_outputs_latest_after_tests():
             elif os.path.isdir(fpath):
                 shutil.rmtree(fpath, ignore_errors=True)
     shutil.rmtree(latest_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def minimal_valid_config():
+    """A minimal config with one valid task and strict mode on."""
+    return {
+        "tasks": {"dummy_task": {}},
+        "safety": {"strict_mode": True},
+        "metadata": {"profiling_depth": "basic"},
+    }
+
+
+@pytest.fixture
+def config_with_unknown_task():
+    """Includes a task that does not exist in the registry."""
+    return {
+        "tasks": {"not_a_real_task": {}},
+        "safety": {"strict_mode": False},
+    }
+
+
+@pytest.fixture
+def config_with_cycle():
+    """
+    Tasks 'a' and 'b' will be registered in the test with cyclic deps.
+    This config sets strict mode to true to test validation error.
+    """
+    return {
+        "tasks": {"a": {}, "b": {}},
+        "safety": {"strict_mode": True},
+    }
+
+
+@pytest.fixture
+def config_with_schema_validation():
+    """Enables schema validation with one required column."""
+    return {
+        "schema_validation": {
+            "enable_schema_validation": True,
+            "fail_or_warn": "warn",
+            "schema": {"required_columns": ["A"]},
+        },
+        "tasks": {"schema_validation": {}},
+        "metadata": {"dataset_name": "custom"},
+    }
+
+
+@pytest.fixture
+def config_with_strict_plugin_failure():
+    """Tests strict-mode behavior when plugin warnings are present."""
+    return {
+        "tasks": {},
+        "safety": {"strict_mode": True},
+    }

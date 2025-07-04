@@ -27,6 +27,9 @@ engine:
 resource_limits:
   max_memory_gb: 8 # Soft cap for warnings
 
+safety:
+  strict_mode: false # True: Trigger hard fail | False: Trigger warning
+
 schema_validation:
   enable_schema_validation: False  # Set to true to enable validation
   fail_or_warn: "warn"  # Options: "fail" or "warn"

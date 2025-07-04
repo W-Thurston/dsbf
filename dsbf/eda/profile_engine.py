@@ -19,6 +19,7 @@ from dsbf.eda.task_registry import (
     load_task_group,
     set_plugin_logger,
 )
+from dsbf.utils.config_validation import validate_config_and_graph
 from dsbf.utils.data_loader import load_dataset
 from dsbf.utils.data_utils import data_sampling
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
@@ -86,6 +87,21 @@ class ProfileEngine(BaseEngine):
         if plugin_warnings:
             self.context.set_metadata("plugin_warnings", plugin_warnings)
             self.run_metadata["plugin_warnings"] = plugin_warnings
+
+        # Config + DAG validation
+        self._log("Validating config, registry, and DAG...", level="info")
+        errors = validate_config_and_graph(self.config)
+        strict = self.config.get("safety", {}).get("strict_mode", False)
+        if errors:
+            for err in errors:
+                self._log(f"[CONFIG VALIDATION] {err}", level="info")
+            if strict:
+                raise ValueError(
+                    (
+                        "Strict mode is enabled — halting due to "
+                        f"{len(errors)} config/DAG issue(s)."
+                    )
+                )
 
         # Infer stage
         self.inferred_stage = infer_stage(df, self.config)
