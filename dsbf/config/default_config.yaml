@@ -24,6 +24,9 @@ engine:
     percent_numeric_for_model_ready: 0.7
     high_cardinality_threshold: 50
 
+resource_limits:
+  max_memory_gb: 8 # Soft cap for warnings
+
 schema_validation:
   enable_schema_validation: False  # Set to true to enable validation
   fail_or_warn: "warn"  # Options: "fail" or "warn"

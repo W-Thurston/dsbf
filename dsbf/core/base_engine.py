@@ -30,7 +30,13 @@ class BaseEngine(abc.ABC):
             "message_verbosity", "info"
         )
         self.verbosity_level = MESSAGE_VERBOSITY_LEVELS.get(self.message_verbosity, 1)
-        self.output_dir = self._create_output_dir()
+        output_dir_override = config.get("output_dir") or config.get(
+            "metadata", {}
+        ).get("output_dir")
+        if output_dir_override:
+            self.output_dir = output_dir_override
+        else:
+            self.output_dir = self._create_output_dir()
         self.timestamp = os.path.basename(self.output_dir)
         self.fig_path = os.path.join(self.output_dir, "figs")
         self.layout_name = config.get("metadata", {}).get("layout_name", "default")

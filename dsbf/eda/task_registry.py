@@ -13,6 +13,20 @@ from typing import Callable, Dict, List, Literal, Optional, Type
 
 from dsbf.core.base_task import BaseTask
 
+PLUGIN_LOG_FN = None
+
+
+def set_plugin_logger(log_fn):
+    global PLUGIN_LOG_FN
+    PLUGIN_LOG_FN = log_fn
+
+
+PLUGIN_WARNINGS: List[dict] = []
+
+
+def get_plugin_warnings():
+    return PLUGIN_WARNINGS
+
 
 # -- Metadata container --
 @dataclass
@@ -265,4 +279,16 @@ def _import_local_python_file(path: Path) -> None:
         new_tasks = task_names_after - task_names_before
 
         if not new_tasks:
-            print(f"[WARN] Plugin file '{path.name}' did not register any tasks.")
+            warning_msg = f"Plugin file '{path.name}' did not register any tasks."
+
+            PLUGIN_WARNINGS.append(
+                {
+                    "file": str(path),
+                    "message": warning_msg,
+                }
+            )
+
+            if PLUGIN_LOG_FN:
+                PLUGIN_LOG_FN(f"[PLUGIN WARNING] {warning_msg}", level="info")
+            else:
+                print(f"[WARN] {warning_msg}")

@@ -12,8 +12,15 @@ from dsbf.core.base_engine import BaseEngine
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
 from dsbf.eda.stage_inference import infer_stage
-from dsbf.eda.task_registry import TASK_REGISTRY, get_all_task_specs, load_task_group
+from dsbf.eda.task_registry import (
+    TASK_REGISTRY,
+    get_all_task_specs,
+    get_plugin_warnings,
+    load_task_group,
+    set_plugin_logger,
+)
 from dsbf.utils.data_loader import load_dataset
+from dsbf.utils.data_utils import data_sampling
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
 from dsbf.utils.task_utils import filter_tasks, instantiate_task
 
@@ -41,6 +48,10 @@ class ProfileEngine(BaseEngine):
         self._log("Starting profiling...", level="info")
 
         df = self._load_data()
+        df, sampling_info = data_sampling(df, self.config, log_fn=self._log)
+
+        if sampling_info:
+            self.run_metadata["sampling"] = sampling_info
 
         reference_path = self.config.get("engine", {}).get("reference_dataset_path")
         if reference_path and os.path.exists(reference_path):
@@ -66,8 +77,15 @@ class ProfileEngine(BaseEngine):
         task_groups = self.config.get("task_groups", ["core"])
         self._log(f"Loading task groups: {task_groups}", level="debug")
 
+        set_plugin_logger(self._log)
+
         for group in task_groups:
             load_task_group(group)
+
+        plugin_warnings = get_plugin_warnings()
+        if plugin_warnings:
+            self.context.set_metadata("plugin_warnings", plugin_warnings)
+            self.run_metadata["plugin_warnings"] = plugin_warnings
 
         # Infer stage
         self.inferred_stage = infer_stage(df, self.config)

@@ -2,7 +2,9 @@
 
 import json
 import os
+import warnings
 
+import pandas as pd
 import pytest
 
 from dsbf.core.context import AnalysisContext
@@ -178,3 +180,34 @@ def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
         assert isinstance(result, TaskResult)
         assert result.status == "success"
         assert isinstance(result.data, dict)
+
+
+def test_profile_engine_sampling_metadata(tmp_path):
+    df_path = tmp_path / "large_dataset.csv"
+    pd.DataFrame({"col": range(2_000_000)}).to_csv(df_path, index=False)
+
+    config = {
+        "metadata": {
+            "dataset_path": str(df_path),
+            "dataset_name": "test_dataset",
+            "dataset_source": "custom",
+            "output_dir": str(tmp_path),
+        },
+        "resource_limits": {
+            "enable_sampling": True,
+            "sample_threshold_rows": 1_000_000,
+            "sample_strategy": "head",
+        },
+    }
+
+    engine = ProfileEngine(config)
+    warnings.filterwarnings(
+        "ignore",
+        message="Attempting to set identical low and high .*",
+        category=UserWarning,
+    )
+    engine.run()
+
+    assert "sampling" in engine.run_metadata
+    assert engine.run_metadata["sampling"]["sampled_rows"] == 1_000_000
+    assert engine.run_metadata["sampling"]["original_rows"] == 2_000_000

@@ -1,8 +1,13 @@
 # dsbf/eda/task_result.py
 
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Protocol, TypedDict
+
+import numpy as np
+
+warnings.filterwarnings("ignore", category=UserWarning, module="seaborn.matrix")
 
 
 class WarningDetail(TypedDict):
@@ -48,6 +53,15 @@ class TaskResult:
     recommendation_tags: Optional[List[str]] = None  # e.g., ["drop", "transform"]
     error_metadata: Optional[Dict[str, str]] = None
 
+    def _sanitize(self, obj):
+        if isinstance(obj, np.generic):  # Catches np.int64, np.float64, etc.
+            return obj.item()  # Converts to native Python type
+        elif isinstance(obj, dict):
+            return {k: self._sanitize(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._sanitize(v) for v in obj]
+        return obj
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert the TaskResult to a dictionary representation,
@@ -59,10 +73,10 @@ class TaskResult:
         return {
             "name": self.name,
             "status": self.status,
-            "summary": self.summary,
-            "data": self.data,
+            "summary": self._sanitize(self.summary),
+            "data": self._sanitize(self.data),
             "plots": [str(p) for p in self.plots] if self.plots else None,
-            "metadata": self.metadata,
+            "metadata": self._sanitize(self.metadata),
             "ml_impact_score": self.ml_impact_score,
             "reliability_warnings": self.reliability_warnings,
             "recommendations": self.recommendations,
@@ -143,8 +157,8 @@ def log_reliability_warnings(task: LoggingTask, result: "TaskResult") -> None:
     if not result.reliability_warnings:
         return
 
-    for level, warnings in result.reliability_warnings.items():
-        for code, info in warnings.items():
+    for level, warning in result.reliability_warnings.items():
+        for code, info in warning.items():
             task._log(
                 f"[{task.name}] {level.upper()} — {code}: {info['description']}",
                 level="debug",

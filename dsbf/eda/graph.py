@@ -7,11 +7,13 @@ EDA tasks.  Includes support for dependency resolution, error handling, and DAG
 visualization.
 """
 
+import os
 import time
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 import networkx as nx
+import psutil
 
 from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
@@ -79,6 +81,13 @@ class ExecutionGraph:
         context.metadata.setdefault("task_durations", {})
         run_start = time.time()  # Global start time
 
+        # Initialize memory tracker
+        process = psutil.Process(os.getpid())
+        context.metadata.setdefault("task_memory", {})
+        limits = context.get_config("resource_limits") or {}
+        max_memory = limits.get("max_memory_gb")
+        max_runtime = limits.get("max_runtime_seconds")
+
         for task in self.tasks_sorted:
             deps = task.requires
             if deps:
@@ -116,11 +125,39 @@ class ExecutionGraph:
             # Try running the task
             start_time = time.time()
             try:
+                mem_before = process.memory_info().rss / 1e6  # in MB
                 _ = task.run(context)
+
+                mem_after = process.memory_info().rss / 1e6
+                peak_mem = max(mem_before, mem_after)
+                context.metadata["task_memory"][task.name] = peak_mem
+                if max_memory and peak_mem > max_memory * 1024:
+                    context._log(
+                        (
+                            f"[WARNING] Task '{task.name}' exceeded memory limit "
+                            f"({peak_mem:.1f} MB > {max_memory} GB)"
+                        ),
+                        level="info",
+                    )
+                    if task.result:
+                        task.result.metadata["memory_exceeded"] = True
 
                 # Collect and log task duration
                 duration = time.time() - start_time
                 context.metadata["task_durations"][task.name] = duration
+
+                if max_runtime and duration > max_runtime:
+                    context._log(
+                        (
+                            f"[WARNING] Task '{task.name}' exceeded runtime limit "
+                            f"({duration:.2f}s > {max_runtime}s)"
+                        ),
+                        level="info",
+                    )
+                    if task.result:
+                        task.result.metadata["runtime_exceeded"] = (
+                            duration > max_runtime
+                        )
 
                 if log_fn:
                     log_fn(
@@ -174,6 +211,13 @@ class ExecutionGraph:
 
         # Save results to context
         context.metadata["task_outcomes"] = task_outcomes
+
+        # Global memory peak summary
+        if context.metadata["task_memory"]:
+            context.metadata["peak_memory_mb"] = max(
+                context.metadata["task_memory"].values()
+            )
+
         return context.results
 
     def visualize(

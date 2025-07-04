@@ -1,7 +1,8 @@
-# tests/utils/test_report_utils.py
+# tests/test_utils/test_report_utils.py
 
 import json
 import os
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -98,3 +99,35 @@ def test_write_metadata_handles_missing_diagnostics(tmp_path):
 
     assert "diagnostic_results" in metadata
     assert metadata["diagnostic_results"] == {}  # should be empty, not missing
+
+
+def test_write_metadata_report_includes_memory_and_peak(tmp_path: Path):
+    df = pd.DataFrame()
+    context = AnalysisContext(data=df, output_dir=str(tmp_path))
+    context.run_metadata = {
+        "engine": "ProfileEngine",
+        "timestamp": "memory_test",
+    }
+    context.metadata = {
+        "task_memory": {
+            "TaskA": 42.0,
+            "TaskB": 87.5,
+        },
+        "peak_memory_mb": 87.5,
+        "task_durations": {"TaskA": 0.1, "TaskB": 0.2},
+        "run_stats": {"total_tasks": 2},
+    }
+    context.results = {
+        "TaskA": TaskResult(name="TaskA", status="success", summary={}),
+        "TaskB": TaskResult(name="TaskB", status="success", summary={}),
+    }
+    out_path = tmp_path / "metadata_report.json"
+    write_metadata_report(context, filename=out_path.name)
+
+    with out_path.open() as f:
+        report = json.load(f)
+
+    assert "task_memory" in report
+    assert "peak_memory_mb" in report
+    assert report["task_memory"]["TaskB"] == 87.5
+    assert report["peak_memory_mb"] == 87.5
