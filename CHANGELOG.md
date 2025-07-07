@@ -1,4 +1,12 @@
 
+<a name="v0.16.0"></a>
+## [v0.16.0](https://github.com/W-Thurston/dsbf/compare/v0.15.0...v0.16.0) (2025-07-06)
+
+### Feat
+
+* complete milestone — plot integration, task validation, test stability
+
+
 <a name="v0.15.0"></a>
 ## [v0.15.0](https://github.com/W-Thurston/dsbf/compare/v0.14.0...v0.15.0) (2025-07-04)
 
