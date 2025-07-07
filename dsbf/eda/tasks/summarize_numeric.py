@@ -8,11 +8,12 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
     display_name="Summarize Numeric Columns",
-    description="Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
+    description="Computes basic stats (mean, std, min, max, etc.) for numeric columns",
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="cleaned",
@@ -23,7 +24,6 @@ from dsbf.utils.backend import is_polars
 class SummarizeNumeric(BaseTask):
     """
     Produces extended summary statistics for all numeric columns.
-
     Statistics include:
     - Count, mean, std, min, max
     - Percentiles: 1%, 5%, 25%, 50%, 75%, 95%, 99%
@@ -32,8 +32,6 @@ class SummarizeNumeric(BaseTask):
 
     def run(self) -> None:
         try:
-
-            # ctx = self.context
             df: Any = self.input_data
 
             if is_polars(df):
@@ -44,15 +42,19 @@ class SummarizeNumeric(BaseTask):
 
             numeric_df = df.select_dtypes(include=np.number)
             extended_stats: Dict[str, Dict[str, Any]] = {}
+            plots: Dict[str, Dict[str, Any]] = {}
 
             for col in numeric_df.columns:
                 series = numeric_df[col].dropna()
+
+                if series.empty:
+                    self._log(f"{col} skipped: empty after dropna()", "debug")
+                    continue
 
                 # Compute descriptive stats with extended percentiles
                 desc = series.describe(
                     percentiles=[0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
                 )
-
                 # Custom variance check for near-constant features
                 variance = np.var(series)
                 near_zero_var = bool(variance < 1e-4)
@@ -73,7 +75,17 @@ class SummarizeNumeric(BaseTask):
                     "near_zero_variance": near_zero_var,
                 }
 
+                # Add visualizations
+                save_path = self.get_output_path(f"{col}_histogram.png")
+                static = PlotFactory.plot_histogram_static(series, save_path)["path"]
+                interactive = PlotFactory.plot_histogram_interactive(series)
+                plots[col] = {
+                    "static": static,
+                    "interactive": interactive,
+                }
+
             self._log(f"Summarized {len(extended_stats)} numeric columns", "debug")
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -83,6 +95,7 @@ class SummarizeNumeric(BaseTask):
                     )
                 },
                 data=extended_stats,
+                plots=plots,
             )
 
         except Exception as e:

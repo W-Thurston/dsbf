@@ -1,10 +1,13 @@
 # dsbf/eda/tasks/log_resource_usage.py
 
-from typing import Dict, cast
+from typing import Any, Dict, cast
+
+import pandas as pd
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -53,9 +56,36 @@ class LogResourceUsage(BaseTask):
         if mean_task_time and mean_task_time > 5:
             recommendations.append("Investigate tasks with long average runtime.")
 
+        plots: dict[str, dict[str, Any]] = {}
+
+        try:
+            if durations:
+                series = pd.Series(durations, name="Duration (s)").sort_values()
+
+                save_path = self.get_output_path("per_task_runtime.png")
+                static = PlotFactory.plot_barplot_static(
+                    series, save_path=save_path, title="Per-Task Runtime"
+                )
+                interactive = PlotFactory.plot_barplot_interactive(
+                    series,
+                    title="Per-Task Runtime",
+                    annotations=[f"{k}: {v:.2f}s" for k, v in series.items()],
+                )
+
+                plots["task_runtime"] = {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+
+        except Exception as e:
+            self._log(
+                f"[PlotFactory] Skipped resource usage barplot: {e}", level="debug"
+            )
+
         self.output = TaskResult(
             name=self.name,
             status="success",
             summary=summary,
             recommendations=recommendations,
+            plots=plots,
         )

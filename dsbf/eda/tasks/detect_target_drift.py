@@ -1,12 +1,14 @@
 # dsbf/eda/tasks/detect_target_drift.py
 
 import numpy as np
+import pandas as pd
 import polars as pl
 from scipy.stats import chisquare, entropy, ks_2samp
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -179,6 +181,33 @@ class DetectTargetDrift(BaseTask):
             )
             result.summary["column"] = self.get_task_param("target")
 
+        # Plot histogram of current target distribution
+        try:
+            cur_pd = current.to_pandas()
+            # ref_pd = reference.to_pandas()
+            # series_combined = pd.DataFrame({
+            #     "value": pd.concat([ref_pd, cur_pd], ignore_index=True),
+            #     "dataset": ["reference"] * len(ref_pd) + ["current"] * len(cur_pd)
+            # })
+
+            static_path = self.get_output_path("target_drift_histogram.png")
+            static = PlotFactory.plot_histogram_static(
+                cur_pd, save_path=static_path, title="Current Target Distribution"
+            )
+            interactive = PlotFactory.plot_histogram_interactive(
+                cur_pd,
+                title="Current Target Distribution",
+                annotations=[f"PSI: {psi:.3f}", f"KS p-value: {ks_p:.3f}"],
+            )
+            result.plots = {
+                "target_drift": {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+            }
+        except Exception as e:
+            self._log(f"[PlotFactory] Skipped numeric target plot: {e}", level="debug")
+
         return result
 
     def _evaluate_categorical_drift(
@@ -276,5 +305,36 @@ class DetectTargetDrift(BaseTask):
                 ),
             )
             result.summary["column"] = self.get_task_param("target")
+
+        # Plot barplot of current categorical target distribution
+        try:
+
+            cur_counts = pd.Series(
+                {k: current_freq[k] for k in categories}, name="current"
+            )
+            # ref_counts = pd.Series(
+            #     {k: reference_freq[k] for k in categories},
+            #     name="reference"
+            # )
+
+            save_path = self.get_output_path("target_drift_barplot.png")
+            static = PlotFactory.plot_barplot_static(
+                cur_counts, save_path=save_path, title="Current Target Distribution"
+            )
+            interactive = PlotFactory.plot_barplot_interactive(
+                cur_counts,
+                title="Current Target Distribution",
+                annotations=[f"TVD: {tvd:.3f}", f"Chi² p-value: {chi2_p:.3f}"],
+            )
+            result.plots = {
+                "target_drift": {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+            }
+        except Exception as e:
+            self._log(
+                f"[PlotFactory] Skipped categorical target plot: {e}", level="debug"
+            )
 
         return result

@@ -2,10 +2,13 @@
 
 from typing import Any, Dict
 
+import pandas as pd
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -54,6 +57,31 @@ class SummarizeValueCounts(BaseTask):
                 except Exception:
                     continue  # Skip columns that fail (e.g., unhashable types)
 
+            # Plotting
+            plots: dict[str, dict[str, Any]] = {}
+
+            for col, freqs in result.items():
+                if not freqs:
+                    continue
+                series_for_plot = pd.Series(freqs)
+                series_for_plot.name = col
+
+                top_value = series_for_plot.index[0]
+                top_count = series_for_plot.iloc[0]
+                annotations = [f"Top value: '{top_value}' ({top_count}x)"]
+
+                save_path = self.get_output_path(f"{col}_value_counts_barplot.png")
+                static_plot = PlotFactory.plot_barplot_static(
+                    series_for_plot, save_path
+                )
+                interactive_plot = PlotFactory.plot_barplot_interactive(series_for_plot)
+                interactive_plot["annotations"] = annotations
+
+                plots[col] = {
+                    "static": static_plot["path"],
+                    "interactive": interactive_plot,
+                }
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -61,6 +89,7 @@ class SummarizeValueCounts(BaseTask):
                     "message": (f"Computed value counts for {len(result)} columns.")
                 },
                 data=result,
+                plots=plots,
                 metadata={"top_k": top_k},
             )
 

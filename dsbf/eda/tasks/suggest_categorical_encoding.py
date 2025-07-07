@@ -1,13 +1,15 @@
 # dsbf/eda/tasks/suggest_categorical_encoding.py
 
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
+import pandas as pd
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -161,6 +163,38 @@ class SuggestCategoricalEncoding(BaseTask):
                 )
             }
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            try:
+                # Build barplot of cardinality across all categorical columns
+                card_series = pd.Series(
+                    {col: val["cardinality"] for col, val in suggestions.items()},
+                    name="Cardinality",
+                ).sort_values(ascending=False)
+
+                if not card_series.empty:
+                    save_path = self.get_output_path("categorical_cardinality.png")
+                    static = PlotFactory.plot_barplot_static(
+                        card_series,
+                        save_path=save_path,
+                        title="Categorical Cardinalities",
+                    )
+                    interactive = PlotFactory.plot_barplot_interactive(
+                        card_series,
+                        title="Categorical Cardinalities",
+                        annotations=["Used for encoding strategy suggestions"],
+                    )
+
+                    plots["cardinality_distribution"] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+            except Exception as e:
+                self._log(
+                    f"[PlotFactory] Skipped categorical cardinality plot: {e}",
+                    level="debug",
+                )
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -171,6 +205,7 @@ class SuggestCategoricalEncoding(BaseTask):
                     "Use target encoding for high-cardinality columns with"
                     " numeric correlation."
                 ],
+                plots=plots,
             )
 
             # Apply ML scoring to self.output

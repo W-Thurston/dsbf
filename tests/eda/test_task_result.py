@@ -11,7 +11,26 @@ def test_task_result_to_dict():
         status="success",
         summary={"message": "All good"},
         data={"key": "value"},
-        plots=[Path("/tmp/plot1.png"), Path("/tmp/plot2.png")],
+        plots={
+            "plot1": {
+                "static": Path("/tmp/plot1.png"),
+                "interactive": {
+                    "type": "bar",
+                    "config": {},
+                    "data": {},
+                    "annotations": [],
+                },
+            },
+            "plot2": {
+                "static": Path("/tmp/plot2.png"),
+                "interactive": {
+                    "type": "line",
+                    "config": {},
+                    "data": {},
+                    "annotations": [],
+                },
+            },
+        },
         metadata={"runtime": 1.23},
     )
 
@@ -21,7 +40,11 @@ def test_task_result_to_dict():
     assert result_dict["status"] == "success"
     assert result_dict["summary"] == {"message": "All good"}
     assert result_dict["data"] == {"key": "value"}
-    assert result_dict["plots"] == ["/tmp/plot1.png", "/tmp/plot2.png"]
+
+    assert isinstance(result_dict["plots"], dict)
+    assert result_dict["plots"]["plot1"]["static"] == "/tmp/plot1.png"
+    assert result_dict["plots"]["plot2"]["static"] == "/tmp/plot2.png"
+
     assert result_dict["metadata"]["runtime"] == 1.23
 
 

@@ -8,6 +8,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -47,21 +48,44 @@ class DetectOutliers(BaseTask):
             outlier_flags: Dict[str, bool] = {}
             outlier_rows: Dict[str, List[int]] = {}
 
+            plots: Dict[str, Dict[str, Any]] = {}
+
             numeric_df = df.select_dtypes(include=[np.number])
 
             for col in numeric_df.columns:
                 series = numeric_df[col].dropna()
+
+                # Skip plotting + computation if no valid values remain
+                if series.empty:
+                    self._log(f"{col} skipped: empty after dropna()", "debug")
+                    continue
+
                 q1 = series.quantile(0.25)
                 q3 = series.quantile(0.75)
                 iqr = q3 - q1
                 lower = q1 - 1.5 * iqr
                 upper = q3 + 1.5 * iqr
-                mask = (series < lower) | (series > upper)
-                indices = series[mask].index.tolist()
+                outlier_mask = (series < lower) | (series > upper)
+                indices = series[outlier_mask].index.tolist()
 
                 outlier_counts[col] = len(indices)
                 outlier_rows[col] = indices
                 outlier_flags[col] = len(indices) > flag_threshold * n_rows
+
+                # Plot boxplot
+                save_path = self.get_output_path(f"{col}_boxplot.png")
+                static = PlotFactory.plot_boxplot_static(series, save_path)["path"]
+                annotations = [
+                    f"IQR: {iqr:.3f}",
+                    f"Lower bound: {lower:.3f}",
+                    f"Upper bound: {upper:.3f}",
+                    f"Outliers detected: {outlier_mask.sum()}",
+                ]
+                interactive = PlotFactory.plot_boxplot_interactive(
+                    series, annotations=annotations
+                )
+
+                plots[col] = {"static": static, "interactive": interactive}
 
             flagged_cols = [col for col, flagged in outlier_flags.items() if flagged]
 
@@ -81,6 +105,7 @@ class DetectOutliers(BaseTask):
                     "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
                 },
+                plots=plots,
             )
 
             # Apply ML scoring to self.output

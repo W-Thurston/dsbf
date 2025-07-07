@@ -2,9 +2,12 @@
 
 from typing import Any, Dict, List
 
+import pandas as pd
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -180,6 +183,35 @@ class DataQualityScorer(BaseTask):
             int(round(weighted_sum / total_weight)) if total_weight > 0 else 0
         )
 
+        # --- PLOTTING ---
+        plots: dict[str, dict[str, Any]] = {}
+
+        try:
+            all_scores = dict(category_scores)
+            all_scores["overall"] = overall_score
+
+            series = pd.Series(all_scores).sort_index()
+
+            save_path = self.get_output_path("data_quality_score_breakdown.png")
+            static = PlotFactory.plot_barplot_static(
+                series, save_path=save_path, title="Data Quality Score Breakdown"
+            )
+            interactive = PlotFactory.plot_barplot_interactive(
+                series,
+                title="Data Quality Score Breakdown",
+                annotations=[f"{k.capitalize()}: {v}" for k, v in all_scores.items()],
+            )
+
+            plots["data_quality_scores"] = {
+                "static": static["path"],
+                "interactive": interactive,
+            }
+
+        except Exception as e:
+            self._log(
+                f"[PlotFactory] Skipped quality score barplot: {e}", level="debug"
+            )
+
         # --- FINAL RESULT OBJECT ---
         self.output = TaskResult(
             name=self.name,
@@ -195,4 +227,5 @@ class DataQualityScorer(BaseTask):
                 "scoring_method": "configurable weighted average",
                 "weights": weights,
             },
+            plots=plots,
         )

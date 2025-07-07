@@ -2,7 +2,10 @@
 
 import json
 
+import pytest
 
+
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_metadata_file_exists(clean_engine_run):
     report_path = clean_engine_run()
     metadata_path = report_path.parent / "metadata_report.json"
@@ -11,6 +14,7 @@ def test_metadata_file_exists(clean_engine_run):
     ), f"metadata_report.json was not created at {metadata_path}"
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_report_and_metadata_are_separate(clean_engine_run):
     report_path = clean_engine_run()
     metadata_path = report_path.parent / "metadata_report.json"

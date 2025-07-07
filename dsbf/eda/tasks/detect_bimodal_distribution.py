@@ -1,6 +1,6 @@
 # dsbf/eda/tasks/detect_bimodal_distribution.py
 
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
@@ -9,6 +9,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -74,6 +75,33 @@ class DetectBimodalDistribution(BaseTask):
                     self._log(f"Failed on column {col}: {e}", "debug")
                     continue
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            if self.context and self.context.output_dir:
+                for col in bimodal_flags:
+                    if col not in df.columns:
+                        continue
+                    series = df[col].dropna()
+                    if series.empty:
+                        continue
+
+                    save_path = self.get_output_path(f"{col}_bimodal_hist.png")
+                    static = PlotFactory.plot_histogram_static(series, save_path)
+
+                    interactive = PlotFactory.plot_histogram_interactive(
+                        series,
+                        annotations=(
+                            ["Possible bimodal distribution"]
+                            if bimodal_flags[col]
+                            else []
+                        ),
+                    )
+
+                    plots[col] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -87,6 +115,7 @@ class DetectBimodalDistribution(BaseTask):
                     "bimodal_flags": bimodal_flags,
                     "bic_scores": bic_scores,
                 },
+                plots=plots,
                 metadata={"bic_threshold": bic_threshold},
             )
 

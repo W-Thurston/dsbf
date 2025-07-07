@@ -44,7 +44,8 @@ ML_TASKS = [
 
 
 @pytest.mark.parametrize("task_name", ML_TASKS)
-def test_ml_impact_scoring_fields(task_name, test_data):
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+def test_ml_impact_scoring_fields(task_name, test_data, tmp_path):
     config = load_default_config()
 
     # Inject needed config if missing
@@ -53,7 +54,12 @@ def test_ml_impact_scoring_fields(task_name, test_data):
     config["tasks"][task_name]["target_column"] = "target"
     config["tasks"][task_name]["target"] = "target"
 
-    ctx = AnalysisContext(data=test_data, config=config, reference_data=test_data)
+    ctx = AnalysisContext(
+        data=test_data,
+        config=config,
+        reference_data=test_data,
+        output_dir=str(tmp_path),
+    )
 
     task = instantiate_task(task_name, config["tasks"].get(task_name, {}))
     task.context = ctx

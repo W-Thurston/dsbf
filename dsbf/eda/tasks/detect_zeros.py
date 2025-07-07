@@ -3,11 +3,13 @@
 from typing import Any, Dict
 
 import numpy as np
+import pandas as pd
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -54,6 +56,33 @@ class DetectZeros(BaseTask):
                 zero_percentages[col] = pct
                 zero_flags[col] = pct > flag_threshold
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            # Create a Series for plotting: index=columns, values=% zeros
+            percent_series = pd.Series(zero_percentages).sort_values(ascending=False)
+            percent_series.name = "% Zeros"
+
+            # Only plot if there are any non-zero entries
+            if not percent_series.empty and percent_series.max() > 0:
+                annotation = [f"Threshold: {flag_threshold:.0%}"]
+                save_path = self.get_output_path("zero_percentage_barplot.png")
+
+                static = PlotFactory.plot_barplot_static(
+                    percent_series,
+                    save_path=save_path,
+                    title="Zero Concentration by Column",
+                )
+                interactive = PlotFactory.plot_barplot_interactive(
+                    percent_series,
+                    title="Zero Concentration by Column",
+                    annotations=annotation,
+                )
+
+                plots["zero_percentages"] = {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -72,6 +101,7 @@ class DetectZeros(BaseTask):
                     "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
                 },
+                plots=plots,
             )
 
         except Exception as e:

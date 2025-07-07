@@ -2,13 +2,11 @@
 
 from typing import Any
 
-import matplotlib.pyplot as plt
-import missingno as msno
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -38,16 +36,26 @@ class MissingnessMatrix(BaseTask):
                 df = df.to_pandas()
 
             fig_path = self.get_output_path("missingness_matrix.png")
+            plot_result = PlotFactory.plot_missingness_matrix(
+                df,
+                save_path=fig_path,
+                title="Missingness Matrix",
+                annotations=[f"Total missing cells: {df.isnull().sum().sum()}"],
+            )
 
-            msno.matrix(df)
-            plt.savefig(fig_path, bbox_inches="tight")
-            plt.close()
+            plots = {
+                "missingness_matrix": {
+                    "static": plot_result["path"],
+                    "interactive": plot_result["plot_data"],
+                }
+            }
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={"message": ("Saved missingness matrix plot to disk.")},
                 data={"image_path": fig_path},
+                plots=plots,
             )
 
         except Exception as e:

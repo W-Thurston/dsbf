@@ -13,6 +13,7 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -109,8 +110,6 @@ class DetectCollinearFeatures(BaseTask):
                     ),
                 )
 
-            self.output = result
-
             # Apply ML scoring to self.output
             if (
                 self.get_engine_param("enable_impact_scoring", True)
@@ -132,6 +131,37 @@ class DetectCollinearFeatures(BaseTask):
                     ),
                 )
                 result.summary["column"] = top_col
+
+            try:
+                save_path = self.get_output_path("correlation_heatmap.png")
+                static = PlotFactory.plot_correlation_static(
+                    df, save_path=save_path, title="Correlation Matrix"
+                )
+                if vif_scores:
+                    top_vif_col = max(vif_scores.items(), key=lambda kv: kv[1])[0]
+                    top_vif_val = vif_scores[top_vif_col]
+                    annotation_str = f"Top VIF: {top_vif_col} ({top_vif_val:.2f})"
+                else:
+                    annotation_str = "No numeric features"
+
+                annotations = [annotation_str]
+                interactive = PlotFactory.plot_correlation_interactive(
+                    df,
+                    title="Correlation Matrix",
+                    annotations=annotations,
+                )
+                result.plots = {
+                    "correlation_matrix": {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+                }
+            except Exception as e:
+                self._log(
+                    f"[PlotFactory] Skipped correlation matrix plot: {e}", level="debug"
+                )
+
+            self.output = result
 
         except Exception as e:
             if self.context:

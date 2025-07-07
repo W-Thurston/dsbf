@@ -6,6 +6,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -59,6 +60,30 @@ class DetectHighCardinality(BaseTask):
                     except Exception:
                         continue
 
+            # Plotting
+            plots: dict[str, dict[str, Any]] = {}
+
+            if is_polars(df):
+                df = df.to_pandas()
+
+            for col in results:
+                series = df[col].dropna()
+                counts = series.value_counts().head(10)
+                counts.name = col
+
+                n_unique = results[col]
+                annotation = [f"Detected {n_unique} unique values"]
+
+                save_path = self.get_output_path(f"{col}_high_cardinality.png")
+                static = PlotFactory.plot_barplot_static(counts, save_path)
+                interactive = PlotFactory.plot_barplot_interactive(counts)
+                interactive["annotations"] = annotation
+
+                plots[col] = {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+
             # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
@@ -67,6 +92,7 @@ class DetectHighCardinality(BaseTask):
                     "message": (f"Detected {len(results)} high-cardinality column(s).")
                 },
                 data=results,
+                plots=plots,
                 metadata={"cardinality_threshold": cardinality_threshold},
             )
 

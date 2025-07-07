@@ -6,6 +6,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -41,16 +42,44 @@ class DetectSingleDominantValue(BaseTask):
             results: Dict[str, Dict[str, Any]] = {}
 
             for col in df.columns:
-                vc = df[col].value_counts(dropna=False, normalize=True)
-                if not vc.empty and vc.iloc[0] >= dominance_threshold:
+                series = df[col].dropna()
+                if series.empty:
+                    continue  # Skip all-null columns
+
+                top_val = series.value_counts().index[0]
+                proportion = series.value_counts(normalize=True).iloc[0]
+
+                if proportion >= dominance_threshold:
                     self._log(
-                        f"{col} has dominant value {vc.index[0]} at {vc.iloc[0]:.1%}",
+                        f"{col} has dominant value {top_val} at {proportion:.1%}",
                         "debug",
                     )
                     results[col] = {
-                        "dominant_value": vc.index[0],
-                        "proportion": float(vc.iloc[0]),
+                        "dominant_value": top_val,
+                        "proportion": float(proportion),
                     }
+
+            # Plotting
+            plots: dict[str, dict[str, Any]] = {}
+
+            for col in results:
+                series = df[col].dropna()
+                counts = series.value_counts()
+                counts.name = col
+
+                dominant_val = results[col]["dominant_value"]
+                dominance = results[col]["proportion"]
+                annotation = [f"Dominant value: '{dominant_val}' ({dominance:.1%})"]
+
+                save_path = self.get_output_path(f"{col}_dominant_barplot.png")
+                static = PlotFactory.plot_barplot_static(counts, save_path)
+                interactive = PlotFactory.plot_barplot_interactive(counts)
+                interactive["annotations"] = annotation
+
+                plots[col] = {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
 
             self.output = TaskResult(
                 name=self.name,
@@ -61,6 +90,7 @@ class DetectSingleDominantValue(BaseTask):
                     )
                 },
                 data=results,
+                plots=plots,
                 metadata={"dominance_threshold": dominance_threshold},
             )
 

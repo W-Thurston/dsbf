@@ -2,7 +2,10 @@
 
 import json
 
+import pytest
 
+
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_top_ml_risks_structure(clean_engine_run):
     report_path = clean_engine_run()
     assert report_path.exists()

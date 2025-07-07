@@ -1,5 +1,7 @@
 # tests/eda/test_tasks/test_detect_feature_drift.py
 
+from pathlib import Path
+
 import numpy as np
 import polars as pl
 
@@ -62,3 +64,41 @@ def test_skips_if_no_reference_data():
     assert result is not None
     assert result.status == "skipped"
     assert "reference" in result.summary.get("message", "").lower()
+
+
+def test_numeric_drift_generates_plot(tmp_path):
+    """
+    Confirm that numeric drift triggers plot generation for shared columns.
+    """
+    np.random.seed(42)
+    reference = pl.DataFrame({"feature": np.random.normal(0, 1, 1000)})
+    current = pl.DataFrame({"feature": np.random.normal(2, 1, 1000)})
+
+    ctx, task = make_ctx_and_task(
+        task_cls=DetectFeatureDrift,
+        current_df=current,
+        reference_df=reference,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.plots is not None
+    assert "feature" in result.plots
+
+    plot_entry = result.plots["feature"]
+
+    # Static plot
+    static_path = plot_entry["static"]
+    assert isinstance(static_path, Path)
+    assert static_path.exists()
+    assert static_path.suffix == ".png"
+
+    # Interactive structure
+    interactive = plot_entry["interactive"]
+    assert isinstance(interactive, dict)
+    assert interactive["type"] == "histogram"
+    assert "data" in interactive
+    assert "config" in interactive
+    assert "annotations" in interactive
+    assert any("PSI" in ann for ann in interactive["annotations"])

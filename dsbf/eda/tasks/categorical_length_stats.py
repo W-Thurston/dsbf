@@ -1,11 +1,14 @@
 # dsbf/eda/tasks/categorical_length_stats.py
 
+from typing import Any
+
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -89,6 +92,39 @@ class CategoricalLengthStats(BaseTask):
                             )
                             continue
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            for col in results:
+                # Compute character lengths
+                if is_polars(df):
+                    lengths_series = df.select(
+                        pl.col(col).cast(pl.Utf8).str.len_chars().alias("len")
+                    ).to_pandas()["len"]
+                else:
+                    lengths_series = df[col].dropna().str.len()
+
+                lengths_series.name = f"{col} length"
+                annotation = [
+                    f"Min: {results[col]['min_length']:.1f}, "
+                    f"Mean: {results[col]['mean_length']:.1f}, "
+                    f"Max: {results[col]['max_length']:.1f}"
+                ]
+
+                save_path = self.get_output_path(f"{col}_length_hist.png")
+                static = PlotFactory.plot_histogram_static(
+                    lengths_series, save_path, title=f"{col} — String Lengths"
+                )
+                interactive = PlotFactory.plot_histogram_interactive(
+                    lengths_series,
+                    title=f"{col} — String Lengths",
+                    annotations=annotation,
+                )
+
+                plots[col] = {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+
             # Final output
             self.output = TaskResult(
                 name=self.name,
@@ -99,6 +135,7 @@ class CategoricalLengthStats(BaseTask):
                     )
                 },
                 data=results,
+                plots=plots,
             )
 
         except Exception as e:

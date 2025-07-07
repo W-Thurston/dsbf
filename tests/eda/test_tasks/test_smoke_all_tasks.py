@@ -16,6 +16,7 @@ load_all_tasks()
 @pytest.mark.filterwarnings(
     "ignore:divide by zero encountered in scalar divide:RuntimeWarning"
 )
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_all_tasks_smoke(tmp_path):
     df = pl.DataFrame(
         {

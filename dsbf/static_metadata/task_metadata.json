@@ -543,7 +543,7 @@
     "stage": "cleaned",
     "runtime_estimate": "fast",
     "profiling_depth": "basic",
-    "summary": "Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
+    "summary": "Computes basic stats (mean, std, min, max, etc.) for numeric columns",
     "ml_impact_score": null,
     "experimental": false
   },

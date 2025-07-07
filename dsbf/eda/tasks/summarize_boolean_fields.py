@@ -1,9 +1,12 @@
 from typing import Any, Dict
 
+import pandas as pd
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 def is_boolean_column(series) -> bool:
@@ -52,11 +55,40 @@ class SummarizeBooleanFields(BaseTask):
                     "pct_null": null_count / total,
                 }
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            if self.context and self.context.output_dir:
+                for col in bool_cols:
+                    series = df[col]
+                    counts = series.value_counts(dropna=False).to_dict()
+                    count_series = pd.Series(counts)
+
+                    # Compose annotation
+                    total = len(series)
+                    annotations = []
+                    for k, v in counts.items():
+                        label = "Null" if pd.isna(k) else str(k)
+                        pct = v / total * 100
+                        annotations.append(f"{label}: {pct:.1f}%")
+
+                    # Static + interactive
+                    save_path = self.get_output_path(f"{col}_boolean_barplot.png")
+                    static = PlotFactory.plot_barplot_static(count_series, save_path)
+                    interactive = PlotFactory.plot_barplot_interactive(
+                        count_series, annotations=annotations
+                    )
+
+                    plots[col] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={"message": (f"Summarized {len(result)} boolean columns.")},
                 data=result,
+                plots=plots,
                 metadata={"bool_columns": bool_cols},
             )
 

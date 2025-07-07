@@ -2,13 +2,11 @@
 
 from typing import Any
 
-import matplotlib.pyplot as plt
-import missingno as msno
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -38,18 +36,31 @@ class MissingnessHeatmap(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            fig_path = self.get_output_path("missingness_heatmap.png")
+            missing_cells = df.isnull().sum().sum()
+            annotation = [f"Total missing cells: {missing_cells}"]
 
-            # Generate and save the heatmap
-            msno.heatmap(df)
-            plt.savefig(fig_path, bbox_inches="tight")
-            plt.close()
+            save_path = self.get_output_path("missingness_heatmap.png")
+
+            static = PlotFactory.plot_null_matrix_static(
+                df, save_path=save_path, title="Missingness Heatmap"
+            )
+            interactive = PlotFactory.plot_null_matrix_interactive(
+                df, title="Missingness Heatmap", annotations=annotation
+            )
+
+            plots = {
+                "missingness_heatmap": {
+                    "static": static["path"],
+                    "interactive": interactive,
+                }
+            }
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary={"message": ("Saved missingness heatmap to disk.")},
-                data={"image_path": fig_path},
+                summary={"message": f"Found {missing_cells} missing cells in dataset."},
+                data={"missing_cells": int(missing_cells)},
+                plots=plots,
             )
 
         except Exception as e:

@@ -2,10 +2,13 @@
 
 from typing import Any, Dict, List
 
+import pandas as pd
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -78,6 +81,33 @@ class SummarizeNulls(BaseTask):
                 },
                 metadata={"rows": n_rows},
             )
+
+            if self.context and self.context.output_dir and self.output.data:
+                null_series = pd.Series(self.output.data["null_counts"])
+                save_path = self.get_output_path("null_counts_barplot.png")
+
+                # Annotate fully null or high-null columns
+                annotations = []
+                for col, count in self.output.data["null_counts"].items():
+                    pct = self.output.data["null_percentages"].get(col, 0)
+                    if count == self.output.metadata["rows"]:
+                        annotations.append(f"{col} is fully null ({pct:.1%})")
+                    elif pct > 0.5:
+                        annotations.append(f"{col} has >50% missing ({pct:.1%})")
+
+                # Static and interactive plots
+                static = PlotFactory.plot_barplot_static(null_series, save_path)
+                interactive = PlotFactory.plot_barplot_interactive(
+                    null_series,
+                    annotations=annotations,
+                )
+
+                self.output.plots = {
+                    "null_counts": {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+                }
 
         except Exception as e:
             if self.context:

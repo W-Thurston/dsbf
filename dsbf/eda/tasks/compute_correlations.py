@@ -15,6 +15,7 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 
 
 def cramers_v(x: pd.Series, y: pd.Series) -> float:
@@ -76,7 +77,25 @@ class ComputeCorrelations(BaseTask):
 
             # --- Pandas numeric correlation ---
             if not is_polars(df):
-                numeric_cols = df.select_dtypes(include=np.number).columns
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if len(numeric_cols) < 2:
+                    self._log(
+                        "Fewer than 2 numeric columns —"
+                        " skipping correlation computation."
+                    )
+                    self.output = TaskResult(
+                        name=self.name,
+                        status="success",
+                        summary={
+                            "message": (
+                                "Not enough numeric columns to compute correlations."
+                            )
+                        },
+                        data={},
+                        plots={},
+                    )
+                    return
+                numeric_df = df[numeric_cols]
                 for i, col1 in enumerate(numeric_cols):
                     for j in range(i + 1, len(numeric_cols)):
                         col2 = numeric_cols[j]
@@ -206,6 +225,39 @@ class ComputeCorrelations(BaseTask):
                     description=description,
                     recommendation=recommendation,
                 )
+
+            # --- Optional visualization ---
+            if correlations:
+                corr_df = pd.DataFrame(
+                    index=df.columns, columns=df.columns, dtype=float
+                )
+                for pair, value in correlations.items():
+                    col1, col2 = pair.split("|")
+                    corr_df.loc[col1, col2] = value
+                    corr_df.loc[col2, col1] = value  # Ensure symmetry
+                    corr_df.loc[col1, col1] = 1.0
+                    corr_df.loc[col2, col2] = 1.0
+                corr_df.fillna(1.0, inplace=True)
+
+                # Convert to numeric-only (some non-numeric pairs may sneak in)
+                numeric_corr = corr_df.select_dtypes(include=[np.number])
+
+                save_path = self.get_output_path("correlation_heatmap.png")
+                static_plot = PlotFactory.plot_correlation_static(
+                    numeric_corr,
+                    save_path=save_path,
+                    title="Correlation Heatmap",
+                )
+                interactive_plot = PlotFactory.plot_correlation_interactive(
+                    numeric_corr,
+                    title="Correlation Heatmap",
+                )
+                result.plots = {
+                    "correlation_matrix": {
+                        "static": static_plot["path"],
+                        "interactive": interactive_plot,
+                    }
+                }
 
             log_reliability_warnings(self, result)
             self.output = result

@@ -1,5 +1,7 @@
 # dsbf/eda/tasks/detect_near_zero_variance.py
 
+from typing import Any
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import (
@@ -7,6 +9,7 @@ from dsbf.eda.task_result import (
     add_reliability_warning,
     make_failure_result,
 )
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -43,12 +46,37 @@ class DetectNearZeroVariance(BaseTask):
                 for _ in low_variance
             ]
 
+            plots: dict[str, dict[str, Any]] = {}
+
+            # Only run if context + output_dir + input is set
+            if self.context and self.context.output_dir and self.input_data is not None:
+                df = self.input_data
+                if hasattr(df, "to_pandas"):  # Polars support
+                    df = df.to_pandas()
+
+                for col in low_variance:
+                    if col not in df.columns:
+                        continue
+                    series = df[col].dropna()
+
+                    save_path = self.get_output_path(f"{col}_boxplot.png")
+                    static = PlotFactory.plot_boxplot_static(series, save_path)
+                    interactive = PlotFactory.plot_boxplot_interactive(
+                        series, annotations=[f"Variance = {low_variance[col]:.8f}"]
+                    )
+
+                    plots[col] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+
             result = TaskResult(
                 name=self.name,
                 status="success",
                 summary=summary,
                 data={"low_variance_columns": low_variance},
                 recommendations=recommendations,
+                plots=plots,
             )
 
             if flags["zero_variance_cols"]:

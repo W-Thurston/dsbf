@@ -45,7 +45,16 @@ def make_ctx_and_task(
     # Inject updated task config
     full_config.setdefault("tasks", {})[task_name] = task_config
 
-    ctx = AnalysisContext(data=current_df, config=full_config)
+    if global_overrides is None:
+        global_overrides = {}
+
+    output_dir = global_overrides.pop("output_dir", None)
+    ctx = AnalysisContext(
+        data=current_df,
+        config=full_config,
+        output_dir=output_dir,
+    )
+
     if reference_df is not None:
         ctx.reference_data = reference_df
 

@@ -12,6 +12,7 @@ from dsbf.eda.profile_engine import ProfileEngine
 from dsbf.eda.task_result import TaskResult
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -49,6 +50,7 @@ def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     assert os.path.exists("dsbf_run.json")
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -77,6 +79,7 @@ def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
     assert os.path.exists("dsbf_run.json")
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
     try:
         __import__("polars")
@@ -110,6 +113,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
     assert os.path.exists("dsbf_run.json")
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -151,6 +155,7 @@ def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
     assert metadata.get("visualize_dag") is True
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -182,6 +187,7 @@ def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
         assert isinstance(result.data, dict)
 
 
+@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_profile_engine_sampling_metadata(tmp_path):
     df_path = tmp_path / "large_dataset.csv"
     pd.DataFrame({"col": range(2_000_000)}).to_csv(df_path, index=False)

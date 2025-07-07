@@ -1,5 +1,7 @@
 # tests/eda/test_tasks/test_data_quality_scorer.py
 
+from pathlib import Path
+
 import pytest
 
 from dsbf.eda.task_result import TaskResult
@@ -8,13 +10,17 @@ from tests.helpers.context_utils import make_ctx_and_task
 
 
 @pytest.fixture
-def dummy_context():
+def dummy_context(tmp_path):
     """
     Simulate a realistic profiling context with synthetic task
     results and reliability flags.
     """
     # Use make_ctx_and_task to load default config
-    ctx, _ = make_ctx_and_task(DataQualityScorer, current_df=None)
+    ctx, _ = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
 
     # Inject reliability flags
     ctx.reliability_flags = {
@@ -64,9 +70,13 @@ def dummy_context():
     return ctx
 
 
-def test_data_quality_scorer_smoke(dummy_context):
+def test_data_quality_scorer_smoke(tmp_path, dummy_context):
     ctx = dummy_context
-    ctx, scorer = make_ctx_and_task(DataQualityScorer, current_df=None)
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     scorer.context = ctx
     scorer.context.results = dummy_context.results
     scorer.context.reliability_flags = dummy_context.reliability_flags
@@ -80,8 +90,12 @@ def test_data_quality_scorer_smoke(dummy_context):
     assert isinstance(result.recommendations, list)
 
 
-def test_category_breakdown_keys(dummy_context):
-    ctx, scorer = make_ctx_and_task(DataQualityScorer, current_df=None)
+def test_category_breakdown_keys(tmp_path, dummy_context):
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     scorer.context = ctx
     scorer.context.results = dummy_context.results
     scorer.context.reliability_flags = dummy_context.reliability_flags
@@ -91,8 +105,12 @@ def test_category_breakdown_keys(dummy_context):
     assert set(categories.keys()) == expected
 
 
-def test_recommendations_present(dummy_context):
-    ctx, scorer = make_ctx_and_task(DataQualityScorer, current_df=None)
+def test_recommendations_present(tmp_path, dummy_context):
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     scorer.context = ctx
     scorer.context.results = dummy_context.results
     scorer.context.reliability_flags = dummy_context.reliability_flags
@@ -104,8 +122,12 @@ def test_recommendations_present(dummy_context):
     assert "Reevaluate features with significant drift." in recs
 
 
-def test_category_weights_in_summary(dummy_context):
-    ctx, scorer = make_ctx_and_task(DataQualityScorer, current_df=None)
+def test_category_weights_in_summary(tmp_path, dummy_context):
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     scorer.context = ctx
     scorer.context.results = dummy_context.results
     scorer.context.reliability_flags = dummy_context.reliability_flags
@@ -117,7 +139,7 @@ def test_category_weights_in_summary(dummy_context):
     assert all(k in summary["category_weights"] for k in summary["category_breakdown"])
 
 
-def test_weight_override_affects_score(dummy_context):
+def test_weight_override_affects_score(tmp_path, dummy_context):
     custom_weights = {
         "completeness": 0.0,
         "consistency": 0.0,
@@ -129,6 +151,7 @@ def test_weight_override_affects_score(dummy_context):
         DataQualityScorer,
         current_df=None,
         task_overrides={"weights": custom_weights},
+        global_overrides={"output_dir": str(tmp_path)},
     )
     scorer.context = ctx
     scorer.context.results = dummy_context.results
@@ -138,3 +161,37 @@ def test_weight_override_affects_score(dummy_context):
     summary = scorer.get_output().summary
     # Drift penalty was 2 * 5 = 10 → 100 - 10 = 90
     assert summary["overall_score"] == 90
+
+
+def test_data_quality_score_plot_generated(tmp_path, dummy_context):
+    """
+    Check that a barplot is generated for overall + category scores.
+    """
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+
+    scorer.context = ctx
+    scorer.context.results = dummy_context.results
+    scorer.context.reliability_flags = dummy_context.reliability_flags
+
+    scorer.run()
+    result = scorer.get_output()
+
+    assert result.status == "success"
+    assert result.plots is not None
+    assert "data_quality_scores" in result.plots
+
+    plot_entry = result.plots["data_quality_scores"]
+    static_path = plot_entry["static"]
+    interactive = plot_entry["interactive"]
+
+    assert isinstance(static_path, Path)
+    assert static_path.exists()
+    assert static_path.suffix == ".png"
+
+    assert interactive["type"] == "bar"
+    assert "annotations" in interactive
+    assert any("overall" in a.lower() for a in interactive["annotations"])

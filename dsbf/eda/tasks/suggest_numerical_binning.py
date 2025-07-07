@@ -1,5 +1,7 @@
 # dsbf/eda/tasks/suggest_numerical_binning.py
 
+from typing import Any
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import (
@@ -8,6 +10,7 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
+from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -111,6 +114,48 @@ class SuggestNumericalBinning(BaseTask):
                         "Validate binning strategies with"
                         " visual plots or bootstrapping."
                     ),
+                )
+
+            plots: dict[str, dict[str, Any]] = {}
+
+            try:
+                for col in suggestions:
+                    # Safely get non-null values from either backend
+                    if is_polars(df):
+                        series = df[col].drop_nulls().to_pandas()
+                    else:
+                        series = df[col].dropna()
+
+                    if series.empty:
+                        continue
+
+                    strategy = suggestions[col]["suggested_binning"]
+                    skew_val = suggestions[col].get("skewness", 0.0)
+
+                    annotation = [f"Suggested: {strategy}", f"Skewness: {skew_val:.2f}"]
+
+                    save_path = self.get_output_path(f"{col}_binning_hist.png")
+                    static = PlotFactory.plot_histogram_static(
+                        series, save_path=save_path, title=f"{col} — Distribution"
+                    )
+                    interactive = PlotFactory.plot_histogram_interactive(
+                        series,
+                        title=f"{col} — Distribution",
+                        annotations=annotation,
+                    )
+
+                    plots[col] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+
+                if plots:
+                    result.plots = plots
+
+            except Exception as e:
+                self._log(
+                    f"[PlotFactory] Skipped one or more binning plots: {e}",
+                    level="debug",
                 )
 
             self.output = result

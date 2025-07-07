@@ -2,11 +2,13 @@
 
 from typing import Any, Dict
 
+import pandas as pd
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -157,12 +159,50 @@ class CompareWithReferenceDataset(BaseTask):
                     f"Type mismatches in: {', '.join(type_mismatches)}"
                 )
 
+            # Plotting
+            plots: dict[str, dict[str, Any]] = {}
+
+            try:
+                drift_counts = {
+                    col: sum(
+                        1 for k in data if k.startswith("flag_") and data[k] is True
+                    )
+                    for col, data in field_changes.items()
+                    if isinstance(data, dict)
+                }
+
+                drift_series = pd.Series(drift_counts, name="Drift Flags").sort_values(
+                    ascending=False
+                )
+
+                if not drift_series.empty:
+                    save_path = self.get_output_path("reference_drift_flags.png")
+                    static = PlotFactory.plot_barplot_static(
+                        drift_series,
+                        save_path=save_path,
+                        title="Reference Drift Flags per Column",
+                    )
+                    interactive = PlotFactory.plot_barplot_interactive(
+                        drift_series,
+                        title="Reference Drift Flags per Column",
+                        annotations=["Flags: missing %, unique count, min/max"],
+                    )
+
+                    plots["reference_drift_flags"] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
+
+            except Exception as e:
+                self._log(f"[PlotFactory] Skipped drift barplot: {e}", level="debug")
+
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary=summary,
                 data=summary,
                 recommendations=recommendations,
+                plots=plots,
             )
 
         except Exception as e:
