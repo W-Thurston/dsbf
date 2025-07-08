@@ -1,4 +1,8 @@
 
+<a name="v0.17.0"></a>
+## [v0.17.0](https://github.com/W-Thurston/dsbf/compare/v0.16.0...v0.17.0) (2025-07-08)
+
+
 <a name="v0.16.0"></a>
 ## [v0.16.0](https://github.com/W-Thurston/dsbf/compare/v0.15.0...v0.16.0) (2025-07-06)
 
