@@ -19,6 +19,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["bounds", "validation"],
+    expected_semantic_types=["continuous"],
 )
 class DetectOutOfBounds(BaseTask):
     """
@@ -28,6 +29,10 @@ class DetectOutOfBounds(BaseTask):
     def run(self) -> None:
         try:
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
 
             # Load shared reliability flags in case we
             #  want to supplement bounds in the future
@@ -71,7 +76,16 @@ class DetectOutOfBounds(BaseTask):
                     )
                 },
                 data=flagged,
-                metadata={"rule_columns": list(bounds.keys())},
+                metadata={
+                    "rule_columns": list(bounds.keys()),
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Validation",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

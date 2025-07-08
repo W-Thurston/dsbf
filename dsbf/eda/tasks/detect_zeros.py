@@ -21,6 +21,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["zeros", "sparsity"],
+    expected_semantic_types=["continuous"],
 )
 class DetectZeros(BaseTask):
     """
@@ -33,6 +34,10 @@ class DetectZeros(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
 
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.95)
 
@@ -100,6 +105,13 @@ class DetectZeros(BaseTask):
                 metadata={
                     "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Sparsity",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
                 },
                 plots=plots,
             )

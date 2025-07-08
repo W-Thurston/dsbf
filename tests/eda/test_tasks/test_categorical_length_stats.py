@@ -6,7 +6,7 @@ import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.categorical_length_stats import CategoricalLengthStats
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_categorical_length_stats_expected_output(tmp_path):
@@ -18,29 +18,45 @@ def test_categorical_length_stats_expected_output(tmp_path):
         {
             "name": ["Alice", "Bob", "Charlotte", None],
             "city": ["New York", "Paris", "Berlin", "New York"],
-            "age": [25, 30, 35, 40],  # Should be ignored
+            "age": [25, 30, 35, 40],  # Should be excluded
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=CategoricalLengthStats,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, CategoricalLengthStats)
 
-    # Validate TaskResult structure
-    assert result is not None, "Task did not produce an output"
+    assert result is not None
     assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert isinstance(result.data, dict)
-    assert "name" in result.data
-    assert "city" in result.data
-    assert "age" not in result.data  # Not a string-type column
 
-    # Validate content structure
+    # Core output checks
+    assert result.data is not None
+    assert len(result.data) >= 1
+    assert all("mean_length" in v for v in result.data.values())
+    assert "city" in result.data
+    assert "age" not in result.data
+
     for col_stats in result.data.values():
         assert {"mean_length", "max_length", "min_length"} <= set(col_stats.keys())
+
+    # Metadata checks
+    excluded = result.metadata.get("excluded_columns", {})
+    assert "age" in excluded
+
+    column_types = result.metadata.get("column_types", {})
+    assert "name" in column_types
+    assert column_types["name"]["analysis_intent_dtype"] in [
+        "categorical",
+        "text",
+        "id",
+    ]
+    assert column_types["name"]["inferred_dtype"] in ["object", "str"]
+    if column_types["name"]["analysis_intent_dtype"] == "id":
+        assert "name" not in result.data
 
 
 def test_categorical_length_stats_no_text_columns(tmp_path):
@@ -54,16 +70,17 @@ def test_categorical_length_stats_no_text_columns(tmp_path):
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=CategoricalLengthStats,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result = run_task_with_dependencies(ctx, CategoricalLengthStats)
 
     assert result.status == "success"
     assert result.data == {}
-    assert result.plots is None or result.plots == {}
+    assert result.plots == {}
+    assert result.metadata.get("column_types") is not None
 
 
 def test_categorical_length_stats_generates_plots(tmp_path):
@@ -75,23 +92,23 @@ def test_categorical_length_stats_generates_plots(tmp_path):
         {
             "product": ["apple", "banana", "cherry", None],
             "region": ["east", "west", "south", "east"],
-            "quantity": [100, 200, 300, 400],  # Should not be plotted
+            "quantity": [100, 200, 300, 400],
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=CategoricalLengthStats,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result = run_task_with_dependencies(ctx, CategoricalLengthStats)
 
     assert result.status == "success"
-    assert isinstance(result.plots, dict)
-    assert set(result.plots.keys()) == {"product", "region"}
+    assert result.plots is not None
+    assert set(result.plots.keys()).issubset({"product", "region"})
+    assert len(result.plots) >= 1
 
-    for col in ["product", "region"]:
-        plot_entry = result.plots[col]
+    for col, plot_entry in result.plots.items():
         assert isinstance(plot_entry["static"], Path)
         assert plot_entry["static"].suffix == ".png"
         assert plot_entry["static"].exists()

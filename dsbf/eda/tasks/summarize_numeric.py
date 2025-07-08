@@ -20,6 +20,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["numeric", "summary"],
+    expected_semantic_types=["continuous"],
 )
 class SummarizeNumeric(BaseTask):
     """
@@ -33,6 +34,10 @@ class SummarizeNumeric(BaseTask):
     def run(self) -> None:
         try:
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
 
             if is_polars(df):
                 df = df.to_pandas()
@@ -96,6 +101,15 @@ class SummarizeNumeric(BaseTask):
                 },
                 data=extended_stats,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "histogram",
+                    "recommended_section": "Summary",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

@@ -20,6 +20,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["modes", "summary"],
+    expected_semantic_types=["any"],
 )
 class SummarizeModes(BaseTask):
     """
@@ -35,6 +36,10 @@ class SummarizeModes(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             if is_polars(df):
                 result = {
@@ -90,6 +95,15 @@ class SummarizeModes(BaseTask):
                 summary={"message": (f"Computed mode(s) for {len(result)} columns.")},
                 data=result,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Summary",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

@@ -26,6 +26,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "encoding", "ml_readiness"],
+    expected_semantic_types=["categorical"],
 )
 class SuggestCategoricalEncoding(BaseTask):
     """
@@ -44,6 +45,11 @@ class SuggestCategoricalEncoding(BaseTask):
     def run(self) -> None:
         try:
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'categorical' column(s)", "debug")
+
             low_threshold = int(self.get_task_param("low_cardinality_threshold") or 10)
             high_threshold = int(
                 self.get_task_param("high_cardinality_threshold") or 50
@@ -206,6 +212,15 @@ class SuggestCategoricalEncoding(BaseTask):
                     " numeric correlation."
                 ],
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Encoding",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

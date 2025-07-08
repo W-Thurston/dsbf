@@ -59,6 +59,9 @@ class TaskSpec:
     outputs: Optional[List[str]] = None  # Expected outputs (e.g., ["TaskResult"])
 
     experimental: bool = False  # Marks the task as unstable or in testing
+    expected_semantic_types: Optional[List[str]] = (
+        None  # List of expected semantic types (e.g., ["continuous"])
+    )
 
 
 # -- Global registry --
@@ -80,6 +83,7 @@ def register_task(
     inputs: Optional[List[str]] = None,
     outputs: Optional[List[str]] = None,
     experimental: bool = False,
+    expected_semantic_types: Optional[List[str]] = None,
 ) -> Callable[[Type[BaseTask]], Type[BaseTask]]:
     """
     Decorator to register a BaseTask subclass in the global TASK_REGISTRY.
@@ -98,6 +102,8 @@ def register_task(
         inputs (Optional[List[str]]): Required input types or names.
         outputs (Optional[List[str]]): Outputs produced by this task.
         experimental (bool): Flag to mark unstable or test-only tasks.
+        expected_semantic_types (Optional[List[str]]): Expected semantic types for
+            column selection.
 
     Returns:
         Callable: Class decorator that registers the task into TASK_REGISTRY.
@@ -133,6 +139,7 @@ def register_task(
             inputs=inputs,
             outputs=outputs,
             experimental=experimental,
+            expected_semantic_types=expected_semantic_types,
         )
 
         TASK_REGISTRY[task_name] = spec
@@ -218,6 +225,7 @@ def describe_task(name: str) -> None:
     print(f"  Inputs:           {', '.join(spec.inputs or [])}")
     print(f"  Outputs:          {', '.join(spec.outputs or [])}")
     print(f"  Experimental:     {spec.experimental}")
+    print(f"  Expected Types:   {', '.join(spec.expected_semantic_types or [])}")
 
 
 def load_task_group(group: str) -> None:

@@ -26,6 +26,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="slow",
     tags=["multicollinearity", "numeric"],
+    expected_semantic_types=["continuous"],
 )
 class DetectCollinearFeatures(BaseTask):
     def run(self) -> None:
@@ -42,6 +43,9 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 df = df.to_pandas()
 
+            # Use semantic typing to select relevant columns
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
             numeric_df = df.select_dtypes(include=np.number).dropna()
 
             if numeric_df.shape[1] < 2:
@@ -77,7 +81,16 @@ class DetectCollinearFeatures(BaseTask):
                     "vif_scores": vif_scores,
                     "collinear_columns": collinear_columns,
                 },
-                metadata={"vif_threshold": vif_threshold},
+                metadata={
+                    "vif_threshold": vif_threshold,
+                    "suggested_viz_type": "heatmap",
+                    "recommended_section": "Multicollinearity",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
             # Reliability warnings

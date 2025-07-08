@@ -18,6 +18,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="moderate",
     tags=["leakage", "target"],
+    expected_semantic_types=["categorical", "continuous"],
 )
 class DetectDataLeakage(BaseTask):
     """
@@ -50,6 +51,13 @@ class DetectDataLeakage(BaseTask):
                 )
                 df = df.to_pandas()
 
+            # Use semantic typing to select relevant columns
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(
+                f"Processing {len(matched_cols)} ['categorical', 'continuous'] "
+                "column(s)",
+                "debug",
+            )
             numeric_df = df.select_dtypes(include="number")
             corr_matrix = numeric_df.corr().abs()
             leakage_pairs: Dict[str, float] = {}
@@ -72,7 +80,16 @@ class DetectDataLeakage(BaseTask):
                     )
                 },
                 data={"leakage_pairs": leakage_pairs},
-                metadata={"correlation_threshold": correlation_threshold},
+                metadata={
+                    "correlation_threshold": correlation_threshold,
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Target",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

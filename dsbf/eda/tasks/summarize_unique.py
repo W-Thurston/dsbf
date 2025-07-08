@@ -20,6 +20,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["uniqueness", "summary"],
+    expected_semantic_types=["any"],
 )
 class SummarizeUnique(BaseTask):
     """
@@ -33,6 +34,10 @@ class SummarizeUnique(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             if is_polars(df):
                 result: Dict[str, int] = {col: df[col].n_unique() for col in df.columns}
@@ -49,6 +54,15 @@ class SummarizeUnique(BaseTask):
                     "message": (f"Computed unique counts for {len(result)} columns.")
                 },
                 data=result,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Summary",
+                    "display_priority": "low",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Use the output data dict to build a plot

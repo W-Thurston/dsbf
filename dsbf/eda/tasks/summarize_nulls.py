@@ -20,6 +20,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["nulls", "missing"],
+    expected_semantic_types=["any"],
 )
 class SummarizeNulls(BaseTask):
     """
@@ -37,6 +38,10 @@ class SummarizeNulls(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             null_threshold = float(self.get_task_param("null_threshold") or 0.5)
 
@@ -79,7 +84,16 @@ class SummarizeNulls(BaseTask):
                     "high_null_columns": high_null_columns,
                     "null_patterns": pattern_counts,
                 },
-                metadata={"rows": n_rows},
+                metadata={
+                    "rows": n_rows,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Missingness",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             if self.context and self.context.output_dir and self.output.data:

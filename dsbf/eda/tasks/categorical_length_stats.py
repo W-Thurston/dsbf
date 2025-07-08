@@ -1,13 +1,13 @@
 # dsbf/eda/tasks/categorical_length_stats.py
 
-from typing import Any
+from typing import Any, Dict
 
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars, is_text_pandas, is_text_polars
+from dsbf.utils.backend import is_polars
 from dsbf.utils.plot_factory import PlotFactory
 
 
@@ -20,122 +20,112 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "text", "stats"],
+    expected_semantic_types=["categorical", "text"],
 )
 class CategoricalLengthStats(BaseTask):
     """
     Computes string length statistics (mean, min, max) for all text-like categorical
-        columns. Supports both Pandas and Polars DataFrames.
+    columns. Supports both Pandas and Polars DataFrames.
 
-    The task inspects each column and, if it's a recognized text-type column,
-        computes character length statistics for non-null values.
-
-    Produces a TaskResult containing the summary and per-column stats.
+    Produces a TaskResult with per-column summary stats and length histograms.
     """
 
     def run(self) -> None:
         """
-        Run the task on input_data and populate self.output as a TaskResult.
-        Sets status='success' if the task completes, 'failed' otherwise.
+        Run the task and populate self.output with a TaskResult.
+        This method filters for categorical/text-like columns based on semantic types,
+        computes string length stats for each, and attaches static/interactive plots.
         """
-
-        # ctx = self.context
         df = self.input_data
-        results = {}
+        results: Dict[str, Dict[str, float]] = {}
+        plots: Dict[str, Dict[str, Any]] = {}
 
         try:
-            if is_polars(df):
-                # Iterate over each column and check if it qualifies as text in Polars
-                for col in df.columns:
-                    if is_text_polars(df[col]):
-                        try:
-                            # Convert to Utf8 and compute character lengths
-                            lengths = df.select(
-                                pl.col(col).cast(pl.Utf8).str.len_chars().alias("len")
-                            ).drop_nulls()["len"]
+            # Select matching columns based on semantic type
+            matching_cols, excluded = self.get_columns_by_intent()
 
-                            # Skip empty results
-                            if lengths.len() > 0:
-                                results[col] = {
-                                    "mean_length": lengths.mean(),
-                                    "max_length": lengths.max(),
-                                    "min_length": lengths.min(),
-                                }
-                        except Exception as e:
-                            # Gracefully handle and continue on per-column errors
-                            self._log(
-                                (
-                                    f"[CategoricalLengthStats] Error in {col}"
-                                    f" (Polars): {e}"
-                                ),
-                                "debug",
-                            )
+            # Compute string length stats per column
+            for col in matching_cols:
+                try:
+                    if is_polars(df):
+                        lengths = df.select(
+                            pl.col(col).cast(pl.Utf8).str.len_chars().alias("len")
+                        ).drop_nulls()["len"]
+                        if lengths.len() == 0:
                             continue
-            else:
-                # Iterate over Pandas columns and check for text-type columns
-                for col in df.columns:
-                    if is_text_pandas(df[col]):
-                        try:
-                            lengths = df[col].dropna().str.len()
-                            if len(lengths) > 0:
-                                results[col] = {
-                                    "mean_length": lengths.mean(),
-                                    "max_length": lengths.max(),
-                                    "min_length": lengths.min(),
-                                }
-                        except Exception as e:
-                            self._log(
-                                (
-                                    f"[CategoricalLengthStats] Error in {col}"
-                                    f" (Pandas): {e}"
-                                ),
-                                "debug",
-                            )
+                        stats = {
+                            "mean_length": lengths.mean(),
+                            "max_length": lengths.max(),
+                            "min_length": lengths.min(),
+                        }
+                    else:
+                        lengths = df[col].dropna().str.len()
+                        if len(lengths) == 0:
                             continue
+                        stats = {
+                            "mean_length": lengths.mean(),
+                            "max_length": lengths.max(),
+                            "min_length": lengths.min(),
+                        }
 
-            plots: dict[str, dict[str, Any]] = {}
+                    results[col] = stats
 
-            for col in results:
-                # Compute character lengths
-                if is_polars(df):
-                    lengths_series = df.select(
-                        pl.col(col).cast(pl.Utf8).str.len_chars().alias("len")
-                    ).to_pandas()["len"]
-                else:
-                    lengths_series = df[col].dropna().str.len()
+                    # Generate histogram plots
+                    lengths_series = (
+                        lengths.to_pandas()
+                        if hasattr(lengths, "to_pandas")
+                        else lengths
+                    )
+                    lengths_series.name = f"{col} length"
 
-                lengths_series.name = f"{col} length"
-                annotation = [
-                    f"Min: {results[col]['min_length']:.1f}, "
-                    f"Mean: {results[col]['mean_length']:.1f}, "
-                    f"Max: {results[col]['max_length']:.1f}"
-                ]
+                    annotation = [
+                        f"Min: {stats['min_length']:.1f}, "
+                        f"Mean: {stats['mean_length']:.1f}, "
+                        f"Max: {stats['max_length']:.1f}"
+                    ]
 
-                save_path = self.get_output_path(f"{col}_length_hist.png")
-                static = PlotFactory.plot_histogram_static(
-                    lengths_series, save_path, title=f"{col} — String Lengths"
-                )
-                interactive = PlotFactory.plot_histogram_interactive(
-                    lengths_series,
-                    title=f"{col} — String Lengths",
-                    annotations=annotation,
-                )
+                    save_path = self.get_output_path(f"{col}_length_hist.png")
+                    static = PlotFactory.plot_histogram_static(
+                        lengths_series, save_path, title=f"{col} — String Lengths"
+                    )
+                    interactive = PlotFactory.plot_histogram_interactive(
+                        lengths_series,
+                        title=f"{col} — String Lengths",
+                        annotations=annotation,
+                    )
 
-                plots[col] = {
-                    "static": static["path"],
-                    "interactive": interactive,
-                }
+                    plots[col] = {
+                        "static": static["path"],
+                        "interactive": interactive,
+                    }
 
-            # Final output
+                except Exception as e:
+                    self._log(
+                        f"[CategoricalLengthStats] Error processing {col}: {e}",
+                        level="debug",
+                    )
+                    continue
+
+            # Assemble TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
                     "message": (
-                        f"Computed string length stats for {len(results)} columns."
+                        f"Computed string length stats for {len(results)} column(s)."
                     )
                 },
                 data=results,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "histogram",
+                    "recommended_section": "Text Summary",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matching_cols + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

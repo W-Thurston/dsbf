@@ -15,6 +15,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["preview"],
+    expected_semantic_types=["any"],
 )
 class SampleTail(BaseTask):
     """
@@ -26,6 +27,10 @@ class SampleTail(BaseTask):
         try:
             # ctx = self.context
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             n = self.get_task_param("n")
             if n is None:
@@ -48,7 +53,16 @@ class SampleTail(BaseTask):
                 status="success",
                 summary={"message": (f"Returned last {n} rows.")},
                 data={"sample": result},
-                metadata={"n": n},
+                metadata={
+                    "n": n,
+                    "suggested_viz_type": "table",
+                    "recommended_section": "Preview",
+                    "display_priority": "low",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

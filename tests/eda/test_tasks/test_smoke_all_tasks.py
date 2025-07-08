@@ -1,4 +1,4 @@
-# tests/test_tasks/test_smoke_all_tasks.py
+# tests/eda/test_tasks/test_smoke_all_tasks.py
 
 import polars as pl
 import pytest
@@ -8,6 +8,7 @@ from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.task_utils import is_diagnostic_task
+from tests.helpers.context_utils import run_task_with_dependencies
 
 load_all_tasks()
 
@@ -45,7 +46,7 @@ def test_all_tasks_smoke(tmp_path):
             context.metadata["task_durations"] = {"mock_task": 0.5}
             context.metadata["run_stats"] = {"duration": 0.5}
 
-        result = context.run_task(task)
+        result = run_task_with_dependencies(context, task.__class__)
 
         assert isinstance(result, TaskResult), f"{task_name} did not return TaskResult"
         assert result.status in (

@@ -22,6 +22,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     profiling_depth="basic",
     runtime_estimate="fast",
+    expected_semantic_types=["any"],
 )
 class DataQualityScorer(BaseTask):
     """
@@ -51,6 +52,10 @@ class DataQualityScorer(BaseTask):
 
         results: Dict[str, TaskResult] = self.context.results
         flags: Dict[str, Any] = self.context.reliability_flags or {}
+
+        # Use semantic typing to select relevant columns
+        matched_cols, excluded = self.get_columns_by_intent()
+        self._log(f"Processing {len(matched_cols)} column(s)", "debug")
 
         category_scores: Dict[str, int] = {}
         explanations: List[str] = []
@@ -226,6 +231,13 @@ class DataQualityScorer(BaseTask):
             metadata={
                 "scoring_method": "configurable weighted average",
                 "weights": weights,
+                "suggested_viz_type": "bar",
+                "recommended_section": "Summary",
+                "display_priority": "high",
+                "excluded_columns": excluded,
+                "column_types": self.get_column_type_info(
+                    matched_cols + list(excluded.keys())
+                ),
             },
             plots=plots,
         )

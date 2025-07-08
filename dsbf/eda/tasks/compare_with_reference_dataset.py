@@ -24,6 +24,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["schema", "drift", "comparison"],
+    expected_semantic_types=["any"],
 )
 class CompareWithReferenceDataset(BaseTask):
     """

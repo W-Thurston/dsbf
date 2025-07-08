@@ -23,11 +23,17 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["numeric", "variance", "ml_readiness"],
+    expected_semantic_types=["continuous"],
 )
 class DetectNearZeroVariance(BaseTask):
     def run(self) -> None:
         try:
             # df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
+
             threshold = float(self.get_task_param("threshold") or 1e-4)
 
             flags = self.ensure_reliability_flags()
@@ -51,6 +57,7 @@ class DetectNearZeroVariance(BaseTask):
             # Only run if context + output_dir + input is set
             if self.context and self.context.output_dir and self.input_data is not None:
                 df = self.input_data
+
                 if hasattr(df, "to_pandas"):  # Polars support
                     df = df.to_pandas()
 
@@ -77,6 +84,15 @@ class DetectNearZeroVariance(BaseTask):
                 data={"low_variance_columns": low_variance},
                 recommendations=recommendations,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "box",
+                    "recommended_section": "Variance",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             if flags["zero_variance_cols"]:

@@ -21,8 +21,9 @@ from dsbf.utils.backend import is_polars
     inputs=["dataframe"],
     outputs=["TaskResult"],
     experimental=False,
+    expected_semantic_types=["any"],
 )
-class SchemaValidationTask(BaseTask):
+class SchemaValidation(BaseTask):
     def run(self):
 
         ctx = self.context

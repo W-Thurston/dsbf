@@ -25,6 +25,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="slow",
     tags=["drift", "comparison"],
+    expected_semantic_types=["any"],
 )
 class DetectTargetDrift(BaseTask):
     """
@@ -103,6 +104,10 @@ class DetectTargetDrift(BaseTask):
     def _evaluate_numeric_drift(
         self, current: pl.Series, reference: pl.Series
     ) -> TaskResult:
+        # Use semantic typing to select relevant columns
+        matched_col, excluded = self.get_columns_by_intent()
+        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+
         psi_threshold = float(self.get_task_param("psi") or 0.1)
         ks_threshold = float(self.get_task_param("ks_pvalue") or 0.05)
 
@@ -161,6 +166,15 @@ class DetectTargetDrift(BaseTask):
                 "drift_rating": drift_severity,
             },
             recommendations=recommendations,
+            metadata={
+                "suggested_viz_type": "histogram",
+                "recommended_section": "Comparison",
+                "display_priority": "high",
+                "excluded_columns": excluded,
+                "column_types": self.get_column_type_info(
+                    matched_col + list(excluded.keys())
+                ),
+            },
         )
 
         # Apply ML scoring to self.output
@@ -213,6 +227,11 @@ class DetectTargetDrift(BaseTask):
     def _evaluate_categorical_drift(
         self, current: pl.Series, reference: pl.Series
     ) -> TaskResult:
+
+        # Use semantic typing to select relevant columns
+        matched_col, excluded = self.get_columns_by_intent()
+        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+
         chi2_threshold = float(self.get_task_param("chi2_pvalue") or 0.05)
         entropy_threshold = float(self.get_task_param("entropy_delta") or 0.5)
 
@@ -286,6 +305,15 @@ class DetectTargetDrift(BaseTask):
                 "drift_rating": drift_severity,
             },
             recommendations=recommendations,
+            metadata={
+                "suggested_viz_type": "bar",
+                "recommended_section": "Comparison",
+                "display_priority": "high",
+                "excluded_columns": excluded,
+                "column_types": self.get_column_type_info(
+                    matched_col + list(excluded.keys())
+                ),
+            },
         )
 
         # Apply ML scoring to self.output

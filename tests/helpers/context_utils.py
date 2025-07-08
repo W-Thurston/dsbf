@@ -4,6 +4,9 @@ from typing import Optional, Type
 
 from dsbf.config import load_default_config
 from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_registry import TASK_REGISTRY
+from dsbf.eda.task_result import TaskResult
+from dsbf.utils.task_utils import instantiate_task
 
 
 def make_ctx_and_task(
@@ -60,3 +63,46 @@ def make_ctx_and_task(
 
     task = task_cls(name=task_name, config=task_config)
     return ctx, task
+
+
+def run_task_with_dependencies(ctx: AnalysisContext, task_cls: Type) -> TaskResult:
+    """
+    Recursively run all declared dependencies (via TASK_REGISTRY) for the given task,
+    then run the task itself. Returns the final TaskResult.
+
+    Args:
+        ctx (AnalysisContext): The shared context for task execution.
+        task_cls (Type): The main task class to run after dependencies.
+
+    Returns:
+        TaskResult: Output of the final task.
+    """
+
+    registry_entry = next(
+        (spec for name, spec in TASK_REGISTRY.items() if spec.cls == task_cls),
+        None,
+    )
+    if not registry_entry:
+        raise ValueError(f"Task {task_cls.__name__} not found in registry.")
+
+    task_name = registry_entry.name
+    if not registry_entry:
+        raise ValueError(f"Task '{task_name}' not registered.")
+
+    visited = set()
+
+    def _run_recursive(name: str):
+        if name in visited:
+            return
+        visited.add(name)
+        deps = TASK_REGISTRY[name].depends_on or []
+        for dep_name in deps:
+            _run_recursive(dep_name)
+        dep_task = instantiate_task(name)
+        ctx.run_task(dep_task)  # uses full validation
+
+    _run_recursive(task_name)
+    result = ctx.get_result(task_name)
+    if result is None:
+        raise RuntimeError(f"Task '{task_name}' did not produce a TaskResult.")
+    return result

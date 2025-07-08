@@ -26,6 +26,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="moderate",
     tags=["info", "distribution"],
+    expected_semantic_types=["categorical", "text"],
 )
 class ComputeEntropy(BaseTask):
     """
@@ -36,6 +37,12 @@ class ComputeEntropy(BaseTask):
 
     def run(self) -> None:
         results: Dict[str, float] = {}
+
+        # Use semantic typing to select relevant columns
+        matched_cols, excluded = self.get_columns_by_intent()
+        self._log(
+            f"Processing {len(matched_cols)} ['categorical', 'text'] column(s)", "debug"
+        )
 
         try:
             df = self.input_data
@@ -94,6 +101,15 @@ class ComputeEntropy(BaseTask):
                 summary={"message": f"Computed entropy for {len(results)} columns."},
                 data=results,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Distributions",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
             if flags["low_row_count"]:

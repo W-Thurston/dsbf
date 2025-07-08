@@ -18,6 +18,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["missing", "structure", "viz"],
+    expected_semantic_types=["any"],
 )
 class MissingnessMatrix(BaseTask):
     """
@@ -31,6 +32,10 @@ class MissingnessMatrix(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             if is_polars(df):
                 df = df.to_pandas()
@@ -56,6 +61,15 @@ class MissingnessMatrix(BaseTask):
                 summary={"message": ("Saved missingness matrix plot to disk.")},
                 data={"image_path": fig_path},
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "matrix",
+                    "recommended_section": "Missingness",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

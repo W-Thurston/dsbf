@@ -20,6 +20,7 @@ from dsbf.eda.task_result import (
     runtime_estimate="fast",
     inputs=["context"],
     outputs=["TaskResult"],
+    expected_semantic_types=["any"],
 )
 class ValidatePluginCoverageTask(BaseTask):
     def run(self):

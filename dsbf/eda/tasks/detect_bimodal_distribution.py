@@ -21,6 +21,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="moderate",
     tags=["distribution", "outliers"],
+    expected_semantic_types=["continuous"],
 )
 class DetectBimodalDistribution(BaseTask):
     """
@@ -50,6 +51,10 @@ class DetectBimodalDistribution(BaseTask):
             bic_threshold = float(self.get_task_param("bic_threshold") or 10.0)
             bimodal_flags: Dict[str, bool] = {}
             bic_scores: Dict[str, Dict[str, float]] = {}
+
+            # Use semantic typing to select relevant columns
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
 
             numeric_df = df.select_dtypes(include=np.number)
 
@@ -116,7 +121,16 @@ class DetectBimodalDistribution(BaseTask):
                     "bic_scores": bic_scores,
                 },
                 plots=plots,
-                metadata={"bic_threshold": bic_threshold},
+                metadata={
+                    "bic_threshold": bic_threshold,
+                    "suggested_viz_type": "histogram",
+                    "recommended_section": "Distributions",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

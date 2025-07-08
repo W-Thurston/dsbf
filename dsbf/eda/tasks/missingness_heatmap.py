@@ -18,6 +18,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["missing", "viz"],
+    expected_semantic_types=["any"],
 )
 class MissingnessHeatmap(BaseTask):
     """
@@ -31,6 +32,10 @@ class MissingnessHeatmap(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             # Convert to pandas if needed
             if is_polars(df):
@@ -61,6 +66,15 @@ class MissingnessHeatmap(BaseTask):
                 summary={"message": f"Found {missing_cells} missing cells in dataset."},
                 data={"missing_cells": int(missing_cells)},
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "heatmap",
+                    "recommended_section": "Missingness",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

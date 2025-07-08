@@ -22,6 +22,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["text", "summary"],
+    expected_semantic_types=["text"],
 )
 class SummarizeTextFields(BaseTask):
     """
@@ -39,6 +40,11 @@ class SummarizeTextFields(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'text' column(s)", "debug")
+
             results: Dict[str, Dict[str, Any]] = {}
 
             if is_polars(df):
@@ -131,6 +137,15 @@ class SummarizeTextFields(BaseTask):
                 summary={"message": (f"Summarized {len(results)} text column(s).")},
                 data=results,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "histogram",
+                    "recommended_section": "Text Features",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

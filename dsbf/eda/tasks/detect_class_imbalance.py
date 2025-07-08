@@ -26,6 +26,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["target", "imbalance", "ml_readiness"],
+    expected_semantic_types=["continuous"],
 )
 class DetectClassImbalance(BaseTask):
     """
@@ -39,6 +40,10 @@ class DetectClassImbalance(BaseTask):
     def run(self) -> None:
         try:
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
 
             # Load parameters from config
             target_col: Optional[str] = self.get_task_param("target_column")
@@ -137,6 +142,15 @@ class DetectClassImbalance(BaseTask):
                 data=data,
                 recommendations=recommendations,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Target",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

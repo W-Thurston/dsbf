@@ -17,6 +17,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["overview", "summary"],
+    expected_semantic_types=["any"],
 )
 class SummarizeDatasetShape(BaseTask):
     """
@@ -31,6 +32,10 @@ class SummarizeDatasetShape(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             # Prefer Polars backend but fallback to Pandas
             if is_polars(df):
@@ -56,6 +61,15 @@ class SummarizeDatasetShape(BaseTask):
                     "num_columns": n_cols,
                     "null_cell_percentage": round(null_pct, 4),
                     "approx_memory_MB": round(mem_bytes / 1_048_576, 2),
+                },
+                metadata={
+                    "suggested_viz_type": "summary",
+                    "recommended_section": "Overview",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
                 },
             )
 

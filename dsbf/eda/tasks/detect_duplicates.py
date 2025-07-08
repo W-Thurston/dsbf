@@ -17,6 +17,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["duplicates", "rows"],
+    expected_semantic_types=["any"],
 )
 class DetectDuplicates(BaseTask):
     """
@@ -31,6 +32,11 @@ class DetectDuplicates(BaseTask):
         """
         try:
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+
             if is_polars(df):
                 # In Polars, duplicates = total rows - unique rows
                 total_rows = df.shape[0]
@@ -47,6 +53,15 @@ class DetectDuplicates(BaseTask):
                 status="success",
                 summary={"message": f"Found {duplicate_count} duplicate row(s)."},
                 data={"duplicate_count": duplicate_count},
+                metadata={
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Duplicates",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

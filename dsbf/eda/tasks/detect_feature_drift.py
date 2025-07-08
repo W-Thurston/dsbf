@@ -28,12 +28,18 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="slow",
     tags=["drift", "comparison"],
+    expected_semantic_types=["any"],
 )
 class DetectFeatureDrift(BaseTask):
     def run(self) -> None:
         try:
             ctx = self.context
             df: pl.DataFrame = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+
             reference: Optional[pl.DataFrame] = getattr(ctx, "reference_data", None)
             if reference is None:
                 self.output = TaskResult(
@@ -232,6 +238,15 @@ class DetectFeatureDrift(BaseTask):
                 data=drift_results,
                 recommendations=recommendations,
                 plots=plots,
+                metadata={
+                    "suggested_viz_type": "histogram",
+                    "recommended_section": "Comparison",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

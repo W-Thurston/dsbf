@@ -25,6 +25,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
+    expected_semantic_types=["any"],
 )
 class DetectMixedTypeColumns(BaseTask):
     """
@@ -39,6 +40,10 @@ class DetectMixedTypeColumns(BaseTask):
 
             # ctx = self.context
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             min_ratio = float(self.get_task_param("min_ratio") or 0.05)
             ignore_null_type = bool(self.get_task_param("ignore_null_type") or True)
@@ -116,6 +121,15 @@ class DetectMixedTypeColumns(BaseTask):
                 summary=summary,
                 data=details,
                 recommendations=recommendations,
+                metadata={
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Validation",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

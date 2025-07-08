@@ -3,7 +3,7 @@
 import polars as pl
 import pytest
 
-from dsbf.eda.tasks.schema_validation import SchemaValidationTask
+from dsbf.eda.tasks.schema_validation import SchemaValidation
 from tests.helpers.context_utils import make_ctx_and_task
 
 
@@ -23,7 +23,7 @@ def titanic_like_df():
 
 def test_validation_skipped(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {
@@ -39,7 +39,7 @@ def test_validation_skipped(titanic_like_df):
 
 def test_validation_passes_clean(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {
@@ -65,7 +65,7 @@ def test_validation_passes_clean(titanic_like_df):
 
 def test_missing_required_columns(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {
@@ -86,7 +86,7 @@ def test_missing_required_columns(titanic_like_df):
 
 def test_dtype_mismatch(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {
@@ -104,7 +104,7 @@ def test_dtype_mismatch(titanic_like_df):
 def test_value_out_of_range(titanic_like_df):
     df = titanic_like_df.with_columns(pl.col("age") + 200)
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=df,
         global_overrides={
             "schema_validation": {
@@ -122,7 +122,7 @@ def test_value_out_of_range(titanic_like_df):
 def test_unexpected_category(titanic_like_df):
     df = titanic_like_df.with_columns(pl.lit("other").alias("sex"))
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=df,
         global_overrides={
             "schema_validation": {
@@ -139,7 +139,7 @@ def test_unexpected_category(titanic_like_df):
 
 def test_fail_mode_blocks_pipeline(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {
@@ -156,7 +156,7 @@ def test_fail_mode_blocks_pipeline(titanic_like_df):
 
 def test_unknown_schema_key_warning(titanic_like_df):
     ctx, task = make_ctx_and_task(
-        task_cls=SchemaValidationTask,
+        task_cls=SchemaValidation,
         current_df=titanic_like_df,
         global_overrides={
             "schema_validation": {

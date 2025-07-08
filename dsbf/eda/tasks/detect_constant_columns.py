@@ -18,6 +18,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["redundancy", "null-equivalent"],
+    expected_semantic_types=["any"],
 )
 class DetectConstantColumns(BaseTask):
     """
@@ -37,6 +38,13 @@ class DetectConstantColumns(BaseTask):
             df = self.input_data
             constant_columns: List[str]
 
+            # Use semantic typing to select relevant columns
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(
+                f"Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
+                "debug",
+            )
+
             if is_polars(df):
                 # Use Polars' n_unique per column
                 constant_columns = [
@@ -54,7 +62,16 @@ class DetectConstantColumns(BaseTask):
                     "message": (f"Found {len(constant_columns)} constant column(s).")
                 },
                 data={"constant_columns": constant_columns},
-                metadata={"engine": "polars" if is_polars(df) else "pandas"},
+                metadata={
+                    "engine": "polars" if is_polars(df) else "pandas",
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Redundancy",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_cols + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

@@ -20,6 +20,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "summary"],
+    expected_semantic_types=["any"],
 )
 class SummarizeValueCounts(BaseTask):
     """
@@ -37,6 +38,10 @@ class SummarizeValueCounts(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             top_k = int(self.get_task_param("top_k") or 5)
 
@@ -90,7 +95,16 @@ class SummarizeValueCounts(BaseTask):
                 },
                 data=result,
                 plots=plots,
-                metadata={"top_k": top_k},
+                metadata={
+                    "top_k": top_k,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Summary",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

@@ -36,6 +36,7 @@ def cramers_v(x: pd.Series, y: pd.Series) -> float:
     domain="core",
     runtime_estimate="moderate",
     tags=["numeric", "correlation"],
+    expected_semantic_types=["continuous", "categorical"],
 )
 class ComputeCorrelations(BaseTask):
     def run(self) -> None:
@@ -258,6 +259,15 @@ class ComputeCorrelations(BaseTask):
                         "interactive": interactive_plot,
                     }
                 }
+
+            result.metadata.update(
+                {
+                    "suggested_viz_type": "heatmap",
+                    "recommended_section": "Correlations",
+                    "display_priority": "medium",
+                    "column_types": self.get_column_type_info(list(df.columns)),
+                }
+            )
 
             log_reliability_warnings(self, result)
             self.output = result

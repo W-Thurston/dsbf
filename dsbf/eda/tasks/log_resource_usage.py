@@ -18,9 +18,15 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["diagnostic", "runtime", "logging"],
+    expected_semantic_types=["any"],
 )
 class LogResourceUsage(BaseTask):
     def run(self) -> None:
+
+        # Use semantic typing to select relevant columns
+        matched_col, excluded = self.get_columns_by_intent()
+        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+
         if self.context is None:
             raise RuntimeError("Context is not set.")
 
@@ -88,4 +94,13 @@ class LogResourceUsage(BaseTask):
             summary=summary,
             recommendations=recommendations,
             plots=plots,
+            metadata={
+                "suggested_viz_type": "bar",
+                "recommended_section": "Diagnostics",
+                "display_priority": "low",
+                "excluded_columns": excluded,
+                "column_types": self.get_column_type_info(
+                    matched_col + list(excluded.keys())
+                ),
+            },
         )

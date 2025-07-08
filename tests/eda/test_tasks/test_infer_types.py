@@ -1,4 +1,4 @@
-# tests/test_tasks/test_infer_types.py
+# tests/eda/test_tasks/test_infer_types.py
 
 import pandas as pd
 import pytest
@@ -30,8 +30,9 @@ def test_infer_types_expanded_output():
     assert result.status == "success"
     assert result.data is not None
 
-    assert result.data["numeric"]["tag"] == "numeric"
-    assert result.data["binary"]["tag"] == "binary"
-    assert result.data["bool"]["tag"] == "boolean"
-    assert result.data["datetime_str"]["tag"] in ("likely_datetime_string", "datetime")
-    assert result.data["text"]["tag"] == "string"
+    assert result.data["numeric"]["inferred_dtype"] in ("int64", "float64")
+    assert result.data["numeric"]["analysis_intent_dtype"] == "continuous"
+    assert result.data["binary"]["analysis_intent_dtype"] == "categorical"
+    assert result.data["bool"]["analysis_intent_dtype"] == "categorical"
+    assert result.data["datetime_str"]["analysis_intent_dtype"] == "datetime"
+    assert result.data["text"]["analysis_intent_dtype"] in ("id", "text", "categorical")

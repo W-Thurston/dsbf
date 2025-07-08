@@ -7,6 +7,7 @@ from dsbf.config import load_default_config
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.task_utils import instantiate_task
+from tests.helpers.context_utils import run_task_with_dependencies
 
 
 # Sample small DataFrame for testing
@@ -66,8 +67,7 @@ def test_ml_impact_scoring_fields(task_name, test_data, tmp_path):
     task.set_input(test_data)
 
     try:
-        task.run()
-        result = task.get_output()
+        result = run_task_with_dependencies(ctx, task.__class__)
 
         assert isinstance(
             result, TaskResult

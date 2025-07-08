@@ -17,6 +17,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["redundancy", "duplicates"],
+    expected_semantic_types=["any"],
 )
 class DetectDuplicateColumns(BaseTask):
     """
@@ -42,6 +43,10 @@ class DetectDuplicateColumns(BaseTask):
                     "debug",
                 )
                 df = df.to_pandas()
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             duplicate_pairs: List[Tuple[str, str]] = []
             columns = df.columns.tolist()
@@ -71,6 +76,15 @@ class DetectDuplicateColumns(BaseTask):
                     )
                 },
                 data={"duplicate_column_pairs": duplicate_pairs},
+                metadata={
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Redundancy",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             if self.get_engine_param("enable_impact_scoring", True) and duplicate_pairs:

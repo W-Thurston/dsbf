@@ -2,7 +2,7 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
@@ -38,6 +38,15 @@ class BaseTask(ABC):
         pass
 
     def get_output_path(self, filename: str) -> str:
+        """
+        Construct the path to save a file (e.g., figure) inside the output directory.
+
+        Args:
+            filename (str): The name of the file to save.
+
+        Returns:
+            str: Full path to the output file.
+        """
         if not self.context or not self.context.output_dir:
             raise RuntimeError("Context or output_dir is not set in this task.")
         fig_dir = os.path.join(self.context.output_dir, "figs")
@@ -72,11 +81,21 @@ class BaseTask(ABC):
         """
         Safe logging wrapper that uses context._log() if available.
         Prevents Pylance 'Optional' warnings.
+
+        Args:
+            msg (str): The message to log.
+            level (str): Logging level (e.g., 'info', 'debug').
         """
         if self.context and hasattr(self.context, "_log"):
             self.context._log(msg, level)
 
     def ensure_reliability_flags(self) -> Dict:
+        """
+        Ensure global reliability flags are computed and cached in context.
+
+        Returns:
+            Dict: Dictionary of reliability flags.
+        """
         if self.context is None:
             raise RuntimeError("AnalysisContext is not set in this task.")
 
@@ -89,14 +108,102 @@ class BaseTask(ABC):
         self,
         result: TaskResult,
         score: float,
-        tags: list[str],
+        tags: List[str],
         recommendation: str,
     ) -> None:
         """
         Attach ML impact metadata to a TaskResult.
+
+        Args:
+            result (TaskResult): The task result object to modify.
+            score (float): ML impact score between 0.0 and 1.0.
+            tags (list[str]): Tags that describe the issue or remedy.
+            recommendation (str): User-facing recommendation or note.
         """
         result.ml_impact_score = score
         result.recommendation_tags = tags
         if result.recommendations is None:
             result.recommendations = []
         result.recommendations.append(recommendation)
+
+    def get_expected_types(self) -> List[str]:
+        """
+        Retrieve the expected semantic types from the task's registry entry.
+
+        Returns:
+            List[str]: List of expected analysis-intent dtypes (e.g., ['continuous'])
+        """
+        from dsbf.eda.task_registry import TASK_REGISTRY, _to_snake_case
+
+        snake_name = _to_snake_case(self.__class__.__name__)
+        spec = TASK_REGISTRY.get(snake_name)
+        return spec.expected_semantic_types or [] if spec else []
+
+    def get_columns_by_intent(
+        self, expected_types: Optional[List[str]] = None
+    ) -> Tuple[List[str], Dict[str, str]]:
+        """
+        Retrieve a list of columns whose analysis_intent_dtype matches the
+        expected types, and return a dict of excluded columns with their
+        inferred types for reporting.
+
+        Args:
+            expected_types (list[str] or None): List of allowed semantic types
+                for the task. If None, will fall back to the task's registered
+                expected_semantic_types.
+
+        Returns:
+            Tuple[list[str], Dict[str, str]]:
+                - List of matching column names
+                - Dict of excluded columns with their mismatched types
+        """
+        if not self.context:
+            return [], {}
+
+        semantic_types = self.context.get_metadata("semantic_types", {}) or {}
+        _ = self.context.get_metadata("inferred_dtypes", {}) or {}
+
+        if expected_types is None:
+            expected_types = self.get_expected_types()
+
+        matched = []
+        excluded = {}
+
+        for col, intent_type in semantic_types.items():
+            if intent_type in expected_types:
+                matched.append(col)
+            else:
+                excluded[col] = intent_type
+
+        return matched, excluded
+
+    def get_column_type_info(self, columns: List[str]) -> Dict[str, Dict[str, str]]:
+        """
+        Returns a dictionary mapping each column name to its inferred and
+         analysis-intent dtypes.
+
+        Args:
+            columns (List[str]): List of column names to include
+
+        Returns:
+            Dict[str, Dict[str, str]]: {
+                column_name: {
+                    "inferred_dtype": ...,
+                    "analysis_intent_dtype": ...
+                },
+                ...
+            }
+        """
+        if not self.context:
+            return {}
+
+        semantic_types = self.context.get_metadata("semantic_types", {}) or {}
+        inferred_types = self.context.get_metadata("inferred_dtypes", {}) or {}
+
+        return {
+            col: {
+                "inferred_dtype": inferred_types.get(col, "unknown"),
+                "analysis_intent_dtype": semantic_types.get(col, "unknown"),
+            }
+            for col in columns
+        }

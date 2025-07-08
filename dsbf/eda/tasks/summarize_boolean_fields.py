@@ -24,6 +24,7 @@ def is_boolean_column(series) -> bool:
     domain="core",
     runtime_estimate="fast",
     tags=["boolean", "summary"],
+    expected_semantic_types=["boolean"],
 )
 class SummarizeBooleanFields(BaseTask):
     """
@@ -36,6 +37,10 @@ class SummarizeBooleanFields(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'boolean' column(s)", "debug")
 
             if is_polars(df):
                 df = df.to_pandas()
@@ -89,7 +94,16 @@ class SummarizeBooleanFields(BaseTask):
                 summary={"message": (f"Summarized {len(result)} boolean columns.")},
                 data=result,
                 plots=plots,
-                metadata={"bool_columns": bool_cols},
+                metadata={
+                    "bool_columns": bool_cols,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Summary",
+                    "display_priority": "low",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

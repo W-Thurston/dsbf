@@ -12,7 +12,7 @@ from dsbf.utils.backend import is_polars
 
 @register_task(
     display_name="Infer Column Types",
-    description="Infers column types (e.g., categorical, numeric, text) heuristically.",
+    description="Infers both raw and analysis-intent dtypes for each column.",
     depends_on=[],
     profiling_depth="basic",
     stage="raw",
@@ -22,60 +22,102 @@ from dsbf.utils.backend import is_polars
 )
 class InferTypes(BaseTask):
     """
-    Infers data types for each column and assigns a smart tag
-    (e.g., binary, numeric, datetime, boolean, string, etc.).
+    Infers both the raw data type (e.g., 'int64', 'object') and the analysis-intent
+    semantic type (e.g., 'categorical', 'continuous', 'text', 'id', 'datetime')
+    for each column in the dataset.
+
+    The inferred types are used to guide downstream tasks such as visualizations,
+    statistical tests, or recommendations, while the analysis intent helps align
+    profiling behavior with how the data will be used, not just what it is.
     """
 
     def run(self) -> None:
+        """
+        Executes the type inference process on the input DataFrame.
+        Produces a mapping of column names to both raw and semantic types,
+        and stores these in the analysis context for use by downstream tasks.
+        """
         try:
-
-            # ctx = self.context
             df: Any = self.input_data
 
+            # Convert to Pandas for compatibility
             if is_polars(df):
                 df = df.to_pandas()
 
             results: Dict[str, Dict[str, str]] = {}
 
+            # Loop through each column to infer dtypes
             for col in df.columns:
-                dtype = str(df[col].dtype)
-                tag = "unknown"
+                inferred_dtype: str = str(df[col].dtype)
+                analysis_intent_dtype: str = "unknown"
 
-                if pd.api.types.is_bool_dtype(df[col]):
-                    tag = "boolean"
+                # Always record something, even for empty columns
+                try:
+                    series = df[col].dropna()
+                    nunique = series.nunique()
+                    total = series.size
+                    uniq_ratio = nunique / total if total else 0
 
-                elif pd.api.types.is_numeric_dtype(df[col]):
-                    unique_vals = df[col].dropna().unique()
-                    tag = "binary" if len(unique_vals) == 2 else "numeric"
-
-                elif pd.api.types.is_datetime64_any_dtype(df[col]):
-                    tag = "datetime"
-
-                elif pd.api.types.is_string_dtype(df[col]):
-                    # Try parsing to datetime to detect patterns like ISO strings
-                    try:
-                        parsed = pd.to_datetime(
-                            df[col], errors="coerce", format="ISO8601"
-                        )
-                        if parsed.notnull().mean() > 0.9:
-                            tag = "likely_datetime_string"
+                    # ---- Heuristic rules for semantic typing ----
+                    if pd.api.types.is_bool_dtype(series):
+                        analysis_intent_dtype = "categorical"
+                    elif pd.api.types.is_numeric_dtype(series):
+                        if nunique == 2:
+                            analysis_intent_dtype = "categorical"
+                        elif uniq_ratio < 0.05 and nunique <= 20:
+                            analysis_intent_dtype = "categorical"
                         else:
-                            tag = "string"
-                    except Exception:
-                        tag = "string"
+                            analysis_intent_dtype = "continuous"
+                    elif pd.api.types.is_datetime64_any_dtype(series):
+                        analysis_intent_dtype = "datetime"
+                    elif pd.api.types.is_string_dtype(series):
+                        try:
+                            _ = pd.to_datetime(series, errors="raise", utc=True)
+                            analysis_intent_dtype = "datetime"
+                        except Exception:
+                            if series.str.fullmatch(r"[A-Fa-f0-9\-]{8,}").mean() > 0.8:
+                                analysis_intent_dtype = "id"
+                            elif uniq_ratio > 0.9:
+                                analysis_intent_dtype = "id"
+                            elif series.str.len().mean() > 30:
+                                analysis_intent_dtype = "text"
+                            else:
+                                analysis_intent_dtype = "categorical"
+                except Exception:
+                    pass  # Still record defaults below
 
-                results[col] = {"dtype": dtype, "tag": tag}
+                # Ensure every column is included
+                results[col] = {
+                    "inferred_dtype": inferred_dtype,
+                    "analysis_intent_dtype": analysis_intent_dtype,
+                }
 
+            # ---- Store semantic type metadata in context ----
+            if self.context:
+                # Map: column → 'continuous' | 'categorical' | etc.
+                self.context.set_metadata(
+                    "semantic_types",
+                    {
+                        col: info["analysis_intent_dtype"]
+                        for col, info in results.items()
+                    },
+                )
+                # Map: column → pandas/polars dtype as string
+                self.context.set_metadata(
+                    "inferred_dtypes",
+                    {col: info["inferred_dtype"] for col, info in results.items()},
+                )
+
+            # ---- Build and return TaskResult ----
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary={
-                    "message": (f"Inferred types and tags for {len(results)} columns.")
-                },
+                summary={"message": f"Inferred types for {len(results)} columns."},
                 data=results,
             )
 
         except Exception as e:
+            # On failure, return a standardized failure result unless debugging
             if self.context:
                 raise
             self.output = make_failure_result(self.name, e)

@@ -370,7 +370,7 @@
     "stage": "raw",
     "runtime_estimate": "fast",
     "profiling_depth": "basic",
-    "summary": "Infers column types (e.g., categorical, numeric, text) heuristically.",
+    "summary": "Infers both raw and analysis-intent dtypes for each column.",
     "ml_impact_score": null,
     "experimental": false
   },

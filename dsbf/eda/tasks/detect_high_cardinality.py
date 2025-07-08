@@ -19,6 +19,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "cardinality"],
+    expected_semantic_types=["categorical"],
 )
 class DetectHighCardinality(BaseTask):
     """
@@ -34,6 +35,10 @@ class DetectHighCardinality(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'categorical' column(s)", "debug")
 
             cardinality_threshold = float(
                 self.get_task_param("cardinality_threshold") or 50
@@ -93,7 +98,16 @@ class DetectHighCardinality(BaseTask):
                 },
                 data=results,
                 plots=plots,
-                metadata={"cardinality_threshold": cardinality_threshold},
+                metadata={
+                    "cardinality_threshold": cardinality_threshold,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Cardinality",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

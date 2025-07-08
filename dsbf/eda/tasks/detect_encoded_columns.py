@@ -27,6 +27,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
+    expected_semantic_types=["text", "categorical"],
 )
 class DetectEncodedColumns(BaseTask):
     """
@@ -39,6 +40,13 @@ class DetectEncodedColumns(BaseTask):
         try:
             # ctx = self.context
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(
+                f"Processing {len(matched_col)} ['text', 'categorical'] column(s)",
+                "debug",
+            )
 
             min_entropy = float(self.get_task_param("min_entropy") or 4.5)
             length_std_threshold = float(
@@ -136,6 +144,15 @@ class DetectEncodedColumns(BaseTask):
                 summary=summary,
                 data=details,
                 recommendations=recommendations,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Format",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             # Apply ML scoring to self.output

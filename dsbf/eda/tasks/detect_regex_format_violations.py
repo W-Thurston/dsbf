@@ -21,6 +21,7 @@ from dsbf.utils.backend import is_text_polars
     runtime_estimate="fast",
     inputs=["dataframe"],
     outputs=["TaskResult"],
+    expected_semantic_types=["text"],
 )
 class DetectRegexFormatViolations(BaseTask):
     """
@@ -39,6 +40,10 @@ class DetectRegexFormatViolations(BaseTask):
 
             # ctx = self.context
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'text' column(s)", "debug")
 
             patterns = dict(self.get_task_param("custom_patterns") or {})
             max_violations = int(self.get_task_param("max_violations") or 5)
@@ -84,6 +89,15 @@ class DetectRegexFormatViolations(BaseTask):
                 },
                 data=data,
                 recommendations=recs,
+                metadata={
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Format",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
         except Exception as e:
             if self.context:

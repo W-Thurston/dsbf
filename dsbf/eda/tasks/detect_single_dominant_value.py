@@ -18,6 +18,7 @@ from dsbf.utils.plot_factory import PlotFactory
     domain="core",
     runtime_estimate="fast",
     tags=["redundancy", "skew"],
+    expected_semantic_types=["any"],
 )
 class DetectSingleDominantValue(BaseTask):
     """
@@ -31,6 +32,10 @@ class DetectSingleDominantValue(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} column(s)", "debug")
 
             dominance_threshold = float(
                 self.get_task_param("dominance_threshold") or 0.95
@@ -91,7 +96,16 @@ class DetectSingleDominantValue(BaseTask):
                 },
                 data=results,
                 plots=plots,
-                metadata={"dominance_threshold": dominance_threshold},
+                metadata={
+                    "dominance_threshold": dominance_threshold,
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Redundancy",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

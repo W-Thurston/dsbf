@@ -17,6 +17,7 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["metadata", "id", "index"],
+    expected_semantic_types=["id", "categorical", "text"],
 )
 class DetectIDColumns(BaseTask):
     """
@@ -29,6 +30,13 @@ class DetectIDColumns(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(
+                f"Processing {len(matched_col)} ['id', 'categorical', 'text']column(s)",
+                "debug",
+            )
 
             threshold_ratio = float(self.get_task_param("threshold_ratio") or 0.95)
 
@@ -72,7 +80,17 @@ class DetectIDColumns(BaseTask):
                 status="success",
                 summary={"message": (f"Detected {len(results)} likely ID column(s).")},
                 data=results,
-                metadata={"rows": n_rows, "threshold_ratio": threshold_ratio},
+                metadata={
+                    "rows": n_rows,
+                    "threshold_ratio": threshold_ratio,
+                    "suggested_viz_type": "None",
+                    "recommended_section": "Schema",
+                    "display_priority": "low",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

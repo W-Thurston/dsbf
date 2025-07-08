@@ -27,6 +27,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="fast",
     tags=["numeric", "transformation", "ml_readiness"],
+    expected_semantic_types=["continuous"],
 )
 class SuggestNumericalBinning(BaseTask):
     """
@@ -38,6 +39,11 @@ class SuggestNumericalBinning(BaseTask):
     def run(self) -> None:
         try:
             df = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
+
             flags = self.ensure_reliability_flags()
             skew_vals = flags.get("skew_vals", {})
             stds = flags.get("stds", {})
@@ -99,6 +105,15 @@ class SuggestNumericalBinning(BaseTask):
                     "Use quantile or equal-width binning for non-linear features. "
                     "Apply log transform to reduce high skew."
                 ],
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Transformations",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
+                },
             )
 
             if flags.get("low_row_count") and flags.get("high_skew"):

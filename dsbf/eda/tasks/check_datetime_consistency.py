@@ -7,11 +7,10 @@ import pandas as pd
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 
 @register_task(
-    display_name="Datetime Consistency Check",
+    display_name="Check Datetime Consistency",
     description="Checks for consistency in datetime columns across the dataset.",
     depends_on=["infer_types"],
     profiling_depth="standard",
@@ -19,64 +18,68 @@ from dsbf.utils.backend import is_polars
     domain="core",
     runtime_estimate="fast",
     tags=["datetime", "validation"],
+    expected_semantic_types=["datetime"],
 )
 class CheckDatetimeConsistency(BaseTask):
     """
-    Checks datetime columns for:
-        - Whether they can be parsed as dates (parseable)
-        - Whether they are monotonic (increasing or decreasing)
-        - How many nulls remain after parsing
-
-    Falls back to Pandas even for Polars inputs due to date parsing robustness.
+    Checks for datetime columns and flags rows where parsing
+    fails or yields inconsistent formats.
+    Intended to surface dirty or heterogeneous timestamp data.
     """
 
     def run(self) -> None:
         """
-        Execute the task using input_data (Polars or Pandas DataFrame).
-        Produces a TaskResult with per-column flags and metrics.
+        Execute the datetime consistency check.
+        For each datetime column, parse and check for nulls (parsing failures).
+        Reports number and percentage of inconsistent values.
         """
+        df = self.input_data
         results: Dict[str, Dict[str, Any]] = {}
 
         try:
+            # Step 1: Select datetime-like columns via semantic typing
+            datetime_cols, excluded = self.get_columns_by_intent()
 
-            # ctx = self.context
-            # Polars fallback — convert to Pandas for datetime ops
-            df = self.input_data
-            if is_polars(df):
-                self._log(
-                    "Falling back to Pandas for datetime parsing robustness", "debug"
-                )
-                df = df.to_pandas()
-
-            for col in df.columns:
+            for col in datetime_cols:
                 try:
-                    # Attempt to coerce column to datetime
-                    parsed = pd.to_datetime(df[col], errors="coerce", format="ISO8601")
-
-                    # Compute parseability and monotonicity
-                    is_monotonic = bool(
-                        parsed.is_monotonic_increasing or parsed.is_monotonic_decreasing
-                    )
-                    null_pct = parsed.isnull().mean()
+                    # Step 2: Attempt datetime parsing (fallback to pandas)
+                    parsed = pd.to_datetime(df[col], errors="coerce")
+                    total = len(parsed)
+                    nulls = parsed.isna().sum()
+                    consistency = 1.0 - (nulls / total) if total > 0 else 0.0
 
                     results[col] = {
-                        "parseable": bool(parsed.notnull().mean() > 0.95),
-                        "monotonic": is_monotonic,
-                        "null_pct_after_parse": null_pct,
+                        "num_values": total,
+                        "num_invalid": nulls,
+                        "percent_valid": round(100 * consistency, 2),
                     }
-                except Exception:
-                    # Gracefully skip columns that can’t be parsed
+
+                except Exception as e:
+                    self._log(
+                        f"[CheckDatetimeConsistency] Error in column {col}: {e}",
+                        "debug",
+                    )
                     continue
 
+            # Step 3: Package results in a TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
                     "message": (
-                        f"Checked datetime consistency for {len(results)} columns."
+                        f"Checked datetime consistency for {len(results)} column(s)."
                     )
                 },
                 data=results,
+                metadata={
+                    "suggested_viz_type": "bar",
+                    "recommended_section": "Validation",
+                    "display_priority": "medium",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        datetime_cols + list(excluded.keys())
+                    ),
+                },
             )
 
         except Exception as e:

@@ -21,6 +21,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     domain="core",
     runtime_estimate="moderate",
     tags=["outliers", "numeric"],
+    expected_semantic_types=["continuous"],
 )
 class DetectOutliers(BaseTask):
     """
@@ -33,6 +34,10 @@ class DetectOutliers(BaseTask):
 
             # ctx = self.context
             df: Any = self.input_data
+
+            # Use semantic typing to select relevant columns
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
 
             method = str(self.get_task_param("method") or "iqr")
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.01)
@@ -104,6 +109,13 @@ class DetectOutliers(BaseTask):
                     "method": method,
                     "threshold_pct": flag_threshold,
                     "total_rows": n_rows,
+                    "suggested_viz_type": "boxplot",
+                    "recommended_section": "Outliers",
+                    "display_priority": "high",
+                    "excluded_columns": excluded,
+                    "column_types": self.get_column_type_info(
+                        matched_col + list(excluded.keys())
+                    ),
                 },
                 plots=plots,
             )
