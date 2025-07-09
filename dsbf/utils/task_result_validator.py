@@ -1,6 +1,7 @@
 from dsbf.eda.task_result import TaskResult
 
 
+# TODO: Delete File.. Wait for pipeline confirmation
 def validate_task_result(result: TaskResult, raise_on_error: bool = False) -> bool:
     """
     Validate the structure and content of a TaskResult object.

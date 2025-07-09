@@ -1,7 +1,7 @@
 # tests/test_task_result_validation.py
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.task_result_validator import validate_task_result
+from dsbf.utils.task_utils import validate_task_result
 
 
 def test_valid_result_passes():

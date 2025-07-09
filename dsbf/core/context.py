@@ -10,12 +10,10 @@ from scipy.stats import median_abs_deviation, skew
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
-from dsbf.utils.task_result_validator import validate_task_result
+from dsbf.utils.logging_utils import DSBFLogger, setup_logger
 
 if TYPE_CHECKING:
     from dsbf.core.base_task import BaseTask
-
-MESSAGE_VERBOSITY_LEVELS = {"quiet": 0, "info": 1, "debug": 2}
 
 
 class AnalysisContext:
@@ -43,20 +41,22 @@ class AnalysisContext:
         self.stage: Optional[str] = None
         self.reliability_flags: Dict[str, Any] = {}
 
-    from dsbf.core.base_engine import (  # Import this if not already
-        MESSAGE_VERBOSITY_LEVELS,
-    )
-
     def _log(self, msg: str, level: str = "info") -> None:
         """
-        Log messages conditionally based on configured verbosity.
+        Structured logging for context operations using DSBF verbosity levels.
         """
-        verbosity_str = self.config.get("metadata", {}).get("message_verbosity", "info")
-        verbosity_level = MESSAGE_VERBOSITY_LEVELS.get(verbosity_str, 1)
-        msg_level = MESSAGE_VERBOSITY_LEVELS.get(level, 1)
 
-        if verbosity_level >= msg_level:
-            print(f"[AnalysisContext] {msg}")
+        verbosity = self.config.get("metadata", {}).get("message_verbosity", "info")
+        logger: DSBFLogger = setup_logger("dsbf.context", verbosity)
+
+        level_map = {
+            "warn": logger.warning,
+            "stage": logger.stage,
+            "info": logger.info2,
+            "debug": logger.debug,
+        }
+        log_fn = level_map.get(level, logger.info2)
+        log_fn(msg)
 
     def get_config(self, key: str, default=None):
         return self.config.get(key, default)
@@ -90,6 +90,8 @@ class AnalysisContext:
         )
 
     def run_task(self, task: "BaseTask") -> TaskResult:
+        from dsbf.utils.task_utils import validate_task_result
+
         task.set_input(self.data)
         task.context = self
         task.run()

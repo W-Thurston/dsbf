@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.logging_utils import DSBFLogger, setup_logger
 
 
 class BaseTask(ABC):
@@ -79,15 +80,25 @@ class BaseTask(ABC):
 
     def _log(self, msg: str, level: str = "info") -> None:
         """
-        Safe logging wrapper that uses context._log() if available.
-        Prevents Pylance 'Optional' warnings.
+        Structured logging that prefers the context logger if available.
 
         Args:
             msg (str): The message to log.
-            level (str): Logging level (e.g., 'info', 'debug').
+            level (str): One of "warn", "stage", "info", "debug".
         """
         if self.context and hasattr(self.context, "_log"):
             self.context._log(msg, level)
+        else:
+            # Fallback logger for standalone tasks
+            fallback: DSBFLogger = setup_logger("dsbf.task", "info")
+            level_map = {
+                "warn": fallback.warning,
+                "stage": fallback.stage,
+                "info": fallback.info2,
+                "debug": fallback.debug,
+            }
+            log_fn = level_map.get(level, fallback.info2)
+            log_fn(msg)
 
     def ensure_reliability_flags(self) -> Dict:
         """

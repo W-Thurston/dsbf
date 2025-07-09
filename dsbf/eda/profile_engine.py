@@ -46,7 +46,7 @@ class ProfileEngine(BaseEngine):
         return self.results
 
     def run(self):
-        self._log("Starting profiling...", level="info")
+        self._log("Starting profiling...", level="stage")
 
         df = self._load_data()
         df, sampling_info = data_sampling(df, self.config, log_fn=self._log)
@@ -89,12 +89,12 @@ class ProfileEngine(BaseEngine):
             self.run_metadata["plugin_warnings"] = plugin_warnings
 
         # Config + DAG validation
-        self._log("Validating config, registry, and DAG...", level="info")
+        self._log("Validating config, registry, and DAG...", level="stage")
         errors = validate_config_and_graph(self.config)
         strict = self.config.get("safety", {}).get("strict_mode", False)
         if errors:
             for err in errors:
-                self._log(f"[CONFIG VALIDATION] {err}", level="info")
+                self._log(f"[CONFIG VALIDATION] {err}", level="warn")
             if strict:
                 raise ValueError(
                     (
@@ -107,7 +107,7 @@ class ProfileEngine(BaseEngine):
         self.inferred_stage = infer_stage(df, self.config)
         self.context.stage = self.inferred_stage
         self.run_metadata["inferred_stage"] = self.inferred_stage
-        self._log(f"Inferred data stage: {self.inferred_stage}", level="info")
+        self._log(f"Inferred data stage: {self.inferred_stage}", level="stage")
 
         # Build graph and run tasks
         self._log("Building execution graph...", level="debug")
@@ -144,12 +144,12 @@ class ProfileEngine(BaseEngine):
         backend = self.config.get("engine", {}).get("backend", "pandas")
 
         if dataset_path and os.path.exists(dataset_path):
-            self._log(f"Loading dataset from: {dataset_path}", level="info")
+            self._log(f"Loading dataset from: {dataset_path}", level="stage")
             return pd.read_csv(dataset_path)
 
         self._log(
             f"Loading built-in dataset: {dataset_name} from {dataset_source}",
-            level="info",
+            level="stage",
         )
         return load_dataset(name=dataset_name, source=dataset_source, backend=backend)
 
@@ -191,7 +191,7 @@ class ProfileEngine(BaseEngine):
         if not allowed_names:
             self._log(
                 "[WARNING] No tasks matched filters — falling back to core domain",
-                "info",
+                "warn",
             )
             allowed_names = {
                 spec.name
@@ -210,6 +210,11 @@ class ProfileEngine(BaseEngine):
                 <= PROFILING_DEPTH[selected_depth]
             )
         ]
+        self._log(f"Applying filters: {criteria}", "debug")
+        self._log(
+            f"Selected {len(filtered_specs)} tasks after filtering and depth checks",
+            "debug",
+        )
 
         G = nx.DiGraph()
         for spec in filtered_specs:

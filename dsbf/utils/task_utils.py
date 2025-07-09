@@ -6,6 +6,9 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.logging_utils import setup_logger
+
+logger = setup_logger("dsbf.task_validator", "warn")
 
 load_all_tasks()
 
@@ -69,7 +72,7 @@ def validate_task_result(result: TaskResult, raise_on_error: bool = False) -> bo
         if raise_on_error:
             raise ValueError(msg)
         else:
-            print(f"[WARN] Invalid TaskResult: {msg}")
+            logger.warning(f"[TaskResultValidator] {msg}")
 
     if not result.name:
         fail("Missing 'name' field")

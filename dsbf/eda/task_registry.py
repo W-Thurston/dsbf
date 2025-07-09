@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Callable, Dict, List, Literal, Optional, Type
 
 from dsbf.core.base_task import BaseTask
+from dsbf.utils.logging_utils import setup_logger
+
+logger = setup_logger("dsbf.task_registry", "info")
 
 PLUGIN_LOG_FN = None
 
@@ -243,7 +246,7 @@ def load_task_group(group: str) -> None:
     try:
         if group_path.is_dir():
             if not group_path.exists():
-                print(f"[WARN] Task group path does not exist: {group_path}")
+                logger.warning(f"[Plugin Load] Path does not exist: {group_path}")
                 return
 
             # Load all Python files in the directory
@@ -256,7 +259,7 @@ def load_task_group(group: str) -> None:
             importlib.import_module(module_path)
 
     except Exception as e:
-        print(f"[ERROR] Failed to load task group '{group}': {e}")
+        logger.warning(f"[Plugin Load] Failed to load group '{group}': {e}")
         traceback.print_exc()
 
     # Automatically export full metadata after loading tasks
@@ -297,6 +300,6 @@ def _import_local_python_file(path: Path) -> None:
             )
 
             if PLUGIN_LOG_FN:
-                PLUGIN_LOG_FN(f"[PLUGIN WARNING] {warning_msg}", level="info")
+                PLUGIN_LOG_FN(f"[PLUGIN WARNING] {warning_msg}", level="warn")
             else:
-                print(f"[WARN] {warning_msg}")
+                logger.warning(f"[WARN] {warning_msg}")

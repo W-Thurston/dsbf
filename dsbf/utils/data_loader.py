@@ -14,6 +14,10 @@ import seaborn as sns
 from sklearn import datasets as sklearn_datasets
 from sklearn.datasets import fetch_openml
 
+from dsbf.utils.logging_utils import setup_logger
+
+logger = setup_logger("dsbf.data_loader", "warn")
+
 
 def load_dataset(
     name: str = "iris",
@@ -66,7 +70,7 @@ def load_dataset(
 
             return pl.from_pandas(df)
         except ImportError:
-            print("[DataLoader] Polars not installed. Falling back to pandas.")
+            logger.warning("[DataLoader] Polars not installed. Falling back to pandas.")
             return df
 
     return df

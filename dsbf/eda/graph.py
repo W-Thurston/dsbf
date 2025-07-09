@@ -95,16 +95,14 @@ class ExecutionGraph:
                 if log_fn:
                     log_fn(
                         (
-                            f"[DEBUG] Starting task: {task.name}"
-                            f" (depends on: {', '.join(dep_statuses)})"
+                            f"[{task.name}] Starting task (depends on: "
+                            f"{', '.join(dep_statuses)})"
                         ),
-                        "debug",
+                        "info",
                     )
             else:
                 if log_fn:
-                    log_fn(
-                        f"[DEBUG] Starting task: {task.name} (no dependencies)", "debug"
-                    )
+                    log_fn(f"[{task.name}] Starting task (no dependencies)", "info")
 
             failed_deps = [
                 dep for dep in deps if self.task_map[dep].status != "success"
@@ -114,11 +112,9 @@ class ExecutionGraph:
                 task_outcomes["skipped"].append(task.name)
                 if log_fn:
                     log_fn(
-                        (
-                            f"Skipping task '{task.name}'"
-                            f" due to failed dependency: {failed_deps}"
-                        ),
-                        "debug",
+                        f"[{task.name}] Skipped due to failed dependency: "
+                        f"{failed_deps}",
+                        "info",
                     )
                 continue
 
@@ -161,11 +157,9 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        (
-                            f"[DEBUG] Completed task: {task.name} in"
-                            f" {duration:.2f}s (status: {task.status})"
-                        ),
-                        "debug",
+                        f"[{task.name}] Completed in {duration:.2f}s"
+                        f" (status: {task.status})",
+                        "info",
                     )
                 task_outcomes["success"].append(task.name)
 
@@ -193,11 +187,9 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        (
-                            f"[ERROR] Task {task.name} failed after {duration:.2f}s:"
-                            f" {error_metadata['trace_summary']}"
-                        ),
-                        "debug",
+                        f"[{task.name}] Failed after {duration:.2f}s: "
+                        f"{error_metadata['trace_summary']}",
+                        "warn",
                     )
 
                 task_outcomes["failed"].append(task.name)

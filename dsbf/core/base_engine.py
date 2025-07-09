@@ -1,4 +1,5 @@
 # dsbf/core/base_engine.py
+
 """
 Base Engine module for DSBF.
 
@@ -6,6 +7,7 @@ Defines the abstract `BaseEngine` class used to implement modular data processin
 engines (e.g., ProfileEngine). Handles run tracking, output directory setup, logging,
 and metadata.
 """
+
 import abc
 import json
 import os
@@ -13,7 +15,7 @@ import platform
 import subprocess
 from datetime import datetime
 
-MESSAGE_VERBOSITY_LEVELS = {"quiet": 0, "info": 1, "debug": 2}
+from dsbf.utils.logging_utils import DSBFLogger, setup_logger
 
 
 class BaseEngine(abc.ABC):
@@ -29,7 +31,7 @@ class BaseEngine(abc.ABC):
         self.message_verbosity = config.get("metadata", {}).get(
             "message_verbosity", "info"
         )
-        self.verbosity_level = MESSAGE_VERBOSITY_LEVELS.get(self.message_verbosity, 1)
+
         output_dir_override = config.get("output_dir") or config.get(
             "metadata", {}
         ).get("output_dir")
@@ -41,6 +43,10 @@ class BaseEngine(abc.ABC):
         self.fig_path = os.path.join(self.output_dir, "figs")
         self.layout_name = config.get("metadata", {}).get("layout_name", "default")
 
+        self.logger: DSBFLogger = setup_logger(
+            "dsbf", self.message_verbosity, self.output_dir
+        )
+
         metadata_cfg = config.get("metadata", {})
         self.run_metadata = {
             "engine": self.__class__.__name__,
@@ -50,7 +56,7 @@ class BaseEngine(abc.ABC):
             "dataset_source": metadata_cfg.get("dataset_source", ""),
             "profiling_depth": metadata_cfg.get("profiling_depth", ""),
             "message_verbosity": metadata_cfg.get("message_verbosity", ""),
-            "visualize_dag": self.config.get("metadata", {}).get("visualize_dag"),
+            "visualize_dag": metadata_cfg.get("visualize_dag"),
         }
 
         # Append additional runtime environment metadata
@@ -64,9 +70,29 @@ class BaseEngine(abc.ABC):
             }
         )
 
-    def _log(self, msg, level="info"):
-        if self.verbosity_level >= MESSAGE_VERBOSITY_LEVELS[level]:
-            print(f"[{self.__class__.__name__}] {msg}")
+    def _log(self, msg: str, level: str = "info") -> None:
+        """
+        Verbosity-aware logger with indentation and Rich + file support.
+
+        Args:
+            msg (str): Message to log.
+            level (str): One of "warn", "stage", "info", "debug".
+        """
+        INDENTATION = {
+            "warn": "",
+            "stage": "",
+            "info": "  ",
+            "debug": "    ",
+        }
+
+        prefix = INDENTATION.get(level, "  ")
+        log_fn = {
+            "warn": self.logger.warning,
+            "stage": self.logger.stage,
+            "info": self.logger.info2,
+            "debug": self.logger.debug,
+        }.get(level, self.logger.info2)
+        log_fn(prefix + msg)
 
     def _create_output_dir(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

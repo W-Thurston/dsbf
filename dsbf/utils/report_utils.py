@@ -6,7 +6,10 @@ from typing import Any, Dict
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
+from dsbf.utils.logging_utils import setup_logger
 from dsbf.utils.task_utils import is_diagnostic_task
+
+logger = setup_logger("dsbf.report_utils", "info")
 
 
 def render_user_report(results: Dict[str, TaskResult], output_path: str) -> None:
@@ -95,4 +98,4 @@ def write_metadata_report(
         json.dump(metadata, f, indent=2)
 
     # Log result location for debugging
-    context._log(f"[write_metadata_report] Metadata written to: {output_path}", "info")
+    logger.info2(f"[write_metadata_report] Metadata written to: {output_path}")
