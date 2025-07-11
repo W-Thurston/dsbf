@@ -122,7 +122,7 @@ This avoids writing to disk unless you explicitly export results.
 
 ---
 
-## 🧾 Output Artifacts
+## Output Artifacts
 
 Each run creates a timestamped folder under `dsbf/outputs/`, containing:
 
@@ -138,7 +138,7 @@ Each run creates a timestamped folder under `dsbf/outputs/`, containing:
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 DSBF uses a YAML config file to control engine behavior, profiling depth, task selection, and output settings. See `default_config.yaml` for reference.
 
@@ -164,7 +164,7 @@ tasks:
 
 ---
 
-## 🔌 Plugin System
+## Plugin System
 
 You can extend DSBF by adding custom tasks in a directory and loading them via config:
 
