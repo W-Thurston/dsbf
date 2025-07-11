@@ -1,23 +1,23 @@
-# DSBF – Data Scientist’s Best Friend 🧠🔍
+# DSBF – Data Scientist’s Best Friend
 
 **DSBF** is a fast, modular, and extensible profiling engine for tabular datasets. It analyzes raw CSVs, Pandas, or Polars DataFrames and produces actionable data health reports to support EDA, model diagnostics, and data quality initiatives.
 
 ---
 
-## 🔑 Key Features
+## Key Features
 
-- ✅ Supports both **Pandas** and **Polars** backends
-- 📊 Generates structured reports with **task-level results**, **ML impact scores**, and **reliability warnings**
-- 📁 Saves all outputs (plots, logs, JSON) to a **timestamped directory**
-- 🧩 Plugin-ready with a registry and safety checks
-- 🧠 Infers data maturity stage (raw, cleaned, modeling) to tailor analysis
-- 🌐 Supports CLI, Python API, and Jupyter notebook workflows
-- 📦 Built-in task filtering by profiling depth, runtime estimate, domain, etc.
-- 🧮 DAG-based execution engine with visual output (optional)
+- Supports both **Pandas** and **Polars** backends
+- Generates structured reports with **task-level results**, **ML impact scores**, and **reliability warnings**
+- Saves all outputs (plots, logs, JSON) to a **timestamped directory**
+- Plugin-ready with a registry and safety checks
+- Infers data maturity stage (raw, cleaned, modeling) to tailor analysis
+- Supports CLI, Python API, and Jupyter notebook workflows
+- Built-in task filtering by profiling depth, runtime estimate, domain, etc.
+- DAG-based execution engine with visual output (optional)
 
 ---
 
-## 🚀 Installation
+## Installation
 
 ```bash
 # Clone the repo
@@ -178,7 +178,7 @@ Tasks must use the `@register_task` decorator and subclass `BaseTask`. Plugins a
 
 ---
 
-## 📚 Advanced Topics
+## Advanced Topics
 
 * **Execution DAG**: Tasks run in topological order with dependency resolution and failure recovery. See `graph.py` for details.
 * **Stage Inference**: DSBF auto-detects whether data is raw, cleaned, or modeling-ready to prioritize appropriate tasks.
@@ -187,7 +187,7 @@ Tasks must use the `@register_task` decorator and subclass `BaseTask`. Plugins a
 
 ---
 
-## 🛣️ Roadmap
+## Roadmap
 
 Planned features:
 
@@ -199,7 +199,7 @@ Planned features:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please:
 
@@ -212,7 +212,7 @@ All contributions must include docstrings, adhere to linting standards, and pass
 
 ---
 
-## 📄 License
+## License
 
 MIT License. See `LICENSE` for details.
 
