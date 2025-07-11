@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "dsbf"
 version = "0.19.0"
 description = "Data Scientist's Best Friend — transparent AutoML pipeline"
