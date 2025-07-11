@@ -1,38 +1,34 @@
-[project]
+[tool.poetry]
 name = "dsbf"
 version = "0.19.0"
 description = "Data Scientist's Best Friend — transparent AutoML pipeline"
 authors = ["Will Thurston <WilliamD.Thurston@gmail.com>"]
-license = "MIT"
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-  "pyyaml>=6.0.1",
-  "pandas>=2.3.0",
-  "pytest>=8.4.0",
-  "seaborn>=0.13.2",
-  "scikit-learn>=1.7.0",
-  "polars>=1.30.0",
-  "pyarrow>=20.0.0",
-  "networkx>=3.5",
-  "matplotlib>=3.10.3",
-  "graphviz>=0.21",
-  "pydot>=4.0.1",
-  "missingno>=0.5.2",
-  "statsmodels>=0.14.4",
-  "pytest-order>=1.3.0",
-  "psutil>=7.0.0",
-  "plotly>=6.2.0",
-  "rich>=14.0.0",
-  "typer>=0.16.0",
-]
+license = "MIT"
+packages = [{ include = "dsbf" }]
+homepage = "https://github.com/YOUR_USERNAME/dsbf"
+keywords = ["data-profiling", "eda", "ml", "automl"]
 
-[project.scripts]
-dsbf = "dsbf.interfaces.cli:app"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["dsbf"]
+[tool.poetry.dependencies]
+python = ">=3.12"
+pyyaml = "^6.0.1"
+pandas = "^2.3.0"
+pytest = "^8.4.0"
+seaborn = "^0.13.2"
+scikit-learn = "^1.7.0"
+polars = "^1.30.0"
+pyarrow = "^20.0.0"
+networkx = "^3.5"
+matplotlib = "^3.10.3"
+graphviz = "^0.21"
+pydot = "^4.0.1"
+missingno = "^0.5.2"
+statsmodels = "^0.14.4"
+pytest-order = "^1.3.0"
+psutil = "^7.0.0"
+plotly = "^6.2.0"
+rich = "^14.0.0"
+typer = "^0.16.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -40,6 +36,13 @@ black = "^25.1.0"
 flake8 = "^7.3.0"
 pre-commit = "^4.2.0"
 isort = "^6.0.1"
+
+[tool.poetry.scripts]
+dsbf = "dsbf.interfaces.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dsbf"]
 
 [build-system]
 requires = ["poetry-core"]
