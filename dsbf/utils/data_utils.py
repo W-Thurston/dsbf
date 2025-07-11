@@ -35,3 +35,18 @@ def data_sampling(df, config, log_fn=None):
         "sampled_rows": threshold,
         "strategy": strategy,
     }
+
+
+def is_integer_polars(series):
+    import polars as pl
+
+    return hasattr(series, "dtype") and series.dtype in {
+        pl.Int8,
+        pl.Int16,
+        pl.Int32,
+        pl.Int64,
+        pl.UInt8,
+        pl.UInt16,
+        pl.UInt32,
+        pl.UInt64,
+    }

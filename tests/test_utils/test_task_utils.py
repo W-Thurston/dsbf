@@ -5,8 +5,15 @@ import tempfile
 
 import pytest
 
-from dsbf.eda.task_registry import TASK_REGISTRY
-from dsbf.utils.task_utils import filter_tasks, is_diagnostic_task, write_task_metadata
+from dsbf.core.base_task import BaseTask
+from dsbf.eda.task_registry import TASK_REGISTRY, register_task
+from dsbf.eda.task_result import TaskResult
+from dsbf.utils.task_utils import (
+    filter_tasks,
+    is_diagnostic_task,
+    validate_task_result,
+    write_task_metadata,
+)
 
 
 def test_is_diagnostic_task():
@@ -72,3 +79,19 @@ def test_write_task_metadata_creates_valid_json():
         assert "domain" in first_task
         assert "runtime_estimate" in first_task
         assert "summary" in first_task
+
+
+@register_task(name="test_task", description="TEST", domain="test", tags=["foo"])
+class DummyTask(BaseTask):
+    def run(self):
+        self.output = TaskResult(name=self.name, summary={"message": "ok"})
+
+
+def test_validate_task_result_passes():
+    result = TaskResult(name="test_task", status="success")
+    assert validate_task_result(result)
+
+
+def test_validate_task_result_fails_on_score():
+    result = TaskResult(name="test_task", ml_impact_score=1.5)
+    assert not validate_task_result(result)

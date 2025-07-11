@@ -212,7 +212,7 @@
     "ml_impact_score": null,
     "experimental": false
   },
-  "detect_i_d_columns": {
+  "detect_id_columns": {
     "domain": "core",
     "tags": [
       "metadata",
@@ -597,6 +597,18 @@
     "runtime_estimate": "fast",
     "profiling_depth": "basic",
     "summary": "Checks that all loaded plugin files registered at least one task.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "test_task": {
+    "domain": "test",
+    "tags": [
+      "foo"
+    ],
+    "stage": null,
+    "runtime_estimate": null,
+    "profiling_depth": "full",
+    "summary": "TEST",
     "ml_impact_score": null,
     "experimental": false
   }

@@ -41,7 +41,8 @@ class ComputeEntropy(BaseTask):
         # Use semantic typing to select relevant columns
         matched_cols, excluded = self.get_columns_by_intent()
         self._log(
-            f"Processing {len(matched_cols)} ['categorical', 'text'] column(s)", "debug"
+            f"    Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
+            "debug",
         )
 
         try:
@@ -49,27 +50,32 @@ class ComputeEntropy(BaseTask):
             flags = self.ensure_reliability_flags()
 
             if is_polars(df):
-                for col in df.columns:
-                    if df[col].dtype == pl.Utf8:
-                        try:
-                            counts_df = df[col].value_counts()
-                            counts = counts_df["count"]
-                            total = counts.sum()
-                            probs = [count / total for count in counts]
-                            entropy_val = -sum(p * log2(p) for p in probs if p > 0)
-                            results[col] = entropy_val
-                        except Exception as e:
-                            self._log(
-                                f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
-                            )
-            else:
-                for col in df.select_dtypes(include="object").columns:
+                for col in matched_cols:
+                    if df[col].dtype != pl.Utf8:
+                        continue
                     try:
-                        counts = df[col].value_counts()
+                        counts_df = df[col].value_counts()
+                        counts = counts_df["count"]
+                        total = counts.sum()
+                        if total == 0:
+                            continue  # Skip all-null or empty frequency
+                        probs = [count / total for count in counts]
+                        entropy_val = -sum(p * log2(p) for p in probs if p > 0)
+                        results[col] = entropy_val
+                    except Exception as e:
+                        self._log(
+                            f"    [ComputeEntropy] Failed on column {col}: {e}", "debug"
+                        )
+            else:
+                for col in matched_cols:  # Only process matched columns
+                    try:
+                        counts = df[col].dropna().value_counts()
+                        if counts.sum() == 0:
+                            continue  # Skip empty frequency
                         results[col] = float(scipy_entropy(counts, base=2))
                     except Exception as e:
                         self._log(
-                            f"[ComputeEntropy] Failed on column {col}: {e}", "debug"
+                            f"    [ComputeEntropy] Failed on column {col}: {e}", "debug"
                         )
 
             plots: dict[str, dict[str, Any]] = {}
@@ -105,7 +111,7 @@ class ComputeEntropy(BaseTask):
                     "suggested_viz_type": "bar",
                     "recommended_section": "Distributions",
                     "display_priority": "medium",
-                    "excluded_columns": excluded,
+                    "excluded_columns": excluded,  # Now populated correctly
                     "column_types": self.get_column_type_info(
                         matched_cols + list(excluded.keys())
                     ),
@@ -132,4 +138,9 @@ class ComputeEntropy(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

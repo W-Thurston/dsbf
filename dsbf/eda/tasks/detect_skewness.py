@@ -43,7 +43,9 @@ class DetectSkewness(BaseTask):
 
             # Use semantic typing to select relevant columns
             numeric_cols, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(numeric_cols)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(numeric_cols)} 'continuous' column(s)", "debug"
+            )
 
             # Compute skewness for Polars DataFrame
             if is_polars(df):
@@ -51,7 +53,7 @@ class DetectSkewness(BaseTask):
                 for col in df.columns:
                     series = df[col].drop_nulls().to_numpy()
                     if series.size == 0:
-                        self._log(f"{col} skipped: empty after dropna()", "debug")
+                        self._log(f"    {col} skipped: empty after dropna()", "debug")
                         continue
                     mean = np.mean(series)
                     std = np.std(series)
@@ -75,7 +77,7 @@ class DetectSkewness(BaseTask):
                         "static": static_plot["path"],
                         "interactive": interactive_plot,
                     }
-                    self._log(f"{col}: skewness computed", "debug")
+                    self._log(f"    {col}: skewness computed", "debug")
 
             # Compute skewness for Pandas DataFrame
             else:
@@ -87,11 +89,11 @@ class DetectSkewness(BaseTask):
                 for col in numeric_df.columns:
                     series = numeric_df[col].dropna()
                     if series.empty:
-                        self._log(f"{col} skipped: empty after dropna()", "debug")
+                        self._log(f"    {col} skipped: empty after dropna()", "debug")
                         continue
                     if series.nunique() == 1:
                         skew_val = 0.0
-                        self._log(f"{col} skipped: constant values", "debug")
+                        self._log(f"    {col} skipped: constant values", "debug")
                     else:
                         skew_val = skew(series)
                     skewness[col] = float(skew_val)
@@ -106,7 +108,7 @@ class DetectSkewness(BaseTask):
                         "static": static_plot["path"],
                         "interactive": interactive_plot,
                     }
-                    self._log(f"{col}: skewness computed", "debug")
+                    self._log(f"    {col}: skewness computed", "debug")
 
             # Build TaskResult with visualization hints
             self.output = TaskResult(
@@ -154,4 +156,9 @@ class DetectSkewness(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

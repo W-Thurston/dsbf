@@ -102,6 +102,23 @@ class TaskResult:
         )
 
 
+def error_to_metadata(error: Exception) -> Dict[str, str]:
+    """
+    Format an exception into standardized error metadata for TaskResult.
+
+    Args:
+        error (Exception): The exception that occurred.
+
+    Returns:
+        Dict[str, str]: Metadata block for debugging and trace reporting.
+    """
+    return {
+        "error_type": type(error).__name__,
+        "trace_summary": str(error),
+        "suggested_action": "Check logs or upstream outputs",
+    }
+
+
 def make_failure_result(task_name: str, error: Exception) -> "TaskResult":
     """
     Create a standardized failed TaskResult for standalone task execution.
@@ -117,12 +134,31 @@ def make_failure_result(task_name: str, error: Exception) -> "TaskResult":
         name=task_name,
         status="failed",
         summary={"message": f"Error during {task_name}: {error}"},
-        error_metadata={
-            "error_type": type(error).__name__,
-            "trace_summary": str(error),
-            "suggested_action": "Review task input or parameters",
-        },
+        error_metadata=error_to_metadata(error),
     )
+
+
+def append_warning(
+    warnings_dict: ReliabilityWarning,
+    level: str,
+    code: str,
+    description: str,
+    recommendation: Optional[str] = None,
+) -> None:
+    """
+    Add a structured warning entry to a nested reliability dictionary.
+
+    Args:
+        warnings_dict (dict): The existing warnings object to update.
+        level (str): Tier of warning (e.g., "low", "medium", "high").
+        code (str): Short identifier for the warning (e.g., "low_variance").
+        description (str): Explanation of the issue.
+        recommendation (str): Optional suggested action.
+    """
+    warnings_dict.setdefault(level, {})[code] = {
+        "description": description,
+        "recommendation": recommendation,
+    }
 
 
 def add_reliability_warning(
@@ -141,13 +177,9 @@ def add_reliability_warning(
     if result.reliability_warnings is None:
         result.reliability_warnings = cast(ReliabilityWarning, {})
 
-    if level not in result.reliability_warnings:
-        result.reliability_warnings[level] = {}
-
-    result.reliability_warnings[level][code] = {
-        "description": description,
-        "recommendation": recommendation,
-    }
+    append_warning(
+        result.reliability_warnings, level, code, description, recommendation
+    )
 
 
 class LoggingTask(Protocol):

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.logging_utils import DSBFLogger, setup_logger
+from dsbf.utils.logging_utils import get_log_fn, setup_logger
 
 
 class BaseTask(ABC):
@@ -78,27 +78,16 @@ class BaseTask(ABC):
             return ctx.config.get("metadata", {}).get(key, default)
         return default
 
-    def _log(self, msg: str, level: str = "info") -> None:
+    def _log(self, msg: str, level: str = "debug") -> None:
         """
         Structured logging that prefers the context logger if available.
-
-        Args:
-            msg (str): The message to log.
-            level (str): One of "warn", "stage", "info", "debug".
+        Automatically prepends the task name.
         """
         if self.context and hasattr(self.context, "_log"):
-            self.context._log(msg, level)
+            self.context._log(msg, level=level, task_name=self.name)
         else:
-            # Fallback logger for standalone tasks
-            fallback: DSBFLogger = setup_logger("dsbf.task", "info")
-            level_map = {
-                "warn": fallback.warning,
-                "stage": fallback.stage,
-                "info": fallback.info2,
-                "debug": fallback.debug,
-            }
-            log_fn = level_map.get(level, fallback.info2)
-            log_fn(msg)
+            fallback = setup_logger("dsbf.task", "info")
+            get_log_fn(fallback, level)(f"[{self.name}] {msg}")
 
     def ensure_reliability_flags(self) -> Dict:
         """

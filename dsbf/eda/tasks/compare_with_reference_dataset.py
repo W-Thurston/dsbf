@@ -195,7 +195,9 @@ class CompareWithReferenceDataset(BaseTask):
                     }
 
             except Exception as e:
-                self._log(f"[PlotFactory] Skipped drift barplot: {e}", level="debug")
+                self._log(
+                    f"    [PlotFactory] Skipped drift barplot: {e}", level="debug"
+                )
 
             self.output = TaskResult(
                 name=self.name,
@@ -209,4 +211,9 @@ class CompareWithReferenceDataset(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

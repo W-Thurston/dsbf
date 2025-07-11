@@ -35,7 +35,7 @@ class DetectDuplicates(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             if is_polars(df):
                 # In Polars, duplicates = total rows - unique rows
@@ -46,7 +46,7 @@ class DetectDuplicates(BaseTask):
                 # In Pandas, use .duplicated() to count duplicate rows
                 duplicate_count = df.duplicated().sum()
 
-            self._log(f"Duplicate count: {duplicate_count}", "debug")
+            self._log(f"    Duplicate count: {duplicate_count}", "debug")
 
             self.output = TaskResult(
                 name=self.name,
@@ -67,4 +67,9 @@ class DetectDuplicates(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

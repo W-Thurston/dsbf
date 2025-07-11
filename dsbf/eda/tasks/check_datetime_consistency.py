@@ -56,7 +56,7 @@ class CheckDatetimeConsistency(BaseTask):
 
                 except Exception as e:
                     self._log(
-                        f"[CheckDatetimeConsistency] Error in column {col}: {e}",
+                        f"    [CheckDatetimeConsistency] Error in column {col}: {e}",
                         "debug",
                     )
                     continue
@@ -85,4 +85,9 @@ class CheckDatetimeConsistency(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

@@ -1,16 +1,14 @@
 # dsbf/core/context.py
 
-import warnings
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
-import numpy as np
 import pandas as pd
 import polars as pl
-from scipy.stats import median_abs_deviation, skew
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
-from dsbf.utils.logging_utils import DSBFLogger, setup_logger
+from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+from dsbf.utils.reliability_stats import compute_reliability_flags as compute_flags
 
 if TYPE_CHECKING:
     from dsbf.core.base_task import BaseTask
@@ -20,6 +18,17 @@ class AnalysisContext:
     """
     Shared context object for DSBF runs.
     Holds the main input dataframe, global config, task results, and metadata.
+
+    Attributes:
+        data (Any): The input dataframe (Pandas or Polars).
+        config (dict): Full config dictionary (engine, metadata, task-level).
+        results (dict[str, TaskResult]): Stores each task's final output.
+        metadata (dict): Flexible key-value store for:
+            - 'semantic_types': analysis-intent column types
+            - 'inferred_dtypes': raw type inference results
+            - 'task_durations': per-task runtime (sec)
+            - 'plugin_warnings': plugin validation messages
+            - Any custom task-level or engine-level signals
     """
 
     def __init__(
@@ -30,33 +39,36 @@ class AnalysisContext:
         run_metadata: Optional[Dict[str, Any]] = None,
         reference_data: Optional[Any] = None,
     ):
+        """
+        Initialize shared context object for a single DSBF profiling run.
+        Stores raw data, configuration, outputs, and metadata across tasks.
+        """
         self.data = data
         self.config = config or {}
         self.output_dir = output_dir
         self.run_metadata = run_metadata or {}
         self.reference_data = reference_data
 
-        self.results: Dict[str, TaskResult] = {}
-        self.metadata: Dict[str, Any] = {}
-        self.stage: Optional[str] = None
-        self.reliability_flags: Dict[str, Any] = {}
+        self.results: Dict[str, TaskResult] = {}  # Stores outputs by task name
+        self.metadata: Dict[str, Any] = {}  # Shared metadata from tasks or engine
+        self.stage: Optional[str] = None  # Inferred data stage (raw, cleaned, etc.)
+        self.reliability_flags: Dict[str, Any] = {}  # Cached global reliability info
 
-    def _log(self, msg: str, level: str = "info") -> None:
+        self.logger: DSBFLogger = setup_logger(
+            "dsbf.context",
+            self.config.get("metadata", {}).get("message_verbosity", "info"),
+        )
+
+    def _log(
+        self, msg: str, level: str = "info", task_name: Optional[str] = None
+    ) -> None:
         """
         Structured logging for context operations using DSBF verbosity levels.
+        Optionally prefixes the message with a task name.
         """
-
-        verbosity = self.config.get("metadata", {}).get("message_verbosity", "info")
-        logger: DSBFLogger = setup_logger("dsbf.context", verbosity)
-
-        level_map = {
-            "warn": logger.warning,
-            "stage": logger.stage,
-            "info": logger.info2,
-            "debug": logger.debug,
-        }
-        log_fn = level_map.get(level, logger.info2)
-        log_fn(msg)
+        log_fn = get_log_fn(self.logger, level)
+        prefix = f"[{task_name}] " if task_name else ""
+        log_fn(prefix + msg)
 
     def get_config(self, key: str, default=None):
         return self.config.get(key, default)
@@ -90,8 +102,11 @@ class AnalysisContext:
         )
 
     def run_task(self, task: "BaseTask") -> TaskResult:
+
+        # import statement here to prevent cyclical imports warning
         from dsbf.utils.task_utils import validate_task_result
 
+        # Inject task input and context
         task.set_input(self.data)
         task.context = self
         task.run()
@@ -102,55 +117,18 @@ class AnalysisContext:
 
         # Validate result before storing it
         if not validate_task_result(result):
-            self._log(f"[{task.name}] ⚠️ TaskResult validation failed", "debug")
+            msg = f"[{task.name}] TaskResult validation failed"
+            self._log(msg, "warn")
 
         self.set_result(task.name, result)
         return result
 
     def compute_reliability_flags(self, df: pd.DataFrame | pl.DataFrame) -> None:
-        if self.reliability_flags:  # Already computed
+        if self.reliability_flags:
             return
 
         if is_polars(df):
             df = cast(pl.DataFrame, df).to_pandas()
-
         df = cast(pd.DataFrame, df)
-        numeric_df = df.select_dtypes(include=np.number).dropna()
 
-        n_rows = len(numeric_df)
-        stds = numeric_df.std().to_dict()
-        means = numeric_df.mean().to_dict()
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            skew_vals = dict(
-                zip(numeric_df.columns, skew(numeric_df, nan_policy="omit", bias=False))
-            )
-
-        # Robust outlier detection using median and MAD
-        mad = {
-            col: median_abs_deviation(numeric_df[col], nan_policy="omit")
-            for col in numeric_df.columns
-        }
-        mad = {k: (v if v != 0 else 1e-8) for k, v in mad.items()}
-        robust_z = pd.DataFrame(
-            {
-                col: (numeric_df[col] - numeric_df[col].median()) / mad[col]
-                for col in numeric_df.columns
-            }
-        )
-        has_outliers = (robust_z.abs() > 3).any().any()
-
-        low_var_cols = [
-            col for col, std in stds.items() if std is not None and std < 1e-8
-        ]
-
-        self.reliability_flags = {
-            "n_rows": n_rows,
-            "low_row_count": n_rows < 30,
-            "extreme_outliers": has_outliers,
-            "high_skew": any(abs(s) > 2 for s in skew_vals.values() if s is not None),
-            "zero_variance_cols": low_var_cols,
-            "skew_vals": skew_vals,
-            "stds": stds,
-            "means": means,
-        }
+        self.reliability_flags = compute_flags(df)

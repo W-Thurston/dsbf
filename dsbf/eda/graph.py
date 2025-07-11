@@ -17,7 +17,7 @@ import psutil
 
 from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
-from dsbf.eda.task_result import TaskResult
+from dsbf.eda.task_result import TaskResult, error_to_metadata
 from dsbf.utils.dag_layout import assign_waterfall_positions, draw_dag, topo_sort_levels
 
 
@@ -94,15 +94,13 @@ class ExecutionGraph:
                 dep_statuses = [f"{dep}: {self.task_map[dep].status}" for dep in deps]
                 if log_fn:
                     log_fn(
-                        (
-                            f"[{task.name}] Starting task (depends on: "
-                            f"{', '.join(dep_statuses)})"
-                        ),
+                        f"\\[{task.name}] Starting task (depends on: "
+                        f"{', '.join(dep_statuses)})",
                         "info",
                     )
             else:
                 if log_fn:
-                    log_fn(f"[{task.name}] Starting task (no dependencies)", "info")
+                    log_fn(f"\\[{task.name}] Starting task (no dependencies)", "info")
 
             failed_deps = [
                 dep for dep in deps if self.task_map[dep].status != "success"
@@ -112,7 +110,7 @@ class ExecutionGraph:
                 task_outcomes["skipped"].append(task.name)
                 if log_fn:
                     log_fn(
-                        f"[{task.name}] Skipped due to failed dependency: "
+                        f"\\[{task.name}] Skipped due to failed dependency: "
                         f"{failed_deps}",
                         "info",
                     )
@@ -157,7 +155,7 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        f"[{task.name}] Completed in {duration:.2f}s"
+                        f"\\[{task.name}] Completed in {duration:.2f}s"
                         f" (status: {task.status})",
                         "info",
                     )
@@ -169,11 +167,7 @@ class ExecutionGraph:
                 duration = time.time() - start_time
                 context.metadata["task_durations"][task.name] = duration
 
-                error_metadata = {
-                    "error_type": type(e).__name__,
-                    "trace_summary": str(e),
-                    "suggested_action": "Check logs or upstream outputs",
-                }
+                error_metadata = error_to_metadata(e)
 
                 failed_result = TaskResult(
                     name=task.name,
@@ -187,7 +181,7 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        f"[{task.name}] Failed after {duration:.2f}s: "
+                        f"\\[{task.name}] Failed after {duration:.2f}s: "
                         f"{error_metadata['trace_summary']}",
                         "warn",
                     )

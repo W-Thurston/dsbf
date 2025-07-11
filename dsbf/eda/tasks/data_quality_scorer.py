@@ -55,7 +55,7 @@ class DataQualityScorer(BaseTask):
 
         # Use semantic typing to select relevant columns
         matched_cols, excluded = self.get_columns_by_intent()
-        self._log(f"Processing {len(matched_cols)} column(s)", "debug")
+        self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
         category_scores: Dict[str, int] = {}
         explanations: List[str] = []
@@ -214,12 +214,13 @@ class DataQualityScorer(BaseTask):
 
         except Exception as e:
             self._log(
-                f"[PlotFactory] Skipped quality score barplot: {e}", level="debug"
+                f"    [PlotFactory] Skipped quality score barplot: {e}", level="debug"
             )
 
         # --- FINAL RESULT OBJECT ---
         self.output = TaskResult(
             name=self.name,
+            status="success",
             summary={
                 "overall_score": overall_score,
                 "category_breakdown": category_scores,

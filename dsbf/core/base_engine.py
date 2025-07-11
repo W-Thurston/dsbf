@@ -14,8 +14,10 @@ import os
 import platform
 import subprocess
 from datetime import datetime
+from typing import Any, Dict, Optional
 
-from dsbf.utils.logging_utils import DSBFLogger, setup_logger
+from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+from dsbf.utils.versioning import get_dsbf_version
 
 
 class BaseEngine(abc.ABC):
@@ -26,7 +28,7 @@ class BaseEngine(abc.ABC):
         config (dict): Engine and metadata configuration dictionary.
     """
 
-    def __init__(self, config):
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.message_verbosity = config.get("metadata", {}).get(
             "message_verbosity", "info"
@@ -62,7 +64,7 @@ class BaseEngine(abc.ABC):
         # Append additional runtime environment metadata
         self.run_metadata.update(
             {
-                "dsbf_version": "0.1.0",  # TODO: Replace with real version
+                "dsbf_version": get_dsbf_version(),
                 "git_sha": self._get_git_sha(),
                 "host": platform.node(),
                 "os": platform.platform(),
@@ -70,7 +72,9 @@ class BaseEngine(abc.ABC):
             }
         )
 
-    def _log(self, msg: str, level: str = "info") -> None:
+    def _log(
+        self, msg: str, level: str = "info", task_name: Optional[str] = None
+    ) -> None:
         """
         Verbosity-aware logger with indentation and Rich + file support.
 
@@ -82,17 +86,11 @@ class BaseEngine(abc.ABC):
             "warn": "",
             "stage": "",
             "info": "  ",
-            "debug": "    ",
+            "debug": "   ",
         }
-
         prefix = INDENTATION.get(level, "  ")
-        log_fn = {
-            "warn": self.logger.warning,
-            "stage": self.logger.stage,
-            "info": self.logger.info2,
-            "debug": self.logger.debug,
-        }.get(level, self.logger.info2)
-        log_fn(prefix + msg)
+        log_fn = get_log_fn(self.logger, level)
+        log_fn(f"{prefix}{msg}")
 
     def _create_output_dir(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

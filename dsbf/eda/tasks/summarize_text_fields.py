@@ -43,7 +43,7 @@ class SummarizeTextFields(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'text' column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} 'text' column(s)", "debug")
 
             results: Dict[str, Dict[str, Any]] = {}
 
@@ -67,7 +67,7 @@ class SummarizeTextFields(BaseTask):
                             top_value = most_common[0][0] if most_common else None
                             has_symbols = any(re.search(r"[^\w\s]", s) for s in strings)
 
-                            self._log(f"Summarized text column: {col}", "debug")
+                            self._log(f"    Summarized text column: {col}", "debug")
                             results[col] = {
                                 "avg_char_length": sum(char_counts) / len(char_counts),
                                 "avg_word_count": sum(word_counts) / len(word_counts),
@@ -95,7 +95,7 @@ class SummarizeTextFields(BaseTask):
                             top_value = most_common[0][0] if most_common else None
                             has_symbols = any(re.search(r"[^\w\s]", s) for s in texts)
 
-                            self._log(f"Summarized text column: {col}", "debug")
+                            self._log(f"    Summarized text column: {col}", "debug")
                             results[col] = {
                                 "avg_char_length": char_counts.mean(),
                                 "avg_word_count": word_counts.mean(),
@@ -130,7 +130,7 @@ class SummarizeTextFields(BaseTask):
                     "interactive": interactive,
                 }
 
-            self._log(f"Processed {len(results)} text columns", "debug")
+            self._log(f"    Processed {len(results)} text columns", "debug")
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -151,4 +151,9 @@ class SummarizeTextFields(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

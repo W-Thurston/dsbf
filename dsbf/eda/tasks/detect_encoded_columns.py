@@ -44,7 +44,7 @@ class DetectEncodedColumns(BaseTask):
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
             self._log(
-                f"Processing {len(matched_col)} ['text', 'categorical'] column(s)",
+                f"    Processing {len(matched_col)} ['text', 'categorical'] column(s)",
                 "debug",
             )
 
@@ -117,9 +117,7 @@ class DetectEncodedColumns(BaseTask):
                         match_type = "base64"
 
                 if match_type:
-                    self._log(f"Flagged column '{col}' as {match_type}", "debug")
                     flagged_columns.append(col)
-                    self._log(f"Flagged column '{col}' as {match_type}", "debug")
                     details[col] = {
                         "match_type": match_type,
                         "avg_length": avg_len,
@@ -178,4 +176,9 @@ class DetectEncodedColumns(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

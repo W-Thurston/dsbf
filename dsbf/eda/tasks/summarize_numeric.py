@@ -37,12 +37,14 @@ class SummarizeNumeric(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_col)} 'continuous' column(s)", "debug"
+            )
 
             if is_polars(df):
                 df = df.to_pandas()
                 self._log(
-                    "Converting Polars to Pandas for numeric summarization", "debug"
+                    "    Converting Polars to Pandas for numeric summarization", "debug"
                 )
 
             numeric_df = df.select_dtypes(include=np.number)
@@ -53,7 +55,7 @@ class SummarizeNumeric(BaseTask):
                 series = numeric_df[col].dropna()
 
                 if series.empty:
-                    self._log(f"{col} skipped: empty after dropna()", "debug")
+                    self._log(f"    {col} skipped: empty after dropna()", "debug")
                     continue
 
                 # Compute descriptive stats with extended percentiles
@@ -89,7 +91,7 @@ class SummarizeNumeric(BaseTask):
                     "interactive": interactive,
                 }
 
-            self._log(f"Summarized {len(extended_stats)} numeric columns", "debug")
+            self._log(f"    Summarized {len(extended_stats)} numeric columns", "debug")
 
             self.output = TaskResult(
                 name=self.name,
@@ -115,4 +117,9 @@ class SummarizeNumeric(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

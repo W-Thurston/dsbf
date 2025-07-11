@@ -1,7 +1,7 @@
 # dsbf/eda/profile_engine.py
 
 import os
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import networkx as nx
 import pandas as pd
@@ -32,7 +32,7 @@ class ProfileEngine(BaseEngine):
     Loads data, constructs task graph, runs analysis, and exports report.
     """
 
-    def __init__(self, config: Optional[dict] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         config = config or load_default_config()
         super().__init__(config)
         self.context: Optional[AnalysisContext] = None
@@ -76,7 +76,7 @@ class ProfileEngine(BaseEngine):
 
         # Load tasks into the global registry
         task_groups = self.config.get("task_groups", ["core"])
-        self._log(f"Loading task groups: {task_groups}", level="debug")
+        self._log(f"Loading task groups: {task_groups}", level="stage")
 
         set_plugin_logger(self._log)
 
@@ -110,29 +110,31 @@ class ProfileEngine(BaseEngine):
         self._log(f"Inferred data stage: {self.inferred_stage}", level="stage")
 
         # Build graph and run tasks
-        self._log("Building execution graph...", level="debug")
+        self._log("Building execution graph...", level="info")
         graph = self.build_graph()
         self.results = graph.run(self.context, log_fn=self._log)
 
         # Optional DAG visualization
         if self.config.get("metadata", {}).get("visualize_dag", False):
-            self._log("Visualizing task DAG...", level="debug")
+            self._log("Visualizing task DAG...", level="info")
             fig_path = os.path.join(self.fig_path, "dag.png")
             os.makedirs(os.path.dirname(fig_path), exist_ok=True)
             status_dict = {name: result.status for name, result in self.results.items()}
             graph.visualize(save_path=fig_path, status=status_dict)
 
         # Export user-facing report (results only)
-        self._log("Rendering JSON report...", level="debug")
-        render_user_report(
-            results=self.context.results,
-            output_path=os.path.join(self.output_dir, "report.json"),
-        )
+        if not self.config.get("metadata", {}).get("disable_report", False):
+            self._log("Rendering JSON report...", level="info")
+            render_user_report(
+                results=self.context.results,
+                output_path=os.path.join(self.output_dir, "report.json"),
+            )
 
         # Write separate runtime metadata
         write_metadata_report(self.context)
 
         self.record_run()
+        self._log(f"[DONE] Results saved to: {self.output_dir}", level="stage")
 
     def _load_data(self) -> Union[pd.DataFrame, pl.DataFrame]:
         dataset_path = self.config.get("metadata", {}).get("dataset_path")
@@ -210,10 +212,10 @@ class ProfileEngine(BaseEngine):
                 <= PROFILING_DEPTH[selected_depth]
             )
         ]
-        self._log(f"Applying filters: {criteria}", "debug")
+        self._log(f"Applying filters: {criteria}", "info")
         self._log(
             f"Selected {len(filtered_specs)} tasks after filtering and depth checks",
-            "debug",
+            "info",
         )
 
         G = nx.DiGraph()

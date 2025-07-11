@@ -41,7 +41,7 @@ class SummarizeValueCounts(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             top_k = int(self.get_task_param("top_k") or 5)
 
@@ -49,7 +49,8 @@ class SummarizeValueCounts(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
                 self._log(
-                    "Converting Polars to Pandas for value count computation", "debug"
+                    "    Converting Polars to Pandas for value count computation",
+                    "debug",
                 )
 
             result: Dict[str, Dict[Any, int]] = {}
@@ -58,7 +59,7 @@ class SummarizeValueCounts(BaseTask):
                 try:
                     vc = df[col].value_counts(dropna=False).head(top_k)
                     result[col] = vc.to_dict()
-                    self._log(f"Value counts for {col}: {list(vc.index)}", "debug")
+                    self._log(f"    Value counts for {col}: {list(vc.index)}", "debug")
                 except Exception:
                     continue  # Skip columns that fail (e.g., unhashable types)
 
@@ -110,4 +111,9 @@ class SummarizeValueCounts(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

@@ -41,7 +41,7 @@ class SummarizeNulls(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             null_threshold = float(self.get_task_param("null_threshold") or 0.5)
 
@@ -60,7 +60,8 @@ class SummarizeNulls(BaseTask):
                 col for col, pct in null_percentages.items() if pct >= null_threshold
             ]
             self._log(
-                f"Detected {len(high_null_columns)} columns with >50% nulls", "debug"
+                f"    Detected {len(high_null_columns)} columns with >50% nulls",
+                "debug",
             )
 
             # Row-wise null pattern frequency (e.g., "101" means null in cols 1 and 3)
@@ -126,4 +127,9 @@ class SummarizeNulls(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

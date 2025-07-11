@@ -195,3 +195,21 @@ def test_data_quality_score_plot_generated(tmp_path, dummy_context):
     assert interactive["type"] == "bar"
     assert "annotations" in interactive
     assert any("overall" in a.lower() for a in interactive["annotations"])
+
+
+def test_score_with_empty_context(tmp_path):
+    """
+    If no issues or reliability flags are present, the score should default to 100.
+    """
+    ctx, scorer = make_ctx_and_task(
+        DataQualityScorer,
+        current_df=None,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    scorer.context = ctx
+    scorer.run()
+    result = scorer.get_output()
+
+    assert result.status == "success"
+    assert result.summary["overall_score"] == 100
+    assert all(v == 100 for v in result.summary["category_breakdown"].values())

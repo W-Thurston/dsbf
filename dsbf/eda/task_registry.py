@@ -303,3 +303,20 @@ def _import_local_python_file(path: Path) -> None:
                 PLUGIN_LOG_FN(f"[PLUGIN WARNING] {warning_msg}", level="warn")
             else:
                 logger.warning(f"[WARN] {warning_msg}")
+
+
+DIAGNOSTIC_TASK_PREFIXES = ["identifybottleneck", "logresourceusage"]
+
+
+def is_diagnostic_name(name: str) -> bool:
+    """
+    Determines if a task name matches a known diagnostic task pattern.
+
+    Args:
+        name (str): Task name to check (e.g., 'identify_bottleneck_tasks').
+
+    Returns:
+        bool: True if diagnostic, False otherwise.
+    """
+    normalized = name.lower().replace("_", "")
+    return any(normalized.startswith(prefix) for prefix in DIAGNOSTIC_TASK_PREFIXES)

@@ -46,7 +46,8 @@ class DetectDataLeakage(BaseTask):
 
             if is_polars(df):
                 self._log(
-                    "Falling back to Pandas: correlation matrix requires numeric types",
+                    "    Falling back to Pandas: correlation matrix requires "
+                    "numeric types",
                     "debug",
                 )
                 df = df.to_pandas()
@@ -54,7 +55,7 @@ class DetectDataLeakage(BaseTask):
             # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"Processing {len(matched_cols)} ['categorical', 'continuous'] "
+                f"    Processing {len(matched_cols)} ['categorical', 'continuous'] "
                 "column(s)",
                 "debug",
             )
@@ -116,4 +117,9 @@ class DetectDataLeakage(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

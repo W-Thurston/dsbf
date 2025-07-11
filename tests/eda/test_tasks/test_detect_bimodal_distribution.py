@@ -5,7 +5,7 @@ import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_bimodal_distribution import DetectBimodalDistribution
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_detect_bimodal_distribution_expected_output(tmp_path):
@@ -30,7 +30,7 @@ def test_detect_bimodal_distribution_expected_output(tmp_path):
         task_overrides={"bic_threshold": 5.0},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
@@ -67,7 +67,7 @@ def test_detect_bimodal_distribution_with_plots(tmp_path):
         global_overrides={"output_dir": str(tmp_path)},
         task_overrides={"bic_threshold": 3.0},  # Lower to ensure detection
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
 
     assert result.status == "success"
     assert result.plots is not None
@@ -82,3 +82,68 @@ def test_detect_bimodal_distribution_with_plots(tmp_path):
     interactive = result.plots["bimodal"]["interactive"]
     assert "annotations" in interactive
     assert any("bimodal" in a.lower() for a in interactive["annotations"])
+
+
+def test_bimodal_detection_skips_low_sample_columns(tmp_path):
+    df = pd.DataFrame({"small": [1.0, 2.0, 2.0] * 3})  # < 10 rows
+    ctx, task = make_ctx_and_task(
+        DetectBimodalDistribution, df, global_overrides={"output_dir": str(tmp_path)}
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
+
+    assert result.data is not None
+    assert "small" not in result.data["bimodal_flags"]
+
+
+def test_skips_low_sample_column(tmp_path):
+    """
+    Columns with fewer than 10 non-null values should be skipped.
+    """
+    df = pd.DataFrame({"tiny": [1.0, 2.0, 3.0] * 3})  # only 9 rows
+    ctx, task = make_ctx_and_task(
+        DetectBimodalDistribution,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert "tiny" not in result.data["bimodal_flags"]
+
+
+def test_skips_all_null_column(tmp_path):
+    """
+    Columns with all NaNs should not produce a result.
+    """
+    df = pd.DataFrame({"null_col": [None] * 50})
+    ctx, task = make_ctx_and_task(
+        DetectBimodalDistribution,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert "null_col" not in result.data["bimodal_flags"]
+
+
+def test_skips_constant_column(tmp_path):
+    """
+    Columns with constant values are not suitable for GMM and should be skipped.
+    """
+    df = pd.DataFrame({"constant": [42.0] * 100})
+    ctx, task = make_ctx_and_task(
+        DetectBimodalDistribution,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+
+    result: TaskResult = run_task_with_dependencies(ctx, DetectBimodalDistribution)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert "constant" not in result.data["bimodal_flags"]

@@ -32,7 +32,9 @@ class DetectOutOfBounds(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_col)} 'continuous' column(s)", "debug"
+            )
 
             # Load shared reliability flags in case we
             #  want to supplement bounds in the future
@@ -91,4 +93,9 @@ class DetectOutOfBounds(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

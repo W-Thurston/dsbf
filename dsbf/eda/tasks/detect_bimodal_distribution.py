@@ -43,7 +43,7 @@ class DetectBimodalDistribution(BaseTask):
             df = self.input_data
             if is_polars(df):
                 self._log(
-                    "Falling back to Pandas: sklearn GMM requires numeric arrays",
+                    "    Falling back to Pandas: sklearn GMM requires numeric arrays",
                     "debug",
                 )
                 df = df.to_pandas()  # sklearn requires numpy/pandas
@@ -54,7 +54,9 @@ class DetectBimodalDistribution(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_cols)} 'continuous' column(s)", "debug"
+            )
 
             numeric_df = df.select_dtypes(include=np.number)
 
@@ -63,6 +65,9 @@ class DetectBimodalDistribution(BaseTask):
 
                 # Skip if not enough data points for GMM
                 if col_data.shape[0] < 10:
+                    continue
+
+                if np.std(col_data) == 0 or np.unique(col_data).size < 2:
                     continue
 
                 try:
@@ -77,7 +82,7 @@ class DetectBimodalDistribution(BaseTask):
                     }
                     bimodal_flags[col] = bool((bic1 - bic2) > bic_threshold)
                 except Exception as e:
-                    self._log(f"Failed on column {col}: {e}", "debug")
+                    self._log(f"    Failed on column {col}: {e}", "debug")
                     continue
 
             plots: dict[str, dict[str, Any]] = {}
@@ -136,4 +141,9 @@ class DetectBimodalDistribution(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

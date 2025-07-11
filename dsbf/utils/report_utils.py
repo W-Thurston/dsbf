@@ -98,4 +98,4 @@ def write_metadata_report(
         json.dump(metadata, f, indent=2)
 
     # Log result location for debugging
-    logger.info2(f"[write_metadata_report] Metadata written to: {output_path}")
+    logger.info2(f" \\[write_metadata_report] Metadata written to: {output_path}")

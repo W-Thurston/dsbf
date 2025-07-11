@@ -29,7 +29,7 @@ class IdentifyBottleneckTasks(BaseTask):
 
         # Use semantic typing to select relevant columns
         matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
         if self.context is None:
             raise RuntimeError("Context is not set for task.")
@@ -100,7 +100,9 @@ class IdentifyBottleneckTasks(BaseTask):
                     "interactive": interactive,
                 }
         except Exception as e:
-            self._log(f"[PlotFactory] Skipped bottleneck barplot: {e}", level="debug")
+            self._log(
+                f"    [PlotFactory] Skipped bottleneck barplot: {e}", level="debug"
+            )
 
         self.output = TaskResult(
             name=self.name,

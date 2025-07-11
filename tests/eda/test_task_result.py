@@ -2,7 +2,12 @@
 
 from pathlib import Path
 
-from dsbf.eda.task_result import TaskResult, add_reliability_warning
+from dsbf.eda.task_result import (
+    TaskResult,
+    add_reliability_warning,
+    log_reliability_warnings,
+    make_failure_result,
+)
 
 
 def test_task_result_to_dict():
@@ -154,3 +159,44 @@ def test_warning_serializes_in_to_dict():
         ]
         == "N too small"
     )
+
+
+def test_make_failure_result_generates_error_metadata():
+    try:
+        raise ValueError("Something went wrong")
+    except Exception as e:
+        result = make_failure_result("bad_task", e)
+
+    assert result.name == "bad_task"
+    assert result.status == "failed"
+    assert "Something went wrong" in result.summary["message"]
+    assert result.error_metadata is not None
+    assert "ValueError" in result.error_metadata["error_type"]
+
+
+class DummyLoggerTask:
+    name = "log_test"
+
+    def __init__(self):
+        self.logged = []
+
+    def _log(self, msg, level="info"):
+        self.logged.append((level, msg))
+
+
+def test_log_reliability_warnings_emits_expected_lines():
+    task = DummyLoggerTask()
+    result = TaskResult(name="log_test")
+
+    add_reliability_warning(
+        result,
+        level="high",
+        code="test_warning",
+        description="Bad stuff",
+        recommendation="Fix it",
+    )
+
+    log_reliability_warnings(task, result)
+
+    assert any("test_warning" in msg for _, msg in task.logged)
+    assert any("Fix it" in msg for _, msg in task.logged)

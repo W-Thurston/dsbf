@@ -38,7 +38,9 @@ class DetectHighCardinality(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'categorical' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_col)} 'categorical' column(s)", "debug"
+            )
 
             cardinality_threshold = float(
                 self.get_task_param("cardinality_threshold") or 50
@@ -52,7 +54,9 @@ class DetectHighCardinality(BaseTask):
                         n_unique = df[col].n_unique()
                         if n_unique > cardinality_threshold:
                             results[col] = n_unique
-                            self._log(f"{col} has {n_unique} unique values", "debug")
+                            self._log(
+                                f"    {col} has {n_unique} unique values", "debug"
+                            )
                     except Exception:
                         continue
             else:
@@ -61,7 +65,9 @@ class DetectHighCardinality(BaseTask):
                         n_unique = df[col].nunique()
                         if n_unique > cardinality_threshold:
                             results[col] = n_unique
-                            self._log(f"{col} has {n_unique} unique values", "debug")
+                            self._log(
+                                f"    {col} has {n_unique} unique values", "debug"
+                            )
                     except Exception:
                         continue
 
@@ -134,4 +140,9 @@ class DetectHighCardinality(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

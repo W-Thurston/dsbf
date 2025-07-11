@@ -65,12 +65,12 @@ class ComputeCorrelations(BaseTask):
                                 correlations[f"{col1}|{col2}"] = value
                     else:
                         self._log(
-                            "Not enough numeric columns for correlation matrix.",
+                            "    Not enough numeric columns for correlation matrix.",
                             "debug",
                         )
                 except Exception as e:
                     self._log(
-                        f"Polars correlation failed: {e}. Falling back to Pandas.",
+                        f"    Polars correlation failed: {e}. Falling back to Pandas.",
                         "debug",
                     )
                     df = df.to_pandas()
@@ -81,7 +81,7 @@ class ComputeCorrelations(BaseTask):
                 numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
                 if len(numeric_cols) < 2:
                     self._log(
-                        "Fewer than 2 numeric columns —"
+                        "    Fewer than 2 numeric columns —"
                         " skipping correlation computation."
                     )
                     self.output = TaskResult(
@@ -275,4 +275,9 @@ class ComputeCorrelations(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

@@ -37,7 +37,7 @@ class DetectDuplicateColumns(BaseTask):
             if is_polars(df):
                 self._log(
                     (
-                        "Falling back to Pandas: duplicate column"
+                        "    Falling back to Pandas: duplicate column"
                         " detection requires `.equals()`"
                     ),
                     "debug",
@@ -46,7 +46,7 @@ class DetectDuplicateColumns(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             duplicate_pairs: List[Tuple[str, str]] = []
             columns = df.columns.tolist()
@@ -62,7 +62,7 @@ class DetectDuplicateColumns(BaseTask):
                                 seen.add((col1, col2))
                         except Exception as e:
                             self._log(
-                                f"[DetectDuplicateColumns] Comparison failed for "
+                                f"    [DetectDuplicateColumns] Comparison failed for "
                                 f"{col1} and {col2}: {e}",
                                 "debug",
                             )
@@ -109,4 +109,9 @@ class DetectDuplicateColumns(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

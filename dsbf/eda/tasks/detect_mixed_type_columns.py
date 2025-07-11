@@ -43,7 +43,7 @@ class DetectMixedTypeColumns(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             min_ratio = float(self.get_task_param("min_ratio") or 0.05)
             ignore_null_type = bool(self.get_task_param("ignore_null_type") or True)
@@ -156,4 +156,9 @@ class DetectMixedTypeColumns(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

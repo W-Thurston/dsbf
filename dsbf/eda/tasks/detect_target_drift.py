@@ -99,6 +99,11 @@ class DetectTargetDrift(BaseTask):
                     current_series, reference_series
                 )
         except Exception as e:
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)
 
     def _evaluate_numeric_drift(
@@ -106,7 +111,7 @@ class DetectTargetDrift(BaseTask):
     ) -> TaskResult:
         # Use semantic typing to select relevant columns
         matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
         psi_threshold = float(self.get_task_param("psi") or 0.1)
         ks_threshold = float(self.get_task_param("ks_pvalue") or 0.05)
@@ -220,7 +225,9 @@ class DetectTargetDrift(BaseTask):
                 }
             }
         except Exception as e:
-            self._log(f"[PlotFactory] Skipped numeric target plot: {e}", level="debug")
+            self._log(
+                f"    [PlotFactory] Skipped numeric target plot: {e}", level="debug"
+            )
 
         return result
 
@@ -230,7 +237,7 @@ class DetectTargetDrift(BaseTask):
 
         # Use semantic typing to select relevant columns
         matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
         chi2_threshold = float(self.get_task_param("chi2_pvalue") or 0.05)
         entropy_threshold = float(self.get_task_param("entropy_delta") or 0.5)
@@ -362,7 +369,7 @@ class DetectTargetDrift(BaseTask):
             }
         except Exception as e:
             self._log(
-                f"[PlotFactory] Skipped categorical target plot: {e}", level="debug"
+                f"    [PlotFactory] Skipped categorical target plot: {e}", level="debug"
             )
 
         return result

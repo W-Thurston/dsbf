@@ -33,7 +33,7 @@ class SchemaValidation(BaseTask):
         schema_cfg = ctx.get_config("schema_validation") or {}
         if not schema_cfg.get("enable_schema_validation", False):
             self._log(
-                "[schema_validation] Skipping — validation disabled in config.",
+                "    [schema_validation] Skipping — validation disabled in config.",
                 level="debug",
             )
             self.output = TaskResult(

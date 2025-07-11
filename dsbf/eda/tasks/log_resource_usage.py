@@ -25,7 +25,7 @@ class LogResourceUsage(BaseTask):
 
         # Use semantic typing to select relevant columns
         matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"Processing {len(matched_col)} column(s)", "debug")
+        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
         if self.context is None:
             raise RuntimeError("Context is not set.")
@@ -85,7 +85,7 @@ class LogResourceUsage(BaseTask):
 
         except Exception as e:
             self._log(
-                f"[PlotFactory] Skipped resource usage barplot: {e}", level="debug"
+                f"    [PlotFactory] Skipped resource usage barplot: {e}", level="debug"
             )
 
         self.output = TaskResult(

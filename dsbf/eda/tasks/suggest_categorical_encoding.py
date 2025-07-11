@@ -48,7 +48,9 @@ class SuggestCategoricalEncoding(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'categorical' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_col)} 'categorical' column(s)", "debug"
+            )
 
             low_threshold = int(self.get_task_param("low_cardinality_threshold") or 10)
             high_threshold = int(
@@ -197,7 +199,7 @@ class SuggestCategoricalEncoding(BaseTask):
                     }
             except Exception as e:
                 self._log(
-                    f"[PlotFactory] Skipped categorical cardinality plot: {e}",
+                    f"    [PlotFactory] Skipped categorical cardinality plot: {e}",
                     level="debug",
                 )
 
@@ -244,4 +246,9 @@ class SuggestCategoricalEncoding(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

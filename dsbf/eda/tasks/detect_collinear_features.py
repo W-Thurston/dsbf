@@ -38,14 +38,16 @@ class DetectCollinearFeatures(BaseTask):
 
             if is_polars(df):
                 self._log(
-                    "Falling back to Pandas: VIF calculation requires NumPy arrays",
+                    "    Falling back to Pandas: VIF calculation requires NumPy arrays",
                     "debug",
                 )
                 df = df.to_pandas()
 
             # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_cols)} 'continuous' column(s)", "debug"
+            )
             numeric_df = df.select_dtypes(include=np.number).dropna()
 
             if numeric_df.shape[1] < 2:
@@ -171,7 +173,8 @@ class DetectCollinearFeatures(BaseTask):
                 }
             except Exception as e:
                 self._log(
-                    f"[PlotFactory] Skipped correlation matrix plot: {e}", level="debug"
+                    f"    [PlotFactory] Skipped correlation matrix plot: {e}",
+                    level="debug",
                 )
 
             self.output = result
@@ -179,4 +182,9 @@ class DetectCollinearFeatures(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

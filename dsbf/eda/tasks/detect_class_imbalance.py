@@ -43,7 +43,9 @@ class DetectClassImbalance(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_cols)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_cols)} 'continuous' column(s)", "debug"
+            )
 
             # Load parameters from config
             target_col: Optional[str] = self.get_task_param("target_column")
@@ -177,4 +179,9 @@ class DetectClassImbalance(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

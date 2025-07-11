@@ -37,12 +37,13 @@ class SummarizeUnique(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             if is_polars(df):
                 result: Dict[str, int] = {col: df[col].n_unique() for col in df.columns}
                 self._log(
-                    f"Computing unique values for {len(df.columns)} columns", "debug"
+                    f"    Computing unique values for {len(df.columns)} columns",
+                    "debug",
                 )
             else:
                 result = df.nunique().to_dict()
@@ -95,4 +96,9 @@ class SummarizeUnique(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

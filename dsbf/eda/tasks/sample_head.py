@@ -31,12 +31,12 @@ class SampleHead(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} column(s)", "debug")
+            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
 
             n = int(self.get_task_param("n") or 5)
 
             df_head = df.head(n)
-            self._log(f"Returning first {n} rows", "debug")
+            self._log(f"    Returning first {n} rows", "debug")
 
             if is_polars(df_head):
                 result = df_head.to_pandas().to_dict(orient="list")
@@ -63,4 +63,9 @@ class SampleHead(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

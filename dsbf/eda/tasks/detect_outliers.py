@@ -37,7 +37,9 @@ class DetectOutliers(BaseTask):
 
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"Processing {len(matched_col)} 'continuous' column(s)", "debug")
+            self._log(
+                f"    Processing {len(matched_col)} 'continuous' column(s)", "debug"
+            )
 
             method = str(self.get_task_param("method") or "iqr")
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.01)
@@ -62,7 +64,7 @@ class DetectOutliers(BaseTask):
 
                 # Skip plotting + computation if no valid values remain
                 if series.empty:
-                    self._log(f"{col} skipped: empty after dropna()", "debug")
+                    self._log(f"    {col} skipped: empty after dropna()", "debug")
                     continue
 
                 q1 = series.quantile(0.25)
@@ -141,4 +143,9 @@ class DetectOutliers(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

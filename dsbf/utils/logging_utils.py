@@ -89,3 +89,22 @@ def setup_logger(
 
     logger.propagate = False
     return cast(DSBFLogger, logger)
+
+
+def get_log_fn(logger: DSBFLogger, level: str = "info"):
+    """
+    Return the appropriate logging function for the given verbosity level.
+
+    Args:
+        logger (DSBFLogger): An instance of the project logger.
+        level (str): One of "warn", "stage", "info", "debug".
+
+    Returns:
+        Callable[[str], None]: The logging method corresponding to the level.
+    """
+    return {
+        "warn": logger.warning,
+        "stage": logger.stage,
+        "info": logger.info2,
+        "debug": logger.debug,
+    }.get(level, logger.info2)

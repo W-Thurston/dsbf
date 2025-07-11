@@ -3,12 +3,14 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.categorical_length_stats import CategoricalLengthStats
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_categorical_length_stats_expected_output(tmp_path):
     """
     Test that CategoricalLengthStats correctly computes string length stats
@@ -75,7 +77,7 @@ def test_categorical_length_stats_no_text_columns(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = run_task_with_dependencies(ctx, CategoricalLengthStats)
+    result: TaskResult = run_task_with_dependencies(ctx, CategoricalLengthStats)
 
     assert result.status == "success"
     assert result.data == {}
@@ -83,6 +85,7 @@ def test_categorical_length_stats_no_text_columns(tmp_path):
     assert result.metadata.get("column_types") is not None
 
 
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_categorical_length_stats_generates_plots(tmp_path):
     """
     Test that CategoricalLengthStats generates both static and interactive plots
@@ -101,7 +104,7 @@ def test_categorical_length_stats_generates_plots(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = run_task_with_dependencies(ctx, CategoricalLengthStats)
+    result: TaskResult = run_task_with_dependencies(ctx, CategoricalLengthStats)
 
     assert result.status == "success"
     assert result.plots is not None

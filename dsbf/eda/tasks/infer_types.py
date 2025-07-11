@@ -1,5 +1,6 @@
 # dsbf/eda/tasks/infer_types.py
 
+import warnings
 from typing import Any, Dict
 
 import pandas as pd
@@ -8,6 +9,10 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+
+warnings.filterwarnings(
+    "ignore", category=UserWarning, message="Could not infer format.*"
+)
 
 
 @register_task(
@@ -72,17 +77,27 @@ class InferTypes(BaseTask):
                         analysis_intent_dtype = "datetime"
                     elif pd.api.types.is_string_dtype(series):
                         try:
-                            _ = pd.to_datetime(series, errors="raise", utc=True)
+                            # Attempt ISO-style format first for performance
+                            pd.to_datetime(
+                                series, format="%Y-%m-%d", errors="raise", utc=True
+                            )
                             analysis_intent_dtype = "datetime"
                         except Exception:
-                            if series.str.fullmatch(r"[A-Fa-f0-9\-]{8,}").mean() > 0.8:
-                                analysis_intent_dtype = "id"
-                            elif uniq_ratio > 0.9:
-                                analysis_intent_dtype = "id"
-                            elif series.str.len().mean() > 30:
-                                analysis_intent_dtype = "text"
-                            else:
-                                analysis_intent_dtype = "categorical"
+                            try:
+                                pd.to_datetime(series, errors="raise", utc=True)
+                                analysis_intent_dtype = "datetime"
+                            except Exception:
+                                if (
+                                    series.str.fullmatch(r"[A-Fa-f0-9\-]{8,}").mean()
+                                    > 0.8
+                                ):
+                                    analysis_intent_dtype = "id"
+                                elif uniq_ratio > 0.9:
+                                    analysis_intent_dtype = "id"
+                                elif series.str.len().mean() > 30:
+                                    analysis_intent_dtype = "text"
+                                else:
+                                    analysis_intent_dtype = "categorical"
                 except Exception:
                     pass  # Still record defaults below
 
@@ -117,7 +132,11 @@ class InferTypes(BaseTask):
             )
 
         except Exception as e:
-            # On failure, return a standardized failure result unless debugging
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)

@@ -19,7 +19,7 @@ from dsbf.utils.backend import is_polars
     tags=["metadata", "id", "index"],
     expected_semantic_types=["id", "categorical", "text"],
 )
-class DetectIDColumns(BaseTask):
+class DetectIdColumns(BaseTask):
     """
     Detects columns likely to be unique identifiers (e.g., user IDs, UUIDs).
     A column is flagged if its number of unique values exceeds 95% of total rows.
@@ -34,7 +34,8 @@ class DetectIDColumns(BaseTask):
             # Use semantic typing to select relevant columns
             matched_col, excluded = self.get_columns_by_intent()
             self._log(
-                f"Processing {len(matched_col)} ['id', 'categorical', 'text']column(s)",
+                f"    Processing {len(matched_col)} ['id', 'categorical', 'text']"
+                " column(s)",
                 "debug",
             )
 
@@ -52,7 +53,7 @@ class DetectIDColumns(BaseTask):
                             results[col] = f"{n_unique} unique values (likely ID)"
                             self._log(
                                 (
-                                    f"{col} flagged as likely ID with {n_unique}"
+                                    f"    {col} flagged as likely ID with {n_unique}"
                                     " unique values"
                                 ),
                                 "debug",
@@ -67,7 +68,7 @@ class DetectIDColumns(BaseTask):
                             results[col] = f"{n_unique} unique values (likely ID)"
                             self._log(
                                 (
-                                    f"{col} flagged as likely ID with {n_unique}"
+                                    f"    {col} flagged as likely ID with {n_unique}"
                                     " unique values"
                                 ),
                                 "debug",
@@ -96,4 +97,9 @@ class DetectIDColumns(BaseTask):
         except Exception as e:
             if self.context:
                 raise
+            self._log(
+                f"    [{self.name}] Task failed outside execution context: "
+                f"{type(e).__name__} — {e}",
+                level="warn",
+            )
             self.output = make_failure_result(self.name, e)
