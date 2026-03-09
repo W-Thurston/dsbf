@@ -82,6 +82,12 @@ export function getRunSample(runKey, n = 10) {
  * Return the URL to fetch a figure file directly.
  * Use this as the src attribute on <img> tags or as the URL to load Plotly JSON.
  */
+export function getColumnCorrelations(runKey, column, threshold = 0.0) {
+  return api.get(`/api/runs/${runKey}/correlations/${encodeURIComponent(column)}`, {
+    params: { threshold },
+  }).then(r => r.data)
+}
+
 export function figureFileUrl(figureId) {
   return `/api/figures/${figureId}/file`
 }

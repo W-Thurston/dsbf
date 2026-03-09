@@ -1,6 +1,8 @@
 <template>
   <div class="card plot-card">
-    <div class="card-title">{{ title }}</div>
+    <div class="card-title-row">
+      <div class="card-title">{{ title }}</div>
+      <slot name="controls" /></div>
 
     <div v-if="loading" class="loading">Loading chart…</div>
     <div v-else-if="error" class="plot-error">{{ error }}</div>
@@ -61,9 +63,9 @@ async function loadFigure() {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
       const raw = await resp.json()
       // Handle common Panel/Plotly serialisation formats:
-      //   A: { data: [...], layout: {} }           - standard plotly figure
-      //   B: { figure: { data: [...], layout: {} }} - Panel-wrapped
-      //   C: [ ...traces ]                          - bare data array
+      //   A: { data: [...], layout: {} }           — standard plotly figure
+      //   B: { figure: { data: [...], layout: {} }} — Panel-wrapped
+      //   C: [ ...traces ]                          — bare data array
       if (Array.isArray(raw)) {
         plotData.value = { data: raw, layout: {} }
       } else if (raw.figure) {
@@ -112,7 +114,7 @@ function heatmapOverrides(data) {
   // Axis label font: starts at 13px, shrinks as n grows, minimum 8px
   const axisFontSize = Math.max(8, Math.round(13 - (n - 5) * 0.35))
 
-  // Annotation font (cell text): hide below 10px - too small to read
+  // Annotation font (cell text): hide below 10px — too small to read
   const annotFontSize = Math.max(7, Math.round(12 - (n - 5) * 0.4))
   const showAnnot     = annotFontSize >= 8
 
@@ -182,6 +184,15 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .plot-card { min-height: 200px; display: flex; flex-direction: column; }
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+.card-title-row .card-title { margin-bottom: 0; }
 
 .card-title { flex-shrink: 0; }
 

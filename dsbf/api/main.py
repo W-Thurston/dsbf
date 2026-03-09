@@ -6,7 +6,7 @@ DSBF FastAPI application.
 Start locally:
     uvicorn dsbf.api.main:app --reload
 
-The API is intentionally thin - it reads from the SQLite database and serves
+The API is intentionally thin — it reads from the SQLite database and serves
 figure files from disk.  All heavy computation stays in the profiling engine.
 
 Endpoints
@@ -38,11 +38,11 @@ from dsbf.api import db
 #############
 app = FastAPI(
     title="DSBF API",
-    description="Data Scientist's Best Friend - profiling run history and report data.",
+    description="Data Scientist's Best Friend — profiling run history and report data.",
     version="0.1.0",
 )
 
-# CORS - allow the Vue frontend (any localhost port during dev, configurable in prod)
+# CORS — allow the Vue frontend (any localhost port during dev, configurable in prod)
 _CORS_ORIGINS: list[str] = os.environ.get(
     "DSBF_CORS_ORIGINS",
     "http://localhost:5173",
@@ -55,7 +55,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional db_path override - falls back to schema.py resolution if not set
+# Optional db_path override — falls back to schema.py resolution if not set
 _DB_PATH: str | None = os.environ.get("DSBF_DB_PATH") or None
 
 
@@ -151,7 +151,7 @@ def get_run_tasks(run_key: str) -> dict[str, Any]:
     """
     Get all task results for a run.
 
-    Returns a dict keyed by task_name - mirrors the structure of report.json.
+    Returns a dict keyed by task_name — mirrors the structure of report.json.
     """
     run = db.get_run(run_key, _DB_PATH)
     if not run:
@@ -171,11 +171,128 @@ def get_task(run_key: str, task_name: str) -> dict[str, Any]:
     return task
 
 
+@app.get("/api/runs/{run_key}/correlations/{column}")
+async def run_column_correlations(run_key: str, column: str, threshold: float = 0.0):
+    """
+    Parse the stored Plotly correlation matrix JSON and return correlations
+    for a single column, sorted by absolute value descending.
+    """
+    run = db.get_run(run_key)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    figures = db.get_run_figures(run_key)
+    # Prefer interactive dark, fall back to light, then static
+    fig = next(
+        (
+            f
+            for f in figures
+            if f["plot_type"] == "correlation_matrix"
+            and f["format"] == "interactive"
+            and f["theme"] == "dark"
+        ),
+        None,
+    ) or next(
+        (
+            f
+            for f in figures
+            if f["plot_type"] == "correlation_matrix" and f["format"] == "interactive"
+        ),
+        None,
+    )
+
+    if not fig:
+        return {
+            "column": column,
+            "correlations": [],
+            "unavailable": True,
+            "reason": "No correlation matrix figure found for this run.",
+        }
+
+    repo_root = Path(__file__).resolve().parents[2]
+    fig_path = repo_root / fig["file_path"]
+
+    if not fig_path.exists():
+        return {
+            "column": column,
+            "correlations": [],
+            "unavailable": True,
+            "reason": "Correlation matrix file not found on disk.",
+        }
+
+    try:
+        import json as _json
+
+        with open(fig_path) as f:
+            plotly_data = _json.load(f)
+
+        # Mirror the three formats PlotCard handles on the frontend:
+        #   1. bare list of traces
+        #   2. { "figure": { "data": [...] } }
+        #   3. { "data": [...] }  (standard Plotly JSON)
+        if isinstance(plotly_data, list):
+            traces = plotly_data
+        elif isinstance(plotly_data, dict) and "figure" in plotly_data:
+            traces = plotly_data["figure"].get("data", [])
+        else:
+            traces = plotly_data.get("data", [])
+
+        trace = next((t for t in traces if t.get("type") == "heatmap"), None)
+        if not trace:
+            return {
+                "column": column,
+                "correlations": [],
+                "unavailable": True,
+                "reason": (
+                    "No heatmap trace found. Top-level keys:",
+                    f" {
+                        list(plotly_data.keys())
+                        if isinstance(plotly_data, dict)
+                        else 'list'
+                    }",
+                ),
+            }
+
+        labels = trace.get("x") or trace.get("y") or []
+        z = trace.get("z") or []
+
+        if column not in labels:
+            return {
+                "column": column,
+                "correlations": [],
+                "unavailable": True,
+                "reason": f"Column '{column}' not found in correlation matrix.",
+            }
+
+        col_idx = labels.index(column)
+        results = []
+        for row_idx, row_label in enumerate(labels):
+            if row_label == column:
+                continue
+            try:
+                val = float(z[row_idx][col_idx])
+            except (IndexError, TypeError, ValueError):
+                continue
+            if abs(val) >= threshold:
+                results.append({"column": row_label, "correlation": round(val, 4)})
+
+        results.sort(key=lambda x: abs(x["correlation"]), reverse=True)
+        return {"column": column, "correlations": results, "unavailable": False}
+
+    except Exception as exc:
+        return {
+            "column": column,
+            "correlations": [],
+            "unavailable": True,
+            "reason": f"Failed to parse correlation matrix: {exc}",
+        }
+
+
 @app.get("/api/runs/{run_key}/sample")
 def read_run_sample(run_key: str, n: int = 10):
     result = db.get_run_sample(run_key, n=min(n, 50))
     if result is None:
-        # source_path not recorded or file no longer on disk - return empty
+        # source_path not recorded or file no longer on disk — return empty
         # payload rather than 404 so the frontend can show a friendly message
         return {"columns": [], "rows": [], "unavailable": True}
     return result

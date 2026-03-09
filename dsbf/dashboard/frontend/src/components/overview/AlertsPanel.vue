@@ -93,8 +93,8 @@ const alerts = computed(() => {
     }
   }
 
-  const constCols = props.tasks.detect_constant_columns?.data ?? {}
-  for (const col of Object.keys(constCols)) {
+  const constCols = props.tasks.detect_constant_columns?.data?.constant_columns ?? []
+  for (const col of constCols) {
     out.push({ level: 'error', icon: '🚫', type: 'Constant',
       message: `Constant column: ${col} has only one unique value` })
   }

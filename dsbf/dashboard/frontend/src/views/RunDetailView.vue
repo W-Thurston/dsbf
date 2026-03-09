@@ -4,7 +4,7 @@
     <div v-if="run" class="quality-header card">
       <div class="quality-title">Data Quality Score</div>
       <div class="quality-score" :class="qualityClass(run.quality_score)">
-        {{ run.quality_score ?? '-' }}
+        {{ run.quality_score ?? '—' }}
       </div>
       <div class="quality-label" :class="qualityClass(run.quality_score)">
         {{ qualityLabel(run.quality_score) }}
@@ -53,8 +53,9 @@
       <!-- Tab content -->
       <div class="tab-content">
         <OverviewTab v-if="activeTab === 'overview'" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
+        <DistributionsTab v-else-if="activeTab === 'distributions'" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <div v-else class="placeholder">
-          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab - coming soon.
+          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab — coming soon.
         </div>
       </div>
     </template>
@@ -64,7 +65,8 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { getRun, getRunTasks, getRunFigures } from '../api.js'
-import OverviewTab  from './tabs/OverviewTab.vue'
+import OverviewTab        from './tabs/OverviewTab.vue'
+import DistributionsTab   from './tabs/DistributionsTab.vue'
 import TooltipIcon  from '../components/TooltipIcon.vue'
 import { formatDate, qualityClass, qualityLabel } from '../utils.js'
 
@@ -114,8 +116,8 @@ const categoryBreakdown = computed(() =>
 
 const categoryTooltips = {
   completeness: 'Measures how much data is present vs missing. A high score means few null or empty values across columns.',
-  consistency:  'Checks whether values follow expected patterns and types - e.g. no text in numeric columns, valid date formats.',
-  distribution: 'Evaluates whether column distributions look reasonable - flags extreme skewness, dominant values, or unusual spreads.',
+  consistency:  'Checks whether values follow expected patterns and types — e.g. no text in numeric columns, valid date formats.',
+  distribution: 'Evaluates whether column distributions look reasonable — flags extreme skewness, dominant values, or unusual spreads.',
   redundancy:   'Detects duplicate columns, constant columns, or features that carry identical information.',
   drift:        'Compares this run\'s statistics against previous runs to surface unexpected shifts in the data.',
 }
@@ -126,7 +128,7 @@ const runMetrics = computed(() => {
   const dupCount = tasks.value?.detect_duplicates?.data?.duplicate_count ?? null
   const rowCount = run.value.row_count ?? null
 
-  let dupValue = '-'
+  let dupValue = '—'
   if (dupCount != null) {
     const pct = rowCount ? ` (${((dupCount / rowCount) * 100).toFixed(1)}%)` : ''
     dupValue  = `${dupCount.toLocaleString()}${pct}`
@@ -136,23 +138,23 @@ const runMetrics = computed(() => {
     {
       label:   'Rows',
       tooltip: 'Total number of rows (observations) in the dataset.',
-      value:   rowCount?.toLocaleString() ?? '-',
+      value:   rowCount?.toLocaleString() ?? '—',
     },
     {
       label:   'Columns',
       tooltip: 'Total number of columns (features) in the dataset.',
-      value:   run.value.col_count?.toLocaleString() ?? '-',
+      value:   run.value.col_count?.toLocaleString() ?? '—',
     },
     {
       label:   'Memory',
       tooltip: 'Approximate memory footprint of the dataset when loaded into a pandas DataFrame.',
-      value:   shape.approx_memory_MB != null ? `${shape.approx_memory_MB} MB` : '-',
+      value:   shape.approx_memory_MB != null ? `${shape.approx_memory_MB} MB` : '—',
     },
     {
       label:   'Missing',
       tooltip: 'Percentage of all cells in the dataset that contain a null or missing value.',
       value:   shape.null_cell_percentage != null
-        ? `${(shape.null_cell_percentage * 100).toFixed(1)}%` : '-',
+        ? `${(shape.null_cell_percentage * 100).toFixed(1)}%` : '—',
     },
     {
       label:   'Duplicate Rows',
@@ -163,12 +165,12 @@ const runMetrics = computed(() => {
     {
       label:   'Depth',
       tooltip: 'Profiling depth used for this run: basic (fast, core stats), standard (recommended), or full (all tasks including expensive checks).',
-      value:   run.value.profiling_depth ?? '-',
+      value:   run.value.profiling_depth ?? '—',
     },
     {
       label:   'Stage',
-      tooltip: 'Inferred lifecycle stage of the dataset - e.g. raw (unprocessed), exploratory, or modelling-ready. Affects which checks are prioritised.',
-      value:   run.value.inferred_stage ?? '-',
+      tooltip: 'Inferred lifecycle stage of the dataset — e.g. raw (unprocessed), exploratory, or modelling-ready. Affects which checks are prioritised.',
+      value:   run.value.inferred_stage ?? '—',
     },
   ]
 })
@@ -289,7 +291,7 @@ const runMetrics = computed(() => {
   cursor: default;
 }
 
-/* Duplicate rows value includes a percentage - allow slightly smaller font
+/* Duplicate rows value includes a percentage — allow slightly smaller font
    so it stays on one line without truncating on typical screen widths */
 .meta-metric:has(.meta-value[data-key="dup"]) .meta-value {
   font-size: 15px;

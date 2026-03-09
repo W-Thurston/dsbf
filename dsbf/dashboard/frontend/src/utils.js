@@ -12,7 +12,7 @@
  * Produces a compact form: "Mar 3 '26, 07:53"
  */
 export function formatDate(iso) {
-  if (!iso) return '-'
+  if (!iso) return '—'
   const d    = new Date(iso)
   const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   const yr   = String(d.getFullYear()).slice(2)
@@ -27,7 +27,7 @@ export function formatDate(iso) {
  * Produces: "Mar 3, 2026, 07:53:08 AM"
  */
 export function formatDateFull(iso) {
-  if (!iso) return '-'
+  if (!iso) return '—'
   return new Date(iso).toLocaleString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -63,10 +63,10 @@ export function qualityLabel(score) {
 
 /**
  * Truncate a string to maxLen characters, appending '…' if truncated.
- * Safe to call with null/undefined - returns '-' in that case.
+ * Safe to call with null/undefined — returns '-' in that case.
  */
 export function trunc(val, maxLen = 20) {
-  if (val == null) return '-'
+  if (val == null) return '—'
   const s = String(val)
   return s.length > maxLen ? s.slice(0, maxLen) + '…' : s
 }
@@ -84,6 +84,19 @@ export function trunc(val, maxLen = 20) {
  * @param {string} theme    - "dark" | "light"
  * @returns {Object|null}
  */
+export function figureForColumn(figures, column, plotType, format, theme) {
+  const candidates = figures.filter(
+    f => f.column_name === column
+      && f.plot_type   === plotType
+      && f.format      === format
+  )
+  return (
+    candidates.find(f => f.theme === theme)     ??
+    candidates.find(f => f.theme === 'default') ??
+    null
+  )
+}
+
 export function figureFor(figures, plotType, format, theme) {
   const candidates = figures.filter(
     f => f.plot_type   === plotType

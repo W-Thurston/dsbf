@@ -200,4 +200,63 @@ body.theme-light .lineage-value                { color: #1e293b; }
 body.theme-light .lineage-label                { color: #64748b; }
 body.theme-light .lineage-item                 { border-bottom-color: #e2e8f0; }
 body.theme-light .lineage-note                 { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+
+/* Distributions tab */
+body.theme-light .browser-search-input        { background: #f8fafc; border-color: #e2e8f0; color: #1e293b; }
+body.theme-light .col-row                     { color: #64748b; }
+body.theme-light .col-row:hover               { background: #f1f5f9; color: #1e293b; }
+body.theme-light .col-row.active              { background: #dbeafe; color: #1e293b; border-color: #bfdbfe; }
+body.theme-light .group-header                { background: #ffffff; }
+body.theme-light .group-count                 { color: #94a3b8; }
+body.theme-light .col-heading                 { color: #0f172a; }
+body.theme-light .col-heading-dtype           { color: #94a3b8; }
+body.theme-light .stats-strip                 { background: #f8fafc; border-color: #e2e8f0; }
+body.theme-light .stat-item                   { border-right-color: #e2e8f0; }
+body.theme-light .stat-label                  { color: #94a3b8; }
+body.theme-light .stat-value                  { color: #1e293b; }
+body.theme-light .stat-warn-high .stat-value  { color: #dc2626; }
+body.theme-light .stat-warn-mid  .stat-value  { color: #ea580c; }
+body.theme-light .insight-body                { color: #475569; }
+body.theme-light .action-chip                 { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+body.theme-light .pct-table th                { color: #94a3b8; border-bottom-color: #e2e8f0; }
+body.theme-light .pct-table td                { color: #475569; }
+body.theme-light .pct-median                  { color: #2563eb !important; }
+body.theme-light .vc-table th                 { color: #94a3b8; border-bottom-color: #e2e8f0; }
+body.theme-light .vc-table td                 { border-bottom-color: #f1f5f9; }
+body.theme-light .vc-table tr:hover td        { background: #f1f5f9; }
+body.theme-light .val-cell                    { color: #1e293b !important; }
+body.theme-light .num-cell                    { color: #475569; }
+body.theme-light .bar-track                   { background: #e2e8f0; }
+body.theme-light .truncated-note              { color: #94a3b8; }
+body.theme-light .empty-state                 { color: #94a3b8; }
+
+/* Distributions — new additions */
+body.theme-light .plot-pane :deep(.toggle-btn)        { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+body.theme-light .plot-pane :deep(.toggle-btn:hover)  { background: #f1f5f9; color: #1e293b; }
+body.theme-light .plot-pane :deep(.toggle-btn.active) { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
+body.theme-light .browser-legend              { border-bottom-color: #e2e8f0; }
+body.theme-light .legend-item                 { color: #94a3b8; }
+body.theme-light .legend-bar-wrap             { background: #e2e8f0; }
+body.theme-light .tl-grid                     { background: #f8fafc; border-color: #e2e8f0; }
+body.theme-light .tl-item                     { border-right-color: #e2e8f0; }
+body.theme-light .tl-label                    { color: #94a3b8; }
+body.theme-light .tl-value                    { color: #1e293b; }
+/* Distributions — correlations panel */
+body.theme-light .filter-chip                 { border-color: #e2e8f0; color: #94a3b8; }
+body.theme-light .filter-chip:hover           { background: #f1f5f9; color: #1e293b; }
+body.theme-light .filter-chip.active          { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
+body.theme-light .corr-row:hover              { background: #f1f5f9; }
+body.theme-light .corr-col-name               { color: #64748b; }
+body.theme-light .corr-row:hover .corr-col-name { color: #1e293b; }
+body.theme-light .corr-bar-neg-track,
+body.theme-light .corr-bar-pos-track          { background: #e2e8f0; }
+body.theme-light .corr-midpoint               { background: #cbd5e1; }
+body.theme-light .corr-truncated              { color: #94a3b8; }
+body.theme-light .corr-unavailable            { color: #94a3b8; }
+body.theme-light .corr-empty                  { color: #94a3b8; }
+body.theme-light .val-pos, body.theme-light .val-neg { color: #64748b; }
+
+body.theme-light .th-val,
+body.theme-light .th-num,
+body.theme-light .th-bar                      { color: #94a3b8; border-bottom-color: #e2e8f0; }
 </style>
