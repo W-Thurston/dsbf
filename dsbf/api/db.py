@@ -3,7 +3,7 @@
 """
 Read-only query helpers for the DSBF SQLite database.
 
-All functions return plain dicts/lists — no SQLite Row objects leak out.
+All functions return plain dicts/lists - no SQLite Row objects leak out.
 
 Row objects are always converted to dicts INSIDE the connection context
 manager to avoid accessing them after the connection is closed.
@@ -11,7 +11,10 @@ manager to avoid accessing them after the connection is closed.
 
 import contextlib
 import json
+from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 from dsbf.storage.schema import get_connection
 
@@ -58,7 +61,7 @@ def list_datasets(db_path=None) -> list[dict]:
             ) latest ON latest.dataset_id = d.id
             GROUP BY d.id
             ORDER BY d.name
-        """
+        """,
         ).fetchall()
         return [_row_to_dict(r) for r in rows]
 
@@ -104,7 +107,10 @@ def get_run(run_key: str, db_path=None) -> dict | None:
     with get_connection(db_path) as conn:
         row = conn.execute(
             """
-            SELECT r.*, d.name AS dataset_name
+            SELECT
+                r.*,
+                d.name AS dataset_name,
+                d.source_path AS source_path
             FROM runs r
             JOIN datasets d ON d.id = r.dataset_id
             WHERE r.run_key = ?
@@ -115,7 +121,82 @@ def get_run(run_key: str, db_path=None) -> dict | None:
             return None
         d = _row_to_dict(row)
     _parse_json_fields(d, "config_snapshot")
+
+    sp = d.get("source_path")
+    # source_path may be relative to the repo root (same convention as figure paths)
+    resolved = None
+    if sp:
+        p = Path(sp)
+        if not p.is_absolute():
+            repo_root = Path(__file__).resolve().parents[2]
+            p = repo_root / p
+        if p.exists():
+            resolved = p
+
+    if resolved:
+        stat = resolved.stat()
+        d["source_file_size_bytes"] = stat.st_size
+        d["source_last_modified"] = stat.st_mtime
+    else:
+        d["source_file_size_bytes"] = None
+        d["source_last_modified"] = None
     return d
+
+
+def get_run_sample(run_key: str, n: int = 10, db_path=None) -> dict | None:
+    with get_connection(db_path) as conn:
+        row = conn.execute(
+            """
+            SELECT d.source_path
+            FROM runs r
+            JOIN datasets d ON d.id = r.dataset_id
+            WHERE r.run_key = ?
+        """,
+            (run_key,),
+        ).fetchone()
+    if not row:
+        return None
+    source_path = _row_to_dict(row).get("source_path")
+    if not source_path:
+        return None
+    p = Path(source_path)
+    if not p.is_absolute():
+        repo_root = Path(__file__).resolve().parents[2]
+        p = repo_root / p
+    if not p.exists():
+        return None
+    source_path = str(p)
+    ext = Path(source_path).suffix.lower()
+    try:
+        if ext == ".parquet":
+            df = pd.read_parquet(source_path).head(n)
+        elif ext in (".xlsx", ".xls"):
+            df = pd.read_excel(source_path, nrows=n)
+        else:
+            df = pd.read_csv(source_path, nrows=n)
+    except Exception as e:
+        return {"error": str(e), "columns": [], "rows": []}
+    # Serialise safely:
+    # 1. Convert datetime columns to ISO strings
+    for col in df.select_dtypes(include=["datetime", "datetimetz"]).columns:
+        df[col] = df[col].astype(str)
+    # 2. Serialise row-by-row using pd.isna() which catches ALL NA types:
+    #    numpy.float64 NaN, numpy.bool_, NaT, pd.NA, None - everything.
+    records = []
+    for _, row in df.iterrows():
+        record = {}
+        for col in df.columns:
+            val = row[col]
+            try:
+                if pd.isna(val):
+                    record[col] = None
+                    continue
+            except (TypeError, ValueError):
+                pass
+            # Convert numpy scalars to native Python types so json.dumps works
+            record[col] = val.item() if hasattr(val, "item") else val
+        records.append(record)
+    return {"columns": list(df.columns), "rows": records}
 
 
 # ── Task results ───────────────────────────────────────────────────────────────
@@ -199,7 +280,7 @@ def get_figure_path(figure_id: int, db_path=None) -> str | None:
 
 def compare_runs(run_keys: list[str], task_name: str, db_path=None) -> dict:
     with get_connection(db_path) as conn:
-        # Use a temp table to keep every value fully parameterised —
+        # Use a temp table to keep every value fully parameterised -
         # avoids f-string SQL construction flagged by Ruff S608.
         conn.execute("CREATE TEMP TABLE IF NOT EXISTS _run_key_filter (run_key TEXT)")
         conn.execute("DELETE FROM _run_key_filter")

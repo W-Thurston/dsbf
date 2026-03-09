@@ -13,7 +13,7 @@ Optional arguments:
     python migrate_runs.py --db-path path/to/custom.db
     python migrate_runs.py --dry-run       # print what would be migrated, write nothing
 
-The script is safe to re-run — runs already in the database are skipped.
+The script is safe to re-run - runs already in the database are skipped.
 """
 
 import argparse
@@ -119,14 +119,21 @@ def _infer_dataset_name(metadata: dict, run_key: str) -> tuple[str, str | None]:
 
 
 # Core migration logic
-def migrate_directory(output_dir: Path, db_path: Path | None, dry_run: bool) -> bool:
+def migrate_directory(
+    output_dir: Path,
+    db_path: Path | None,
+    dry_run: bool,
+    source_path_override: str | None = None,
+) -> bool:
     """
     Attempt to migrate a single output directory.
 
     Args:
-        output_dir (Path): _description_
-        db_path (Path | None): _description_
-        dry_run (bool): _description_
+        output_dir:           Path to the timestamped output directory.
+        db_path:              Optional override for the SQLite database path.
+        dry_run:              If True, print what would happen without writing.
+        source_path_override: If provided, use this as the source_path for the
+                              dataset record instead of whatever is in metadata.
 
     Returns:
         bool: True if the run was (or would be) migrated, False if skipped.
@@ -138,13 +145,18 @@ def migrate_directory(output_dir: Path, db_path: Path | None, dry_run: bool) -> 
     metadata_path = output_dir / "metadata_report.json"
 
     if not report_path.exists():
-        logger.warning("  Skipping %s — no report.json found.", run_key)
+        logger.warning("  Skipping %s - no report.json found.", run_key)
         return False
 
     report = _load_json(report_path)
     metadata = _load_json(metadata_path) if metadata_path.exists() else {}
 
     dataset_name, source_path = _infer_dataset_name(metadata, run_key)
+    # CLI --source-path overrides whatever the metadata contained
+    if source_path_override:
+        source_path = source_path_override
+        if not dataset_name or dataset_name.startswith("unknown_"):
+            dataset_name = Path(source_path_override).stem
     run_meta = _extract_run_meta(report, metadata, run_key)
     results = report.get("results", report)
 
@@ -203,6 +215,16 @@ def main():
         action="store_true",
         help="Print what would be migrated without writing anything",
     )
+    parser.add_argument(
+        "--source-path",
+        type=str,
+        default=None,
+        help=(
+            "Path to the source data file (e.g. dsbf_test_dataset.csv). "
+            "Overrides whatever is in metadata_report.json. "
+            "Stored as-is so the API can resolve it relative to the repo root."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.outputs_dir.is_dir():
@@ -210,7 +232,7 @@ def main():
         sys.exit(1)
 
     if args.dry_run:
-        logger.info("DRY RUN — nothing will be written to the database.")
+        logger.info("DRY RUN - nothing will be written to the database.")
     else:
         db_path = init_db(args.db_path)
         logger.info("Database: %s", db_path)
@@ -237,7 +259,9 @@ def main():
     skipped = 0
 
     for run_dir in run_dirs:
-        success = migrate_directory(run_dir, args.db_path, args.dry_run)
+        success = migrate_directory(
+            run_dir, args.db_path, args.dry_run, args.source_path
+        )
         if success:
             migrated += 1
         else:
