@@ -25,7 +25,7 @@
           <span class="meta-item">
             <span class="meta-label">Quality</span>
             <span class="meta-value" :class="qualityClass(ds.latest_quality_score)">
-              {{ ds.latest_quality_score ?? '—' }}
+              {{ ds.latest_quality_score ?? '-' }}
             </span>
           </span>
         </div>
@@ -37,6 +37,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { listDatasets } from '../api.js'
+import { formatDate, qualityClass } from '../utils.js'
 
 const datasets = ref([])
 const loading  = ref(true)
@@ -52,20 +53,7 @@ onMounted(async () => {
   }
 })
 
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  })
-}
 
-function qualityClass(score) {
-  if (score == null) return ''
-  if (score >= 90) return 'score-excellent'
-  if (score >= 70) return 'score-good'
-  if (score >= 40) return 'score-warn'
-  return 'score-poor'
-}
 </script>
 
 <style scoped>

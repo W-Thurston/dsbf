@@ -2,10 +2,9 @@
  * src/router/index.js
  *
  * Three routes:
-* Three routes:
- *   /                          → DatasetListView  (pick a dataset)
- *   /datasets/:name            → RunListView      (pick a run)
- *   /datasets/:name/runs/:key  → RunDetailView    (the dashboard)
+ *   /                                → DatasetListView  (pick a dataset)
+ *   /datasets/:name                  → RunListView      (pick a run)
+ *   /datasets/:name/runs/:runKey     → RunDetailView    (the dashboard)
  */
 
 import { createRouter, createWebHistory } from 'vue-router'

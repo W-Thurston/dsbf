@@ -2,7 +2,7 @@
  * src/api.js
  *
  * Thin wrapper around axios for all DSBF API endpoints.
- * Import and call these functions from Vue components — never
+ * Import and call these functions from Vue components - never
  * write fetch/axios calls directly in components.
  *
  * All functions return the response data directly (not the axios response
@@ -65,6 +65,15 @@ export function compareRuns(runKeys, taskName) {
   runKeys.forEach(k => params.append('run_keys', k))
   params.append('task_name', taskName)
   return client.get(`/runs/compare?${params}`).then(r => r.data)
+}
+
+/**
+ * Get a sample of rows from the source dataset for a run.
+ * @param {string} runKey
+ * @param {number} n - number of rows (max 50)
+ */
+export function getRunSample(runKey, n = 10) {
+  return client.get(`/runs/${runKey}/sample`, { params: { n } }).then(r => r.data)
 }
 
 // ── Figures ───────────────────────────────────────────────────────────────────

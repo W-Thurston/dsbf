@@ -29,11 +29,11 @@
           <td class="run-key">{{ run.run_key }}</td>
           <td>{{ formatDate(run.ran_at) }}</td>
           <td><span class="badge badge-blue">{{ run.profiling_depth }}</span></td>
-          <td><span class="badge badge-gray">{{ run.inferred_stage ?? '—' }}</span></td>
-          <td>{{ run.row_count?.toLocaleString() ?? '—' }}</td>
-          <td>{{ run.col_count?.toLocaleString() ?? '—' }}</td>
+          <td><span class="badge badge-gray">{{ run.inferred_stage ?? '-' }}</span></td>
+          <td>{{ run.row_count?.toLocaleString() ?? '-' }}</td>
+          <td>{{ run.col_count?.toLocaleString() ?? '-' }}</td>
           <td :class="qualityClass(run.quality_score)">
-            {{ run.quality_score ?? '—' }}
+            {{ run.quality_score ?? '-' }}
           </td>
           <td>{{ run.task_count }}</td>
           <td>{{ run.fig_count }}</td>
@@ -45,6 +45,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { formatDate, qualityClass } from '../utils.js'
 import { listRuns } from '../api.js'
 
 const props = defineProps({ name: String })
@@ -63,21 +64,6 @@ onMounted(async () => {
   }
 })
 
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
-
-function qualityClass(score) {
-  if (score == null) return ''
-  if (score >= 90) return 'score-excellent'
-  if (score >= 70) return 'score-good'
-  if (score >= 40) return 'score-warn'
-  return 'score-poor'
-}
 </script>
 
 <style scoped>
