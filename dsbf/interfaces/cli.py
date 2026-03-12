@@ -6,7 +6,7 @@ import yaml
 from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
 
-app = typer.Typer(help="DSBF: Data Scientist's Best Friend — EDA Profiling CLI")
+app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
 
 
 def _load_config(config_path: str) -> dict:
@@ -59,11 +59,14 @@ def profile(
 def quickstart(
     dataset: str = typer.Argument(
         "iris", help="Built-in dataset name (e.g., iris, titanic)."
-    )
+    ),
 ):
     """Run quick profiling using built-in dataset (e.g., sklearn or seaborn)."""
     cfg = load_default_config()
     cfg["metadata"]["dataset_name"] = dataset
+    # Explicitly clear dataset_path so writer.py never stores a stale file path
+    # from default_config.yaml as the source for a built-in dataset.
+    cfg["metadata"]["dataset_path"] = None
     engine = ProfileEngine(cfg)
     engine.run()
 
@@ -74,3 +77,20 @@ def version():
     from dsbf.utils.versioning import get_dsbf_version
 
     typer.echo(f"DSBF version: {get_dsbf_version()}")
+
+
+@app.command()
+def render_dashboard(
+    output_dir: str = typer.Argument(
+        ..., help="Path to output folder with report.json"
+    ),
+    save_html: bool = typer.Option(
+        False, "--save-html", help="Export to standalone HTML instead of serving."
+    ),
+):
+    """
+    Render the interactive dashboard from a completed DSBF run.
+    """
+    from dsbf.dashboard.render_dashboard import render_and_show
+
+    render_and_show(output_dir=output_dir, save_html=save_html)

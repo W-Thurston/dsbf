@@ -290,7 +290,7 @@ const showValueCounts = computed(() =>
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #475569;
+  color: #94a3b8;
   min-height: 300px;
 }
 .empty-icon { font-size: 32px; }

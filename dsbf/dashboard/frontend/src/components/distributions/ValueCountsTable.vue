@@ -11,7 +11,7 @@
             <th class="th-val">Value</th>
             <th class="th-num">Count</th>
             <th class="th-num">%</th>
-            <th class="th-bar" title="Bar width shows frequency relative to the most common value in this column">Relative Freq ↑</th>
+            <th class="th-bar" title="Bar width shows frequency relative to the most common value in this column">Relative Freq</th>
           </tr>
         </thead>
         <tbody>
@@ -53,7 +53,7 @@ const rows = computed(() => {
 
   const entries = Object.entries(vc)
     .filter(([, v]) => typeof v === 'number')
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
 
   const total   = entries.reduce((s, [, n]) => s + n, 0)
   const topN    = entries.slice(0, props.maxRows)

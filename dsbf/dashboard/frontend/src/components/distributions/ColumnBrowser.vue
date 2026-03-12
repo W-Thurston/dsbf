@@ -12,9 +12,9 @@
     <!-- Legend -->
     <div class="browser-legend">
       <span class="legend-item">
-        <span class="legend-warn">●</span> Has alerts
+        <span class="legend-warn">●</span> {{ alertLabel }}
       </span>
-      <span class="legend-item">
+      <span v-if="showNullBar" class="legend-item">
         <span class="legend-bar-wrap"><span class="legend-bar-fill" /></span> Null %
       </span>
     </div>
@@ -36,6 +36,7 @@
           <span class="col-indicators">
             <span v-if="col.hasWarning" class="warn-dot" title="Has data quality alerts">●</span>
             <span
+              v-if="showNullBar"
               class="null-bar-wrap"
               :title="`Null: ${(col.nullPct * 100).toFixed(1)}%`"
             >
@@ -54,8 +55,12 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  tasks:    { type: Object, default: () => ({}) },
-  selected: { type: String, default: null },
+  tasks:      { type: Object,  default: () => ({}) },
+  selected:   { type: String,  default: null },
+  showNullBar:{ type: Boolean, default: true },
+  alertLabel: { type: String,  default: 'Has alerts' },
+  // When provided, this Set<string> overrides the default alert logic entirely.
+  warningSet: { type: Object,  default: null },
 })
 defineEmits(['select'])
 
@@ -72,6 +77,7 @@ const columns = computed(() => {
   const idCols    = props.tasks.detect_id_columns?.data                  ?? {}
   const oob       = props.tasks.detect_out_of_bounds?.data               ?? {}
   const zeroPcts  = props.tasks.detect_zeros?.data?.zero_percentages     ?? {}
+  const bimodal   = props.tasks.detect_bimodal_distribution?.data?.bimodal_flags ?? {}
   const dom       = props.tasks.detect_single_dominant_value?.data       ?? {}
   const numeric   = props.tasks.summarize_numeric?.data                  ?? {}
   const vcData    = props.tasks.summarize_value_counts?.data             ?? {}
@@ -97,6 +103,7 @@ const columns = computed(() => {
       if (skew !== null && Math.abs(skew) > 1)          hasWarning = true
       if (nm.near_zero_variance === true)               hasWarning = true
       if (name in oob)                                  hasWarning = true
+      if (bimodal[name] === true)                       hasWarning = true
       if ((zeroPcts[name] ?? 0) > 0.3)                  hasWarning = true
       // mean/median divergence
       const mean = nm.mean ?? null, median = nm['50%'] ?? null, std = nm.std ?? null
@@ -120,11 +127,15 @@ const columns = computed(() => {
       const topN  = Math.max(...vals, 0)
       if (total > 0 && topN / total > 0.75)             hasWarning = true
     }
+    const finalWarning = props.warningSet != null
+      ? props.warningSet.has(name)
+      : hasWarning
+
     return {
       name,
       intent:     typeInfo.analysis_intent_dtype ?? 'unknown',
       nullPct,
-      hasWarning,
+      hasWarning: finalWarning,
     }
   })
 })
@@ -256,7 +267,7 @@ const filteredGroups = computed(() => {
   align-items: center;
   gap: 5px;
   font-size: 10px;
-  color: #475569;
+  color: #94a3b8;
   white-space: nowrap;
 }
 
@@ -283,7 +294,7 @@ const filteredGroups = computed(() => {
 .null-bar-wrap {
   width: 30px;
   height: 4px;
-  background: #1e293b;
+  background: #334155;
   border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;

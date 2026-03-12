@@ -76,6 +76,40 @@ export function getRunSample(runKey, n = 10) {
   return client.get(`/runs/${runKey}/sample`, { params: { n } }).then(r => r.data)
 }
 
+// ── Relationships ────────────────────────────────────────────────────────────
+
+/**
+ * Get all pairwise associations for a run.
+ * Returns { source, pairs, summary }
+ */
+export function getRunAssociations(runKey) {
+  return client.get(`/runs/${runKey}/associations`).then(r => r.data)
+}
+
+/**
+ * Get pairwise associations for a single column, sorted by abs metric desc.
+ * @param {string} minStrength - optional: "strong" | "moderate" | "weak"
+ */
+export function getColumnAssociations(runKey, column, minStrength = '') {
+  return client.get(
+    `/runs/${runKey}/associations/${encodeURIComponent(column)}`,
+    { params: minStrength ? { min_strength: minStrength } : {} }
+  ).then(r => r.data)
+}
+
+/**
+ * Fetch raw column values for pair plotting.
+ * @param {string[]} cols - column names to fetch
+ * @param {number}   maxRows - subsample cap (default 3000)
+ * Returns { total_rows, sampled_rows, [colName]: [...values] }
+ */
+export function getColumnData(runKey, cols, maxRows = 3000) {
+  const params = new URLSearchParams()
+  cols.forEach(c => params.append('cols', c))
+  params.append('max_rows', maxRows)
+  return client.get(`/runs/${runKey}/column-data?${params}`).then(r => r.data)
+}
+
 // ── Figures ───────────────────────────────────────────────────────────────────
 
 /**
@@ -83,7 +117,7 @@ export function getRunSample(runKey, n = 10) {
  * Use this as the src attribute on <img> tags or as the URL to load Plotly JSON.
  */
 export function getColumnCorrelations(runKey, column, threshold = 0.0) {
-  return api.get(`/api/runs/${runKey}/correlations/${encodeURIComponent(column)}`, {
+  return client.get(`/runs/${runKey}/correlations/${encodeURIComponent(column)}`, {
     params: { threshold },
   }).then(r => r.data)
 }

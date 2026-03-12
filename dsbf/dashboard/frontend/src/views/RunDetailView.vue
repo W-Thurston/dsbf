@@ -52,8 +52,9 @@
 
       <!-- Tab content -->
       <div class="tab-content">
-        <OverviewTab v-if="activeTab === 'overview'" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
-        <DistributionsTab v-else-if="activeTab === 'distributions'" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
+        <OverviewTab       v-if="activeTab === 'overview'"       :run-key="runKey" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
+        <DistributionsTab  v-else-if="activeTab === 'distributions'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
+        <RelationshipsTab  v-else-if="activeTab === 'relationships'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <div v-else class="placeholder">
           {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab — coming soon.
         </div>
@@ -67,6 +68,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { getRun, getRunTasks, getRunFigures } from '../api.js'
 import OverviewTab        from './tabs/OverviewTab.vue'
 import DistributionsTab   from './tabs/DistributionsTab.vue'
+import RelationshipsTab   from './tabs/RelationshipsTab.vue'
 import TooltipIcon  from '../components/TooltipIcon.vue'
 import { formatDate, qualityClass, qualityLabel } from '../utils.js'
 
@@ -93,12 +95,17 @@ const tabs = [
 ]
 const activeTab = ref('overview')
 
-onMounted(async () => {
+async function loadRun(runKey) {
+  loading.value = true
+  error.value   = null
+  run.value     = null
+  tasks.value   = {}
+  figures.value = []
   try {
     const [runData, taskData, figureData] = await Promise.all([
-      getRun(props.runKey),
-      getRunTasks(props.runKey),
-      getRunFigures(props.runKey),
+      getRun(runKey),
+      getRunTasks(runKey),
+      getRunFigures(runKey),
     ])
     run.value     = runData
     tasks.value   = taskData
@@ -108,7 +115,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(() => loadRun(props.runKey))
+watch(() => props.runKey, (key) => { if (key) loadRun(key) })
 
 const categoryBreakdown = computed(() =>
   tasks.value?.data_quality_scorer?.summary?.category_breakdown ?? {}

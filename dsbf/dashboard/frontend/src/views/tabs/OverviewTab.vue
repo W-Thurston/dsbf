@@ -3,7 +3,7 @@
 
     <!-- Row: data sample | run date + lineage stacked -->
     <div class="row-sample">
-      <DataSampleTable :run-key="run?.run_key" :run="run" />
+      <DataSampleTable :run-key="runKey" :run="run" />
       <div class="sample-sidebar">
         <RunDateCard :run="run" />
         <DataLineageCard :run="run" />
@@ -51,6 +51,7 @@ import DataSampleTable      from '../../components/overview/DataSampleTable.vue'
 import { figureFor as findFigure } from '../../utils.js'
 
 const props = defineProps({
+  runKey:  { type: String, default: null },
   run:     { type: Object, default: null },
   tasks:   { type: Object, required: true },
   figures: { type: Array,  default: () => [] },
@@ -80,11 +81,16 @@ function figureFor(plotType, format) {
   display: flex;
   gap: 16px;
   align-items: stretch;
+  /* No fixed height — sidebar drives the row height naturally,
+     and the sample card stretches to match via height: 100% */
 }
 
 .row-sample > :first-child {
   flex: 3 1 0;
   min-width: 0;
+  /* Let the card fill whatever height the sidebar sets */
+  display: flex;
+  flex-direction: column;
 }
 
 .sample-sidebar {
@@ -93,6 +99,11 @@ function figureFor(plotType, format) {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* Lineage card fills remaining sidebar height after RunDateCard */
+.sample-sidebar > :last-child {
+  flex: 1 1 0;
 }
 
 /* equal-width chart pairs */

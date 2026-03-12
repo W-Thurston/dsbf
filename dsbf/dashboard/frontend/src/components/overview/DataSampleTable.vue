@@ -24,6 +24,10 @@
       <span class="unavail-icon">ⓘ</span>
       Source path not recorded for this run. Re-run the profiler to enable data sampling.
     </div>
+    <div v-else-if="error === 'no_data'" class="sample-unavailable">
+      <span class="unavail-icon">ⓘ</span>
+      Data could not be loaded for this run.
+    </div>
     <div v-else-if="error" class="sample-error">{{ error }}</div>
     <div v-else-if="!columns.length" class="loading">No sample data available.</div>
 
@@ -52,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import TooltipIcon from '../TooltipIcon.vue'
 import { getRunSample } from '../../api.js'
 import { trunc } from '../../utils.js'
@@ -69,15 +73,27 @@ const rows    = ref([])
 const nRows   = ref(10)
 
 async function fetchSample() {
-  // If source_path is not recorded this run was migrated before path tracking
-  // was added - no point hitting the API, it will 404.
-  if (props.run && !props.run.source_path) {
-    loading.value = false
-    error.value   = 'no_source_path'
-    return
-  }
-  loading.value = true
+  if (!props.runKey) return
+
+  // Reset stale data immediately so the previous run's sample doesn't linger
+  columns.value = []
+  rows.value    = []
   error.value   = null
+  loading.value = true
+
+  // For built-in datasets (seaborn/sklearn) source_path is null but the backend
+  // can still load data via _load_dataframe. Only bail early for runs that
+  // pre-date path tracking — identified by dataset_source being unknown and
+  // source_path being null.
+  if (props.run && props.run.run_key === props.runKey) {
+    const src    = props.run.source_path
+    const source = props.run.dataset_source ?? 'unknown'
+    if (!src && source === 'unknown') {
+      loading.value = false
+      error.value   = 'no_source_path'
+      return
+    }
+  }
   try {
     const data    = await getRunSample(props.runKey, nRows.value)
     if (data.error) throw new Error(data.error)
@@ -91,6 +107,9 @@ async function fetchSample() {
 }
 
 onMounted(fetchSample)
+watch(() => props.runKey, () => fetchSample(), { immediate: false })
+// Re-run check when run arrives in case we need to show the no_source_path message
+watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample() })
 </script>
 
 <style scoped>

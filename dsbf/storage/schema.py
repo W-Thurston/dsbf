@@ -12,7 +12,7 @@ Usage
 from dsbf.storage.schema import init_db, get_connection
 
 init_db()                          # create tables if they don't exist
-with get_connection() as conn:     # context manager — commits or rolls back
+with get_connection() as conn:     # context manager - commits or rolls back
     conn.execute("SELECT ...")
 """
 
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS runs (
 -- One row per task per run.
 CREATE TABLE IF NOT EXISTS task_results (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id      INTEGER NOT NULL REFERENCES runs(id),
+    run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
     task_name   TEXT    NOT NULL,
     status      TEXT,                          -- success | failed | skipped
     summary     TEXT,                          -- JSON blob
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS task_results (
 -- column_name is NULL for dataset-level figures (e.g. missingness matrix).
 CREATE TABLE IF NOT EXISTS figures (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id      INTEGER NOT NULL REFERENCES runs(id),
+    run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
     column_name TEXT,
     task_name   TEXT    NOT NULL,
     plot_type   TEXT    NOT NULL,   -- histogram | boxplot | bar | correlation_matrix...

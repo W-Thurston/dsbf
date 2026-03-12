@@ -174,118 +174,58 @@ def get_task(run_key: str, task_name: str) -> dict[str, Any]:
 @app.get("/api/runs/{run_key}/correlations/{column}")
 async def run_column_correlations(run_key: str, column: str, threshold: float = 0.0):
     """
-    Parse the stored Plotly correlation matrix JSON and return correlations
-    for a single column, sorted by absolute value descending.
+    Return pairwise correlations for a single column using the stored
+    compute_correlations task result (keyed as "COL_A|COL_B": float).
     """
     run = db.get_run(run_key)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    figures = db.get_run_figures(run_key)
-    # Prefer interactive dark, fall back to light, then static
-    fig = next(
-        (
-            f
-            for f in figures
-            if f["plot_type"] == "correlation_matrix"
-            and f["format"] == "interactive"
-            and f["theme"] == "dark"
-        ),
-        None,
-    ) or next(
-        (
-            f
-            for f in figures
-            if f["plot_type"] == "correlation_matrix" and f["format"] == "interactive"
-        ),
-        None,
-    )
-
-    if not fig:
+    task = db.get_task(run_key, "compute_correlations")
+    if not task or not task.get("data"):
         return {
             "column": column,
             "correlations": [],
             "unavailable": True,
-            "reason": "No correlation matrix figure found for this run.",
+            "reason": (
+                "Correlation data not available.",
+                "Run the profiler at full depth to enable this feature.",
+            ),
         }
 
-    repo_root = Path(__file__).resolve().parents[2]
-    fig_path = repo_root / fig["file_path"]
-
-    if not fig_path.exists():
-        return {
-            "column": column,
-            "correlations": [],
-            "unavailable": True,
-            "reason": "Correlation matrix file not found on disk.",
-        }
+    import json as _json
 
     try:
-        import json as _json
-
-        with open(fig_path) as f:
-            plotly_data = _json.load(f)
-
-        # Mirror the three formats PlotCard handles on the frontend:
-        #   1. bare list of traces
-        #   2. { "figure": { "data": [...] } }
-        #   3. { "data": [...] }  (standard Plotly JSON)
-        if isinstance(plotly_data, list):
-            traces = plotly_data
-        elif isinstance(plotly_data, dict) and "figure" in plotly_data:
-            traces = plotly_data["figure"].get("data", [])
-        else:
-            traces = plotly_data.get("data", [])
-
-        trace = next((t for t in traces if t.get("type") == "heatmap"), None)
-        if not trace:
-            return {
-                "column": column,
-                "correlations": [],
-                "unavailable": True,
-                "reason": (
-                    "No heatmap trace found. Top-level keys:",
-                    f" {
-                        list(plotly_data.keys())
-                        if isinstance(plotly_data, dict)
-                        else 'list'
-                    }",
-                ),
-            }
-
-        labels = trace.get("x") or trace.get("y") or []
-        z = trace.get("z") or []
-
-        if column not in labels:
-            return {
-                "column": column,
-                "correlations": [],
-                "unavailable": True,
-                "reason": f"Column '{column}' not found in correlation matrix.",
-            }
-
-        col_idx = labels.index(column)
-        results = []
-        for row_idx, row_label in enumerate(labels):
-            if row_label == column:
-                continue
-            try:
-                val = float(z[row_idx][col_idx])
-            except (IndexError, TypeError, ValueError):
-                continue
-            if abs(val) >= threshold:
-                results.append({"column": row_label, "correlation": round(val, 4)})
-
-        results.sort(key=lambda x: abs(x["correlation"]), reverse=True)
-        return {"column": column, "correlations": results, "unavailable": False}
-
+        raw = (
+            task["data"]
+            if isinstance(task["data"], dict)
+            else _json.loads(task["data"])
+        )
     except Exception as exc:
         return {
             "column": column,
             "correlations": [],
             "unavailable": True,
-            "reason": f"Failed to parse correlation matrix: {exc}",
+            "reason": f"Could not parse correlation data: {exc}",
         }
+
+    results = []
+    for pair_key, val in raw.items():
+        if "|" not in pair_key:
+            continue
+        parts = pair_key.split("|", 1)
+        if column not in parts:
+            continue
+        other = parts[1] if parts[0] == column else parts[0]
+        try:
+            corr = float(val)
+        except (TypeError, ValueError):
+            continue
+        if abs(corr) >= threshold:
+            results.append({"column": other, "correlation": round(corr, 4)})
+
+    results.sort(key=lambda x: abs(x["correlation"]), reverse=True)
+    return {"column": column, "correlations": results, "unavailable": False}
 
 
 @app.get("/api/runs/{run_key}/sample")
@@ -301,6 +241,139 @@ def read_run_sample(run_key: str, n: int = 10):
 ###########
 # Figures #
 ###########
+
+
+@app.get("/api/runs/{run_key}/associations", tags=["relationships"])
+def get_run_associations(run_key: str):
+    """
+    Return all pairwise association results from compute_pairwise_associations.
+    Falls back to compute_correlations (Pearson-only) if the richer task hasn't run.
+    """
+    run = db.get_run(run_key, _DB_PATH)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
+
+    task = db.get_task(run_key, "compute_pairwise_associations", _DB_PATH)
+    if task and task.get("data"):
+        return {
+            "source": "compute_pairwise_associations",
+            "pairs": task["data"],
+            "summary": task.get("summary", {}),
+        }
+
+    # Fallback: wrap compute_correlations in the same shape
+    fallback = db.get_task(run_key, "compute_correlations", _DB_PATH)
+    if fallback and fallback.get("data"):
+        pairs = {}
+        for key, val in fallback["data"].items():
+            if "|" not in key:
+                continue
+            try:
+                fval = float(val)
+            except (TypeError, ValueError):
+                continue
+            pairs[key] = {
+                "metric": round(fval, 6),
+                "metric_type": "pearson_r",
+                "strength": _pearson_strength(fval),
+                "col_a_intent": "continuous",
+                "col_b_intent": "continuous",
+            }
+        return {
+            "source": "compute_correlations",
+            "pairs": pairs,
+            "summary": {
+                "message": (
+                    "Pearson correlations only ",
+                    "(run at full depth for richer associations).",
+                ),
+            },
+        }
+
+    return {
+        "source": None,
+        "pairs": {},
+        "summary": {
+            "message": "No association data available. Run the profiler at full depth."
+        },
+    }
+
+
+def _pearson_strength(val: float) -> str:
+    v = abs(val)
+    if v >= 0.7:
+        return "strong"
+    if v >= 0.4:
+        return "moderate"
+    if v >= 0.2:
+        return "weak"
+    return "negligible"
+
+
+@app.get("/api/runs/{run_key}/associations/{column}", tags=["relationships"])
+def get_column_associations(run_key: str, column: str, min_strength: str = ""):
+    """
+    Return all pairwise associations for a single column, sorted by abs metric desc.
+    Optional min_strength filter: "strong" | "moderate" | "weak" (inclusive upward).
+    """
+    all_data = get_run_associations(run_key)
+    pairs = all_data.get("pairs", {})
+
+    _strength_order = {"strong": 3, "moderate": 2, "weak": 1, "negligible": 0}
+    min_rank = _strength_order.get(min_strength, -1)
+
+    results = []
+    for key, val in pairs.items():
+        if "|" not in key:
+            continue
+        parts = key.split("|", 1)
+        if column not in parts:
+            continue
+        other = parts[1] if parts[0] == column else parts[0]
+        if _strength_order.get(val.get("strength", "negligible"), 0) < min_rank:
+            continue
+        results.append(
+            {
+                "column": other,
+                **val,
+            }
+        )
+
+    results.sort(key=lambda x: abs(x["metric"]), reverse=True)
+    return {
+        "column": column,
+        "associations": results,
+        "source": all_data.get("source"),
+        "unavailable": len(pairs) == 0,
+    }
+
+
+@app.get("/api/runs/{run_key}/column-data", tags=["relationships"])
+def get_column_data(
+    run_key: str,
+    cols: Annotated[list[str], Query(description="Column names to fetch")] = [],
+    max_rows: int = 3000,
+):
+    """
+    Return raw column values from the source dataset for pair plotting.
+    Subsampled to max_rows if the dataset is larger.
+    """
+    if not cols:
+        raise HTTPException(
+            status_code=400, detail="Provide at least one column via ?cols="
+        )
+    if max_rows > 10_000:
+        max_rows = 10_000
+
+    result = db.get_column_data(run_key, cols, max_rows, _DB_PATH)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Source file not found. Ensure source_path is set for this dataset.",
+        )
+    return result
+
+
 @app.get("/api/runs/{run_key}/figures", tags=["figures"])
 def get_run_figures(run_key: str) -> list[dict[str, Any]]:
     """

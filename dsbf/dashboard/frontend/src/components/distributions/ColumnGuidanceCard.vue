@@ -244,11 +244,23 @@ const insights = computed(() => {
     })
   }
 
-  // Depth note for continuous columns — bimodal detection requires full depth
+  // Bimodal detection — show real result if available, depth note if not
   if (intent === 'continuous') {
-    const depth = props.tasks.summarize_dataset_shape?.data?.profiling_depth ?? null
-    const bimodalRan = 'detect_bimodal_distribution' in (props.tasks ?? {})
-    if (!bimodalRan) {
+    const bimodalData  = props.tasks.detect_bimodal_distribution?.data
+    const bimodalRan   = bimodalData != null
+    if (bimodalRan) {
+      const flagged = bimodalData.bimodal_flags?.[col] === true
+      if (flagged) {
+        const bic   = bimodalData.bic_scores?.[col]
+        const delta = bic?.delta ?? null
+        const relImprovement = bic?.relative_improvement ?? null
+        out.push({
+          level: 'warn', icon: '〰️', title: 'Bimodal Distribution Detected',
+          body: `This column shows evidence of two distinct sub-populations${delta != null ? ` (BIC improvement: ${delta.toFixed(1)}${relImprovement != null ? `, ${(relImprovement * 100).toFixed(1)}% relative` : ''})` : ''}. Bimodal features can confuse linear models — consider adding a cluster membership indicator or investigating whether a grouping variable explains the separation.`,
+          actions: ['Add cluster indicator column', 'Investigate grouping variable', 'Consider mixture model'],
+        })
+      }
+    } else {
       out.push({
         level: 'info', icon: '🔬', title: 'Bimodal Detection Not Run',
         body: 'Bimodal distribution detection requires full profiling depth. If you suspect this column may have two distinct clusters, re-run the profiler with --depth full.',

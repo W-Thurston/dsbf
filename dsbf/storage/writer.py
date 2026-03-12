@@ -1,20 +1,11 @@
 # dsbf/storage/writer.py
-
 """
 Persists a completed ProfileEngine run into the DSBF SQLite database.
-
-Intended usage
---------------
-Called automatically at the end of ProfileEngine.run():
-
-    from dsbf.storage.writer import persist_run
-    persist_run(engine)
-
-Can also be called manually against a completed engine instance.
 """
 
 import json
 import logging
+import os
 from typing import Any
 
 from dsbf.storage.schema import get_connection, init_db
@@ -22,7 +13,7 @@ from dsbf.storage.schema import get_connection, init_db
 logger = logging.getLogger(__name__)
 
 
-# ── Internal helpers ───────────────────────────────────────────────────────────
+# ── Internal helpers ──────────────────────────────────────────────────────────
 
 
 def _safe_json(obj: Any) -> str | None:
@@ -37,13 +28,23 @@ def _safe_json(obj: Any) -> str | None:
 
 
 def _upsert_dataset(conn, name: str, source_path: str | None) -> int:
-    """Insert a dataset row if it doesn't exist, return its id either way."""
+    """
+    Insert a dataset row if it doesn't exist, return its id either way.
+
+    Only updates source_path when the new value is non-null AND the existing
+    row has no path yet.  This prevents a stale file path from a previous run's
+    config being written over a correctly-null built-in dataset entry.
+    """
     conn.execute(
         """
         INSERT INTO datasets (name, source_path)
         VALUES (?, ?)
         ON CONFLICT(name) DO UPDATE SET
-            source_path = COALESCE(excluded.source_path, source_path)
+            source_path = CASE
+                WHEN excluded.source_path IS NOT NULL AND datasets.source_path IS NULL
+                THEN excluded.source_path
+                ELSE datasets.source_path
+            END
         """,
         (name, source_path),
     )
@@ -88,9 +89,8 @@ def _insert_run(conn, dataset_id: int, run_key: str, meta: dict) -> int:
 
 
 def _insert_task_results(conn, run_id: int, results: dict) -> None:
-    """Insert one row per task result.  Skips tasks already recorded for this run."""
+    """Insert one row per task result. Skips tasks already recorded for this run."""
     for task_name, result in results.items():
-        # result may be a TaskResult object or a plain dict (from migration)
         if hasattr(result, "__dict__"):
             status = getattr(result, "status", None)
             summary = getattr(result, "summary", None)
@@ -119,22 +119,11 @@ def _insert_task_results(conn, run_id: int, results: dict) -> None:
 
 
 def _insert_figures(conn, run_id: int, results: dict) -> None:
-    """
-    Walk the 'data' payload of plot-generating tasks and record figure paths.
-
-    Understands the nested structure:
-        result.data[column_name][plot_type][format][theme] = file_path
-
-    Dataset-level figures (no column key) follow the same structure but
-    the top-level keys are plot type names rather than column names.
-    """
-    plot_tasks: set[str] = {
-        "generate_univariate_plots",
-        "generate_dataset_summary_plots",
-    }
+    """Walk the 'data' payload of plot-generating tasks and record figure paths."""
+    PLOT_TASKS = {"generate_univariate_plots", "generate_dataset_summary_plots"}
 
     for task_name, result in results.items():
-        if task_name not in plot_tasks:
+        if task_name not in PLOT_TASKS:
             continue
 
         if hasattr(result, "data"):
@@ -149,7 +138,6 @@ def _insert_figures(conn, run_id: int, results: dict) -> None:
                 continue
 
             if is_dataset_level:
-                # outer_key is plot_type (e.g. "dtype_stacked_bar")
                 _record_figure_paths(
                     conn,
                     run_id,
@@ -159,7 +147,6 @@ def _insert_figures(conn, run_id: int, results: dict) -> None:
                     path_dict=plot_dict,
                 )
             else:
-                # outer_key is column_name
                 for plot_type, path_dict in plot_dict.items():
                     if not isinstance(path_dict, dict):
                         continue
@@ -181,28 +168,7 @@ def _record_figure_paths(
     plot_type: str,
     path_dict: dict,
 ) -> None:
-    """
-    Walk a figure path dict and insert one row per file path found.
-
-    Handles three nesting shapes that exist in the wild:
-
-      Shape A — standard (format → theme → path):
-        {"interactive": {"dark": "fig.json", "light": "fig.json"},
-         "static":      {"dark": "fig.png",  "light": "fig.png"}}
-
-      Shape B — composite (format → theme → variant → path):
-        {"static": {"dark":  {"box_above": "fig.png", "hist_above": "fig.png"},
-                    "light": {"box_above": "fig.png", "hist_above": "fig.png"}}}
-
-      Shape C — theme-less (format → path):
-        {"static": "fig.png", "interactive": "fig.json"}
-
-    In Shape B the variant name is appended to plot_type so each row
-    is still uniquely identifiable, e.g. plot_type="composite_box_above".
-    In Shape C theme is stored as "default".
-    """
     for fmt, theme_level in path_dict.items():
-        # Shape C — value is already a path string
         if isinstance(theme_level, str):
             _insert_figure_row(
                 conn,
@@ -220,7 +186,6 @@ def _record_figure_paths(
             continue
 
         for theme, variant_level in theme_level.items():
-            # Shape A — value is a path string
             if isinstance(variant_level, str):
                 _insert_figure_row(
                     conn,
@@ -232,8 +197,6 @@ def _record_figure_paths(
                     fmt=fmt,
                     file_path=variant_level,
                 )
-
-            # Shape B — value is a dict of variant → path
             elif isinstance(variant_level, dict):
                 for variant, file_path in variant_level.items():
                     if isinstance(file_path, str) and file_path:
@@ -259,7 +222,6 @@ def _insert_figure_row(
     fmt: str,
     file_path: str,
 ) -> None:
-    """Insert a single figure row, logging on failure."""
     if not file_path:
         return
     try:
@@ -275,91 +237,93 @@ def _insert_figure_row(
         logger.warning("Could not insert figure record: %s", exc)
 
 
-# ── Public API ─────────────────────────────────────────────────────────────────
+# ── Public API ────────────────────────────────────────────────────────────────
 
 
 def persist_run(engine, db_path=None) -> int:
     """
     Persist a completed ProfileEngine run to the database.
-
-    Parameters
-    ----------
-    engine:
-        A ProfileEngine instance after engine.run() has been called.
-    db_path:
-        Optional override for the database path.
-        Falls back to DSBF_DB_PATH env var, then dsbf/dsbf.db.
-
-    Returns
-    -------
-    int
-        The database row id of the inserted run.
     """
     init_db(db_path)
 
-    # ── Pull what we need from the engine ──────────────────────────────────
     context = engine.context
-    metadata = getattr(engine, "metadata", {}) or {}
+    config = getattr(engine, "config", {}) or {}
     results = getattr(engine, "results", {}) or {}
+    cfg_meta = config.get("metadata", {}) or {}
 
-    # Dataset identity
-    dataset_name = (
-        getattr(context, "dataset_name", None)
-        or metadata.get("dataset_name")
-        or "unknown"
-    )
-    source_path = getattr(context, "dataset_path", None) or metadata.get("dataset_path")
-
-    # Run identity
+    # Run identity — run_key is the basename of the timestamped output dir
     run_key = (
         getattr(engine, "run_key", None)
-        or getattr(context, "run_key", None)
-        or metadata.get("run_key")
+        or os.path.basename(getattr(engine, "output_dir", "") or "")
+        or None
     )
     if not run_key:
         raise ValueError(
-            "Cannot persist run: no run_key found on engine or context. "
-            "Ensure ProfileEngine sets a run_key before calling persist_run()."
+            "Cannot persist run: could not determine run_key from engine.output_dir."
         )
 
-    # Shape stats
-    shape_data = results.get("summarize_dataset_shape") or {}
-    if hasattr(shape_data, "data"):
-        shape_data = shape_data.data or {}
-    else:
-        shape_data = shape_data.get("data") or {}
+    # Dataset identity
+    dataset_name = cfg_meta.get("dataset_name") or "unknown"
+    # Determine source_path:
+    # - File-based runs (profile command): dataset_path is set, use it.
+    # - Built-in runs (quickstart): dataset_path is None AND dataset_source is
+    #   seaborn/sklearn/openml. Store None so no stale path pollutes the DB.
+    # - If dataset_path is present, always trust it regardless of dataset_source,
+    #   since the profile command sets the path explicitly.
+    raw_path = cfg_meta.get("dataset_path") or None
+    dataset_source = cfg_meta.get("dataset_source") or "file"
+    is_builtin = (raw_path is None) and (
+        dataset_source in ("seaborn", "sklearn", "openml")
+    )
+    source_path = None if is_builtin else raw_path
 
-    row_count = shape_data.get("num_rows") or metadata.get("row_count")
-    col_count = shape_data.get("num_columns") or metadata.get("col_count")
+    # Shape stats — result may be a TaskResult object or plain dict
+    _shape_result = results.get("summarize_dataset_shape") or {}
+    shape_data = (
+        _shape_result.data
+        if hasattr(_shape_result, "data")
+        else _shape_result.get("data") or {}
+    ) or {}
+    row_count = shape_data.get("num_rows")
+    col_count = shape_data.get("num_columns")
 
-    # Quality score
-    quality_score = (
-        (results.get("data_quality_scorer") or {})
-        .get("summary", {})
-        .get("overall_score")
-        if isinstance((results.get("data_quality_scorer") or {}), dict)
-        else getattr(results.get("data_quality_scorer"), "summary", {}).get(
-            "overall_score"
-        )
+    # Quality score — same dual-form handling
+    _dqs_result = results.get("data_quality_scorer") or {}
+    _dqs_summary = (
+        _dqs_result.summary
+        if hasattr(_dqs_result, "summary")
+        else _dqs_result.get("summary") or {}
+    ) or {}
+    quality_score = _dqs_summary.get("overall_score")
+
+    # Profiling depth and stage
+    profiling_depth = cfg_meta.get("profiling_depth") or getattr(
+        context, "profiling_depth", None
+    )
+    inferred_stage = getattr(engine, "inferred_stage", None) or getattr(
+        context, "stage", None
     )
 
+    # Derive ran_at from run_key timestamp
+    from datetime import datetime
+
+    try:
+        ran_at = datetime.strptime(run_key, "%Y%m%d_%H%M%S").isoformat(sep=" ")
+    except ValueError:
+        ran_at = None
+
     run_meta = {
-        "profiling_depth": getattr(context, "profiling_depth", None)
-        or metadata.get("profiling_depth"),
-        "inferred_stage": getattr(context, "inferred_stage", None)
-        or metadata.get("inferred_stage"),
-        "config": getattr(engine, "config", None),
+        "profiling_depth": profiling_depth,
+        "inferred_stage": inferred_stage,
+        "config": config,
         "row_count": row_count,
         "col_count": col_count,
         "quality_score": quality_score,
-        "ran_at": metadata.get("ran_at") or getattr(context, "ran_at", None),
+        "ran_at": ran_at,
     }
 
-    # ── Write everything in one transaction ────────────────────────────────
     with get_connection(db_path) as conn:
-        dataset_id = _upsert_dataset(
-            conn, dataset_name, str(source_path) if source_path else None
-        )
+        dataset_id = _upsert_dataset(conn, dataset_name, source_path)
         run_id = _insert_run(conn, dataset_id, run_key, run_meta)
         _insert_task_results(conn, run_id, results)
         _insert_figures(conn, run_id, results)
@@ -383,18 +347,7 @@ def persist_run_from_dict(
 ) -> int:
     """
     Persist a run from raw dicts rather than a live engine instance.
-
     Used by the migration script to load completed runs from disk.
-
-    Parameters
-    ----------
-    run_key:      e.g. "20260303_075308"
-    dataset_name: e.g. "titanic"
-    source_path:  original CSV path or None
-    run_meta:     dict with keys: profiling_depth, inferred_stage, config,
-                  row_count, col_count, quality_score, ran_at
-    results:      the "results" dict from report.json
-    db_path:      optional database path override
     """
     init_db(db_path)
 
