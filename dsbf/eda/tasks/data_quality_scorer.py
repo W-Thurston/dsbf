@@ -1,13 +1,10 @@
 # dsbf/eda/tasks/data_quality_scorer.py
 
-from typing import Any, Dict, List
-
-import pandas as pd
+from typing import Any
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -50,17 +47,17 @@ class DataQualityScorer(BaseTask):
         if self.context is None:
             raise RuntimeError("AnalysisContext is not set in this task.")
 
-        results: Dict[str, TaskResult] = self.context.results
-        flags: Dict[str, Any] = self.context.reliability_flags or {}
+        results: dict[str, TaskResult] = self.context.results
+        flags: dict[str, Any] = self.context.reliability_flags or {}
 
         # Use semantic typing to select relevant columns
         matched_cols, excluded = self.get_columns_by_intent()
         self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
-        category_scores: Dict[str, int] = {}
-        explanations: List[str] = []
-        top_issues: List[Dict[str, Any]] = []
-        recommendations: List[str] = []
+        category_scores: dict[str, int] = {}
+        explanations: list[str] = []
+        top_issues: list[dict[str, Any]] = []
+        recommendations: list[str] = []
 
         # --- COMPLETENESS ---
         missing_tasks = [
@@ -113,8 +110,8 @@ class DataQualityScorer(BaseTask):
         category_scores["consistency"] = consistency_score
 
         # --- DISTRIBUTION ---
-        skew_vals: Dict[str, float] = flags.get("skew_vals", {})
-        zero_var_cols: List[str] = flags.get("zero_variance_cols", [])
+        skew_vals: dict[str, float] = flags.get("skew_vals", {})
+        zero_var_cols: list[str] = flags.get("zero_variance_cols", [])
         skewed = [col for col, val in skew_vals.items() if abs(val) > 2]
         outliers: bool = flags.get("extreme_outliers", False)
 
@@ -169,14 +166,14 @@ class DataQualityScorer(BaseTask):
         category_scores["drift"] = drift_score
 
         # --- OVERALL SCORE (weighted average) ---
-        default_weights: Dict[str, float] = {
+        default_weights: dict[str, float] = {
             "completeness": 1,
             "consistency": 1,
             "distribution": 1,
             "redundancy": 1,
             "drift": 1,
         }
-        weights: Dict[str, float] = (
+        weights: dict[str, float] = (
             self.get_task_param("weights", default_weights) or default_weights
         )
 
@@ -188,34 +185,37 @@ class DataQualityScorer(BaseTask):
             int(round(weighted_sum / total_weight)) if total_weight > 0 else 0
         )
 
-        # --- PLOTTING ---
-        plots: dict[str, dict[str, Any]] = {}
+        # # --- PLOTTING ---
+        # plots: dict[str, dict[str, Any]] = {}
 
-        try:
-            all_scores = dict(category_scores)
-            all_scores["overall"] = overall_score
+        # try:
+        #     all_scores = dict(category_scores)
+        #     all_scores["overall"] = overall_score
 
-            series = pd.Series(all_scores).sort_index()
+        #     series = pd.Series(all_scores).sort_index()
 
-            save_path = self.get_output_path("data_quality_score_breakdown.png")
-            static = PlotFactory.plot_barplot_static(
-                series, save_path=save_path, title="Data Quality Score Breakdown"
-            )
-            interactive = PlotFactory.plot_barplot_interactive(
-                series,
-                title="Data Quality Score Breakdown",
-                annotations=[f"{k.capitalize()}: {v}" for k, v in all_scores.items()],
-            )
+        #     save_path = self.get_output_path("data_quality_score_breakdown.png")
+        #     static = PlotFactory.plot_barplot_static(
+        #         series, save_path=save_path, title="Data Quality Score Breakdown"
+        #     )
 
-            plots["data_quality_scores"] = {
-                "static": static["path"],
-                "interactive": interactive,
-            }
+        #     save_path = self.get_output_path("data_quality_score_breakdown.json")
+        #     interactive = PlotFactory.plot_barplot_interactive(
+        #         series,
+        #         json_path=save_path,
+        #         title="Data Quality Score Breakdown",
+        #         annotations=[f"{k.capitalize()}: {v}" for k, v in all_scores.items()],
+        #     )
 
-        except Exception as e:
-            self._log(
-                f"    [PlotFactory] Skipped quality score barplot: {e}", level="debug"
-            )
+        #     plots["data_quality_scores"] = {
+        #         "static": static["path"],
+        #         "interactive": str(save_path),
+        #     }
+
+        # except Exception as e:
+        #     self._log(
+        #         f"    [PlotFactory] Skipped quality score barplot: {e}", level="debug"
+        #     )
 
         # --- FINAL RESULT OBJECT ---
         self.output = TaskResult(
@@ -240,5 +240,5 @@ class DataQualityScorer(BaseTask):
                     matched_cols + list(excluded.keys())
                 ),
             },
-            plots=plots,
+            plots={},
         )

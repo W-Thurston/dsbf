@@ -1,9 +1,8 @@
 # dsbf/eda/tasks/detect_feature_drift.py
 
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
-import pandas as pd
 import polars as pl
 from scipy.stats import chi2_contingency, ks_2samp
 
@@ -11,7 +10,6 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_text_polars
-from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -56,7 +54,7 @@ class DetectFeatureDrift(BaseTask):
                     status="skipped",
                     summary={
                         "message": (
-                            "No shared columns between df and" " reference datasets."
+                            "No shared columns between df and reference datasets."
                         )
                     },
                 )
@@ -83,7 +81,6 @@ class DetectFeatureDrift(BaseTask):
                         and hasattr(reference_col.dtype, "is_numeric")
                         and reference_col.dtype.is_numeric()
                     ):
-
                         numeric_cols.append(col)
 
                         cur_np = current_col.drop_nulls().to_numpy()
@@ -177,55 +174,6 @@ class DetectFeatureDrift(BaseTask):
                     " Consider reviewing data pipeline or retraining model."
                 )
 
-            plots: dict[str, dict[str, Any]] = {}
-
-            # Build per-column histograms for numeric drift (current vs reference)
-            for col in numeric_cols:
-                try:
-                    cur = df.get_column(col).drop_nulls().to_pandas()
-                    ref = reference.get_column(col).drop_nulls().to_pandas()
-
-                    if cur.empty or ref.empty:
-                        continue
-
-                    series_combined = pd.DataFrame(
-                        {
-                            "value": pd.concat([ref, cur], ignore_index=True),
-                            "dataset": ["reference"] * len(ref)
-                            + ["current"] * len(cur),
-                        }
-                    )
-
-                    # PlotFactory doesn’t yet support grouped histograms
-                    #   so store two separate Series
-                    static_path = self.get_output_path(f"{col}_drift_hist.png")
-                    static = PlotFactory.plot_histogram_static(
-                        series_combined[series_combined["dataset"] == "current"][
-                            "value"
-                        ],
-                        save_path=static_path,
-                        title=f"{col} — Current Distribution",
-                    )
-                    interactive = PlotFactory.plot_histogram_interactive(
-                        series_combined[series_combined["dataset"] == "current"][
-                            "value"
-                        ],
-                        title=f"{col} — Current Distribution",
-                        annotations=[
-                            f"PSI: {drift_results[col].get('psi', '?')}",
-                            f"KS p-value: {drift_results[col].get('ks_pvalue', '?')}",
-                        ],
-                    )
-
-                    plots[col] = {
-                        "static": static["path"],
-                        "interactive": interactive,
-                    }
-                except Exception as e:
-                    self._log(
-                        f"    [PlotFactory] Skipped plot for {col}: {e}", level="debug"
-                    )
-
             self.output = TaskResult(
                 name=self.name,
                 status="success",
@@ -237,7 +185,7 @@ class DetectFeatureDrift(BaseTask):
                 },
                 data=drift_results,
                 recommendations=recommendations,
-                plots=plots,
+                plots={},
                 metadata={
                     "suggested_viz_type": "histogram",
                     "recommended_section": "Comparison",
@@ -264,7 +212,7 @@ class DetectFeatureDrift(BaseTask):
                     or (
                         f"Column '{col}' shows high drift ({metric} = {value}). "
                         "This may indicate a shift in data distribution"
-                        " — monitor closely or retrain model."
+                        " - monitor closely or retrain model."
                     ),
                 )
                 self.output.summary["column"] = col
@@ -274,7 +222,7 @@ class DetectFeatureDrift(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

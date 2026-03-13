@@ -6,8 +6,6 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
-
-# from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -145,7 +143,7 @@ class DetectHighCardinality(BaseTask):
             eda_body: str = (
                 f"{col} has {n_unique:,} unique values across {n_rows:,} rows "
                 f"({ratio_str} uniqueness). At this level the column may be a "
-                f"near-identifier — each value appears very rarely, making it "
+                f"near-identifier - each value appears very rarely, making it "
                 f"difficult to observe patterns across groups. Confirm whether "
                 f"this is a meaningful categorical feature or effectively a key "
                 f"column masquerading as a category."
@@ -154,7 +152,7 @@ class DetectHighCardinality(BaseTask):
                 f"{col} has {n_unique:,} unique values ({ratio_str} of rows). "
                 f"One-hot encoding would produce {n_unique:,} sparse features, "
                 f"causing extreme dimensionality and likely overfitting. "
-                f"Target encoding or hashing are the practical options — "
+                f"Target encoding or hashing are the practical options - "
                 f"but verify this column is a genuine feature first, not an ID."
             )
             ml_actions: list[dict[str, str]] = [
@@ -180,7 +178,7 @@ class DetectHighCardinality(BaseTask):
             level = "info"
             eda_body = (
                 f"{col} has {n_unique:,} unique values across {n_rows:,} rows. "
-                f"High cardinality means individual category frequencies are low — "
+                f"High cardinality means individual category frequencies are low - "
                 f"bar charts will be crowded and group comparisons will be noisy. "
                 f"Consider whether some categories can be grouped meaningfully, "
                 f"or whether the column represents a genuinely fine-grained taxonomy."
@@ -232,7 +230,7 @@ class DetectHighCardinality(BaseTask):
             column=col,
             phase="ml",
             level=level,
-            title=f"High Cardinality — Encoding Required ({n_unique:,} values)",
+            title=f"High Cardinality - Encoding Required ({n_unique:,} values)",
             body=ml_body.strip(),
             actions=ml_actions,
             metric={

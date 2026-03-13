@@ -1,13 +1,10 @@
 # dsbf/eda/tasks/identify_bottleneck_tasks.py
 
-from typing import Any, Dict, cast
-
-import pandas as pd
+from typing import cast
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -26,7 +23,6 @@ class IdentifyBottleneckTasks(BaseTask):
     """
 
     def run(self) -> None:
-
         # Use semantic typing to select relevant columns
         matched_col, excluded = self.get_columns_by_intent()
         self._log(f"    Processing {len(matched_col)} column(s)", "debug")
@@ -35,7 +31,7 @@ class IdentifyBottleneckTasks(BaseTask):
             raise RuntimeError("Context is not set for task.")
 
         durations_raw = self.context.get_metadata("task_durations", {})
-        durations: Dict[str, float] = cast(Dict[str, float], durations_raw)
+        durations: dict[str, float] = cast(dict[str, float], durations_raw)
         if not durations:
             self.output = TaskResult(
                 name=self.name,
@@ -65,51 +61,12 @@ class IdentifyBottleneckTasks(BaseTask):
                     f" (took {task_info['duration_sec']}s)."
                 )
 
-        plots: dict[str, dict[str, Any]] = {}
-
-        try:
-            if sorted_tasks:
-                durations_df = pd.DataFrame(
-                    sorted_tasks, columns=["Task", "Duration (s)"]
-                )
-
-                # Reverse for horizontal barplot (longest task on top)
-                durations_df = durations_df.iloc[::-1]
-
-                series = pd.Series(
-                    durations_df["Duration (s)"].values,
-                    index=durations_df["Task"].values,
-                    name="Duration (s)",
-                )
-
-                save_path = self.get_output_path("bottleneck_task_durations.png")
-                static = PlotFactory.plot_barplot_static(
-                    series, save_path=save_path, title="Top Bottleneck Tasks by Runtime"
-                )
-                interactive = PlotFactory.plot_barplot_interactive(
-                    series,
-                    title="Top Bottleneck Tasks by Runtime",
-                    annotations=[
-                        f"{row['Task']}: {row['Duration (s)']:.2f}s"
-                        for _, row in durations_df.iterrows()
-                    ],
-                )
-
-                plots["bottleneck_tasks"] = {
-                    "static": static["path"],
-                    "interactive": interactive,
-                }
-        except Exception as e:
-            self._log(
-                f"    [PlotFactory] Skipped bottleneck barplot: {e}", level="debug"
-            )
-
         self.output = TaskResult(
             name=self.name,
             status="success",
             summary=summary,
             recommendations=recommendations,
-            plots=plots,
+            plots={},
             metadata={
                 "suggested_viz_type": "bar",
                 "recommended_section": "Diagnostics",

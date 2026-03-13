@@ -1,15 +1,13 @@
 # dsbf/eda/tasks/detect_class_imbalance.py
 
-from typing import Any, Optional
+from typing import Optional
 
-import pandas as pd
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -117,25 +115,6 @@ class DetectClassImbalance(BaseTask):
                 "is_imbalanced": is_imbalanced,
             }
 
-            # Plotting
-            plots: dict[str, dict[str, Any]] = {}
-
-            if class_counts:
-
-                count_series = pd.Series(class_counts, name=target_col)
-
-                save_path = self.get_output_path(f"{target_col}_class_distribution.png")
-                annotations = [f"Majority class: {majority_ratio:.2%}"]
-
-                static_plot = PlotFactory.plot_barplot_static(count_series, save_path)
-                interactive_plot = PlotFactory.plot_barplot_interactive(count_series)
-                interactive_plot["annotations"] = annotations
-
-                plots[target_col] = {
-                    "static": static_plot["path"],
-                    "interactive": interactive_plot,
-                }
-
             # Build TaskResult
             self.output = TaskResult(
                 name=self.name,
@@ -143,7 +122,7 @@ class DetectClassImbalance(BaseTask):
                 summary=summary,
                 data=data,
                 recommendations=recommendations,
-                plots=plots,
+                plots={},
                 metadata={
                     "suggested_viz_type": "bar",
                     "recommended_section": "Target",
@@ -181,7 +160,7 @@ class DetectClassImbalance(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

@@ -14,8 +14,6 @@ from dsbf.eda.task_result import (
 )
 from dsbf.utils.backend import is_polars
 
-# from dsbf.utils.plot_factory import PlotFactory
-
 
 def cramers_v(x: pd.Series, y: pd.Series) -> float:
     contingency = pd.crosstab(x, y)

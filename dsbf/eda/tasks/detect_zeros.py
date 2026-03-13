@@ -9,8 +9,6 @@ from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
-# from dsbf.utils.plot_factory import PlotFactory
-
 
 @register_task(
     display_name="Detect Zeros",
@@ -93,7 +91,7 @@ class DetectZeros(BaseTask):
             )
 
             # Generate guidance for any column with notable zero concentration.
-            # Threshold is lower than flag_threshold — guidance starts at 30%
+            # Threshold is lower than flag_threshold - guidance starts at 30%
             # to match what a reviewer would find worth investigating.
             guidance_threshold = 0.30
             for col, pct in zero_percentages.items():
@@ -117,8 +115,8 @@ class DetectZeros(BaseTask):
 
         eda_body: str = (
             f"{col} has {pct_str} zero values ({count:,} rows). "
-            f"Consider whether zeros here represent 'none' or 'absent' — a genuine "
-            f"measurement of zero — or whether they are placeholders for missing data. "
+            f"Consider whether zeros here represent 'none' or 'absent' - a genuine "
+            f"measurement of zero - or whether they are placeholders for missing data. "
             f"The distinction matters: genuine zeros are informative and should be "
             f"kept, while placeholder zeros should be treated as nulls. "
             f"Check the data source or documentation to confirm the intended meaning."
@@ -126,7 +124,7 @@ class DetectZeros(BaseTask):
 
         ml_body: str = (
             f"{col} has {pct_str} zero values. If zeros are genuine measurements, "
-            f"this column follows a zero-inflated distribution — consider a log1p "
+            f"this column follows a zero-inflated distribution - consider a log1p "
             f"transform or a separate binary indicator (is_zero) to help models "
             f"distinguish the zero mass from the non-zero distribution. "
             f"If zeros are missing-value placeholders, replace them with NaN before "

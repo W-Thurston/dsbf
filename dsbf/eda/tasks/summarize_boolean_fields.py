@@ -5,8 +5,6 @@ from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
-# from dsbf.utils.plot_factory import PlotFactory
-
 
 @register_task(
     display_name="Summarize Boolean Fields",

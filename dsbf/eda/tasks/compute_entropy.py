@@ -1,7 +1,6 @@
 # dsbf/eda/tasks/compute_entropy.py
 
 from math import log2
-from typing import Any, Dict
 
 import polars as pl
 from scipy.stats import entropy as scipy_entropy
@@ -14,7 +13,6 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -36,7 +34,7 @@ class ComputeEntropy(BaseTask):
     """
 
     def run(self) -> None:
-        results: Dict[str, float] = {}
+        results: dict[str, float] = {}
 
         # Use semantic typing to select relevant columns
         matched_cols, excluded = self.get_columns_by_intent()
@@ -78,35 +76,12 @@ class ComputeEntropy(BaseTask):
                             f"    [ComputeEntropy] Failed on column {col}: {e}", "debug"
                         )
 
-            plots: dict[str, dict[str, Any]] = {}
-
-            if self.context and self.context.output_dir and self.input_data is not None:
-                df = self.input_data
-                if is_polars(df):
-                    df = df.to_pandas()
-
-                for col, entropy_val in results.items():
-                    if col not in df.columns:
-                        continue
-                    series = df[col].dropna()
-
-                    save_path = self.get_output_path(f"{col}_entropy_barplot.png")
-                    static = PlotFactory.plot_barplot_static(series, save_path)
-                    interactive = PlotFactory.plot_barplot_interactive(
-                        series, annotations=[f"Entropy: {entropy_val:.3f} bits"]
-                    )
-
-                    plots[col] = {
-                        "static": static["path"],
-                        "interactive": interactive,
-                    }
-
             result = TaskResult(
                 name=self.name,
                 status="success",
                 summary={"message": f"Computed entropy for {len(results)} columns."},
                 data=results,
-                plots=plots,
+                plots={},
                 metadata={
                     "suggested_viz_type": "bar",
                     "recommended_section": "Distributions",
@@ -140,7 +115,7 @@ class ComputeEntropy(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

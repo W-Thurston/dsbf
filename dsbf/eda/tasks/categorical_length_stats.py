@@ -1,14 +1,11 @@
 # dsbf/eda/tasks/categorical_length_stats.py
 
-from typing import Any, Dict
-
 import polars as pl
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -37,15 +34,18 @@ class CategoricalLengthStats(BaseTask):
         computes string length stats for each, and attaches static/interactive plots.
         """
         df = self.input_data
-        results: Dict[str, Dict[str, float]] = {}
-        plots: Dict[str, Dict[str, Any]] = {}
+        results: dict[str, dict[str, float]] = {}
 
         try:
             # Select matching columns based on semantic type
-            matching_cols, excluded = self.get_columns_by_intent()
+            matched_col, excluded = self.get_columns_by_intent()
+            self._log(
+                f"    Processing {len(matched_col)} ['categorical', 'text'] column(s)",
+                "debug",
+            )
 
             # Compute string length stats per column
-            for col in matching_cols:
+            for col in matched_col:
                 try:
                     if is_polars(df):
                         lengths = df.select(
@@ -59,7 +59,7 @@ class CategoricalLengthStats(BaseTask):
                             "min_length": lengths.min(),
                         }
                     else:
-                        lengths = df[col].dropna().str.len()
+                        lengths = df[col].dropna().astype(str).str.len()
                         if len(lengths) == 0:
                             continue
                         stats = {
@@ -78,26 +78,28 @@ class CategoricalLengthStats(BaseTask):
                     )
                     lengths_series.name = f"{col} length"
 
-                    annotation = [
-                        f"Min: {stats['min_length']:.1f}, "
-                        f"Mean: {stats['mean_length']:.1f}, "
-                        f"Max: {stats['max_length']:.1f}"
-                    ]
+                    # annotation = [
+                    #     f"Min: {stats['min_length']:.1f}, "
+                    #     f"Mean: {stats['mean_length']:.1f}, "
+                    #     f"Max: {stats['max_length']:.1f}"
+                    # ]
 
-                    save_path = self.get_output_path(f"{col}_length_hist.png")
-                    static = PlotFactory.plot_histogram_static(
-                        lengths_series, save_path, title=f"{col} — String Lengths"
-                    )
-                    interactive = PlotFactory.plot_histogram_interactive(
-                        lengths_series,
-                        title=f"{col} — String Lengths",
-                        annotations=annotation,
-                    )
+                    # save_path = self.get_output_path(f"{col}_length_hist.png")
+                    # static = PlotFactory.plot_histogram_static(
+                    #     lengths_series, save_path, title=f"{col} - String Lengths"
+                    # )
+                    # save_path = self.get_output_path(f"{col}_length_hist.json")
+                    # interactive = PlotFactory.plot_histogram_interactive(
+                    #     lengths_series,
+                    #     json_path=save_path,
+                    #     title=f"{col} - String Lengths",
+                    #     annotations=annotation,
+                    # )
 
-                    plots[col] = {
-                        "static": static["path"],
-                        "interactive": interactive,
-                    }
+                    # plots[col] = {
+                    #     "static": static["path"],
+                    #     "interactive": str(save_path),
+                    # }
 
                 except Exception as e:
                     self._log(
@@ -116,14 +118,14 @@ class CategoricalLengthStats(BaseTask):
                     )
                 },
                 data=results,
-                plots=plots,
+                plots={},
                 metadata={
                     "suggested_viz_type": "histogram",
                     "recommended_section": "Text Summary",
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matching_cols + list(excluded.keys())
+                        matched_col + list(excluded.keys())
                     ),
                 },
             )
@@ -133,7 +135,7 @@ class CategoricalLengthStats(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)
