@@ -63,9 +63,9 @@ async function loadFigure() {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
       const raw = await resp.json()
       // Handle common Panel/Plotly serialisation formats:
-      //   A: { data: [...], layout: {} }           — standard plotly figure
-      //   B: { figure: { data: [...], layout: {} }} — Panel-wrapped
-      //   C: [ ...traces ]                          — bare data array
+      //   A: { data: [...], layout: {} }           - standard plotly figure
+      //   B: { figure: { data: [...], layout: {} }} - Panel-wrapped
+      //   C: [ ...traces ]                          - bare data array
       if (Array.isArray(raw)) {
         plotData.value = { data: raw, layout: {} }
       } else if (raw.figure) {
@@ -114,7 +114,7 @@ function heatmapOverrides(data) {
   // Axis label font: starts at 13px, shrinks as n grows, minimum 8px
   const axisFontSize = Math.max(8, Math.round(13 - (n - 5) * 0.35))
 
-  // Annotation font (cell text): hide below 10px — too small to read
+  // Annotation font (cell text): hide below 10px - too small to read
   const annotFontSize = Math.max(7, Math.round(12 - (n - 5) * 0.4))
   const showAnnot     = annotFontSize >= 8
 

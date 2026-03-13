@@ -139,7 +139,7 @@ const filtered = computed(() => {
 })
 
 function formatMetric(val, type) {
-  if (val == null) return '—'
+  if (val == null) return '-'
   const v = Number(val)
   if (type === 'eta_squared') return `η²=${v.toFixed(3)}`
   if (type === 'cramers_v')   return `V=${v.toFixed(3)}`

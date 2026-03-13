@@ -62,7 +62,7 @@ const rows = computed(() => {
   return topN.map(([val, count]) => ({
     value:    String(val),
     count,
-    pct:      total > 0 ? `${((count / total) * 100).toFixed(1)}%` : '—',
+    pct:      total > 0 ? `${((count / total) * 100).toFixed(1)}%` : '-',
     barWidth: `${((count / maxCount) * 100).toFixed(1)}%`,
   }))
 })

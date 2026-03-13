@@ -1,6 +1,17 @@
 <template>
   <div class="overview-tab">
 
+    <!-- Run metadata strip -->
+    <div class="meta-strip card">
+      <div class="meta-metric" v-for="m in runMetrics" :key="m.label">
+        <span class="meta-label">
+          {{ m.label }}
+          <TooltipIcon :text="m.tooltip" align="center" />
+        </span>
+        <span class="meta-value" :title="m.fullValue ?? m.value" :data-key="m.dataKey">{{ m.value }}</span>
+      </div>
+    </div>
+
     <!-- Row: data sample | run date + lineage stacked -->
     <div class="row-sample">
       <DataSampleTable :run-key="runKey" :run="run" />
@@ -48,6 +59,8 @@ import PlotCard             from '../../components/overview/PlotCard.vue'
 import DataLineageCard      from '../../components/overview/DataLineageCard.vue'
 import RunDateCard          from '../../components/overview/RunDateCard.vue'
 import DataSampleTable      from '../../components/overview/DataSampleTable.vue'
+import TooltipIcon          from '../../components/TooltipIcon.vue'
+import { computed }         from 'vue'
 import { figureFor as findFigure } from '../../utils.js'
 
 const props = defineProps({
@@ -62,10 +75,107 @@ const props = defineProps({
 function figureFor(plotType, format) {
   return findFigure(props.figures, plotType, format, props.theme)
 }
+
+const runMetrics = computed(() => {
+  if (!props.run) return []
+  const shape    = props.tasks?.summarize_dataset_shape?.data ?? {}
+  const dupCount = props.tasks?.detect_duplicates?.data?.duplicate_count ?? null
+  const rowCount = props.run.row_count ?? null
+
+  let dupValue = '-'
+  if (dupCount != null) {
+    const pct = rowCount ? ` (${((dupCount / rowCount) * 100).toFixed(1)}%)` : ''
+    dupValue  = `${dupCount.toLocaleString()}${pct}`
+  }
+
+  return [
+    {
+      label:   'Rows',
+      tooltip: 'Total number of rows (observations) in the dataset.',
+      value:   rowCount?.toLocaleString() ?? '-',
+    },
+    {
+      label:   'Columns',
+      tooltip: 'Total number of columns (features) in the dataset.',
+      value:   props.run.col_count?.toLocaleString() ?? '-',
+    },
+    {
+      label:   'Memory',
+      tooltip: 'Approximate memory footprint of the dataset when loaded into a pandas DataFrame.',
+      value:   shape.approx_memory_MB != null ? `${shape.approx_memory_MB} MB` : '-',
+    },
+    {
+      label:   'Missing',
+      tooltip: 'Percentage of all cells in the dataset that contain a null or missing value.',
+      value:   shape.null_cell_percentage != null
+        ? `${(shape.null_cell_percentage * 100).toFixed(1)}%` : '-',
+    },
+    {
+      label:   'Duplicate Rows',
+      tooltip: 'Number of rows that are exact duplicates of another row, with their percentage of the total.',
+      value:   dupValue,
+      dataKey: 'dup',
+    },
+    {
+      label:   'Depth',
+      tooltip: 'Profiling depth used for this run: basic (fast, core stats), standard (recommended), or full (all tasks including expensive checks).',
+      value:   props.run.profiling_depth ?? '-',
+    },
+    {
+      label:   'Stage',
+      tooltip: 'Inferred lifecycle stage of the dataset - e.g. raw, exploratory, or modelling-ready.',
+      value:   props.run.inferred_stage ?? '-',
+    },
+  ]
+})
 </script>
 
 <style scoped>
 .overview-tab { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Meta strip ──────────────────────────────────────────────────────────── */
+.meta-strip {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 16px 24px;
+}
+.meta-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  padding: 8px 16px;
+  border-right: 1px solid #334155;
+  min-width: 0;
+}
+.meta-metric:last-child { border-right: none; }
+.meta-label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.meta-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  cursor: default;
+}
+.meta-metric:has(.meta-value[data-key="dup"]) .meta-value {
+  font-size: 15px;
+}
 
 /* metadata table (wider) + alerts (narrower) */
 .row-split {
@@ -81,7 +191,7 @@ function figureFor(plotType, format) {
   display: flex;
   gap: 16px;
   align-items: stretch;
-  /* No fixed height — sidebar drives the row height naturally,
+  /* No fixed height - sidebar drives the row height naturally,
      and the sample card stretches to match via height: 100% */
 }
 
@@ -125,4 +235,9 @@ function figureFor(plotType, format) {
     min-width: 0;
   }
 }
+
+/* ── Light theme overrides ───────────────────────────────────────────────── */
+:global(body.theme-light) .meta-metric { border-right-color: #e2e8f0; }
+:global(body.theme-light) .meta-label  { color: #94a3b8; }
+:global(body.theme-light) .meta-value  { color: #1e293b; }
 </style>

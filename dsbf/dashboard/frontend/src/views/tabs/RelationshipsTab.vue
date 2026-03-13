@@ -46,7 +46,7 @@
         </div>
       </div>
 
-      <!-- Pair detail — shown once secondary column is selected -->
+      <!-- Pair detail - shown once secondary column is selected -->
       <template v-if="secondaryColumn">
         <div class="pair-divider">
           <span class="pair-label">{{ primaryColumn }}</span>
@@ -183,7 +183,7 @@ watch(primaryColumn, col => { if (col) loadAssociations(col) })
   min-height: 600px;
 }
 
-/* ── Browser pane — identical to DistributionsTab ──────────────────────── */
+/* ── Browser pane - identical to DistributionsTab ──────────────────────── */
 .browser-pane {
   width: 220px;
   flex-shrink: 0;

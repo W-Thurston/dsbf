@@ -177,11 +177,11 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
     Return pairwise correlations for a single column using the stored
     compute_correlations task result (keyed as "COL_A|COL_B": float).
     """
-    run = db.get_run(run_key)
+    run = db.get_run(run_key, _DB_PATH)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    task = db.get_task(run_key, "compute_correlations")
+    task = db.get_task(run_key, "compute_correlations", _DB_PATH)
     if not task or not task.get("data"):
         return {
             "column": column,
@@ -189,7 +189,7 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
             "unavailable": True,
             "reason": (
                 "Correlation data not available.",
-                "Run the profiler at full depth to enable this feature.",
+                " Run the profiler at full depth to enable this feature.",
             ),
         }
 
@@ -230,7 +230,7 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
 
 @app.get("/api/runs/{run_key}/sample")
 def read_run_sample(run_key: str, n: int = 10):
-    result = db.get_run_sample(run_key, n=min(n, 50))
+    result = db.get_run_sample(run_key, n=min(n, 50), db_path=_DB_PATH)
     if result is None:
         # source_path not recorded or file no longer on disk — return empty
         # payload rather than 404 so the frontend can show a friendly message

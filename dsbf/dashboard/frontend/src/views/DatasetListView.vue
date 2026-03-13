@@ -44,7 +44,7 @@
             <span class="meta-item">
               <span class="meta-label">Quality</span>
               <span class="meta-value" :class="qualityClass(ds.latest_quality_score)">
-                {{ ds.latest_quality_score ?? '—' }}
+                {{ ds.latest_quality_score ?? '-' }}
               </span>
             </span>
           </div>
@@ -90,7 +90,7 @@ function highlight(text, q) {
 }
 
 function formatDate(iso) {
-  if (!iso) return '—'
+  if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
   })

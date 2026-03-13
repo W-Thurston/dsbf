@@ -140,11 +140,6 @@ body.theme-light .tab-btn.active   { color: #2563eb; border-bottom-color: #2563e
 body.theme-light .theme-btn        { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
 body.theme-light .theme-btn.active { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
 
-/* Meta strip */
-body.theme-light .meta-metric      { border-right-color: #e2e8f0; }
-body.theme-light .meta-label       { color: #94a3b8; }
-body.theme-light .meta-value       { color: #1e293b; }
-
 /* Quality header */
 body.theme-light .quality-title    { color: #64748b; }
 body.theme-light .quality-divider  { background: #e2e8f0; }
@@ -230,7 +225,7 @@ body.theme-light .bar-track                   { background: #e2e8f0; }
 body.theme-light .truncated-note              { color: #94a3b8; }
 body.theme-light .empty-state                 { color: #94a3b8; }
 
-/* Distributions — new additions */
+/* Distributions - new additions */
 body.theme-light .plot-pane :deep(.toggle-btn)        { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
 body.theme-light .plot-pane :deep(.toggle-btn:hover)  { background: #f1f5f9; color: #1e293b; }
 body.theme-light .plot-pane :deep(.toggle-btn.active) { background: #dbeafe; border-color: #2563eb; color: #2563eb; }
@@ -241,7 +236,7 @@ body.theme-light .tl-grid                     { background: #f8fafc; border-colo
 body.theme-light .tl-item                     { border-right-color: #e2e8f0; }
 body.theme-light .tl-label                    { color: #94a3b8; }
 body.theme-light .tl-value                    { color: #1e293b; }
-/* Distributions — correlations panel */
+/* Distributions - correlations panel */
 body.theme-light .filter-chip                 { border-color: #e2e8f0; color: #94a3b8; }
 body.theme-light .filter-chip:hover           { background: #f1f5f9; color: #1e293b; }
 body.theme-light .filter-chip.active          { background: #dbeafe; border-color: #2563eb; color: #2563eb; }

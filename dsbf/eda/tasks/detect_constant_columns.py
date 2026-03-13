@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/detect_constant_columns.py
 
-from typing import List
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
@@ -30,15 +28,17 @@ class DetectConstantColumns(BaseTask):
     def run(self) -> None:
         """
         Executes the constant column detection logic.
+
         Produces a TaskResult with a list of constant column names.
         """
         try:
-
             # ctx = self.context
             df = self.input_data
-            constant_columns: List[str]
+            constant_columns: list[str]
 
             # Use semantic typing to select relevant columns
+            matched_cols: list[str] = None
+            excluded: tuple[list[str], dict[str, str]] = None
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
                 f"    Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
@@ -59,7 +59,7 @@ class DetectConstantColumns(BaseTask):
                 name=self.name,
                 status="success",
                 summary={
-                    "message": (f"Found {len(constant_columns)} constant column(s).")
+                    "message": f"Found {len(constant_columns)} constant column(s).",
                 },
                 data={"constant_columns": constant_columns},
                 metadata={
@@ -69,20 +69,24 @@ class DetectConstantColumns(BaseTask):
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_cols + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
+
+            # Generate per-column guidance
+            for col in constant_columns:
+                self._attach_guidance(col)
 
             # Apply ML scoring to self.output
             if (
                 self.get_engine_param("enable_impact_scoring", True)
                 and constant_columns
             ):
-                col = constant_columns[0]
-                result = self.output
+                col: str = constant_columns[0]
+                result: TaskResult = self.output
                 if result:
-                    tip = get_recommendation_tip(self.name, {"n_unique": 1})
+                    tip: str | None = get_recommendation_tip(self.name, {"n_unique": 1})
                     self.set_ml_signals(
                         result=result,
                         score=1.0,
@@ -100,7 +104,51 @@ class DetectConstantColumns(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)
+
+    def _attach_guidance(self, col: str) -> None:
+        """Generate EDA + ML guidance for a confirmed constant column."""
+        eda_body: str = (
+            f"{col} has only one unique value across all rows — it is a constant "
+            f"column. It carries no information and cannot distinguish between "
+            f"observations. Verify this is not a data loading artifact, a column "
+            f"populated in error, or a filter applied upstream that collapsed "
+            f"the dataset to a single value."
+        )
+
+        ml_body: str = (
+            f"{col} is a constant column with zero variance. Most ML frameworks "
+            f"will silently drop or error on constant features during fitting. "
+            f"Drop {col} before modeling."
+        )
+
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="eda",
+            level="error",
+            title="Constant Column",
+            body=eda_body.strip(),
+            actions=[],
+            metric={"n_unique": 1},
+        )
+
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="ml",
+            level="error",
+            title="Constant Column — Drop Before Modeling",
+            body=ml_body.strip(),
+            actions=[
+                {
+                    "action": "drop",
+                    "column": col,
+                    "detail": "Zero variance — provides no signal to any model",
+                },
+            ],
+            metric={"n_unique": 1},
+        )

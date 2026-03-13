@@ -75,9 +75,10 @@ CREATE TABLE IF NOT EXISTS task_results (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id      INTEGER NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
     task_name   TEXT    NOT NULL,
-    status      TEXT,                          -- success | failed | skipped
-    summary     TEXT,                          -- JSON blob
-    data        TEXT,                          -- JSON blob
+    status      TEXT,                      -- success | failed | skipped
+    summary     TEXT,                      -- JSON blob
+    data        TEXT,                      -- JSON blob
+    guidance    TEXT,                      -- JSON blob: {col: {eda: [...], ml: [...]}}
     UNIQUE (run_id, task_name)
 );
 
@@ -125,6 +126,14 @@ def init_db(db_path: str | Path | None = None) -> Path:
         conn.executescript(_DDL)
         conn.execute("PRAGMA journal_mode=WAL;")  # safe for concurrent reads
         conn.execute("PRAGMA foreign_keys=ON;")
+        # Migration: add guidance column to task_results if not present.
+        # ALTER TABLE ADD COLUMN is idempotent via the exception catch -
+        # SQLite raises OperationalError if the column already exists.
+        try:
+            conn.execute("ALTER TABLE task_results ADD COLUMN guidance TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists - nothing to do
 
     return resolved
 

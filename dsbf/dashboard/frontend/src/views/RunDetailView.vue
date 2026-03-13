@@ -4,7 +4,7 @@
     <div v-if="run" class="quality-header card">
       <div class="quality-title">Data Quality Score</div>
       <div class="quality-score" :class="qualityClass(run.quality_score)">
-        {{ run.quality_score ?? '—' }}
+        {{ run.quality_score ?? '-' }}
       </div>
       <div class="quality-label" :class="qualityClass(run.quality_score)">
         {{ qualityLabel(run.quality_score) }}
@@ -39,24 +39,13 @@
         </div>
       </div>
 
-      <!-- Run metadata strip -->
-      <div class="meta-strip card">
-        <div class="meta-metric" v-for="m in runMetrics" :key="m.label">
-          <span class="meta-label">
-            {{ m.label }}
-            <TooltipIcon :text="m.tooltip" align="center" />
-          </span>
-          <span class="meta-value" :title="m.fullValue ?? m.value" :data-key="m.dataKey">{{ m.value }}</span>
-        </div>
-      </div>
-
       <!-- Tab content -->
       <div class="tab-content">
         <OverviewTab       v-if="activeTab === 'overview'"       :run-key="runKey" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <DistributionsTab  v-else-if="activeTab === 'distributions'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <RelationshipsTab  v-else-if="activeTab === 'relationships'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <div v-else class="placeholder">
-          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab — coming soon.
+          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab - coming soon.
         </div>
       </div>
     </template>
@@ -126,64 +115,11 @@ const categoryBreakdown = computed(() =>
 
 const categoryTooltips = {
   completeness: 'Measures how much data is present vs missing. A high score means few null or empty values across columns.',
-  consistency:  'Checks whether values follow expected patterns and types — e.g. no text in numeric columns, valid date formats.',
-  distribution: 'Evaluates whether column distributions look reasonable — flags extreme skewness, dominant values, or unusual spreads.',
+  consistency:  'Checks whether values follow expected patterns and types - e.g. no text in numeric columns, valid date formats.',
+  distribution: 'Evaluates whether column distributions look reasonable - flags extreme skewness, dominant values, or unusual spreads.',
   redundancy:   'Detects duplicate columns, constant columns, or features that carry identical information.',
   drift:        'Compares this run\'s statistics against previous runs to surface unexpected shifts in the data.',
 }
-
-const runMetrics = computed(() => {
-  if (!run.value) return []
-  const shape   = tasks.value?.summarize_dataset_shape?.data ?? {}
-  const dupCount = tasks.value?.detect_duplicates?.data?.duplicate_count ?? null
-  const rowCount = run.value.row_count ?? null
-
-  let dupValue = '—'
-  if (dupCount != null) {
-    const pct = rowCount ? ` (${((dupCount / rowCount) * 100).toFixed(1)}%)` : ''
-    dupValue  = `${dupCount.toLocaleString()}${pct}`
-  }
-
-  return [
-    {
-      label:   'Rows',
-      tooltip: 'Total number of rows (observations) in the dataset.',
-      value:   rowCount?.toLocaleString() ?? '—',
-    },
-    {
-      label:   'Columns',
-      tooltip: 'Total number of columns (features) in the dataset.',
-      value:   run.value.col_count?.toLocaleString() ?? '—',
-    },
-    {
-      label:   'Memory',
-      tooltip: 'Approximate memory footprint of the dataset when loaded into a pandas DataFrame.',
-      value:   shape.approx_memory_MB != null ? `${shape.approx_memory_MB} MB` : '—',
-    },
-    {
-      label:   'Missing',
-      tooltip: 'Percentage of all cells in the dataset that contain a null or missing value.',
-      value:   shape.null_cell_percentage != null
-        ? `${(shape.null_cell_percentage * 100).toFixed(1)}%` : '—',
-    },
-    {
-      label:   'Duplicate Rows',
-      tooltip: 'Number of rows that are exact duplicates of another row, with their percentage of the total. Duplicates can inflate counts and skew model training.',
-      value:   dupValue,
-      dataKey: 'dup',
-    },
-    {
-      label:   'Depth',
-      tooltip: 'Profiling depth used for this run: basic (fast, core stats), standard (recommended), or full (all tasks including expensive checks).',
-      value:   run.value.profiling_depth ?? '—',
-    },
-    {
-      label:   'Stage',
-      tooltip: 'Inferred lifecycle stage of the dataset — e.g. raw (unprocessed), exploratory, or modelling-ready. Affects which checks are prioritised.',
-      value:   run.value.inferred_stage ?? '—',
-    },
-  ]
-})
 
 </script>
 
@@ -259,54 +195,8 @@ const runMetrics = computed(() => {
 }
 .theme-btn.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
 
-/* Meta strip */
-.meta-strip {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  padding: 16px 24px;
-  margin-bottom: 16px;
-}
-.meta-metric {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex: 1;
-  padding: 8px 16px;
-  border-right: 1px solid #334155;
-  min-width: 0;
-}
-.meta-metric:last-child { border-right: none; }
-.meta-label {
-  font-size: 11px;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.meta-value {
-  font-size: 18px;
-  font-weight: 600;
-  color: #f1f5f9;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  cursor: default;
-}
-
-/* Duplicate rows value includes a percentage — allow slightly smaller font
+/* Duplicate rows value includes a percentage - allow slightly smaller font
    so it stays on one line without truncating on typical screen widths */
-.meta-metric:has(.meta-value[data-key="dup"]) .meta-value {
-  font-size: 15px;
-}
-
 .tab-content { min-height: 200px; }
 .placeholder { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
 </style>

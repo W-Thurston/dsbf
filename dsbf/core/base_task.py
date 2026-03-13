@@ -104,6 +104,65 @@ class BaseTask(ABC):
 
         return self.context.reliability_flags
 
+    def add_guidance(
+        self,
+        result: TaskResult,
+        column: str,
+        phase: str,
+        level: str,
+        title: str,
+        body: str,
+        actions: List[Dict[str, Any]],
+        metric: Dict[str, Any],
+    ) -> None:
+        """
+        Attach a guidance blurb for a specific column and phase to a TaskResult.
+
+        Guidance blurbs are the authoritative, phase-scoped narrative for each
+        signal detected by a task. They are stored in report.json and rendered
+        by the dashboard — tasks are the single source of truth.
+
+        EDA blurbs (phase="eda") describe data as-is: what was observed and what
+        it means about the distribution. No modeling language, no action chips.
+
+        ML blurbs (phase="ml") prescribe what to do before modeling: which models
+        are affected, what transforms are recommended, as structured actions an
+        agent or user can act on directly.
+
+        Args:
+            result (TaskResult): The task result to attach guidance to.
+            column (str): The column this guidance applies to.
+            phase (str): "eda" or "ml".
+            level (str): Severity — "info", "warn", "error", or "good".
+            title (str): Short descriptive title for the finding.
+            body (str): Full self-contained narrative. Must include the observed
+                metric value, the direction/nature of the issue, and the
+                implication. Should make sense without surrounding context
+                (for LLM/agent consumption).
+            actions (list[dict]): Structured actions. Empty list for EDA blurbs.
+                Each action dict should have at minimum an "action" key.
+                Example: {"action": "transform", "method": "log1p", "column": col}
+            metric (dict): The observed metric values that triggered this blurb.
+                Always include the raw numeric values, not just labels.
+                Example: {"skewness": 2.84, "mean": 312.4, "median": 287.0}
+        """
+        if result.guidance is None:
+            result.guidance = {}
+        if column not in result.guidance:
+            result.guidance[column] = {"eda": [], "ml": []}
+
+        result.guidance[column][phase].append(
+            {
+                "phase": phase,
+                "column": column,
+                "level": level,
+                "title": title,
+                "body": body,
+                "actions": actions,
+                "metric": metric,
+            }
+        )
+
     def set_ml_signals(
         self,
         result: TaskResult,
@@ -170,7 +229,7 @@ class BaseTask(ABC):
         excluded = {}
 
         for col, intent_type in semantic_types.items():
-            if intent_type in expected_types:
+            if "any" in expected_types or intent_type in expected_types:
                 matched.append(col)
             else:
                 excluded[col] = intent_type

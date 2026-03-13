@@ -47,7 +47,7 @@ const STRENGTH_CLS = {
 }
 
 function metricDisplay(val, type) {
-  if (val == null) return '—'
+  if (val == null) return '-'
   const v = Number(val)
   if (type === 'eta_squared') return v.toFixed(4)
   if (type === 'cramers_v')   return v.toFixed(4)
@@ -66,7 +66,7 @@ const stats = computed(() => {
     },
     {
       label: 'Strength',
-      value: props.strength ? props.strength.charAt(0).toUpperCase() + props.strength.slice(1) : '—',
+      value: props.strength ? props.strength.charAt(0).toUpperCase() + props.strength.slice(1) : '-',
       cls:   STRENGTH_CLS[props.strength] ?? '',
     },
     {

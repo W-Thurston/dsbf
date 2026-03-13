@@ -19,10 +19,12 @@ from dsbf.eda.task_registry import (
     load_task_group,
     set_plugin_logger,
 )
+from dsbf.storage.writer import persist_run
 from dsbf.utils.config_validation import validate_config_and_graph
 from dsbf.utils.data_loader import load_dataset
 from dsbf.utils.data_utils import data_sampling
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
+from dsbf.utils.task_and_column_mapping_utils import build_column_task_mappings
 from dsbf.utils.task_utils import filter_tasks, instantiate_task
 
 
@@ -98,7 +100,7 @@ class ProfileEngine(BaseEngine):
             if strict:
                 raise ValueError(
                     (
-                        "Strict mode is enabled — halting due to "
+                        "Strict mode is enabled - halting due to "
                         f"{len(errors)} config/DAG issue(s)."
                     )
                 )
@@ -113,6 +115,17 @@ class ProfileEngine(BaseEngine):
         self._log("Building execution graph...", level="info")
         graph = self.build_graph()
         self.results = graph.run(self.context, log_fn=self._log)
+
+        # Inject column/task maps into metadata
+        mappings = build_column_task_mappings(self.results)
+        self.context.set_metadata(
+            "column_task_map",
+            {k: sorted(v) for k, v in mappings["column_task_map"].items()},
+        )
+        self.context.set_metadata(
+            "task_column_map",
+            {k: sorted(v) for k, v in mappings["task_column_map"].items()},
+        )
 
         # Optional DAG visualization
         if self.config.get("metadata", {}).get("visualize_dag", False):
@@ -133,6 +146,15 @@ class ProfileEngine(BaseEngine):
         # Write separate runtime metadata
         write_metadata_report(self.context)
 
+        # Persist run to SQLite so the dashboard picks it up immediately
+        try:
+            persist_run(self)
+            self._log("Run persisted to database.", level="info")
+        except Exception as exc:
+            self._log(
+                f"[WARNING] Could not persist run to database: {exc}", level="warn"
+            )
+
         self.record_run()
         self._log(f"[DONE] Results saved to: {self.output_dir}", level="stage")
 
@@ -145,9 +167,28 @@ class ProfileEngine(BaseEngine):
 
         backend = self.config.get("engine", {}).get("backend", "pandas")
 
-        if dataset_path and os.path.exists(dataset_path):
+        if dataset_path:
+            if not os.path.exists(dataset_path):
+                msg: str = (
+                    "Dataset path was provided but the file could not be found: "
+                    f"'{dataset_path}'\n"
+                    "If you are running under WSL, make sure the Windows path is "
+                    "accessible (e.g. /mnt/c/...) and the file exists at that location."
+                )
+                raise FileNotFoundError(msg)
             self._log(f"Loading dataset from: {dataset_path}", level="stage")
-            return pd.read_csv(dataset_path)
+            ext = os.path.splitext(dataset_path)[1].lower()
+            if ext == ".csv":
+                return pd.read_csv(dataset_path)
+            elif ext in (".parquet", ".pq"):
+                return pd.read_parquet(dataset_path)
+            elif ext in (".xlsx", ".xls"):
+                return pd.read_excel(dataset_path)
+            else:
+                raise ValueError(
+                    f"Unsupported file extension '{ext}'. "
+                    f"Supported formats: .csv, .parquet, .xlsx"
+                )
 
         self._log(
             f"Loading built-in dataset: {dataset_name} from {dataset_source}",
@@ -156,7 +197,6 @@ class ProfileEngine(BaseEngine):
         return load_dataset(name=dataset_name, source=dataset_source, backend=backend)
 
     def build_graph(self) -> ExecutionGraph:
-
         selected_depth = self.config.get("metadata", {}).get("profiling_depth", "full")
         PROFILING_DEPTH = {
             "basic": 1,
@@ -192,7 +232,7 @@ class ProfileEngine(BaseEngine):
         # Fallback
         if not allowed_names:
             self._log(
-                "[WARNING] No tasks matched filters — falling back to core domain",
+                "[WARNING] No tasks matched filters - falling back to core domain",
                 "warn",
             )
             allowed_names = {

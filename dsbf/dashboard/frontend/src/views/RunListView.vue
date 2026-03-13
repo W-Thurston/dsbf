@@ -48,11 +48,11 @@
             <td class="run-key" v-html="highlight(run.run_key, query)" />
             <td v-html="highlight(formatDate(run.ran_at), query)" />
             <td><span class="badge badge-blue">{{ run.profiling_depth }}</span></td>
-            <td><span class="badge badge-gray">{{ run.inferred_stage ?? '—' }}</span></td>
-            <td>{{ run.row_count?.toLocaleString() ?? '—' }}</td>
-            <td>{{ run.col_count?.toLocaleString() ?? '—' }}</td>
+            <td><span class="badge badge-gray">{{ run.inferred_stage ?? '-' }}</span></td>
+            <td>{{ run.row_count?.toLocaleString() ?? '-' }}</td>
+            <td>{{ run.col_count?.toLocaleString() ?? '-' }}</td>
             <td :class="qualityClass(run.quality_score)">
-              {{ run.quality_score ?? '—' }}
+              {{ run.quality_score ?? '-' }}
             </td>
             <td>{{ run.task_count }}</td>
             <td>{{ run.fig_count }}</td>

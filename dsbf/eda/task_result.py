@@ -51,6 +51,16 @@ class TaskResult:
     recommendations: Optional[List[str]] = None
     recommendation_tags: Optional[List[str]] = None  # e.g., ["drop", "transform"]
     error_metadata: Optional[Dict[str, str]] = None
+    guidance: Optional[Dict[str, Dict[str, List[Dict[str, Any]]]]] = None
+    # guidance shape:
+    # {
+    # "COLUMN_NAME": {
+    #  "eda": [{"phase", "column", "level", "title", "body", "actions", "metric"}, ...],
+    #  "ml":  [{"phase", "column", "level", "title", "body", "actions", "metric"}, ...],
+    # }
+    # }
+    # EDA blurbs describe data as-is (no actions, no ML language).
+    # ML blurbs prescribe what to do before modeling (structured actions, model context)
 
     def _sanitize(self, obj):
         if isinstance(obj, np.generic):  # Catches np.int64, np.float64, etc.
@@ -87,6 +97,7 @@ class TaskResult:
             "reliability_warnings": self.reliability_warnings,
             "recommendations": self.recommendations,
             "error_metadata": self.error_metadata,
+            "guidance": self._sanitize(self.guidance),
         }
 
     def __str__(self) -> str:
@@ -111,6 +122,7 @@ def error_to_metadata(error: Exception) -> Dict[str, str]:
 
     Returns:
         Dict[str, str]: Metadata block for debugging and trace reporting.
+
     """
     return {
         "error_type": type(error).__name__,
@@ -129,6 +141,7 @@ def make_failure_result(task_name: str, error: Exception) -> "TaskResult":
 
     Returns:
         TaskResult: A failed result object.
+
     """
     return TaskResult(
         name=task_name,
@@ -154,6 +167,7 @@ def append_warning(
         code (str): Short identifier for the warning (e.g., "low_variance").
         description (str): Explanation of the issue.
         recommendation (str): Optional suggested action.
+
     """
     warnings_dict.setdefault(level, {})[code] = {
         "description": description,
@@ -189,16 +203,14 @@ class LoggingTask(Protocol):
 
 
 def log_reliability_warnings(task: LoggingTask, result: "TaskResult") -> None:
-    """
-    Print reliability warnings to console if present (and verbosity = debug).
-    """
+    """Print reliability warnings to console if present (and verbosity = debug)."""
     if not result.reliability_warnings:
         return
 
     for level, warning in result.reliability_warnings.items():
         for code, info in warning.items():
             task._log(
-                f"[{task.name}] {level.upper()} — {code}: {info['description']}",
+                f"[{task.name}] {level.upper()} - {code}: {info['description']}",
                 level="debug",
             )
             if info.get("recommendation"):

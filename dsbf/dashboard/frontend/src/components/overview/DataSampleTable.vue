@@ -83,7 +83,7 @@ async function fetchSample() {
 
   // For built-in datasets (seaborn/sklearn) source_path is null but the backend
   // can still load data via _load_dataframe. Only bail early for runs that
-  // pre-date path tracking — identified by dataset_source being unknown and
+  // pre-date path tracking - identified by dataset_source being unknown and
   // source_path being null.
   if (props.run && props.run.run_key === props.runKey) {
     const src    = props.run.source_path

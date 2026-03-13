@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/detect_collinear_features.py
 
-from typing import Dict, List
-
 import numpy as np
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
@@ -13,7 +11,6 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -46,7 +43,8 @@ class DetectCollinearFeatures(BaseTask):
             # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)", "debug"
+                f"    Processing {len(matched_cols)} 'continuous' column(s)",
+                "debug",
             )
             numeric_df = df.select_dtypes(include=np.number).dropna()
 
@@ -60,13 +58,13 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 return
 
-            vif_scores: Dict[str, float] = {}
+            vif_scores: dict[str, float] = {}
             for i in range(numeric_df.shape[1]):
                 col = numeric_df.columns[i]
                 vif_val = variance_inflation_factor(numeric_df.values, i)
                 vif_scores[col] = float(vif_val)
 
-            collinear_columns: List[str] = [
+            collinear_columns: list[str] = [
                 col for col, vif in vif_scores.items() if vif > vif_threshold
             ]
 
@@ -77,7 +75,7 @@ class DetectCollinearFeatures(BaseTask):
                     "message": (
                         f"Flagged {len(collinear_columns)} "
                         f"column(s) with VIF > {vif_threshold}."
-                    )
+                    ),
                 },
                 data={
                     "vif_scores": vif_scores,
@@ -90,10 +88,16 @@ class DetectCollinearFeatures(BaseTask):
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_cols + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
+
+            # Generate guidance for every column with a meaningful VIF score
+            vif_info = 5.0  # moderate correlation - worth knowing
+            for col, vif in vif_scores.items():
+                if vif >= vif_info:
+                    self._attach_guidance(col, vif, vif_threshold)
 
             # Reliability warnings
             if flags["low_row_count"]:
@@ -102,8 +106,7 @@ class DetectCollinearFeatures(BaseTask):
                     level="heuristic_caution",
                     code="vif_low_n",
                     description=(
-                        "VIF values may be unstable when"
-                        " sample size is small (N < 30)."
+                        "VIF values may be unstable when sample size is small (N < 30)."
                     ),
                     recommendation=(
                         "Consider bootstrapping or collecting"
@@ -120,8 +123,7 @@ class DetectCollinearFeatures(BaseTask):
                         " which can distort VIF calculations."
                     ),
                     recommendation=(
-                        "Drop or transform zero-variance features"
-                        " before running VIF."
+                        "Drop or transform zero-variance features before running VIF."
                     ),
                 )
 
@@ -130,10 +132,10 @@ class DetectCollinearFeatures(BaseTask):
                 self.get_engine_param("enable_impact_scoring", True)
                 and collinear_columns
             ):
-                top_col = collinear_columns[0]
-                top_vif = vif_scores[top_col]
-                score = 0.75 if top_vif < 15 else 0.85
-                tip = get_recommendation_tip(self.name, {"vif": top_vif})
+                top_col: str = collinear_columns[0]
+                top_vif: float = vif_scores[top_col]
+                score: float = 0.75 if top_vif < 15 else 0.85
+                tip: str | None = get_recommendation_tip(self.name, {"vif": top_vif})
                 self.set_ml_signals(
                     result=result,
                     score=score,
@@ -147,36 +149,6 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 result.summary["column"] = top_col
 
-            try:
-                save_path = self.get_output_path("correlation_heatmap.png")
-                static = PlotFactory.plot_correlation_static(
-                    df, save_path=save_path, title="Correlation Matrix"
-                )
-                if vif_scores:
-                    top_vif_col = max(vif_scores.items(), key=lambda kv: kv[1])[0]
-                    top_vif_val = vif_scores[top_vif_col]
-                    annotation_str = f"Top VIF: {top_vif_col} ({top_vif_val:.2f})"
-                else:
-                    annotation_str = "No numeric features"
-
-                annotations = [annotation_str]
-                interactive = PlotFactory.plot_correlation_interactive(
-                    df,
-                    title="Correlation Matrix",
-                    annotations=annotations,
-                )
-                result.plots = {
-                    "correlation_matrix": {
-                        "static": static["path"],
-                        "interactive": interactive,
-                    }
-                }
-            except Exception as e:
-                self._log(
-                    f"    [PlotFactory] Skipped correlation matrix plot: {e}",
-                    level="debug",
-                )
-
             self.output = result
 
         except Exception as e:
@@ -184,7 +156,139 @@ class DetectCollinearFeatures(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)
+
+    def _attach_guidance(self, col: str, vif: float, vif_threshold: float) -> None:
+        """
+        Generate EDA + ML guidance for a column with a notable VIF score.
+
+        VIF tiers (standard statistical convention):
+        - 5-10: moderate multicollinearity - info
+        - 10-20: high - warn
+        - >20:  severe - error
+        """
+        vif_str: str = f"{vif:.1f}"
+
+        if vif >= 20:
+            level = "error"
+            tier = "severe"
+            eda_interp: str = (
+                f"A VIF of {vif_str} means {col} shares most of its variance with "
+                f"other features in the dataset. There is very little independent "
+                f"information in this column that is not already captured elsewhere."
+            )
+        elif vif >= 10:
+            level = "warn"
+            tier = "high"
+            eda_interp = (
+                f"A VIF of {vif_str} indicates strong linear overlap between {col} "
+                f"and at least one other numeric feature. The column has limited "
+                "independent variation beyond what the correlated features "
+                "already carry."
+            )
+        else:
+            level = "info"
+            tier = "moderate"
+            eda_interp = (
+                f"A VIF of {vif_str} indicates moderate correlation between {col} "
+                f"and other numeric features. Some redundancy is present, but the "
+                f"column still carries meaningful independent signal."
+            )
+
+        eda_body: str = (
+            f"{col} has a Variance Inflation Factor of {vif_str} - {tier} "
+            "multicollinearity. "
+            f"{eda_interp} "
+            f"Check the correlation matrix (Relationships tab) to identify which "
+            f"features are most strongly associated with {col}."
+        )
+
+        ml_body: str = (
+            f"{col} has VIF = {vif_str}. "
+            f"""{
+                "Linear models (OLS regression, logistic regression, linear SVM) will"
+                " be most affected: "
+                "coefficient estimates become unstable and their standard errors"
+                " inflate, "
+                "making feature importance and hypothesis tests unreliable."
+                if vif >= 10
+                else "Linear models may show coefficient instability for this "
+                "feature - "
+                "interpret its coefficient cautiously in any regularised or "
+                "unregularised regression."
+            } """
+            "Tree-based models (Random Forest, Gradient Boosting) are not directly "
+            "harmed by multicollinearity, but feature importance scores will be split "
+            "between the correlated columns rather than concentrated on one. "
+            f"""{
+                "Dropping the weaker of the collinear pair, applying ridge/elastic-net"
+                "regularisation, or using PCA to orthogonalise"
+                " the feature space are the standard remedies."
+                if vif >= 10
+                else "Consider whether this column adds meaningful "
+                "signal beyond its correlated neighbours "
+                "before including it in a linear model."
+            }
+            """
+        )
+
+        ml_actions: list[str] = []
+        if vif >= 10:
+            ml_actions = [
+                {
+                    "action": "drop",
+                    "column": col,
+                    "detail": "Drop the weaker of the collinear pair after "
+                    "inspecting correlation matrix",
+                },
+                {
+                    "action": "regularise",
+                    "method": "ridge_or_elastic_net",
+                    "detail": "Regularisation stabilises coefficients under "
+                    "multicollinearity",
+                },
+                {
+                    "action": "transform",
+                    "method": "pca",
+                    "detail": "PCA produces orthogonal components - eliminates "
+                    "multicollinearity entirely",
+                },
+            ]
+        else:
+            ml_actions = [
+                {
+                    "action": "monitor",
+                    "column": col,
+                    "detail": "Check correlation matrix to confirm which feature is"
+                    " the source of overlap",
+                },
+            ]
+
+        metric: dict[str, float] = {
+            "vif": round(vif, 4),
+            "vif_threshold": vif_threshold,
+        }
+
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="eda",
+            level=level,
+            title=f"{tier.title()} Multicollinearity (VIF = {vif_str})",
+            body=eda_body.strip(),
+            actions=[],
+            metric=metric,
+        )
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="ml",
+            level=level,
+            title=f"VIF = {vif_str} - Collinearity Impact on Models",
+            body=ml_body.strip(),
+            actions=ml_actions,
+            metric=metric,
+        )

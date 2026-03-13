@@ -25,15 +25,15 @@ const props = defineProps({
 })
 
 function fmt(v, decimals = 2) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   return typeof v === 'number' ? v.toFixed(decimals) : String(v)
 }
 function fmtCount(v) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   return Number(v).toLocaleString()
 }
 function fmtPct(v) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   return `${(v * 100).toFixed(1)}%`
 }
 
@@ -55,7 +55,7 @@ const stats = computed(() => {
     const nullCls = nullPct == null ? '' : nullPct >= 0.2 ? 'stat-warn-high' : nullPct >= 0.05 ? 'stat-warn-mid' : ''
     return [
       { label: 'Count',   value: fmtCount(nm.count),  tooltip: 'Number of non-null values.',                                              cls: '' },
-      { label: 'Mean',    value: fmt(nm.mean),         tooltip: 'Arithmetic mean. Sensitive to outliers — compare with median.',           cls: '' },
+      { label: 'Mean',    value: fmt(nm.mean),         tooltip: 'Arithmetic mean. Sensitive to outliers - compare with median.',           cls: '' },
       { label: 'Median',  value: fmt(nm['50%']),       tooltip: 'The middle value (50th percentile). More robust to outliers than mean.',  cls: '' },
       { label: 'Std Dev', value: fmt(nm.std),          tooltip: 'Standard deviation. Measures spread around the mean.',                   cls: '' },
       { label: 'Min',     value: fmt(nm.min),          tooltip: 'Smallest observed value.',                                               cls: '' },
@@ -75,7 +75,7 @@ const stats = computed(() => {
     return [
       { label: 'Count',     value: fmtCount(rowCount),          tooltip: 'Total number of rows in the dataset.',                                     cls: '' },
       { label: 'Unique',    value: fmtCount(unique),            tooltip: 'Number of distinct values. Very high uniqueness relative to row count may indicate an ID column.', cls: cardCls },
-      { label: 'Top Value', value: dom.mode != null ? String(dom.mode).slice(0, 20) : '—', tooltip: 'The most frequently occurring value.',           cls: '' },
+      { label: 'Top Value', value: dom.mode != null ? String(dom.mode).slice(0, 20) : '-', tooltip: 'The most frequently occurring value.',           cls: '' },
       { label: 'Top %',     value: fmtPct(topProp),             tooltip: 'Proportion of rows containing the most common value. Very high values (>90%) indicate a near-constant column.', cls: topCls },
       { label: 'Null %',    value: fmtPct(nullPct),             tooltip: 'Percentage of rows with a missing value.',                                  cls: nullCls },
     ]
@@ -85,7 +85,7 @@ const stats = computed(() => {
     const vc   = props.tasks.summarize_value_counts?.data?.[col] ?? {}
     const vals = Object.entries(vc).sort((a, b) => b[1] - a[1])
     const total = vals.reduce((s, [, n]) => s + n, 0)
-    const topVal  = vals[0]?.[0] ?? '—'
+    const topVal  = vals[0]?.[0] ?? '-'
     const topN    = vals[0]?.[1] ?? null
     const topProp = total > 0 && topN != null ? topN / total : null
     const imbalCls = topProp != null && topProp > 0.9 ? 'stat-warn-high' : topProp > 0.75 ? 'stat-warn-mid' : ''

@@ -9,6 +9,13 @@
       />
     </div>
 
+    <!-- Active warning filter banner -->
+    <div v-if="filterToWarnings" class="filter-banner">
+      <span class="filter-banner-icon">⚠️</span>
+      <span class="filter-banner-label">{{ filterLabel || 'Flagged columns only' }}</span>
+      <button class="filter-banner-clear" @click="$emit('clear-filter')" title="Show all columns">✕ Clear</button>
+    </div>
+
     <!-- Legend -->
     <div class="browser-legend">
       <span class="legend-item">
@@ -55,14 +62,15 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  tasks:      { type: Object,  default: () => ({}) },
-  selected:   { type: String,  default: null },
-  showNullBar:{ type: Boolean, default: true },
-  alertLabel: { type: String,  default: 'Has alerts' },
-  // When provided, this Set<string> overrides the default alert logic entirely.
-  warningSet: { type: Object,  default: null },
+  tasks:          { type: Object,  default: () => ({}) },
+  selected:       { type: String,  default: null },
+  showNullBar:    { type: Boolean, default: true },
+  alertLabel:     { type: String,  default: 'Has alerts' },
+  warningSet:     { type: Object,  default: null },
+  filterToWarnings: { type: Boolean, default: false },
+  filterLabel:    { type: String,  default: '' },
 })
-defineEmits(['select'])
+defineEmits(['select', 'clear-filter'])
 
 const search = ref('')
 
@@ -142,7 +150,12 @@ const columns = computed(() => {
 
 const filteredGroups = computed(() => {
   const q    = search.value.toLowerCase()
-  const cols = q ? columns.value.filter(c => c.name.toLowerCase().includes(q)) : columns.value
+  let cols = q ? columns.value.filter(c => c.name.toLowerCase().includes(q)) : columns.value
+
+  // Warning filter mode: only show flagged columns
+  if (props.filterToWarnings) {
+    cols = cols.filter(c => c.hasWarning)
+  }
 
   const byIntent = {}
   for (const col of cols) {
@@ -165,6 +178,44 @@ const filteredGroups = computed(() => {
 }
 
 .browser-search { padding: 0 0 10px 0; flex-shrink: 0; }
+
+/* ── Active filter banner ─────────────────────────────────────────────────── */
+.filter-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: #2d1f0a;
+  border: 1px solid #fb923c;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.filter-banner-icon  { font-size: 12px; }
+
+.filter-banner-label {
+  flex: 1;
+  font-size: 11px;
+  color: #fed7aa;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.filter-banner-clear {
+  background: none;
+  border: 1px solid #fb923c;
+  border-radius: 4px;
+  color: #fb923c;
+  font-size: 10px;
+  padding: 2px 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.filter-banner-clear:hover {
+  background: #fb923c22;
+}
 
 .browser-search-input {
   width: 100%;

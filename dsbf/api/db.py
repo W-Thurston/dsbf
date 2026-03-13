@@ -288,7 +288,7 @@ def get_run_tasks(run_key: str, db_path=None) -> dict[str, Any]:
             return {}
         rows = conn.execute(
             """
-            SELECT task_name, status, summary, data
+            SELECT task_name, status, summary, data, guidance
             FROM task_results
             WHERE run_id = ?
             ORDER BY task_name
@@ -300,7 +300,7 @@ def get_run_tasks(run_key: str, db_path=None) -> dict[str, Any]:
     result = {}
     for d in raw:
         task_name = d.pop("task_name")
-        _parse_json_fields(d, "summary", "data")
+        _parse_json_fields(d, "summary", "data", "guidance")
         result[task_name] = d
     return result
 
@@ -309,7 +309,7 @@ def get_task(run_key: str, task_name: str, db_path=None) -> dict | None:
     with get_connection(db_path) as conn:
         row = conn.execute(
             """
-            SELECT tr.task_name, tr.status, tr.summary, tr.data
+            SELECT tr.task_name, tr.status, tr.summary, tr.data, tr.guidance
             FROM task_results tr
             JOIN runs r ON r.id = tr.run_id
             WHERE r.run_key = ? AND tr.task_name = ?
@@ -319,7 +319,7 @@ def get_task(run_key: str, task_name: str, db_path=None) -> dict | None:
         if not row:
             return None
         d = _row_to_dict(row)
-    _parse_json_fields(d, "summary", "data")
+    _parse_json_fields(d, "summary", "data", "guidance")
     return d
 
 

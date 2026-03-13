@@ -62,7 +62,7 @@ def _insert_run(conn, dataset_id: int, run_key: str, meta: dict) -> int:
         "SELECT id FROM runs WHERE run_key = ?", (run_key,)
     ).fetchone()
     if existing:
-        logger.info("Run %s already in database — skipping insert.", run_key)
+        logger.info("Run %s already in database - skipping insert.", run_key)
         return existing["id"]
 
     conn.execute(
@@ -95,16 +95,18 @@ def _insert_task_results(conn, run_id: int, results: dict) -> None:
             status = getattr(result, "status", None)
             summary = getattr(result, "summary", None)
             data = getattr(result, "data", None)
+            guidance = getattr(result, "guidance", None)
         else:
             status = result.get("status")
             summary = result.get("summary")
             data = result.get("data")
+            guidance = result.get("guidance")
 
         try:
             conn.execute(
                 """
-        INSERT OR IGNORE INTO task_results (run_id, task_name, status, summary, data)
-        VALUES (?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO task_results (run_id, task_name, status, summary, data, guidance)
+VALUES (?, ?, ?, ?, ?, ?)
         """,
                 (
                     run_id,
@@ -112,6 +114,7 @@ def _insert_task_results(conn, run_id: int, results: dict) -> None:
                     status,
                     _safe_json(summary),
                     _safe_json(data),
+                    _safe_json(guidance),
                 ),
             )
         except Exception as exc:
@@ -251,7 +254,7 @@ def persist_run(engine, db_path=None) -> int:
     results = getattr(engine, "results", {}) or {}
     cfg_meta = config.get("metadata", {}) or {}
 
-    # Run identity — run_key is the basename of the timestamped output dir
+    # Run identity - run_key is the basename of the timestamped output dir
     run_key = (
         getattr(engine, "run_key", None)
         or os.path.basename(getattr(engine, "output_dir", "") or "")
@@ -277,7 +280,7 @@ def persist_run(engine, db_path=None) -> int:
     )
     source_path = None if is_builtin else raw_path
 
-    # Shape stats — result may be a TaskResult object or plain dict
+    # Shape stats - result may be a TaskResult object or plain dict
     _shape_result = results.get("summarize_dataset_shape") or {}
     shape_data = (
         _shape_result.data
@@ -287,7 +290,7 @@ def persist_run(engine, db_path=None) -> int:
     row_count = shape_data.get("num_rows")
     col_count = shape_data.get("num_columns")
 
-    # Quality score — same dual-form handling
+    # Quality score - same dual-form handling
     _dqs_result = results.get("data_quality_scorer") or {}
     _dqs_summary = (
         _dqs_result.summary

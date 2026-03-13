@@ -1,14 +1,13 @@
 # dsbf/eda/tasks/summarize_nulls.py
 
-from typing import Any, Dict, List
-
-import pandas as pd
+from typing import Any
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
+
+# from dsbf.utils.plot_factory import PlotFactory
 
 
 @register_task(
@@ -35,7 +34,6 @@ class SummarizeNulls(BaseTask):
 
     def run(self) -> None:
         try:
-
             # ctx = self.context
             df: Any = self.input_data
 
@@ -51,12 +49,12 @@ class SummarizeNulls(BaseTask):
             n_rows: int = df.shape[0]
 
             # Column null counts and percentages
-            null_counts: Dict[str, int] = df.isnull().sum().to_dict()
-            null_percentages: Dict[str, float] = {
+            null_counts: dict[str, int] = df.isnull().sum().to_dict()
+            null_percentages: dict[str, float] = {
                 col: null_counts[col] / n_rows for col in df.columns
             }
 
-            high_null_columns: List[str] = [
+            high_null_columns: list[str] = [
                 col for col, pct in null_percentages.items() if pct >= null_threshold
             ]
             self._log(
@@ -67,9 +65,10 @@ class SummarizeNulls(BaseTask):
             # Row-wise null pattern frequency (e.g., "101" means null in cols 1 and 3)
             null_mask_df = df.isnull().astype(int)
             null_patterns = null_mask_df.apply(
-                lambda row: "".join(row.astype(str)), axis=1
+                lambda row: "".join(row.astype(str)),
+                axis=1,
             )
-            pattern_counts: Dict[str, int] = null_patterns.value_counts().to_dict()
+            pattern_counts: dict[str, int] = null_patterns.value_counts().to_dict()
 
             self.output = TaskResult(
                 name=self.name,
@@ -77,7 +76,7 @@ class SummarizeNulls(BaseTask):
                 summary={
                     "message": (
                         f"{len(high_null_columns)} column(s) have >50% missing values."
-                    )
+                    ),
                 },
                 data={
                     "null_counts": null_counts,
@@ -92,44 +91,151 @@ class SummarizeNulls(BaseTask):
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_col + list(excluded.keys()),
                     ),
                 },
             )
 
-            if self.context and self.context.output_dir and self.output.data:
-                null_series = pd.Series(self.output.data["null_counts"])
-                save_path = self.get_output_path("null_counts_barplot.png")
-
-                # Annotate fully null or high-null columns
-                annotations = []
-                for col, count in self.output.data["null_counts"].items():
-                    pct = self.output.data["null_percentages"].get(col, 0)
-                    if count == self.output.metadata["rows"]:
-                        annotations.append(f"{col} is fully null ({pct:.1%})")
-                    elif pct > 0.5:
-                        annotations.append(f"{col} has >50% missing ({pct:.1%})")
-
-                # Static and interactive plots
-                static = PlotFactory.plot_barplot_static(null_series, save_path)
-                interactive = PlotFactory.plot_barplot_interactive(
-                    null_series,
-                    annotations=annotations,
-                )
-
-                self.output.plots = {
-                    "null_counts": {
-                        "static": static["path"],
-                        "interactive": interactive,
-                    }
-                }
+            # Generate per-column guidance for any column with notable missingness
+            guidance_threshold = 0.05
+            for col, pct in null_percentages.items():
+                if pct >= guidance_threshold:
+                    self._attach_guidance(col, pct, null_counts[col], n_rows)
 
         except Exception as e:
             if self.context:
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)
+
+    def _attach_guidance(self, col: str, pct: float, count: int, n_rows: int) -> None:
+        """Generate EDA + ML guidance for a column with notable missingness."""
+        pct_str: str = f"{pct:.1%}"
+
+        if pct >= 0.5:
+            level = "error"
+            title: str = f"Severe Missingness ({pct_str})"
+            eda_body: str = (
+                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
+                f"rows). More than half the data is absent - this column is largely "
+                f"unobserved. Before drawing any conclusions from it, investigate why "
+                f"so much data is missing: is this a collection failure, a conditional "
+                f"field only populated in certain cases, or a column that simply was "
+                f"not available for most records?"
+            )
+            ml_body: str = (
+                f"{col} has {pct_str} missing values. At this level of missingness "
+                f"imputation will introduce substantial bias regardless of method. "
+                f"Consider dropping the column unless the missingness itself is "
+                f"informative - in which case retain a binary is_missing indicator "
+                f"and drop the original."
+            )
+            ml_actions: list[dict[str, str]] = [
+                {
+                    "action": "drop",
+                    "column": col,
+                    "detail": "Missingness too high to impute reliably",
+                },
+                {
+                    "action": "add_indicator",
+                    "method": "is_missing",
+                    "column": col,
+                    "detail": "If missingness pattern is informative",
+                },
+            ]
+
+        elif pct >= 0.2:
+            level = "warn"
+            title = f"Significant Missingness ({pct_str})"
+            eda_body = (
+                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
+                "rows). This is substantial enough to affect any analysis that uses "
+                "this column. Consider whether the missing values are random, or "
+                "whether certain subgroups are more likely to have data absent - "
+                "a pattern in missingness can be as informative as the values "
+                "themselves."
+            )
+            ml_body = (
+                f"{col} has {pct_str} missing values. Simple mean or mode imputation "
+                f"will introduce bias at this level. Prefer median imputation for "
+                f"skewed distributions, or model-based imputation if data is likely "
+                f"missing not at random. Add a binary is_missing indicator alongside "
+                f"any imputed values to preserve the signal."
+            )
+            ml_actions = [
+                {
+                    "action": "impute",
+                    "method": "median",
+                    "column": col,
+                    "condition": "skewed distribution",
+                },
+                {
+                    "action": "impute",
+                    "method": "model_based",
+                    "column": col,
+                    "condition": "missing not at random",
+                },
+                {
+                    "action": "add_indicator",
+                    "method": "is_missing",
+                    "column": col,
+                    "detail": "Retain missingness as a signal",
+                },
+            ]
+
+        else:
+            # 5-20%
+            level = "info"
+            title = f"Some Missingness ({pct_str})"
+            eda_body = (
+                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
+                f"rows). This is manageable but worth understanding - check whether "
+                f"the missing rows share any common characteristics that might "
+                f"indicate a systematic gap rather than random absence."
+            )
+            ml_body = (
+                f"{col} has {pct_str} missing values. Tree-based models handle this "
+                f"natively in most frameworks. For linear models, impute before "
+                f"fitting - mean or median imputation is reasonable at this level. "
+                f"If time series, forward fill may be more appropriate."
+            )
+            ml_actions = [
+                {
+                    "action": "impute",
+                    "method": "mean_or_median",
+                    "column": col,
+                    "condition": "linear models",
+                },
+                {
+                    "action": "impute",
+                    "method": "forward_fill",
+                    "column": col,
+                    "condition": "time series data",
+                },
+            ]
+
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="eda",
+            level=level,
+            title=title,
+            body=eda_body.strip(),
+            actions=[],
+            metric={"null_pct": round(pct, 4), "null_count": count, "n_rows": n_rows},
+        )
+
+        self.add_guidance(
+            result=self.output,
+            column=col,
+            phase="ml",
+            level=level,
+            title=title,
+            body=ml_body.strip(),
+            actions=ml_actions,
+            metric={"null_pct": round(pct, 4), "null_count": count, "n_rows": n_rows},
+        )

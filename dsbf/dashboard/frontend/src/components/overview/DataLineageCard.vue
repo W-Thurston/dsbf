@@ -60,33 +60,33 @@ const lineageItems = computed(() => {
   const hasPath = !!sp
 
   if (isBuiltin.value) {
-    // Built-in dataset — show source library info instead of file fields
+    // Built-in dataset - show source library info instead of file fields
     const src = props.run.dataset_source ?? 'built-in'
     const srcLabels = { seaborn: 'Seaborn', sklearn: 'Scikit-learn', openml: 'OpenML' }
     return [
       {
         label:   'Dataset',
         tooltip: 'The logical dataset name this run belongs to in DSBF.',
-        value:   props.run.dataset_name ?? '—',
+        value:   props.run.dataset_name ?? '-',
       },
       {
         label:   'File Name',
-        tooltip: 'Not applicable — this dataset is loaded from a Python library, not a file on disk.',
+        tooltip: 'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
         value:   'N/A (built-in)',
       },
       {
         label:   'File Path',
-        tooltip: 'Not applicable — this dataset is loaded from a Python library, not a file on disk.',
+        tooltip: 'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
         value:   'N/A (built-in)',
       },
       {
         label:   'File Size',
-        tooltip: 'Not applicable — no file on disk.',
+        tooltip: 'Not applicable - no file on disk.',
         value:   'N/A (built-in)',
       },
       {
         label:   'Last Modified',
-        tooltip: 'Not applicable — no file on disk.',
+        tooltip: 'Not applicable - no file on disk.',
         value:   'N/A (built-in)',
       },
     ]
@@ -96,7 +96,7 @@ const lineageItems = computed(() => {
     {
       label:   'Dataset',
       tooltip: 'The logical dataset name this run belongs to in DSBF.',
-      value:   props.run.dataset_name ?? '—',
+      value:   props.run.dataset_name ?? '-',
     },
     {
       label:   'File Name',

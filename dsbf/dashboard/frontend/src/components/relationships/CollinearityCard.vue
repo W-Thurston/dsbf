@@ -39,7 +39,7 @@ const items = computed(() => {
           code:  `vif_${col}`,
           level: score > 30 ? 'critical' : 'warning',
           icon:  '🔗',
-          title: `High Multicollinearity — ${col}`,
+          title: `High Multicollinearity - ${col}`,
           body:  `VIF = ${score.toFixed(1)}. Values above ${vifThreshold} indicate this column is highly correlated with other features, which can cause instability in linear models. Consider dropping one of the collinear columns or using regularization.`,
         })
       }

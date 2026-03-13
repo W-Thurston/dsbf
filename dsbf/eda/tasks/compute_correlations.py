@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/compute_correlations.py
 
-from typing import Dict
-
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency
@@ -15,7 +13,8 @@ from dsbf.eda.task_result import (
     make_failure_result,
 )
 from dsbf.utils.backend import is_polars
-from dsbf.utils.plot_factory import PlotFactory
+
+# from dsbf.utils.plot_factory import PlotFactory
 
 
 def cramers_v(x: pd.Series, y: pd.Series) -> float:
@@ -42,8 +41,17 @@ class ComputeCorrelations(BaseTask):
     def run(self) -> None:
         try:
             df = self.input_data
-            correlations: Dict[str, float] = {}
+            correlations: dict[str, float] = {}
             backend_used = "polars" if is_polars(df) else "pandas"
+
+            # Maximum unique values a categorical column may have before its
+            # Cramér's V pairs are skipped. A 5000×5000 contingency table uses
+            # ~200 MB and takes ~1.6s per pair - with N high-cardinality columns
+            # the task would hang and OOM before producing any output.
+            # Matches the default threshold in detect_high_cardinality.
+            cat_cardinality_limit = int(
+                self.get_task_param("cat_cardinality_limit") or 50
+            )
 
             # --- Polars numeric correlation ---
             if is_polars(df):
@@ -81,7 +89,7 @@ class ComputeCorrelations(BaseTask):
                 numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
                 if len(numeric_cols) < 2:
                     self._log(
-                        "    Fewer than 2 numeric columns —"
+                        "    Fewer than 2 numeric columns -"
                         " skipping correlation computation."
                     )
                     self.output = TaskResult(
@@ -108,10 +116,22 @@ class ComputeCorrelations(BaseTask):
                 df = df.to_pandas()
                 backend_used = "mixed"
 
-            cat_cols = df.select_dtypes(include="object").columns
+            cat_cols = df.select_dtypes(include=["object", "str"]).columns
+            cat_unique: dict[str, int] = {
+                col: int(df[col].nunique()) for col in cat_cols
+            }
+            skipped_high_card = []
             for i, col1 in enumerate(cat_cols):
                 for j in range(i + 1, len(cat_cols)):
                     col2 = cat_cols[j]
+                    # Skip pairs where either column exceeds the cardinality limit.
+                    # High-cardinality contingency tables cause OOM / hang.
+                    if (
+                        cat_unique[col1] > cat_cardinality_limit
+                        or cat_unique[col2] > cat_cardinality_limit
+                    ):
+                        skipped_high_card.append(f"{col1}|{col2}")
+                        continue
                     v = cramers_v(df[col1], df[col2])
                     correlations[f"{col1}|{col2}"] = v
 
@@ -120,13 +140,20 @@ class ComputeCorrelations(BaseTask):
                 status="success",
                 summary={
                     "message": (
-                        f"Computed correlations for "
-                        f"{len(correlations)} column pairs."
+                        f"Computed correlations for {len(correlations)} column pairs"
+                        + (
+                            f" ({len(skipped_high_card)} "
+                            "high-cardinality pairs skipped)."
+                            if skipped_high_card
+                            else "."
+                        )
                     )
                 },
                 data=correlations,
                 metadata={
                     "backend": backend_used,
+                    "cat_cardinality_limit": cat_cardinality_limit,
+                    "skipped_high_cardinality_pairs": len(skipped_high_card),
                     "numeric_pair_count": sum(
                         "|" in k and k.split("|")[0] in df.columns for k in correlations
                     ),
@@ -149,7 +176,7 @@ class ComputeCorrelations(BaseTask):
                         " unreliable with fewer than 30 observations."
                     ),
                     recommendation=(
-                        "Use bootstrapped confidence intervals" " or collect more data."
+                        "Use bootstrapped confidence intervals or collect more data."
                     ),
                 )
 
@@ -164,8 +191,7 @@ class ComputeCorrelations(BaseTask):
                         "Correlation is undefined."
                     ),
                     recommendation=(
-                        "Drop or impute constant features"
-                        " before computing correlation."
+                        "Drop or impute constant features before computing correlation."
                     ),
                 )
 
@@ -227,38 +253,40 @@ class ComputeCorrelations(BaseTask):
                     recommendation=recommendation,
                 )
 
-            # --- Optional visualization ---
-            if correlations:
-                corr_df = pd.DataFrame(
-                    index=df.columns, columns=df.columns, dtype=float
-                )
-                for pair, value in correlations.items():
-                    col1, col2 = pair.split("|")
-                    corr_df.loc[col1, col2] = value
-                    corr_df.loc[col2, col1] = value  # Ensure symmetry
-                    corr_df.loc[col1, col1] = 1.0
-                    corr_df.loc[col2, col2] = 1.0
-                corr_df.fillna(1.0, inplace=True)
+            # # --- Optional visualization ---
+            # if correlations:
+            #     corr_df = pd.DataFrame(
+            #         index=df.columns, columns=df.columns, dtype=float
+            #     )
+            #     for pair, value in correlations.items():
+            #         col1, col2 = pair.split("|")
+            #         corr_df.loc[col1, col2] = value
+            #         corr_df.loc[col2, col1] = value  # Ensure symmetry
+            #         corr_df.loc[col1, col1] = 1.0
+            #         corr_df.loc[col2, col2] = 1.0
+            #     corr_df.fillna(1.0, inplace=True)
 
-                # Convert to numeric-only (some non-numeric pairs may sneak in)
-                numeric_corr = corr_df.select_dtypes(include=[np.number])
+            #     # Convert to numeric-only (some non-numeric pairs may sneak in)
+            #     numeric_corr = corr_df.select_dtypes(include=[np.number])
 
-                save_path = self.get_output_path("correlation_heatmap.png")
-                static_plot = PlotFactory.plot_correlation_static(
-                    numeric_corr,
-                    save_path=save_path,
-                    title="Correlation Heatmap",
-                )
-                interactive_plot = PlotFactory.plot_correlation_interactive(
-                    numeric_corr,
-                    title="Correlation Heatmap",
-                )
-                result.plots = {
-                    "correlation_matrix": {
-                        "static": static_plot["path"],
-                        "interactive": interactive_plot,
-                    }
-                }
+            #     save_path = self.get_output_path("correlation_heatmap.png")
+            #     static_plot = PlotFactory.plot_correlation_static(
+            #         numeric_corr,
+            #         save_path=save_path,
+            #         title="Correlation Heatmap",
+            #     )
+            #     save_path = self.get_output_path("correlation_heatmap.json")
+            #     interactive_plot = PlotFactory.plot_correlation_interactive(
+            #         numeric_corr,
+            #         json_path=save_path,
+            #         title="Correlation Heatmap",
+            #     )
+            #     result.plots = {
+            #         "correlation_matrix": {
+            #             "static": static_plot["path"],
+            #             "interactive": str(save_path),
+            #         }
+            #     }
 
             result.metadata.update(
                 {
@@ -277,7 +305,7 @@ class ComputeCorrelations(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

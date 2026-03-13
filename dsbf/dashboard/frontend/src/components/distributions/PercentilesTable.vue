@@ -30,7 +30,7 @@ const props = defineProps({
 })
 
 function fmt(v) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   const n = Number(v)
   if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 2 })
   return n.toPrecision(4).replace(/\.?0+$/, '')

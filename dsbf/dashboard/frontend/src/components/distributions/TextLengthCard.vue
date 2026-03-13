@@ -28,7 +28,7 @@ const catStats = computed(() =>
 const hasData = computed(() => textStats.value != null || catStats.value != null)
 
 function fmt(v, dp = 1) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   return typeof v === 'number' ? v.toFixed(dp) : String(v)
 }
 
