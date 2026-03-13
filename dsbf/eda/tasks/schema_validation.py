@@ -25,7 +25,6 @@ from dsbf.utils.backend import is_polars
 )
 class SchemaValidation(BaseTask):
     def run(self):
-
         ctx = self.context
         if ctx is None:
             raise RuntimeError("SchemaValidationTask requires AnalysisContext.")
@@ -33,7 +32,7 @@ class SchemaValidation(BaseTask):
         schema_cfg = ctx.get_config("schema_validation") or {}
         if not schema_cfg.get("enable_schema_validation", False):
             self._log(
-                "    [schema_validation] Skipping — validation disabled in config.",
+                "    [schema_validation] Skipping - validation disabled in config.",
                 level="debug",
             )
             self.output = TaskResult(
@@ -60,8 +59,7 @@ class SchemaValidation(BaseTask):
                     code=f"unknown_schema_key_{key}",
                     description=f"Unknown schema key: '{key}'. This will be ignored.",
                     recommendation=(
-                        "Use only: required_columns, dtypes,"
-                        " value_ranges, categories"
+                        "Use only: required_columns, dtypes, value_ranges, categories"
                     ),
                 )
 

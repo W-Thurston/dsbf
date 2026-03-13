@@ -1,4 +1,4 @@
-# DSBF – Data Scientist’s Best Friend
+# DSBF - Data Scientist’s Best Friend
 
 **DSBF** is a fast, modular, and extensible profiling engine for tabular datasets. It analyzes raw CSVs, Pandas, or Polars DataFrames and produces actionable data health reports to support EDA, model diagnostics, and data quality initiatives.
 

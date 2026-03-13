@@ -8,7 +8,7 @@ from collections import Counter
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars, is_text_polars
+from dsbf.utils.backend import is_text_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -60,9 +60,9 @@ class DetectEncodedColumns(BaseTask):
             details = {}
             recommendations = []
 
-            for col in df.columns:
-                column = df.get_column(col)
-                if not is_polars(df) or not is_text_polars(column):
+            for col in matched_col:
+                column = df[col]
+                if not is_text_polars(column):
                     continue
 
                 charsets = {
@@ -178,7 +178,7 @@ class DetectEncodedColumns(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

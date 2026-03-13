@@ -16,7 +16,7 @@
 
 ### Feat
 
-* complete milestone — plot integration, task validation, test stability
+* complete milestone - plot integration, task validation, test stability
 
 
 <a name="v0.15.0"></a>

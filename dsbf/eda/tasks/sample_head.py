@@ -25,7 +25,6 @@ class SampleHead(BaseTask):
 
     def run(self) -> None:
         try:
-
             # ctx = self.context
             df = self.input_data
 
@@ -65,7 +64,7 @@ class SampleHead(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

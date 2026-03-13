@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dsbf"
 version = "0.19.0"
-description = "Data Scientist's Best Friend — transparent AutoML pipeline"
+description = "Data Scientist's Best Friend - transparent AutoML pipeline"
 authors = ["Will Thurston <WilliamD.Thurston@gmail.com>"]
 readme = "README.md"
 license = "MIT"
@@ -29,6 +29,10 @@ psutil = "^7.0.0"
 plotly = "^6.2.0"
 rich = "^14.0.0"
 typer = "^0.16.0"
+panel = "^1.7.4"
+watchfiles = "^1.1.0"
+fastapi = "^0.135.1"
+uvicorn = "^0.41.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -36,6 +40,7 @@ black = "^25.1.0"
 flake8 = "^7.3.0"
 pre-commit = "^4.2.0"
 isort = "^6.0.1"
+ipykernel = "^6.29.5"
 
 [tool.poetry.scripts]
 dsbf = "dsbf.interfaces.cli:app"

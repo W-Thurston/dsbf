@@ -15,7 +15,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     name="detect_mixed_type_columns",
     display_name="Detect Mixed-Type Columns",
     description=(
-        "Flags columns that contain multiple" " Python data types (e.g., str + float)."
+        "Flags columns that contain multiple Python data types (e.g., str + float)."
     ),
     depends_on=["infer_types"],
     tags=["type", "format", "anomaly"],
@@ -35,9 +35,7 @@ class DetectMixedTypeColumns(BaseTask):
     """
 
     def run(self) -> None:
-
         try:
-
             # ctx = self.context
             df = self.input_data
 
@@ -158,7 +156,7 @@ class DetectMixedTypeColumns(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

@@ -112,7 +112,7 @@ class DetectConstantColumns(BaseTask):
     def _attach_guidance(self, col: str) -> None:
         """Generate EDA + ML guidance for a confirmed constant column."""
         eda_body: str = (
-            f"{col} has only one unique value across all rows — it is a constant "
+            f"{col} has only one unique value across all rows - it is a constant "
             f"column. It carries no information and cannot distinguish between "
             f"observations. Verify this is not a data loading artifact, a column "
             f"populated in error, or a filter applied upstream that collapsed "
@@ -141,13 +141,13 @@ class DetectConstantColumns(BaseTask):
             column=col,
             phase="ml",
             level="error",
-            title="Constant Column — Drop Before Modeling",
+            title="Constant Column - Drop Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": "Zero variance — provides no signal to any model",
+                    "detail": "Zero variance - provides no signal to any model",
                 },
             ],
             metric={"n_unique": 1},

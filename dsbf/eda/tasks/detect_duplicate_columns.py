@@ -31,7 +31,6 @@ class DetectDuplicateColumns(BaseTask):
         Produces a TaskResult with a list of (col1, col2) tuples for identical columns.
         """
         try:
-
             # ctx = self.context
             df = self.input_data
             if is_polars(df):
@@ -111,7 +110,7 @@ class DetectDuplicateColumns(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

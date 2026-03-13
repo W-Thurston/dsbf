@@ -37,7 +37,6 @@ class DetectRegexFormatViolations(BaseTask):
 
     def run(self):
         try:
-
             # ctx = self.context
             df = self.input_data
 
@@ -104,7 +103,7 @@ class DetectRegexFormatViolations(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

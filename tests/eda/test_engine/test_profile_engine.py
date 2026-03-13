@@ -84,7 +84,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
     try:
         __import__("polars")
     except ImportError:
-        pytest.skip("Polars not installed — skipping test.")
+        pytest.skip("Polars not installed - skipping test.")
 
     config = {
         "metadata": {

@@ -120,7 +120,7 @@ class BaseTask(ABC):
 
         Guidance blurbs are the authoritative, phase-scoped narrative for each
         signal detected by a task. They are stored in report.json and rendered
-        by the dashboard — tasks are the single source of truth.
+        by the dashboard - tasks are the single source of truth.
 
         EDA blurbs (phase="eda") describe data as-is: what was observed and what
         it means about the distribution. No modeling language, no action chips.
@@ -133,7 +133,7 @@ class BaseTask(ABC):
             result (TaskResult): The task result to attach guidance to.
             column (str): The column this guidance applies to.
             phase (str): "eda" or "ml".
-            level (str): Severity — "info", "warn", "error", or "good".
+            level (str): Severity - "info", "warn", "error", or "good".
             title (str): Short descriptive title for the finding.
             body (str): Full self-contained narrative. Must include the observed
                 metric value, the direction/nature of the issue, and the

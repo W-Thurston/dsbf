@@ -3,7 +3,7 @@
 """
 Read-only query helpers for the DSBF SQLite database.
 
-All functions return plain dicts/lists — no SQLite Row objects leak out.
+All functions return plain dicts/lists - no SQLite Row objects leak out.
 
 Row objects are always converted to dicts INSIDE the connection context
 manager to avoid accessing them after the connection is closed.
@@ -128,7 +128,7 @@ def get_run(run_key: str, db_path=None) -> dict | None:
     cfg_meta = {}
     if isinstance(d.get("config_snapshot"), dict):
         cfg_meta = d["config_snapshot"].get("metadata", {}) or {}
-    # source_path is the ground truth — if a file path is stored the run is
+    # source_path is the ground truth - if a file path is stored the run is
     # file-based regardless of what dataset_source says in the config snapshot
     # (the profile command sets dataset_path but may leave dataset_source as
     # "seaborn" from the default config).
@@ -257,7 +257,7 @@ def get_run_sample(run_key: str, n: int = 10, db_path=None) -> dict | None:
     for col in df.select_dtypes(include=["datetime", "datetimetz"]).columns:
         df[col] = df[col].astype(str)
     # 2. Serialise row-by-row using pd.isna() which catches ALL NA types:
-    #    numpy.float64 NaN, numpy.bool_, NaT, pd.NA, None — everything.
+    #    numpy.float64 NaN, numpy.bool_, NaT, pd.NA, None - everything.
     records = []
     for _, row in df.iterrows():
         record = {}
@@ -416,7 +416,7 @@ def get_figure_path(figure_id: int, db_path=None) -> str | None:
 
 def compare_runs(run_keys: list[str], task_name: str, db_path=None) -> dict:
     with get_connection(db_path) as conn:
-        # Use a temp table to keep every value fully parameterised —
+        # Use a temp table to keep every value fully parameterised -
         # avoids f-string SQL construction flagged by Ruff S608.
         conn.execute("CREATE TEMP TABLE IF NOT EXISTS _run_key_filter (run_key TEXT)")
         conn.execute("DELETE FROM _run_key_filter")

@@ -165,7 +165,7 @@ def describe_registered_tasks() -> None:
         tags = ", ".join(spec.tags or [])
         stage = spec.stage or "unspecified"
         print(
-            f"- {name:30} — {spec.description or 'No description.'} [{stage}] ({tags})"
+            f"- {name:30} - {spec.description or 'No description.'} [{stage}] ({tags})"
         )
 
 
@@ -181,7 +181,7 @@ def list_tasks(
     if not by:
         print("Registered DSBF Tasks:\n")
         for name, spec in TASK_REGISTRY.items():
-            print(f"- {name:30} — {spec.description or 'No description'}")
+            print(f"- {name:30} - {spec.description or 'No description'}")
         return
 
     grouped = defaultdict(list)
@@ -199,7 +199,7 @@ def list_tasks(
     for group, entries in sorted(grouped.items()):
         print(f"[{group}]")
         for name, spec in entries:
-            print(f"  - {name:25} — {spec.description or 'No description'}")
+            print(f"  - {name:25} - {spec.description or 'No description'}")
         print()
 
 
