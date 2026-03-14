@@ -13,3 +13,7 @@ project_log.md
 dsbf/outputs/
 
 *dsbf_run.json
+
+node_modules/
+
+dsbf/dsbf.db
