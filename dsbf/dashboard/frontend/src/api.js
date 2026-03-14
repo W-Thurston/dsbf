@@ -76,6 +76,16 @@ export function getRunSample(runKey, n = 10) {
   return client.get(`/runs/${runKey}/sample`, { params: { n } }).then(r => r.data)
 }
 
+/**
+ * Get the data-health header bar summary for a run.
+ * Returns { available, total_columns, categories } where categories is
+ * keyed by dimension name and each value has { level, affected_count, pct_affected }.
+ * If the scorer has not run, returns { available: false }.
+ */
+export function getDqStatus(runKey) {
+  return client.get(`/runs/${runKey}/dq-status`).then(r => r.data)
+}
+
 // ── Relationships ────────────────────────────────────────────────────────────
 
 /**

@@ -1,7 +1,7 @@
 # dsbf/eda/tasks/infer_types.py
 
 import warnings
-from typing import Any, Dict
+from typing import Any
 
 import pandas as pd
 
@@ -49,7 +49,7 @@ class InferTypes(BaseTask):
             if is_polars(df):
                 df = df.to_pandas()
 
-            results: Dict[str, Dict[str, str]] = {}
+            results: dict[str, dict[str, str]] = {}
 
             # Loop through each column to infer dtypes
             for col in df.columns:
@@ -87,17 +87,43 @@ class InferTypes(BaseTask):
                                 pd.to_datetime(series, errors="raise", utc=True)
                                 analysis_intent_dtype = "datetime"
                             except Exception:
-                                if (
-                                    series.str.fullmatch(r"[A-Fa-f0-9\-]{8,}").mean()
-                                    > 0.8
-                                ):
-                                    analysis_intent_dtype = "id"
-                                elif uniq_ratio > 0.9:
-                                    analysis_intent_dtype = "id"
-                                elif series.str.len().mean() > 30:
-                                    analysis_intent_dtype = "text"
-                                else:
+                                # --- Robust year-like string detection ---
+                                patterns = [
+                                    r"(?i)^FY\d{2,4}$",  # FY23 or FY2023
+                                    r"^\d{4}$",  # 2023
+                                    r"^'\d{2}$",  # '23
+                                    r"^’\d{2}$",  # ’23 (fancy apostrophe)
+                                    r"^\d{4}[-/–]\d{2,4}$",  # 2023–24, 2023-2024
+                                    r"^'\d{2}[-/–]\d{2}$",  # '23–24
+                                    r"^’\d{2}[-/–]\d{2}$",  # ’23–24
+                                    r"^\d{2}/\d{2}$",  # 23/24
+                                    r"(?i)^Q[1-4]\s?\d{2,4}$",  # Q1 2023 or Q3 23
+                                ]
+
+                                combined_match = pd.Series(False, index=series.index)
+                                for pattern in patterns:
+                                    combined_match |= series.str.contains(
+                                        pattern, na=False
+                                    )
+
+                                year_like_ratio = combined_match.mean()
+
+                                if year_like_ratio > 0.5 and nunique < 100:
                                     analysis_intent_dtype = "categorical"
+                                else:
+                                    if (
+                                        series.str.fullmatch(
+                                            r"[A-Fa-f0-9\-]{8,}"
+                                        ).mean()
+                                        > 0.8
+                                    ):
+                                        analysis_intent_dtype = "id"
+                                    elif uniq_ratio > 0.9:
+                                        analysis_intent_dtype = "id"
+                                    elif series.str.len().mean() > 30:
+                                        analysis_intent_dtype = "text"
+                                    else:
+                                        analysis_intent_dtype = "categorical"
                 except Exception:
                     pass  # Still record defaults below
 
@@ -129,6 +155,7 @@ class InferTypes(BaseTask):
                 status="success",
                 summary={"message": f"Inferred types for {len(results)} columns."},
                 data=results,
+                plots={},
             )
 
         except Exception as e:
@@ -136,7 +163,7 @@ class InferTypes(BaseTask):
                 raise
             self._log(
                 f"    [{self.name}] Task failed outside execution context: "
-                f"{type(e).__name__} — {e}",
+                f"{type(e).__name__} - {e}",
                 level="warn",
             )
             self.output = make_failure_result(self.name, e)

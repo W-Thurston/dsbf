@@ -7,12 +7,56 @@ from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 
 
+def _level(pct_affected: float, any_affected: bool) -> str:
+    """
+    Map a proportion of affected columns to a traffic-light level.
+
+    Thresholds are proportional to dataset size so that e.g. 3 affected
+    columns means something very different in a 10-column dataset vs a
+    1000-column one.
+
+      green : 0 - 5 %   of columns affected
+      amber : 5 - 15 %
+      red   : > 15 %
+
+    If nothing is affected the level is always green regardless of
+    the proportion (avoids edge cases when total_columns is very small).
+    """
+    if not any_affected:
+        return "green"
+    if pct_affected <= 0.05:
+        return "green"
+    if pct_affected <= 0.15:
+        return "amber"
+    return "red"
+
+
+def _category_block(
+    affected_columns: list[str],
+    total_columns: int,
+    findings: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the standard per-category output dict."""
+    affected_count = len(affected_columns)
+    pct = affected_count / total_columns if total_columns else 0.0
+    return {
+        "affected_columns": affected_columns,
+        "affected_count": affected_count,
+        "total_columns": total_columns,
+        "pct_affected": round(pct, 4),
+        "level": _level(pct, bool(affected_columns)),
+        "findings": findings,
+    }
+
+
 @register_task(
     name="data_quality_scorer",
     display_name="Data Quality Scorer",
     description=(
-        "Aggregates profiling results to generate an overall"
-        " data health score and breakdown."
+        "Aggregates EDA profiling results into five data-health dimensions: "
+        "Completeness, Validity, Usability, Redundancy, and Leakage. "
+        "Each dimension reports affected column counts and a proportional "
+        "traffic-light level (green / amber / red) for the header bar."
     ),
     tags=["scoring", "summary", "meta"],
     stage="report",
@@ -20,225 +64,358 @@ from dsbf.eda.task_result import TaskResult
     profiling_depth="basic",
     runtime_estimate="fast",
     expected_semantic_types=["any"],
+    # Explicit depends_on is critical: without it the topological sort places
+    # this task at level 0, causing it to run before any source tasks have
+    # written their results to context.results — producing all-green output.
+    depends_on=[
+        "infer_types",
+        "summarize_dataset_shape",
+        "summarize_nulls",
+        "detect_out_of_bounds",
+        "detect_constant_columns",
+        "detect_zeros",
+        "detect_id_columns",
+        "detect_single_dominant_value",
+        "detect_high_cardinality",
+        # detect_collinear_features is intentionally excluded: it can fail on
+        # datasets with constant or near-constant numeric columns (zero-size
+        # array error in VIF computation). The scorer handles a missing or
+        # failed result gracefully — Redundancy simply shows no findings.
+        # Including it as a hard dependency would cause the scorer to be
+        # skipped whenever VIF fails, producing no health data at all.
+        "detect_data_leakage",
+    ],
 )
 class DataQualityScorer(BaseTask):
     """
-    The DataQualityScorer aggregates the results of prior profiling tasks to generate
-    an overall 0-100 data health score. It also provides category-level breakdowns,
-    explanations for deductions, top issues contributing to score degradation, and
-    recommended actions.
+    Reads the outputs of completed EDA tasks and produces a structured
+    data-health summary across five categories.
 
-    Categories evaluated:
-    - Completeness (missing values)
-    - Consistency (type mismatches, format violations)
-    - Distribution integrity (skew, outliers, zero variance)
-    - Redundancy (high collinearity)
-    - Drift (if reference data available)
+    Categories and their source tasks
+    ──────────────────────────────────
+    Completeness  — summarize_nulls
+                    Columns where ≥ 5 % of values are missing.
 
-    Category weights are read from task-specific config, defaulting to equal weights.
+    Validity      — detect_out_of_bounds   (domain violations)
+                    detect_constant_columns (zero-information columns)
+                    detect_zeros            (> 95 % zeros — structural empties)
+
+    Usability     — detect_id_columns            (IDs masquerading as features)
+                    detect_single_dominant_value  (≥ 95 % single value)
+                    detect_high_cardinality       (near-unique categoricals)
+
+    Redundancy    — detect_collinear_features     (VIF > 10)
+
+    Leakage       — detect_data_leakage           (near-perfectly correlated pairs)
+
+    Output shape (data field)
+    ─────────────────────────
+    {
+        "total_columns": int,
+        "categories": {
+            "<name>": {
+                "affected_columns": [str, ...],
+                "affected_count":   int,
+                "total_columns":    int,
+                "pct_affected":     float,   # 0.0 - 1.0
+                "level":            "green" | "amber" | "red",
+                "findings":         [{ column, issue, ... }, ...]
+            },
+            ...
+        }
+    }
+
+    The `summary` field mirrors the category levels for fast API access:
+    {
+        "completeness": "green",
+        "validity":     "amber",
+        ...
+    }
     """
 
     def run(self) -> None:
-        """
-        Execute the task. Scans the context results and reliability flags to compute
-        category scores and overall health score. Generates structured output via
-        TaskResult.
-        """
         if self.context is None:
-            raise RuntimeError("AnalysisContext is not set in this task.")
+            raise RuntimeError("AnalysisContext is not set.")
 
         results: dict[str, TaskResult] = self.context.results
-        flags: dict[str, Any] = self.context.reliability_flags or {}
 
-        # Use semantic typing to select relevant columns
-        matched_cols, excluded = self.get_columns_by_intent()
-        self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+        # ── Total column count ────────────────────────────────────────────────
+        # Primary source: summarize_dataset_shape.
+        # Fallback: count keys from infer_types (always runs).
+        total_columns: int = 0
+        shape_task = results.get("summarize_dataset_shape")
+        if shape_task and shape_task.status == "success" and shape_task.data:
+            total_columns = int(shape_task.data.get("num_columns") or 0)
 
-        category_scores: dict[str, int] = {}
-        explanations: list[str] = []
-        top_issues: list[dict[str, Any]] = []
-        recommendations: list[str] = []
+        if not total_columns:
+            types_task = results.get("infer_types")
+            if types_task and types_task.status == "success" and types_task.data:
+                total_columns = len(types_task.data)
 
-        # --- COMPLETENESS ---
-        missing_tasks = [
-            r
-            for r in results.values()
-            if r.name in {"null_summary", "missingness_heatmap"}
-            and r.status == "success"
-        ]
-        missing_cols = set()
-        high_missing_cols = set()
+        if not total_columns:
+            # Last resort: count columns from any task that has them
+            for task in results.values():
+                if task.status == "success" and isinstance(task.data, dict):
+                    candidate = len(task.data)
+                    if candidate > total_columns:
+                        total_columns = candidate
 
-        for task in missing_tasks:
-            data = task.data or {}
-            for col, stats in data.get("missingness", {}).items():
-                pct = stats.get("percent_missing", 0)
-                if pct > 0:
-                    missing_cols.add(col)
-                if pct > 0.3:
-                    high_missing_cols.add(col)
+        # Full ordered column list — used by the frontend to derive clean columns.
+        # infer_types always runs and has every column as a key.
+        all_columns: list[str] = []
+        types_task = results.get("infer_types")
+        if types_task and types_task.status == "success" and types_task.data:
+            all_columns = list(types_task.data.keys())
 
-        completeness_deduction = 0
-        if missing_cols:
-            completeness_deduction += min(len(missing_cols) * 2, 50)
-            explanations.append(f"{len(missing_cols)} column(s) have missing values.")
-        if high_missing_cols:
-            completeness_deduction += 10
-            explanations.append(
-                f"{len(high_missing_cols)} column(s) have >30% missing."
+        # ── COMPLETENESS ─────────────────────────────────────────────────────
+        # Source: summarize_nulls → data.null_percentages {col: float 0-1}
+        # Threshold: ≥ 5 % missing (matches EDA guidance blurb lower bound).
+        completeness_cols: list[str] = []
+        completeness_findings: list[dict[str, Any]] = []
+
+        nulls_task = results.get("summarize_nulls")
+        if nulls_task and nulls_task.status == "success" and nulls_task.data:
+            null_pcts: dict[str, float] = nulls_task.data.get("null_percentages") or {}
+            for col, pct in null_pcts.items():
+                if pct >= 0.05:
+                    completeness_cols.append(col)
+                    # Mirror the three-tier severity used in the guidance blurbs
+                    if pct >= 0.50:
+                        severity = "error"
+                    elif pct >= 0.20:
+                        severity = "warn"
+                    else:
+                        severity = "info"
+                    completeness_findings.append(
+                        {
+                            "column": col,
+                            "issue": "missing_values",
+                            "pct_null": round(pct, 4),
+                            "severity": severity,
+                        }
+                    )
+
+        completeness_findings.sort(key=lambda f: f["pct_null"], reverse=True)
+
+        # ── VALIDITY ─────────────────────────────────────────────────────────
+        # Sources:
+        #   detect_out_of_bounds   → data {col: {count, min_violation, …}}
+        #   detect_constant_columns → data.constant_columns [col, …]
+        #   detect_zeros           → data.zero_flags {col: bool}
+        #                            (task threshold is > 95 % zeros — structural)
+        validity_cols: list[str] = []
+        validity_findings: list[dict[str, Any]] = []
+
+        oob_task = results.get("detect_out_of_bounds")
+        if oob_task and oob_task.status == "success" and oob_task.data:
+            for col, info in oob_task.data.items():
+                if col not in validity_cols:
+                    validity_cols.append(col)
+                validity_findings.append(
+                    {
+                        "column": col,
+                        "issue": "out_of_bounds",
+                        "violation_count": info.get("count"),
+                        "severity": "warn",
+                    }
+                )
+
+        const_task = results.get("detect_constant_columns")
+        if const_task and const_task.status == "success" and const_task.data:
+            for col in const_task.data.get("constant_columns") or []:
+                if col not in validity_cols:
+                    validity_cols.append(col)
+                validity_findings.append(
+                    {
+                        "column": col,
+                        "issue": "constant_column",
+                        "severity": "error",
+                    }
+                )
+
+        zeros_task = results.get("detect_zeros")
+        if zeros_task and zeros_task.status == "success" and zeros_task.data:
+            zero_flags: dict[str, bool] = zeros_task.data.get("zero_flags") or {}
+            zero_pcts: dict[str, float] = zeros_task.data.get("zero_percentages") or {}
+            for col, flagged in zero_flags.items():
+                if flagged and col not in validity_cols:
+                    validity_cols.append(col)
+                    validity_findings.append(
+                        {
+                            "column": col,
+                            "issue": "structural_zeros",
+                            "pct_zero": round(zero_pcts.get(col, 0.0), 4),
+                            "severity": "warn",
+                        }
+                    )
+
+        # ── USABILITY ────────────────────────────────────────────────────────
+        # Sources:
+        #   detect_id_columns           → data {col: "N unique (likely ID)"}
+        #   detect_single_dominant_value → data {col: {mode_proportion, …}}
+        #                                  (task threshold ≥ 95 %)
+        #   detect_high_cardinality     → data {col: n_unique}
+        usability_cols: list[str] = []
+        usability_findings: list[dict[str, Any]] = []
+
+        # Build a set of columns confirmed as numeric by summarize_numeric.
+        # detect_id_columns can incorrectly flag float columns with high
+        # cardinality when infer_types misclassifies them (e.g. CSV-loaded
+        # floats with 100% unique values assigned a non-continuous intent).
+        # Any column present in summarize_numeric is genuinely numeric and
+        # should never be reported as a likely ID.
+        numeric_cols: set = set()
+        num_task = results.get("summarize_numeric")
+        if num_task and num_task.status == "success" and num_task.data:
+            numeric_cols = set(num_task.data.keys())
+
+        id_task = results.get("detect_id_columns")
+        if id_task and id_task.status == "success" and id_task.data:
+            for col in id_task.data:
+                if col in numeric_cols:
+                    continue  # numeric column — high uniqueness is expected, not an ID
+                if col not in usability_cols:
+                    usability_cols.append(col)
+                usability_findings.append(
+                    {
+                        "column": col,
+                        "issue": "likely_id",
+                        "severity": "warn",
+                    }
+                )
+
+        dom_task = results.get("detect_single_dominant_value")
+        if dom_task and dom_task.status == "success" and dom_task.data:
+            # The task stores ALL columns with their mode proportions, not just
+            # flagged ones. Read the task's own threshold from metadata so this
+            # stays in sync if the threshold is ever reconfigured; default 0.95.
+            dom_threshold: float = float(
+                (dom_task.metadata or {}).get("dominance_threshold") or 0.95
             )
-
-        completeness_score = max(100 - completeness_deduction, 0)
-        category_scores["completeness"] = completeness_score
-
-        # --- CONSISTENCY ---
-        consistency_score = 100
-        consistency_deduction = 0
-
-        for task_name in ["detect_mixed_type_columns", "regex_format_violations"]:
-            task = results.get(task_name)
-            if task and task.status == "success" and task.data:
-                issues = task.data.get("columns_with_issues", [])
-                count = len(issues)
-                if count:
-                    consistency_deduction += count * 5
-                    explanations.append(f"{count} consistency issue(s) in {task_name}.")
-                    top_issues.append({"task": task_name, "count": count})
-                    recommendations.extend(task.recommendations or [])
-
-        consistency_score = max(100 - consistency_deduction, 0)
-        category_scores["consistency"] = consistency_score
-
-        # --- DISTRIBUTION ---
-        skew_vals: dict[str, float] = flags.get("skew_vals", {})
-        zero_var_cols: list[str] = flags.get("zero_variance_cols", [])
-        skewed = [col for col, val in skew_vals.items() if abs(val) > 2]
-        outliers: bool = flags.get("extreme_outliers", False)
-
-        dist_deduction = 0
-        if skewed:
-            dist_deduction += min(len(skewed) * 5, 30)
-            explanations.append(f"{len(skewed)} column(s) have high skew.")
-        if zero_var_cols:
-            dist_deduction += 10
-            explanations.append("Columns with near-zero variance detected.")
-        if outliers:
-            dist_deduction += 10
-            explanations.append("Extreme outliers detected in data.")
-
-        distribution_score = max(100 - dist_deduction, 0)
-        category_scores["distribution"] = distribution_score
-
-        # --- REDUNDANCY ---
-        redundancy_score = 100
-        red_task = results.get("detect_collinear_features")
-        if red_task and red_task.status == "success" and red_task.data:
-            redundant_pairs = red_task.data.get("redundant_pairs", [])
-            n_redundant = len(redundant_pairs)
-            redundancy_deduction = min(n_redundant * 2, 30)
-            redundancy_score = max(100 - redundancy_deduction, 0)
-            if n_redundant:
-                explanations.append(
-                    f"{n_redundant} pairs of highly correlated features."
+            for col, info in dom_task.data.items():
+                if not isinstance(info, dict):
+                    continue
+                mode_prop = info.get("mode_proportion") or 0.0
+                if mode_prop < dom_threshold:
+                    continue
+                if col not in usability_cols:
+                    usability_cols.append(col)
+                usability_findings.append(
+                    {
+                        "column": col,
+                        "issue": "dominant_value",
+                        "mode_proportion": round(mode_prop, 4),
+                        "severity": "warn",
+                    }
                 )
-                top_issues.append(
-                    {"task": "detect_collinear_features", "count": n_redundant}
+
+        card_task = results.get("detect_high_cardinality")
+        if card_task and card_task.status == "success" and card_task.data:
+            for col, n_unique in card_task.data.items():
+                if col in numeric_cols:
+                    continue  # numeric column — high cardinality is expected
+                if col not in usability_cols:
+                    usability_cols.append(col)
+                usability_findings.append(
+                    {
+                        "column": col,
+                        "issue": "high_cardinality",
+                        "n_unique": n_unique,
+                        "severity": "warn",
+                    }
                 )
-                recommendations.extend(red_task.recommendations or [])
 
-        category_scores["redundancy"] = redundancy_score
+        # ── REDUNDANCY ───────────────────────────────────────────────────────
+        # Source: detect_collinear_features → data.collinear_columns [col]
+        # (VIF > 10 — task default threshold)
+        redundancy_cols: list[str] = []
+        redundancy_findings: list[dict[str, Any]] = []
 
-        # --- DRIFT ---
-        drift_score = 100
-        drift_task = results.get("detect_feature_drift")
-        if drift_task and drift_task.status == "success" and drift_task.data:
-            drifted = drift_task.data.get("drifted_features", [])
-            n_drifted = len(drifted)
-            drift_deduction = min(n_drifted * 5, 30)
-            drift_score = max(100 - drift_deduction, 0)
-            if n_drifted:
-                explanations.append(
-                    f"{n_drifted} feature(s) show signs of distributional drift."
+        colin_task = results.get("detect_collinear_features")
+        if colin_task and colin_task.status == "success" and colin_task.data:
+            vif_scores: dict[str, float] = colin_task.data.get("vif_scores") or {}
+            collinear: list[str] = colin_task.data.get("collinear_columns") or []
+            for col in collinear:
+                redundancy_cols.append(col)
+                redundancy_findings.append(
+                    {
+                        "column": col,
+                        "issue": "high_vif",
+                        "vif_score": round(vif_scores.get(col, 0.0), 2),
+                        "severity": "warn",
+                    }
                 )
-                top_issues.append({"task": "detect_feature_drift", "count": n_drifted})
-                recommendations.extend(drift_task.recommendations or [])
+            redundancy_findings.sort(key=lambda f: f["vif_score"], reverse=True)
 
-        category_scores["drift"] = drift_score
+        # ── LEAKAGE ──────────────────────────────────────────────────────────
+        # Source: detect_data_leakage → data.leakage_pairs {"col_a|col_b": float}
+        # Affected columns = every unique column that appears in any leakage pair.
+        # Leakage is kept separate from redundancy because the implication is
+        # categorically different: redundancy is inefficiency, leakage is
+        # correctness failure.
+        leakage_cols: list[str] = []
+        leakage_findings: list[dict[str, Any]] = []
 
-        # --- OVERALL SCORE (weighted average) ---
-        default_weights: dict[str, float] = {
-            "completeness": 1,
-            "consistency": 1,
-            "distribution": 1,
-            "redundancy": 1,
-            "drift": 1,
+        leak_task = results.get("detect_data_leakage")
+        if leak_task and leak_task.status == "success" and leak_task.data:
+            pairs: dict[str, float] = leak_task.data.get("leakage_pairs") or {}
+            for pair_key, corr in pairs.items():
+                if "|" not in pair_key:
+                    continue
+                col_a, col_b = pair_key.split("|", 1)
+                for col in (col_a, col_b):
+                    if col not in leakage_cols:
+                        leakage_cols.append(col)
+                leakage_findings.append(
+                    {
+                        "col_a": col_a,
+                        "col_b": col_b,
+                        "correlation": round(corr, 4),
+                        "issue": "leakage_pair",
+                        "severity": "error",
+                    }
+                )
+            leakage_findings.sort(key=lambda f: abs(f["correlation"]), reverse=True)
+
+        # ── Assemble output ───────────────────────────────────────────────────
+        categories = {
+            "completeness": _category_block(
+                completeness_cols, total_columns, completeness_findings
+            ),
+            "validity": _category_block(
+                validity_cols, total_columns, validity_findings
+            ),
+            "usability": _category_block(
+                usability_cols, total_columns, usability_findings
+            ),
+            "redundancy": _category_block(
+                redundancy_cols, total_columns, redundancy_findings
+            ),
+            "leakage": _category_block(leakage_cols, total_columns, leakage_findings),
         }
-        weights: dict[str, float] = (
-            self.get_task_param("weights", default_weights) or default_weights
-        )
 
-        total_weight: float = sum(weights.get(cat, 0.0) for cat in category_scores)
-        weighted_sum: float = sum(
-            category_scores[cat] * weights.get(cat, 0.0) for cat in category_scores
-        )
-        overall_score: int = (
-            int(round(weighted_sum / total_weight)) if total_weight > 0 else 0
-        )
+        # Flat summary of just the levels — convenient for the API / header bar
+        level_summary = {name: cat["level"] for name, cat in categories.items()}
 
-        # # --- PLOTTING ---
-        # plots: dict[str, dict[str, Any]] = {}
-
-        # try:
-        #     all_scores = dict(category_scores)
-        #     all_scores["overall"] = overall_score
-
-        #     series = pd.Series(all_scores).sort_index()
-
-        #     save_path = self.get_output_path("data_quality_score_breakdown.png")
-        #     static = PlotFactory.plot_barplot_static(
-        #         series, save_path=save_path, title="Data Quality Score Breakdown"
-        #     )
-
-        #     save_path = self.get_output_path("data_quality_score_breakdown.json")
-        #     interactive = PlotFactory.plot_barplot_interactive(
-        #         series,
-        #         json_path=save_path,
-        #         title="Data Quality Score Breakdown",
-        #         annotations=[f"{k.capitalize()}: {v}" for k, v in all_scores.items()],
-        #     )
-
-        #     plots["data_quality_scores"] = {
-        #         "static": static["path"],
-        #         "interactive": str(save_path),
-        #     }
-
-        # except Exception as e:
-        #     self._log(
-        #         f"    [PlotFactory] Skipped quality score barplot: {e}", level="debug"
-        #     )
-
-        # --- FINAL RESULT OBJECT ---
         self.output = TaskResult(
             name=self.name,
             status="success",
-            summary={
-                "overall_score": overall_score,
-                "category_breakdown": category_scores,
-                "category_weights": weights,
-                "explanation": explanations,
-                "top_issues": top_issues,
+            summary=level_summary,  # fast lookup: {category: level}
+            data={
+                "total_columns": total_columns,
+                "all_columns": all_columns,
+                "categories": categories,
             },
-            recommendations=recommendations,
             metadata={
-                "scoring_method": "configurable weighted average",
-                "weights": weights,
-                "suggested_viz_type": "bar",
+                "scoring_method": "proportional_traffic_light",
+                "thresholds": {
+                    "green": "0 - 5 % of columns affected",
+                    "amber": "5 - 15 % of columns affected",
+                    "red": "> 15 % of columns affected",
+                },
+                "suggested_viz_type": "status_bar",
                 "recommended_section": "Summary",
                 "display_priority": "high",
-                "excluded_columns": excluded,
-                "column_types": self.get_column_type_info(
-                    matched_cols + list(excluded.keys())
-                ),
             },
             plots={},
         )

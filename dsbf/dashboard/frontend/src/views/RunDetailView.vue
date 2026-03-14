@@ -1,25 +1,7 @@
 <template>
   <div>
-    <!-- Quality Score header -->
-    <div v-if="run" class="quality-header card">
-      <div class="quality-title">Data Quality Score</div>
-      <div class="quality-score" :class="qualityClass(run.quality_score)">
-        {{ run.quality_score ?? '-' }}
-      </div>
-      <div class="quality-label" :class="qualityClass(run.quality_score)">
-        {{ qualityLabel(run.quality_score) }}
-      </div>
-      <div class="quality-divider" />
-      <div class="category-breakdown">
-        <div v-for="(score, category) in categoryBreakdown" :key="category" class="category-item">
-          <span class="category-label">
-            {{ category.toUpperCase() }}
-            <TooltipIcon :text="categoryTooltips[category] ?? category" align="center" />
-          </span>
-          <span class="category-value">{{ score }}</span>
-        </div>
-      </div>
-    </div>
+    <!-- Data health bar -->
+    <DataHealthBar v-if="run" :run-key="runKey" :active-tab="activeTab" />
 
     <div v-if="loading" class="loading">Loading run…</div>
     <div v-else-if="error" class="error">{{ error }}</div>
@@ -44,8 +26,9 @@
         <OverviewTab       v-if="activeTab === 'overview'"       :run-key="runKey" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <DistributionsTab  v-else-if="activeTab === 'distributions'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
         <RelationshipsTab  v-else-if="activeTab === 'relationships'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
+        <QualityTab        v-else-if="activeTab === 'quality'"        :run-key="runKey" />
         <div v-else class="placeholder">
-          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab - coming soon.
+          {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab — coming soon.
         </div>
       </div>
     </template>
@@ -53,13 +36,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { getRun, getRunTasks, getRunFigures } from '../api.js'
 import OverviewTab        from './tabs/OverviewTab.vue'
 import DistributionsTab   from './tabs/DistributionsTab.vue'
 import RelationshipsTab   from './tabs/RelationshipsTab.vue'
-import TooltipIcon  from '../components/TooltipIcon.vue'
-import { formatDate, qualityClass, qualityLabel } from '../utils.js'
+import QualityTab         from './tabs/QualityTab.vue'
+import DataHealthBar      from '../components/DataHealthBar.vue'
 
 const props = defineProps({ name: String, runKey: String })
 
@@ -109,55 +92,9 @@ async function loadRun(runKey) {
 onMounted(() => loadRun(props.runKey))
 watch(() => props.runKey, (key) => { if (key) loadRun(key) })
 
-const categoryBreakdown = computed(() =>
-  tasks.value?.data_quality_scorer?.summary?.category_breakdown ?? {}
-)
-
-const categoryTooltips = {
-  completeness: 'Measures how much data is present vs missing. A high score means few null or empty values across columns.',
-  consistency:  'Checks whether values follow expected patterns and types - e.g. no text in numeric columns, valid date formats.',
-  distribution: 'Evaluates whether column distributions look reasonable - flags extreme skewness, dominant values, or unusual spreads.',
-  redundancy:   'Detects duplicate columns, constant columns, or features that carry identical information.',
-  drift:        'Compares this run\'s statistics against previous runs to surface unexpected shifts in the data.',
-}
-
 </script>
 
 <style scoped>
-.quality-header { text-align: center; margin-bottom: 0; padding: 24px 32px 20px; }
-.quality-title  { font-size: 15px; color: #94a3b8; margin-bottom: 6px; }
-.quality-score  { font-size: 56px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-.quality-label  { font-size: 14px; margin-bottom: 16px; }
-.quality-divider { height: 1px; background: #334155; margin: 0 -32px 16px; }
-
-.category-breakdown {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  width: 100%;
-}
-.category-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-}
-.category-label {
-  font-size: 11px;
-  color: #64748b;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.category-value { font-size: 18px; font-weight: 700; color: #e2e8f0; }
-
-.score-excellent { color: #4ade80; }
-.score-good      { color: #34d399; }
-.score-warn      { color: #fb923c; }
-.score-poor      { color: #f87171; }
-
 /* Tab bar */
 .tab-bar {
   display: flex;
@@ -195,8 +132,6 @@ const categoryTooltips = {
 }
 .theme-btn.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
 
-/* Duplicate rows value includes a percentage - allow slightly smaller font
-   so it stays on one line without truncating on typical screen widths */
 .tab-content { min-height: 200px; }
 .placeholder { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
 </style>

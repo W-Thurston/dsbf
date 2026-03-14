@@ -6,7 +6,7 @@ DSBF FastAPI application.
 Start locally:
     uvicorn dsbf.api.main:app --reload
 
-The API is intentionally thin - it reads from the SQLite database and serves
+The API is intentionally thin — it reads from the SQLite database and serves
 figure files from disk.  All heavy computation stays in the profiling engine.
 
 Endpoints
@@ -20,6 +20,7 @@ Endpoints
   GET  /api/runs/{run_key}/figures             figure index for a run
   GET  /api/figures/{figure_id}/file           serve the actual figure file
   GET  /api/runs/compare                       compare a task across run_keys
+  GET  /api/runs/{run_key}/dq-status           data-health header bar summary
   GET  /health                                 liveness check
 """
 
@@ -38,11 +39,11 @@ from dsbf.api import db
 #############
 app = FastAPI(
     title="DSBF API",
-    description="Data Scientist's Best Friend - profiling run history and report data.",
+    description="Data Scientist's Best Friend — profiling run history and report data.",
     version="0.1.0",
 )
 
-# CORS - allow the Vue frontend (any localhost port during dev, configurable in prod)
+# CORS — allow the Vue frontend (any localhost port during dev, configurable in prod)
 _CORS_ORIGINS: list[str] = os.environ.get(
     "DSBF_CORS_ORIGINS",
     "http://localhost:5173",
@@ -55,7 +56,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional db_path override - falls back to schema.py resolution if not set
+# Optional db_path override — falls back to schema.py resolution if not set
 _DB_PATH: str | None = os.environ.get("DSBF_DB_PATH") or None
 
 
@@ -151,12 +152,67 @@ def get_run_tasks(run_key: str) -> dict[str, Any]:
     """
     Get all task results for a run.
 
-    Returns a dict keyed by task_name - mirrors the structure of report.json.
+    Returns a dict keyed by task_name — mirrors the structure of report.json.
     """
     run = db.get_run(run_key, _DB_PATH)
     if not run:
         raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
     return db.get_run_tasks(run_key, _DB_PATH)
+
+
+@app.get("/api/runs/{run_key}/dq-status", tags=["runs"])
+def get_dq_status(run_key: str) -> dict[str, Any]:
+    """
+    Return the data-health header bar summary for a run.
+
+    Reads the data_quality_scorer task result and returns a compact dict
+    with one entry per category, shaped for direct consumption by the
+    Vue header bar component.  The full scorer output (with per-column
+    findings) is still available via /tasks/data_quality_scorer.
+
+    Response shape:
+    {
+     "available": true,
+     "total_columns": 42,
+     "categories": {
+      "completeness": { "level": "amber", "affected_count": 3, "pct_affected": 0.071 },
+      "validity":     { "level": "red",   "affected_count": 9, "pct_affected": 0.214 },
+      "usability":    { "level": "green",  "affected_count": 0, "pct_affected": 0.0   },
+      "redundancy":   { "level": "green",  "affected_count": 1, "pct_affected": 0.024 },
+      "leakage":      { "level": "green",  "affected_count": 0, "pct_affected": 0.0   },
+     }
+    }
+
+    If the scorer has not run (older run, profiler at basic depth), returns
+        { "available": false }
+    so the frontend can render a graceful fallback.
+    """
+    run = db.get_run(run_key, _DB_PATH)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
+
+    task = db.get_task(run_key, "data_quality_scorer", _DB_PATH)
+    if not task or not task.get("data"):
+        return {"available": False}
+
+    raw_data = task["data"]
+    categories_raw = raw_data.get("categories") or {}
+    total_columns = raw_data.get("total_columns") or 0
+
+    # Shape each category down to just what the header bar needs
+    categories: dict[str, Any] = {}
+    for name, block in categories_raw.items():
+        categories[name] = {
+            "level": block.get("level", "green"),
+            "affected_count": block.get("affected_count", 0),
+            "pct_affected": block.get("pct_affected", 0.0),
+        }
+
+    return {
+        "available": True,
+        "total_columns": total_columns,
+        "categories": categories,
+    }
 
 
 @app.get("/api/runs/{run_key}/tasks/{task_name}", tags=["runs"])
@@ -177,19 +233,19 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
     Return pairwise correlations for a single column using the stored
     compute_correlations task result (keyed as "COL_A|COL_B": float).
     """
-    run = db.get_run(run_key, _DB_PATH)
+    run = db.get_run(run_key)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    task = db.get_task(run_key, "compute_correlations", _DB_PATH)
+    task = db.get_task(run_key, "compute_correlations")
     if not task or not task.get("data"):
         return {
             "column": column,
             "correlations": [],
             "unavailable": True,
             "reason": (
-                "Correlation data not available.",
-                " Run the profiler at full depth to enable this feature.",
+                "Correlation data not available. "
+                "Run the profiler at full depth to enable this feature."
             ),
         }
 
@@ -230,9 +286,9 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
 
 @app.get("/api/runs/{run_key}/sample")
 def read_run_sample(run_key: str, n: int = 10):
-    result = db.get_run_sample(run_key, n=min(n, 50), db_path=_DB_PATH)
+    result = db.get_run_sample(run_key, n=min(n, 50))
     if result is None:
-        # source_path not recorded or file no longer on disk - return empty
+        # source_path not recorded or file no longer on disk — return empty
         # payload rather than 404 so the frontend can show a friendly message
         return {"columns": [], "rows": [], "unavailable": True}
     return result
@@ -284,8 +340,8 @@ def get_run_associations(run_key: str):
             "pairs": pairs,
             "summary": {
                 "message": (
-                    "Pearson correlations only ",
-                    "(run at full depth for richer associations).",
+                    "Pearson correlations only "
+                    "(run at full depth for richer associations)."
                 ),
             },
         }
