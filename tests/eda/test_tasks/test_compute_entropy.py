@@ -1,107 +1,29 @@
 # tests/eda/test_tasks/test_compute_entropy.py
 
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
+import polars as pl
 import pytest
 
-from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compute_entropy import ComputeEntropy
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+if TYPE_CHECKING:
+    from dsbf.eda.task_result import TaskResult, WarningDetail
+
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_compute_entropy_expected_output(tmp_path):
-    """
-    Test that ComputeEntropy returns entropy values for text columns.
-    """
+def test_entropy_computed_for_categorical_column(tmp_path) -> None:
+    """Entropy must be positive for categorical column with multiple distinct values."""
     df = pd.DataFrame(
         {
             "cat": ["a", "a", "b", "b", "b", "c", "c", "c", "c"],
-            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Should be ignored
-        }
+            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # numeric — must be excluded
+        },
     )
 
-    ctx, task = make_ctx_and_task(
-        task_cls=ComputeEntropy,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
-
-    assert result is not None, "No TaskResult returned"
-    assert isinstance(result, TaskResult)
-    assert result.status == "success"
-    assert result.data is not None
-    assert "cat" in result.data
-    assert result.data["cat"] > 0.0
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_compute_entropy_with_plots(tmp_path):
-    """
-    Test that barplots with entropy annotations are generated.
-    """
-    df = pd.DataFrame(
-        {
-            "color": [
-                "red",
-                "red",
-                "blue",
-                "blue",
-                "blue",
-                "green",
-                "green",
-                "green",
-                "green",
-            ],
-            "constant": ["x"] * 9,
-            "numeric": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Should be skipped
-        }
-    )
-
-    ctx, task = make_ctx_and_task(
-        task_cls=ComputeEntropy,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
-
-    assert result.status == "success"
-    assert result.data is not None
-    assert result.plots is not None
-
-    for col in ["color", "constant"]:
-        assert col in result.plots
-        plot_entry = result.plots[col]
-
-        # Validate static plot file
-        static_path = plot_entry["static"]
-        assert isinstance(static_path, Path)
-        assert static_path.exists()
-        static_path.unlink()
-
-        # Validate interactive plot + annotations
-        interactive = plot_entry["interactive"]
-        assert isinstance(interactive, dict)
-        assert "annotations" in interactive
-        assert any("Entropy" in a for a in interactive["annotations"])
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_entropy_on_typical_categorical_column(tmp_path: Path) -> None:
-    """
-    Check that entropy is computed for a typical categorical column.
-    """
-    df = pd.DataFrame(
-        {
-            "cat": ["a", "a", "b", "b", "b", "c", "c", "c", "c"],
-            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # Should be ignored
-        }
-    )
-
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ComputeEntropy,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
@@ -115,30 +37,11 @@ def test_entropy_on_typical_categorical_column(tmp_path: Path) -> None:
     assert "num" not in result.data
 
 
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_entropy_barplots_are_generated(tmp_path: Path) -> None:
-    """
-    Verify that barplots with entropy annotations are produced for eligible columns.
-    """
-    df = pd.DataFrame(
-        {
-            "color": [
-                "red",
-                "red",
-                "blue",
-                "blue",
-                "blue",
-                "green",
-                "green",
-                "green",
-                "green",
-            ],
-            "constant": ["x"] * 9,
-            "numeric": list(range(9)),  # Should be excluded
-        }
-    )
+def test_entropy_is_zero_for_constant_column(tmp_path) -> None:
+    """A column with a single unique value must have entropy 0.0."""
+    df = pd.DataFrame({"constant": ["x"] * 100})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ComputeEntropy,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
@@ -146,39 +49,19 @@ def test_entropy_barplots_are_generated(tmp_path: Path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
 
     assert result.status == "success"
-    assert result.plots is not None
-
-    for col in ["color", "constant"]:
-        assert col in result.plots, f"Missing plot entry for column: {col}"
-        static_path = result.plots[col]["static"]
-        assert isinstance(static_path, Path)
-        assert static_path.exists()
-        static_path.unlink()  # Clean up
-
-        interactive = result.plots[col]["interactive"]
-        assert isinstance(interactive, dict)
-        assert any("Entropy" in a for a in interactive.get("annotations", []))
-
-
-def test_entropy_on_constant_column() -> None:
-    """
-    Confirm that entropy is 0.0 for a column with a single unique value.
-    """
-    df = pd.DataFrame({"constant": ["x"] * 100})
-    ctx, task = make_ctx_and_task(task_cls=ComputeEntropy, current_df=df)
-    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
-
-    assert result.status == "success"
     assert result.data is not None
-    assert result.data["constant"] == 0.0
+    assert result.data.get("constant") == 0.0
 
 
-def test_entropy_skips_all_null_column() -> None:
-    """
-    Ensure that a column with all missing values is excluded without error.
-    """
+def test_entropy_skips_all_null_column(tmp_path) -> None:
+    """A column with all missing values must be excluded from output without error."""
     df = pd.DataFrame({"empty": [None] * 10})
-    ctx, task = make_ctx_and_task(task_cls=ComputeEntropy, current_df=df)
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
 
     assert result.status == "success"
@@ -187,23 +70,107 @@ def test_entropy_skips_all_null_column() -> None:
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_entropy_metadata_fields() -> None:
-    """
-    Check that metadata fields are populated with excluded_columns and column_types.
-    """
+def test_entropy_higher_for_uniform_distribution(tmp_path) -> None:
+    """A uniform distribution must have higher entropy than a skewed one."""
+    df = pd.DataFrame(
+        {
+            "uniform": ["a", "b", "c", "d"] * 25,  # 4 equal groups
+            "skewed": ["a"] * 90 + ["b"] * 10,  # 90/10 split
+        }
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
+
+    assert result.status == "success"
+    assert "uniform" in result.data
+    assert "skewed" in result.data
+    assert result.data["uniform"] > result.data["skewed"]
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_entropy_metadata_fields_populated(tmp_path) -> None:
+    """excluded_columns and column_types must be present in metadata."""
     df = pd.DataFrame(
         {
             "col1": ["a", "b", "c", "a"],
-            "col2": [1, 2, 3, 4],  # Should be excluded
+            "col2": [1, 2, 3, 4],  # numeric — must be excluded
         }
     )
-    ctx, task = make_ctx_and_task(task_cls=ComputeEntropy, current_df=df)
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
     result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
 
+    assert result.status == "success"
     metadata: dict[str, Any] = result.metadata
     assert "excluded_columns" in metadata
     assert "col2" in metadata["excluded_columns"]
-
     assert "column_types" in metadata
     assert "col1" in metadata["column_types"]
     assert "col2" in metadata["column_types"]
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_no_plots_generated(tmp_path) -> None:
+    """Entropy task must not generate plots — rendering is owned by
+    generate_univariate_plots and generate_dataset_summary_plots."""
+    df = pd.DataFrame({"cat": ["a", "b", "c"] * 10})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
+
+    assert result.status == "success"
+    assert result.plots is None
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_polars_dataframe_handled(tmp_path) -> None:
+    """Entropy must be computed correctly for a Polars DataFrame."""
+    df = pl.DataFrame(
+        {
+            "color": ["red", "red", "blue", "green", "blue", "green", "green"],
+        }
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
+
+    assert result.status == "success"
+    assert result.data is not None
+    assert "color" in result.data
+    assert result.data["color"] > 0.0
+
+
+def test_reliability_warning_on_low_n(tmp_path) -> None:
+    """A heuristic_caution warning must be emitted when N < 30."""
+    df = pd.DataFrame({"cat": ["a", "b", "c", "a", "b"]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=ComputeEntropy,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, task_cls=ComputeEntropy)
+
+    assert result.status == "success"
+    assert result.reliability_warnings is not None
+    caution: dict[str, WarningDetail] = result.reliability_warnings.get(
+        "heuristic_caution", {}
+    )
+    assert "low_row_count_entropy" in caution

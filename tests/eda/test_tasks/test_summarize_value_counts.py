@@ -1,113 +1,82 @@
 # tests/eda/test_tasks/test_summarize_value_counts.py
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
+import polars as pl
 
-from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_value_counts import SummarizeValueCounts
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+if TYPE_CHECKING:
+    from dsbf.eda.task_result import TaskResult
 
 
-def test_summarize_value_counts_expected_output(tmp_path):
-    df = pd.DataFrame(
-        {
-            "cat": ["a", "b", "a", "a", "c", "b", "c", "c", "c"],
-            "num": [1, 2, 1, 3, 2, 2, 1, 3, 3],
-            "misc": [None, None, "x", "x", "x", "y", "y", "y", "y"],
-        }
+def test_top_k_values_returned(tmp_path) -> None:
+    """Result must contain no more than top_k entries per column."""
+    df = pd.DataFrame({"a": list("abcde") * 4})
+
+    ctx, task = make_ctx_and_task(
+        task_cls=SummarizeValueCounts,
+        current_df=df,
+        task_overrides={"top_k": 3},
+        global_overrides={"output_dir": str(tmp_path)},
     )
+    result: TaskResult = ctx.run_task(task)
 
+    assert result.status == "success"
+    assert len(result.data["a"]) == 3
+
+
+def test_all_columns_summarized(tmp_path) -> None:
+    """Every column in the DataFrame must appear in result data."""
+    df = pd.DataFrame({"x": [1, 2, 3], "y": ["a", "b", "a"]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeValueCounts,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeValueCounts)
+
+    assert result.status == "success"
+    assert "x" in result.data
+    assert "y" in result.data
+
+
+def test_polars_dataframe_handled(tmp_path) -> None:
+    df = pl.DataFrame({"col": ["A", "B", "A", "C", "A"]})
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeValueCounts,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeValueCounts)
+    assert result.status == "success"
+    assert "col" in result.data
+
+
+def test_metadata_top_k_stored(tmp_path) -> None:
+    """The top_k value must be stored in result metadata."""
+    df = pd.DataFrame({"a": [1, 2, 3]})
     ctx, task = make_ctx_and_task(
         task_cls=SummarizeValueCounts,
         current_df=df,
         task_overrides={"top_k": 2},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
-
-    assert isinstance(result, TaskResult)
+    result: TaskResult = ctx.run_task(task)
     assert result.status == "success"
-    assert result.data is not None
-    assert "cat" in result.data
-    assert isinstance(result.data["cat"], dict)
-    assert len(result.data["cat"]) <= 2
-    assert "a" in result.data["cat"] or "c" in result.data["cat"]
+    assert result.metadata["top_k"] == 2
 
 
-def test_summarize_value_counts_high_cardinality(tmp_path):
-    df = pd.DataFrame({"id": [f"id_{i}" for i in range(100)]})
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeValueCounts,
-        current_df=df,
-        task_overrides={"top_k": 5},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    result = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert result.data is not None
-    assert "id" in result.data
-    assert len(result.data["id"]) <= 5
-
-
-def test_summarize_value_counts_with_plots(tmp_path):
-    df = pd.DataFrame(
-        {
-            "fruit": ["apple", "banana", "apple", "orange", "apple"],
-            "color": ["red", "yellow", "green", "orange", "red"],
-        }
-    )
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeValueCounts,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-        task_overrides={"top_k": 3},
-    )
-    result = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert result.plots is not None
-    assert "fruit" in result.plots
-
-    # Static plot file exists
-    static_path = result.plots["fruit"]["static"]
-    assert isinstance(static_path, Path)
-    assert static_path.exists()
-    static_path.unlink()
-
-    # Interactive has annotation
-    interactive = result.plots["fruit"]["interactive"]
-    assert isinstance(interactive, dict)
-    assert "annotations" in interactive
-    assert any("Top value" in a for a in interactive["annotations"])
-
-
-def test_summarize_value_counts_constant_column(tmp_path):
-    df = pd.DataFrame({"col": ["same"] * 5})
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeValueCounts,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-        task_overrides={"top_k": 1},
-    )
-    result = ctx.run_task(task)
-    assert result.data is not None
-    assert "col" in result.data
-    assert result.plots is not None
-    assert result.plots.get("col") is not None  # Still produces a barplot
-
-
-def test_summarize_value_counts_empty_df(tmp_path):
-    df = pd.DataFrame()
-    ctx, task = make_ctx_and_task(
+def test_no_plots_generated(tmp_path) -> None:
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeValueCounts,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeValueCounts)
     assert result.status == "success"
-    assert result.data == {}
-    assert result.plots == {}
+    assert result.plots is None

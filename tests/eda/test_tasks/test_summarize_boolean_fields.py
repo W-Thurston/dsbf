@@ -1,66 +1,93 @@
 # tests/eda/test_tasks/test_summarize_boolean_fields.py
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
-import pytest
 
-from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_boolean_fields import SummarizeBooleanFields
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+if TYPE_CHECKING:
+    from dsbf.eda.task_result import TaskResult
 
 
-def test_summarize_boolean_fields_expected_output(tmp_path):
-    df = pd.DataFrame(
-        {
-            "flag_1": [True, False, True, True, False, None],
-            "flag_2": [False, False, False, False, False, False],
-            "nonbool": [1, 2, 3, 4, 5, 6],
-        }
-    )
+def test_balanced_binary_column_summarized(tmp_path) -> None:
+    """A balanced binary column must have pct_true and pct_false near 0.5."""
+    df = pd.DataFrame({"flag": [True, False] * 50})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeBooleanFields,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeBooleanFields)
 
-    assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert result.data is not None
-    assert "flag_1" in result.data
-    assert "pct_true" in result.data["flag_1"]
-    assert result.data["flag_1"]["pct_null"] > 0
-    assert "nonbool" not in result.data
+    assert "flag" in result.data
+    assert abs(result.data["flag"]["pct_true"] - 0.5) < 0.01
+    assert abs(result.data["flag"]["pct_false"] - 0.5) < 0.01
 
 
-@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
-def test_summarize_boolean_fields_with_plots(tmp_path):
-    df = pd.DataFrame(
-        {
-            "flag_1": [True, False, True, True, False, None],
-            "flag_2": [False, False, False, False, False, False],
-        }
-    )
+def test_imbalanced_column_emits_guidance(tmp_path) -> None:
+    """A column with ≥ 75% one class must emit EDA and ML guidance blurbs."""
+    df = pd.DataFrame({"flag": [True] * 90 + [False] * 10})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeBooleanFields,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeBooleanFields)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "flag_1" in result.plots
-    assert "flag_2" in result.plots
+    assert result.guidance is not None
+    assert "flag" in result.guidance
+    assert len(result.guidance["flag"]["eda"]) > 0
+    assert len(result.guidance["flag"]["ml"]) > 0
+    ml_actions = result.guidance["flag"]["ml"][0]["actions"]
+    assert any(a["action"] == "stratified_split" for a in ml_actions)
 
-    # Static file exists
-    static_path: Path = result.plots["flag_1"]["static"]
-    assert static_path.exists()
-    static_path.unlink()
 
-    # Interactive plot contains annotated percentages
-    annotations = result.plots["flag_1"]["interactive"].get("annotations", [])
-    assert any("True:" in ann or "False:" in ann for ann in annotations)
+def test_balanced_column_produces_no_guidance(tmp_path) -> None:
+    """A balanced binary column (< 75% one class) must not emit guidance."""
+    df = pd.DataFrame({"x": [0, 1] * 50})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeBooleanFields,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeBooleanFields)
+
+    assert result.status == "success"
+    assert result.guidance is None or "x" not in (result.guidance or {})
+
+
+def test_null_percentage_tracked(tmp_path) -> None:
+    """pct_null must reflect the actual proportion of null values."""
+    df = pd.DataFrame({"flag": [True, False, None, True, None]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeBooleanFields,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeBooleanFields)
+
+    assert result.status == "success"
+    assert abs(result.data["flag"]["pct_null"] - 0.4) < 0.01
+
+
+def test_no_plots_generated(tmp_path) -> None:
+    """Boolean summary must not generate plots."""
+    df = pd.DataFrame({"flag": [True, False] * 10})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeBooleanFields,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeBooleanFields)
+
+    assert result.status == "success"
+    assert result.plots is None

@@ -12,36 +12,56 @@ from dsbf.eda.task_result import TaskResult
     description="Summarizes overall runtime and per-task execution totals.",
     profiling_depth="full",
     stage="any",
+    phase="diagnostic",
     domain="core",
     runtime_estimate="fast",
     tags=["diagnostic", "runtime", "logging"],
     expected_semantic_types=["any"],
 )
 class LogResourceUsage(BaseTask):
+    """
+    Summarize runtime usage across all tasks in the current run.
+
+    Reads per-task duration metadata from the analysis context and computes
+    total and mean execution time. Emits a recommendation if the total runtime
+    exceeds 30 seconds or if the mean per-task time exceeds 5 seconds.
+
+    This task requires that task durations have been written to the context
+    metadata before it runs (populated by the execution engine after each task).
+    """
+
     def run(self) -> None:
-        # Use semantic typing to select relevant columns
-        matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+        """
+        Compute runtime statistics and populate self.output.
+
+        Raises:
+            RuntimeError: If no analysis context is attached.
+
+        """
+        matched_cols, excluded = self.get_columns_by_intent()
+        self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
         if self.context is None:
             raise RuntimeError("Context is not set.")
 
-        # Safely cast durations and run_stats
-        durations = cast(
-            dict[str, float], self.context.get_metadata("task_durations", {})
+        durations: dict[str, float] = cast(
+            "dict[str, float]",
+            self.context.get_metadata("task_durations", {}),
         )
-        run_stats = self.context.get_metadata("run_stats") or {}
+        run_stats: dict = self.context.get_metadata("run_stats") or {}
 
-        total_time = (
+        total_time: float | int = (
             round(sum(durations.values()), 2)
             if durations
-            else cast(float, run_stats.get("duration", 0.0))
+            else cast("float", run_stats.get("duration", 0.0))
         )
 
-        task_count = len(durations)
-        mean_task_time = round(total_time / task_count, 4) if task_count else None
+        task_count: int = len(durations)
+        mean_task_time: float | None = (
+            round(total_time / task_count, 4) if task_count else None
+        )
 
-        summary = {
+        summary: dict[str, dict[str, float] | float | int | None] = {
             "task_count": task_count,
             "total_runtime_sec": total_time,
             "mean_task_time": mean_task_time,
@@ -50,12 +70,12 @@ class LogResourceUsage(BaseTask):
             },
         }
 
-        recommendations = []
-        if total_time > 30:
+        recommendations: list[str] = []
+        if total_time > 30:  # noqa: PLR2004
             recommendations.append(
-                "Consider caching static tasks if total time exceeds 30 seconds."
+                "Consider caching static tasks if total time exceeds 30 seconds.",
             )
-        if mean_task_time and mean_task_time > 5:
+        if mean_task_time and mean_task_time > 5:  # noqa: PLR2004
             recommendations.append("Investigate tasks with long average runtime.")
 
         self.output = TaskResult(
@@ -63,14 +83,13 @@ class LogResourceUsage(BaseTask):
             status="success",
             summary=summary,
             recommendations=recommendations,
-            plots={},
             metadata={
                 "suggested_viz_type": "bar",
                 "recommended_section": "Diagnostics",
                 "display_priority": "low",
                 "excluded_columns": excluded,
                 "column_types": self.get_column_type_info(
-                    matched_col + list(excluded.keys())
+                    matched_cols + list(excluded.keys()),
                 ),
             },
         )

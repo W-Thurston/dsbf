@@ -10,7 +10,7 @@ consistent visual style, and dual rendering support (matplotlib + plotly).
 import os
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Literal, Optional, Typeddict, Union
+from typing import Any, Literal, Optional, TypedDict, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -30,7 +30,7 @@ register_dark_theme()
 matplotlib.use("Agg")
 
 
-class PlotData(Typeddict, total=False):
+class PlotData(TypedDict, total=False):
     """Standardized plot output schema used across DSBF."""
 
     type: Literal["histogram", "boxplot", "matrix", "line", "bar", "correlation"]

@@ -16,31 +16,54 @@ from dsbf.utils.backend import is_polars
     stage="raw",
     domain="core",
     runtime_estimate="fast",
+    phase="eda",
     tags=["redundancy", "skew"],
     expected_semantic_types=["any"],
 )
 class DetectSingleDominantValue(BaseTask):
     """
-    Detects columns where a single value dominates the distribution,
-    such as binary features with a heavy skew or categorical columns
-    where nearly all values are the same.
+    Detects columns where one value dominates the distribution.
+
+    For every column, computes the mode and its proportion. Columns where the
+    mode proportion equals or exceeds ``dominance_threshold`` (default: 0.95)
+    are counted as dominant.
+
+    All columns are stored in ``data`` with their mode, proportion, unique value
+    count, and dominance level — not just the flagged ones. This gives the
+    data_quality_scorer a complete picture to work from.
+
+    EDA and ML guidance blurbs are emitted for columns where mode proportion
+    ≥ 0.70 (a lower threshold than the flag threshold, to surface informative
+    findings before they become critical).
+
+    Polars DataFrames are converted to pandas for the value_counts computation.
+
+    Configurable parameters (via config["tasks"]["detect_single_dominant_value"]):
+        dominance_threshold (float): Proportion above which a column is counted
+            as having a dominant value. Default: 0.95
     """
 
     @staticmethod
     def _compute_dominance_level(proportion: float, unique_count: int) -> str:
         """
-        Assigns a dominance level based on how much the mode proportion
-        exceeds a uniform distribution baseline.
+        Classify dominance relative to a uniform baseline.
+
+        A proportion equal to 1/unique_count is the uniform baseline (no dominance).
+        The dominance score measures how many times above that baseline the mode is.
+
+        Args:
+            proportion: Mode proportion (0.0 - 1.0).
+            unique_count: Number of unique non-null values in the column.
 
         Returns:
-            - A string label: low, moderate, high, very high
-            - A dominance_score (float)
+            One of ``"very low"``, ``"low"``, ``"moderate"``, ``"high"``,
+            or ``"very high"``.
 
         """
         if unique_count == 0:
             return "very low"
 
-        expected_uniform: float = 1 / unique_count
+        expected_uniform: float = 1.0 / unique_count
         dominance_score: float = (
             proportion / expected_uniform if expected_uniform > 0 else 0.0
         )
@@ -56,13 +79,18 @@ class DetectSingleDominantValue(BaseTask):
         return "very high"
 
     def run(self) -> None:
-        try:
-            # ctx = self.context
-            df: Any = self.input_data
+        """
+        Execute dominant value detection and populate self.output.
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
+        try:
+            df = self.input_data
+
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
             dominance_threshold = float(
                 self.get_task_param("dominance_threshold") or 0.95,
@@ -70,6 +98,7 @@ class DetectSingleDominantValue(BaseTask):
             dominance_count = 0
 
             if is_polars(df):
+                # pandas value_counts used for proportion computation.
                 df = df.to_pandas()
 
             results: dict[str, dict[str, Any]] = {}
@@ -77,15 +106,13 @@ class DetectSingleDominantValue(BaseTask):
             for col in df.columns:
                 series = df[col].dropna()
                 if series.empty:
-                    continue  # Skip all-null columns
+                    continue
 
                 value_counts = series.value_counts()
-
                 top_val = value_counts.index[0]
                 proportion = series.value_counts(normalize=True).iloc[0]
                 unique_count: int = len(series.unique())
 
-                # Always store mode information
                 dominance_level: str = self._compute_dominance_level(
                     proportion,
                     unique_count,
@@ -101,7 +128,8 @@ class DetectSingleDominantValue(BaseTask):
                 if proportion >= dominance_threshold:
                     dominance_count += 1
                     self._log(
-                        f"    {col} has dominant value {top_val} at {proportion:.1%}",
+                        f"    '{col}' has dominant value '{top_val}' "
+                        f"at {proportion:.1%}",
                         "debug",
                     )
 
@@ -110,12 +138,11 @@ class DetectSingleDominantValue(BaseTask):
                 status="success",
                 summary={
                     "message": (
-                        f"Detected {dominance_count} column(s) with"
-                        f" dominant values above {dominance_threshold:.0%}."
+                        f"Detected {dominance_count} column(s) with dominant "
+                        f"values above {dominance_threshold:.0%}."
                     ),
                 },
                 data=results,
-                plots={},
                 metadata={
                     "dominance_threshold": dominance_threshold,
                     "suggested_viz_type": "bar",
@@ -123,12 +150,13 @@ class DetectSingleDominantValue(BaseTask):
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys()),
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
 
-            # Generate guidance for columns with notable dominance (≥70%)
+            # Emit guidance at a lower threshold than the flag threshold so
+            # findings surface before they become critical.
             guidance_threshold = 0.70
             for col, col_data in results.items():
                 if col_data["mode_proportion"] >= guidance_threshold:
@@ -145,36 +173,44 @@ class DetectSingleDominantValue(BaseTask):
             self.output = make_failure_result(self.name, e)
 
     def _attach_guidance(self, col: str, col_data: dict[str, Any]) -> None:
-        """Generate EDA + ML guidance for a column with a dominant value."""
+        """
+        Generate EDA and ML guidance for a column with a dominant value.
+
+        Args:
+            col: Column name.
+            col_data: Column stats dict containing ``mode``, ``mode_proportion``,
+                and ``unique_values``.
+
+        """
         mode = col_data["mode"]
         prop = col_data["mode_proportion"]
         unique = col_data["unique_values"]
-        pct_str: str = f"{prop:.1%}"
+        pct_str = f"{prop:.1%}"
 
         level: Literal["info", "warn"] = "warn" if prop >= 0.9 else "info"
 
         if prop >= 0.9:
             eda_body: str = (
-                f'{col} is dominated by a single value: "{mode}" appears in '
-                f"{pct_str} of rows. The column carries almost no variation - it "
-                f"is close to constant. This could indicate a default value being "
+                f"'{col}' is dominated by a single value: \"{mode}\" appears in "
+                f"{pct_str} of rows. The column carries almost no variation — it is "
+                f"close to constant. This could indicate a default value being "
                 f"applied across most records, a data collection gap, or a genuine "
                 f"characteristic of the population. Verify whether the rare "
                 f'non-"{mode}" values are meaningful or noise.'
             )
             ml_body: str = (
-                f'"{mode}" appears in {pct_str} of rows in {col}. Near-constant '
+                f"\"{mode}\" appears in {pct_str} of rows in '{col}'. Near-constant "
                 f"features provide minimal discriminative power to any model and may "
                 f"cause numerical instability in some algorithms. If used as a target "
                 f"variable, the severe imbalance will bias predictions toward the "
                 f"dominant class. Consider dropping, or apply class weighting and "
                 f"stratified sampling if retained as a target."
             )
-            ml_actions: list[dict[str, str]] = [
+            ml_actions: list[dict] = [
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": "Near-zero variance - minimal signal for any model",
+                    "detail": "Near-zero variance — minimal signal for any model",
                 },
                 {
                     "action": "class_weight",
@@ -189,15 +225,15 @@ class DetectSingleDominantValue(BaseTask):
             ]
         else:
             eda_body = (
-                f'{col} has a dominant value: "{mode}" appears in {pct_str} of '
-                f"rows across {unique} unique values. The distribution is uneven - "
+                f"'{col}' has a dominant value: \"{mode}\" appears in {pct_str} of "
+                f"rows across {unique} unique values. The distribution is uneven — "
                 f"most observations share the same value while a minority are spread "
                 f"across others. This is normal in many real-world categorical "
                 f"columns, but worth noting when interpreting frequency counts or "
                 f"group comparisons."
             )
             ml_body = (
-                f'"{mode}" accounts for {pct_str} of {col}. If used as a '
+                f"\"{mode}\" accounts for {pct_str} of '{col}'. If used as a "
                 f"classification target, use stratified train/test splits to ensure "
                 f"the minority classes are represented in both sets. Class weighting "
                 f"may improve minority class recall."
@@ -215,6 +251,12 @@ class DetectSingleDominantValue(BaseTask):
                 },
             ]
 
+        metric: dict = {
+            "mode": mode,
+            "mode_proportion": round(prop, 4),
+            "unique_values": unique,
+        }
+
         self.add_guidance(
             result=self.output,
             column=col,
@@ -223,11 +265,7 @@ class DetectSingleDominantValue(BaseTask):
             title=f'Dominant Value "{mode}" ({pct_str})',
             body=eda_body.strip(),
             actions=[],
-            metric={
-                "mode": mode,
-                "mode_proportion": round(prop, 4),
-                "unique_values": unique,
-            },
+            metric=metric,
         )
 
         self.add_guidance(
@@ -235,12 +273,8 @@ class DetectSingleDominantValue(BaseTask):
             column=col,
             phase="ml",
             level=level,
-            title=f'Class Imbalance - "{mode}" Dominates ({pct_str})',
+            title=f'Class Imbalance — "{mode}" Dominates ({pct_str})',
             body=ml_body.strip(),
             actions=ml_actions,
-            metric={
-                "mode": mode,
-                "mode_proportion": round(prop, 4),
-                "unique_values": unique,
-            },
+            metric=metric,
         )

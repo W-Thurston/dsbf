@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/detect_outliers.py
 
-from typing import Any
-
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
@@ -19,31 +17,58 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     stage="cleaned",
     domain="core",
     runtime_estimate="moderate",
+    phase="eda",
     tags=["outliers", "numeric"],
     expected_semantic_types=["continuous"],
 )
 class DetectOutliers(BaseTask):
     """
-    Detects numeric outliers using the IQR method. Flags columns exceeding
-    a proportion threshold of outliers.
+    Detects numeric outliers using the IQR method.
+
+    For each numeric column, computes Q1, Q3, IQR, and lower/upper fences
+    (Q1 - 1.5xIQR and Q3 + 1.5xIQR). Values outside these fences are flagged
+    as outliers.
+
+    A column is included in ``outlier_flags`` as True when the proportion of
+    outliers exceeds ``flag_threshold`` (default: 1%). EDA and ML guidance
+    blurbs are attached for any column with at least one outlier.
+
+    Supports both Polars and Pandas DataFrames — Polars input is converted to
+    pandas before processing since the IQR fence computation uses pandas quantile.
+
+    Note: ``method`` parameter is accepted but only IQR is currently implemented.
+    Future methods (z-score, MAD) will be added under the same parameter key.
+
+    Configurable parameters (via config["tasks"]["detect_outliers"]):
+        method (str): Outlier detection method. Currently only ``"iqr"``
+            is supported. Default: ``"iqr"``
+        flag_threshold (float): Proportion of outliers above which a column
+            is added to ``outlier_flags`` as True. Default: 0.01
     """
 
     def run(self) -> None:
-        try:
-            # ctx = self.context
-            df: Any = self.input_data
+        """
+        Execute outlier detection and populate self.output.
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
+        try:
+            df = self.input_data
+
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} 'continuous' column(s)",
+                f"    Processing {len(matched_cols)} 'continuous' column(s)",
                 "debug",
             )
 
+            # method is read for future extensibility — only IQR is implemented.
             method = str(self.get_task_param("method") or "iqr")
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.01)
 
             if is_polars(df):
+                # pandas quantile is used for IQR fence computation.
                 df = df.to_pandas()
 
             if not hasattr(df, "shape"):
@@ -53,15 +78,15 @@ class DetectOutliers(BaseTask):
             outlier_counts: dict[str, int] = {}
             outlier_flags: dict[str, bool] = {}
             outlier_rows: dict[str, list[int]] = {}
+            iqr_bounds: dict[str, dict[str, float]] = {}
 
             numeric_df = df.select_dtypes(include=[np.number])
-            iqr_bounds: dict[str, dict[str, float]] = {}
 
             for col in numeric_df.columns:
                 series = numeric_df[col].dropna()
 
                 if series.empty:
-                    self._log(f"    {col} skipped: empty after dropna()", "debug")
+                    self._log(f"    '{col}' skipped: empty after dropna()", "debug")
                     continue
 
                 q1 = series.quantile(0.25)
@@ -91,7 +116,7 @@ class DetectOutliers(BaseTask):
                 name=self.name,
                 status="success",
                 summary={
-                    "message": (f"Detected outliers in {len(flagged_cols)} column(s)."),
+                    "message": f"Detected outliers in {len(flagged_cols)} column(s).",
                 },
                 data={
                     "outlier_counts": outlier_counts,
@@ -107,25 +132,30 @@ class DetectOutliers(BaseTask):
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys()),
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
-                plots={},
             )
 
-            # Generate guidance for every column with at least one outlier
+            # Emit guidance for every column with at least one outlier.
             for col, count in outlier_counts.items():
                 if count > 0:
                     pct = count / n_rows
-                    bounds: dict[str, float] = iqr_bounds.get(col, {})
-                    self._attach_guidance(col, count, pct, n_rows, bounds)
+                    self._attach_guidance(
+                        col,
+                        count,
+                        pct,
+                        n_rows,
+                        iqr_bounds.get(col, {}),
+                    )
 
-            # Apply ML scoring to self.output
+            # ML impact scoring
             if self.get_engine_param("enable_impact_scoring", True) and flagged_cols:
-                col: str = flagged_cols[0]
-                n_outliers: int = outlier_counts[col]
+                top_col: str = flagged_cols[0]
+                n_outliers: int = outlier_counts[top_col]
                 tip: str | None = get_recommendation_tip(
-                    self.name, {"n_outliers": n_outliers}
+                    self.name,
+                    {"n_outliers": n_outliers},
                 )
                 self.set_ml_signals(
                     result=self.output,
@@ -133,12 +163,12 @@ class DetectOutliers(BaseTask):
                     tags=["monitor", "transform"],
                     recommendation=tip
                     or (
-                        f"Column '{col}' contains {n_outliers} statistical outliers. "
-                        "Consider log-transforming, winsorizing,"
-                        " or using robust models."
+                        f"Column '{top_col}' contains {n_outliers} statistical "
+                        "outliers. Consider log-transforming, winsorizing, or "
+                        "using robust models."
                     ),
                 )
-                self.output.summary["column"] = col
+                self.output.summary["column"] = top_col
 
         except Exception as e:
             if self.context:
@@ -158,7 +188,18 @@ class DetectOutliers(BaseTask):
         n_rows: int,
         bounds: dict[str, float],
     ) -> None:
-        """Generate EDA + ML guidance for a column with IQR-detected outliers."""
+        """
+        Generate EDA and ML guidance for a column with IQR-detected outliers.
+
+        Args:
+            col: Column name.
+            count: Number of outlier values.
+            pct: Proportion of outlier values (count / n_rows).
+            n_rows: Total row count in the dataset.
+            bounds: IQR bounds dict with keys ``lower``, ``upper``, ``q1``,
+                ``q3``, ``iqr``.
+
+        """
         pct_str: str = f"{pct:.1%}"
         lower: float | None = bounds.get("lower")
         upper: float | None = bounds.get("upper")
@@ -171,58 +212,52 @@ class DetectOutliers(BaseTask):
         if pct >= 0.15:
             level = "error"
             severity = "severe"
+            eda_tail = (
+                "At this rate, calling them outliers is misleading — more than one "
+                "in seven rows falls outside the normal range, which suggests the "
+                "distribution is simply heavy-tailed or multimodal rather than "
+                "contaminated by a few anomalous points."
+            )
         elif pct >= 0.05:
             level = "warn"
             severity = "notable"
+            eda_tail = (
+                "This is a notable minority — enough to materially affect mean-based "
+                "statistics but small enough that these could be genuine rare events."
+            )
         else:
             level = "info"
             severity = "low-level"
+            eda_tail = (
+                "A small number of values sit unusually far from the bulk of the "
+                "distribution."
+            )
 
         eda_body: str = (
-            f"{col} has {count:,} values ({pct_str} of {n_rows:,} rows) {bounds_desc}. "
-            f"{
-                'At this rate, calling them outliers is misleading - more than one in '
-                'seven rows falls outside the normal range, which suggests the '
-                'distribution is simply heavy-tailed or multimodal rather than'
-                ' contaminated by a few anomalous points.'
-                if pct >= 0.15
-                else ''
-            }"
-            f"{
-                'This is a notable minority - enough to materially affect mean-based '
-                'statistics but small enough that these could be genuine rare events.'
-                if 0.05 <= pct < 0.15
-                else ''
-            }"
-            f"{
-                'A small number of values sit unusually far from the bulk of the '
-                'distribution.'
-                if pct < 0.05
-                else ''
-            } "
-            "Check whether these extreme values are plausible for the domain, arise "
-            "from measurement or entry errors, or represent a distinct sub-population "
-            "worth analysing separately."
+            f"'{col}' has {count:,} values ({pct_str} of {n_rows:,} rows) "
+            f"{bounds_desc}. {eda_tail} Check whether these extreme values are "
+            f"plausible for the domain, arise from measurement or entry errors, "
+            f"or represent a distinct sub-population worth analysing separately."
+        )
+
+        winsorise_detail: str = (
+            "At this rate, winsorising is preferable to dropping rows, as you would "
+            "lose too many observations."
+            if pct >= 0.10
+            else "Winsorising (capping at the IQR fence) or log-transforming are the "
+            "standard mitigations."
         )
 
         ml_body: str = (
-            f"{col} has {count:,} outlier values ({pct_str}) by the IQR method. "
-            "Linear models (regression, SVM with RBF kernel) and distance-based "
-            "methods (KNN, K-means) are most sensitive to extreme values - a single "
-            "high-leverage point can shift a regression line substantially. "
-            f"{
-                'At this rate, winsorising is preferable to dropping rows, as you'
-                ' would lose too many observations.'
-                if pct >= 0.10
-                else 'Winsorising '
-                '(capping at the IQR fence) or log-transforming are the standard '
-                'mitigations.'
-            } "
-            "Tree-based models are largely robust to outliers in features but "
-            "remain sensitive when they appear in the target variable."
+            f"'{col}' has {count:,} outlier values ({pct_str}) by the IQR method. "
+            f"Linear models (regression, SVM with RBF kernel) and distance-based "
+            f"methods (KNN, K-means) are most sensitive to extreme values — a single "
+            f"high-leverage point can shift a regression line substantially. "
+            f"{winsorise_detail} Tree-based models are largely robust to outliers "
+            f"in features but remain sensitive when they appear in the target variable."
         )
 
-        ml_actions: list[dict[str, str]] = [
+        ml_actions: list[dict] = [
             {
                 "action": "winsorize",
                 "column": col,
@@ -241,12 +276,14 @@ class DetectOutliers(BaseTask):
             {
                 "action": "investigate",
                 "column": col,
-                "detail": "Confirm whether extreme values are errors or genuine "
-                "observations before transforming",
+                "detail": (
+                    "Confirm whether extreme values are errors or genuine "
+                    "observations before transforming"
+                ),
             },
         ]
 
-        metric: dict[str, float | int | None] = {
+        metric: dict = {
             "outlier_count": count,
             "outlier_pct": round(pct, 4),
             "n_rows": n_rows,

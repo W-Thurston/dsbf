@@ -14,6 +14,7 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="cleaned",
+    phase="eda",
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "summary"],
@@ -21,33 +22,42 @@ from dsbf.utils.backend import is_polars
 )
 class SummarizeValueCounts(BaseTask):
     """
-    Computes the top-k most frequent values for each column.
+    Compute the top-k most frequent values for each column.
 
-    Converts Polars to Pandas if needed for consistent functionality.
+    For each column in the DataFrame, returns the ``top_k`` most frequent
+    values including nulls (``dropna=False``), stored as a column-keyed dict
+    of ``{value: count}`` pairs.
+
+    Polars DataFrames are converted to pandas before processing since pandas
+    ``value_counts()`` is used for consistent null handling.
+
+    Configurable parameters (via config["tasks"]["summarize_value_counts"]):
+        top_k (int): Number of most frequent values to return per column.
+            Default: 5
     """
 
     def run(self) -> None:
         """
-        Perform value count summarization on each column, returning the most
-        frequent `top_k` values including missing/nulls.
+        Compute top-k value counts per column and populate self.output.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
         """
         try:
-            # ctx = self.context
-            df: Any = self.input_data
+            df = self.input_data
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
             top_k = int(self.get_task_param("top_k") or 5)
 
-            # Convert Polars to Pandas for compatibility with value_counts
             if is_polars(df):
-                df = df.to_pandas()
                 self._log(
-                    "    Converting Polars to Pandas for value count computation",
+                    "    Converting Polars to pandas for value count computation",
                     "debug",
                 )
+                df = df.to_pandas()
 
             result: dict[str, dict[Any, int]] = {}
 
@@ -55,18 +65,16 @@ class SummarizeValueCounts(BaseTask):
                 try:
                     vc = df[col].value_counts(dropna=False).head(top_k)
                     result[col] = vc.to_dict()
-                    self._log(f"    Value counts for {col}: {list(vc.index)}", "debug")
-                except Exception:
-                    continue  # Skip columns that fail (e.g., unhashable types)
+                except Exception:  # noqa: BLE001, PERF203, S112
+                    continue  # Skip columns with unhashable or incomparable types
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
-                    "message": (f"Computed value counts for {len(result)} columns.")
+                    "message": f"Computed value counts for {len(result)} columns.",
                 },
                 data=result,
-                plots={},
                 metadata={
                     "top_k": top_k,
                     "suggested_viz_type": "bar",
@@ -74,7 +82,7 @@ class SummarizeValueCounts(BaseTask):
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )

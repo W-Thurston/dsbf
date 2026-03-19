@@ -7,9 +7,10 @@ import re
 import sys
 import traceback
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Literal, Optional, Type
+from typing import Literal
 
 from dsbf.core.base_task import BaseTask
 from dsbf.utils.logging_utils import setup_logger
@@ -24,7 +25,7 @@ def set_plugin_logger(log_fn):
     PLUGIN_LOG_FN = log_fn
 
 
-PLUGIN_WARNINGS: List[dict] = []
+PLUGIN_WARNINGS: list[dict] = []
 
 
 def get_plugin_warnings():
@@ -42,70 +43,70 @@ class TaskSpec:
     """
 
     name: str  # Unique snake_case name used for registration and execution
-    cls: Type[BaseTask]  # Reference to the task class itself
+    cls: type[BaseTask]  # Reference to the task class itself
     profiling_depth: str = "full"  # One of: "basic", "standard", "full"
 
-    display_name: Optional[str] = None  # Human-friendly name for UIs/docs
-    description: Optional[str] = None  # Full docstring or user-supplied override
+    display_name: str | None = None  # Human-friendly name for UIs/docs
+    description: str | None = None  # Full docstring or user-supplied override
 
-    depends_on: Optional[List[str]] = None  # List of task names this task depends on
-    tags: Optional[List[str]] = (
+    depends_on: list[str] | None = None  # list of task names this task depends on
+    tags: list[str] | None = (
         None  # Descriptive tags for filtering (e.g., ["leakage", "text"])
     )
-    stage: Optional[str] = (
-        None  # Pipeline stage (e.g., "early", "cleaning", "modeling")
-    )
-    domain: Optional[str] = None  # Domain this task is relevant to (e.g., "healthcare")
+    stage: str | None = None  # Pipeline stage (e.g., "early", "cleaning", "modeling")
+    domain: str | None = None  # Domain this task is relevant to (e.g., "healthcare")
 
-    runtime_estimate: Optional[str] = None  # Estimated cost ("fast", "medium", "slow")
-    inputs: Optional[List[str]] = None  # Expected inputs (e.g., ["dataframe"])
-    outputs: Optional[List[str]] = None  # Expected outputs (e.g., ["TaskResult"])
+    runtime_estimate: str | None = None  # Estimated cost ("fast", "medium", "slow")
+    inputs: list[str] | None = None  # Expected inputs (e.g., ["dataframe"])
+    outputs: list[str] | None = None  # Expected outputs (e.g., ["TaskResult"])
 
     experimental: bool = False  # Marks the task as unstable or in testing
-    expected_semantic_types: Optional[List[str]] = (
-        None  # List of expected semantic types (e.g., ["continuous"])
+    phase: str | None = None  # "eda", "ml_readiness", or "diagnostic"
+    expected_semantic_types: list[str] | None = (
+        None  # list of expected semantic types (e.g., ["continuous"])
     )
 
 
 # -- Global registry --
-TASK_REGISTRY: Dict[str, TaskSpec] = {}
+TASK_REGISTRY: dict[str, TaskSpec] = {}
 
 
 # -- Decorator --
 def register_task(
-    name: Optional[str] = None,
+    name: str | None = None,
     *,
     profiling_depth: str = "full",
-    display_name: Optional[str] = None,
-    description: Optional[str] = None,
-    depends_on: Optional[List[str]] = None,
-    tags: Optional[List[str]] = None,
-    stage: Optional[str] = None,
-    domain: Optional[str] = None,
-    runtime_estimate: Optional[str] = None,
-    inputs: Optional[List[str]] = None,
-    outputs: Optional[List[str]] = None,
+    display_name: str | None = None,
+    description: str | None = None,
+    depends_on: list[str] | None = None,
+    tags: list[str] | None = None,
+    stage: str | None = None,
+    domain: str | None = None,
+    runtime_estimate: str | None = None,
+    inputs: list[str] | None = None,
+    outputs: list[str] | None = None,
     experimental: bool = False,
-    expected_semantic_types: Optional[List[str]] = None,
-) -> Callable[[Type[BaseTask]], Type[BaseTask]]:
+    phase: str | None = None,
+    expected_semantic_types: list[str] | None = None,
+) -> Callable[[type[BaseTask]], type[BaseTask]]:
     """
     Decorator to register a BaseTask subclass in the global TASK_REGISTRY.
 
     Args:
-        name (Optional[str]): Unique task name (defaults to snake_case of class name).
+        name (str | None): Unique task name (defaults to snake_case of class name).
         profiling_depth (str): One of "basic", "standard", or "full".
-        display_name (Optional[str]): Friendly name for UIs or reports.
-        description (Optional[str]): Full description or docstring override.
-        depends_on (Optional[List[str]]): List of prerequisite task names.
-        tags (Optional[List[str]]): Tags for filtering or grouping tasks.
-        stage (Optional[str]): Logical stage in the pipeline
+        display_name (str | None): Friendly name for UIs or reports.
+        description (str | None): Full description or docstring override.
+        depends_on (list[str] | None]): list of prerequisite task names.
+        tags (list[str] | None]): Tags for filtering or grouping tasks.
+        stage (str | None): Logical stage in the pipeline
             (e.g., "early", "cleaning").
-        domain (Optional[str]): Domain this task is intended for (e.g., "finance").
-        runtime_estimate (Optional[str]): Expected runtime cost (e.g., "fast").
-        inputs (Optional[List[str]]): Required input types or names.
-        outputs (Optional[List[str]]): Outputs produced by this task.
+        domain (str | None): Domain this task is intended for (e.g., "finance").
+        runtime_estimate (str | None): Expected runtime cost (e.g., "fast").
+        inputs (list[str] | None]): Required input types or names.
+        outputs (list[str] | None]): Outputs produced by this task.
         experimental (bool): Flag to mark unstable or test-only tasks.
-        expected_semantic_types (Optional[List[str]]): Expected semantic types for
+        expected_semantic_types (list[str] | None]): Expected semantic types for
             column selection.
 
     Returns:
@@ -113,12 +114,19 @@ def register_task(
     """
     VALID_STAGES = ("raw", "cleaned", "modeling", "report", "any")
 
-    def decorator(cls: Type[BaseTask]) -> Type[BaseTask]:
+    def decorator(cls: type[BaseTask]) -> type[BaseTask]:
         task_name: str = name or _to_snake_case(cls.__name__)
         if stage and stage not in VALID_STAGES:
             raise ValueError(
                 f"Invalid stage '{stage}' for task '{task_name}'. "
                 f"Allowed stages are: {VALID_STAGES}"
+            )
+
+        VALID_PHASES = ("eda", "ml_readiness", "diagnostic")
+        if phase and phase not in VALID_PHASES:
+            raise ValueError(
+                f"Invalid phase '{phase}' for task '{task_name}'. "
+                f"Allowed phases are: {VALID_PHASES}"
             )
 
         if task_name in TASK_REGISTRY:
@@ -142,6 +150,7 @@ def register_task(
             inputs=inputs,
             outputs=outputs,
             experimental=experimental,
+            phase=phase,
             expected_semantic_types=expected_semantic_types,
         )
 
@@ -155,7 +164,7 @@ def _to_snake_case(name: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
-def get_all_task_specs() -> List[TaskSpec]:
+def get_all_task_specs() -> list[TaskSpec]:
     return list(TASK_REGISTRY.values())
 
 
@@ -170,13 +179,13 @@ def describe_registered_tasks() -> None:
 
 
 def list_tasks(
-    by: Optional[Literal["domain", "stage", "tags", "profiling_depth"]] = None,
+    by: Literal["domain", "stage", "phase", "tags", "profiling_depth"] | None = None,
 ) -> None:
     """
     Print all registered tasks, optionally grouped by a metadata field.
 
     Args:
-        by (Optional[str]): Field to group by (e.g., "domain", "stage", "tags").
+        by (str | None): Field to group by (e.g., "domain", "stage", "tags").
     """
     if not by:
         print("Registered DSBF Tasks:\n")
@@ -228,7 +237,8 @@ def describe_task(name: str) -> None:
     print(f"  Inputs:           {', '.join(spec.inputs or [])}")
     print(f"  Outputs:          {', '.join(spec.outputs or [])}")
     print(f"  Experimental:     {spec.experimental}")
-    print(f"  Expected Types:   {', '.join(spec.expected_semantic_types or [])}")
+    print(f"  Phase:            {spec.phase or 'untagged'}")
+    print(f"  Expected types:   {', '.join(spec.expected_semantic_types or [])}")
 
 
 def load_task_group(group: str) -> None:

@@ -3,6 +3,7 @@
 from typing import cast
 
 import polars as pl
+from polars import DataFrame
 from sklearn.preprocessing import LabelEncoder
 
 from dsbf.core.base_task import BaseTask
@@ -22,6 +23,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="modeling",
+    phase="ml_readiness",
     domain="core",
     runtime_estimate="fast",
     tags=["categorical", "encoding", "ml_readiness"],
@@ -29,26 +31,43 @@ from dsbf.utils.reco_engine import get_recommendation_tip
 )
 class SuggestCategoricalEncoding(BaseTask):
     """
-    Suggests categorical encoding strategies based on:
-    - Cardinality thresholds
-    - Optional numeric target correlation (if target is provided)
+    Recommend encoding strategies for categorical columns.
 
-    Strategies:
-      - One-hot encoding: cardinality <= low_threshold
-      - Frequency encoding: low < cardinality <= high_threshold
-      - Target encoding: numeric target and correlated
+    Determines the optimal encoding approach for each categorical column
+    based on cardinality:
 
-    Supports both Polars and Pandas backends.
+    - **one-hot**: cardinality ≤ ``low_cardinality_threshold`` (default 10)
+    - **frequency**: low < cardinality ≤ ``high_cardinality_threshold`` (default 50)
+    - **frequency (high-cardinality)**: cardinality > high threshold
+
+    If a numeric target column is configured, the task also checks whether
+    label-encoded values correlate with the target and upgrades the strategy
+    to include target encoding when correlation exceeds ``correlation_threshold``.
+
+    Supports both Polars and Pandas DataFrames.
+
+    Configurable parameters (via config["tasks"]["suggest_categorical_encoding"]):
+        low_cardinality_threshold (int): Max unique values for one-hot. Default: 10
+        high_cardinality_threshold (int): Max unique values for frequency. Default: 50
+        correlation_threshold (float): Min abs target correlation for target
+            encoding upgrade. Default: 0.3
+        target_column (str): Optional name of the target column.
     """
 
-    def run(self) -> None:
+    def run(self) -> None:  # noqa: C901, PLR0912, PLR0915
+        """
+        Execute encoding strategy suggestion and populate self.output.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
         try:
             df = self.input_data
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} 'categorical' column(s)",
+                f"    Processing {len(matched_cols)} 'categorical' column(s)",
                 "debug",
             )
 
@@ -60,30 +79,29 @@ class SuggestCategoricalEncoding(BaseTask):
             target_col: str | None = self.get_task_param("target_column")
 
             if is_polars(df):
-                categorical_cols: list = [
+                # pl.Utf8 is a deprecated alias for pl.String in modern Polars.
+                categorical_cols: list[str] = [
                     col
                     for col in df.columns
-                    if df[col].dtype in (pl.Utf8, pl.Categorical)
+                    if df[col].dtype in (pl.String, pl.Utf8, pl.Categorical)
                 ]
             else:
                 categorical_cols = list(
                     df.select_dtypes(include=["object", "category"]).columns,
                 )
 
-            suggestions: dict = {}
+            suggestions: dict[str, dict] = {}
 
             for col in categorical_cols:
-                # Get cardinality
                 try:
                     n_unique = (
                         df[col].n_unique()
                         if is_polars(df)
                         else df[col].nunique(dropna=True)
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001, S112
                     continue
 
-                # Suggest encoding
                 if n_unique <= low_threshold:
                     strategy = "one-hot"
                 elif n_unique <= high_threshold:
@@ -91,98 +109,93 @@ class SuggestCategoricalEncoding(BaseTask):
                 else:
                     strategy = "frequency (high-cardinality)"
 
-                # If numeric target provided and available, suggest target encoding
+                # Optionally upgrade to target encoding if a numeric target is
+                # available and the encoded column correlates with it.
                 if target_col and target_col in df.columns:
                     try:
                         if is_polars(df):
                             if df[target_col].dtype.is_numeric():
                                 unique_vals = df[col].unique().to_list()
-                                category_to_int = {
+                                category_to_int: dict[int, int] = {
                                     v: i for i, v in enumerate(unique_vals)
                                 }
-
-                                # Add encoded column using replace()
                                 df_encoded = df.with_columns(
-                                    [
-                                        pl.col(col)
-                                        .replace(category_to_int)
-                                        .cast(pl.Int64)
-                                        .alias("encoded_cat"),
-                                    ],
+                                    pl.col(col)
+                                    .replace(category_to_int)
+                                    .cast(pl.Int64)
+                                    .alias("encoded_cat"),
                                 )
-
-                                # Compute correlation
                                 corr_df = df_encoded.select(
                                     ["encoded_cat", target_col],
                                 ).drop_nulls()
                                 corr_val = corr_df.select(
                                     pl.corr("encoded_cat", target_col),
                                 )[0, 0]
-                                corr = (
+                                corr: float = (
                                     abs(corr_val)
                                     if corr_val is not None
                                     and not pl.Series([corr_val]).is_nan().any()
-                                    else 0
+                                    else 0.0
                                 )
                             else:
-                                corr = 0
+                                corr = 0.0
                         elif df[target_col].dtype.kind in "iuf":
                             encoded = LabelEncoder().fit_transform(df[col].astype(str))
-                            corr_matrix = (
+                            corr_matrix: DataFrame = (
                                 pl.DataFrame(
                                     {"encoded": encoded, "target": df[target_col]},
                                 )
                                 .to_pandas()
                                 .corr()
                             )
-
                             raw_corr = corr_matrix.iloc[0, 1]
-                            corr: float = (
+                            corr = (
                                 abs(cast("float", raw_corr))
                                 if raw_corr is not None
                                 else 0.0
                             )
                         else:
-                            corr = 0
+                            corr = 0.0
 
                         if corr > corr_threshold:
                             strategy: str = f"{strategy} + target encoding"
 
-                    except Exception as e:
-                        if self.context:
-                            raise
-                        self.output = make_failure_result(self.name, e)
+                    except Exception as e:  # noqa: BLE001
+                        # Log and skip target encoding for this column — do not
+                        # abort the entire task or corrupt self.output.
+                        self._log(
+                            f"    [{self.name}] Target correlation failed for "
+                            f"'{col}': {type(e).__name__} - {e}",
+                            "debug",
+                        )
 
                 suggestions[col] = {
                     "cardinality": n_unique,
                     "suggested_encoding": strategy,
                 }
 
-            summary: dict[str, str] = {
-                "message": (
-                    f"Encoding suggestions generated for {len(suggestions)}"
-                    " categorical columns."
-                ),
-            }
-
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary=summary,
+                summary={
+                    "message": (
+                        f"Encoding suggestions generated for {len(suggestions)} "
+                        "categorical columns."
+                    ),
+                },
                 data={"encoding_suggestions": suggestions},
                 recommendations=[
                     "Apply appropriate encoding based on cardinality. "
-                    "Use target encoding for high-cardinality columns with"
-                    " numeric correlation.",
+                    "Use target encoding for high-cardinality columns with "
+                    "numeric correlation.",
                 ],
-                plots={},
                 metadata={
                     "suggested_viz_type": "bar",
                     "recommended_section": "Encoding",
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys()),
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
@@ -194,14 +207,14 @@ class SuggestCategoricalEncoding(BaseTask):
                     col_data["suggested_encoding"],
                 )
 
-            # Apply ML scoring to self.output
+            # ML impact scoring
             if self.get_engine_param("enable_impact_scoring", True) and suggestions:
-                col = next(iter(suggestions))
-                strategy = suggestions[col]["suggested_encoding"]
-                score: float = 0.8 if "target encoding" in strategy else 0.6
+                top_col: str = next(iter(suggestions))
+                top_strategy = suggestions[top_col]["suggested_encoding"]
+                score: float = 0.8 if "target encoding" in top_strategy else 0.6
                 tip: str | None = get_recommendation_tip(
                     self.name,
-                    {"strategy": strategy},
+                    {"strategy": top_strategy},
                 )
                 self.set_ml_signals(
                     result=self.output,
@@ -209,11 +222,11 @@ class SuggestCategoricalEncoding(BaseTask):
                     tags=["transform"],
                     recommendation=tip
                     or (
-                        f"Column '{col}' is best encoded using: {strategy}. "
+                        f"Column '{top_col}' is best encoded using: {top_strategy}. "
                         "This improves modeling of categorical variables."
                     ),
                 )
-                self.output.summary["column"] = col
+                self.output.summary["column"] = top_col
 
         except Exception as e:
             if self.context:
@@ -227,49 +240,51 @@ class SuggestCategoricalEncoding(BaseTask):
 
     def _attach_guidance(self, col: str, cardinality: int, strategy: str) -> None:
         """
-        Generate EDA + ML guidance for a categorical column's encoding posture.
+        Generate EDA and ML guidance for a categorical column's encoding posture.
 
-        Strategy families (from the task's logic):
-        - one-hot                      - cardinality ≤ low_threshold (default 10)
-        - frequency                    - low < cardinality ≤ high_threshold (default 50)
-        - frequency (high-cardinality) - cardinality > high_threshold
-        - any of the above + target encoding - when numeric target correlation found
+        Strategy families:
+        - ``one-hot`` — cardinality ≤ low_threshold (default 10)
+        - ``frequency`` — low < cardinality ≤ high_threshold (default 50)
+        - ``frequency (high-cardinality)`` — cardinality > high_threshold
+        - any of the above ``+ target encoding`` — numeric target correlation found
+
+        Args:
+            col: Column name.
+            cardinality: Number of unique non-null values.
+            strategy: Encoding strategy string from the suggestion dict.
+
         """
         has_target_encoding: bool = "target encoding" in strategy
         base_strategy: str = strategy.replace(" + target encoding", "").strip()
 
-        # --- EDA blurb: describe the cardinality tier ---
         if base_strategy == "one-hot":
             eda_level = "good"
             eda_title: str = f"Low Cardinality ({cardinality} values)"
             eda_body: str = (
-                f"{col} has {cardinality} unique values - a manageable number of "
+                f"'{col}' has {cardinality} unique values — a manageable number of "
                 f"distinct categories. Frequency distributions are easy to read and "
-                f"group comparisons are statistically tractable. This is the simplest "
-                f"cardinality tier to analyse; bar charts and grouped summaries will "
-                f"give a clear picture of how values are distributed."
+                f"group comparisons are statistically tractable. Bar charts and "
+                f"grouped summaries will give a clear picture of value distribution."
             )
         elif base_strategy == "frequency":
             eda_level = "info"
             eda_title = f"Moderate Cardinality ({cardinality} values)"
             eda_body = (
-                f"{col} has {cardinality} unique values - enough categories that "
-                "individual bars will be small but the column is still comprehensible. "
-                "Focus on the top 10-15 most frequent values first to understand where "
-                "the majority of observations sit. Check whether the long tail of rare "
-                "categories represents genuine diversity or sparse / miscoded data."
+                f"'{col}' has {cardinality} unique values — enough categories that "
+                f"individual bars will be small but the column is still "
+                f"comprehensible. Focus on the top 10-15 most frequent values first. "
+                f"Check whether the long tail of rare categories represents genuine "
+                f"diversity or sparse / miscoded data."
             )
         else:
-            # frequency (high-cardinality)
             eda_level = "warn"
             eda_title = f"High Cardinality ({cardinality} values)"
             eda_body = (
-                f"{col} has {cardinality} unique values - too many to analyse "
+                f"'{col}' has {cardinality} unique values — too many to analyse "
                 f"category-by-category. Standard frequency plots will be unreadable "
                 f"at this scale. Focus on the top-N most frequent values, the "
-                f"distribution of frequency counts themselves (how many categories "
-                f"appear only once?), and whether the column is a genuine categorical "
-                f"feature or effectively an identifier."
+                f"distribution of frequency counts (how many categories appear only "
+                f"once?), and whether this is a genuine feature or an identifier."
             )
 
         self.add_guidance(
@@ -283,20 +298,18 @@ class SuggestCategoricalEncoding(BaseTask):
             metric={"cardinality": cardinality, "suggested_encoding": strategy},
         )
 
-        # --- ML blurb: prescribe encoding with tradeoffs ---
         if base_strategy == "one-hot":
             ml_level = "good"
             ml_title: str = f"One-Hot Encoding Recommended ({cardinality} values)"
             ml_body: str = (
-                f"{col} has {cardinality} unique values - one-hot encoding is the "
-                f"standard choice. It adds {cardinality} binary features, which is "
-                f"compact at this cardinality. Works with all model families. "
-                f"Drop one category to avoid perfect multicollinearity in linear "
-                f"models (use drop='first' or 'if_binary')."
+                f"'{col}' has {cardinality} unique values — one-hot encoding is the "
+                f"standard choice. It adds {cardinality} binary features, compact at "
+                f"this cardinality. Drop one category to avoid perfect "
+                f"multicollinearity in linear models (drop='first' or 'if_binary')."
             )
             if has_target_encoding:
                 ml_body += (
-                    f" Target correlation was detected - target encoding is also "
+                    " Target correlation was detected — target encoding is also "
                     f"viable if you want a single ordinal feature rather than "
                     f"{cardinality} binary columns."
                 )
@@ -318,18 +331,17 @@ class SuggestCategoricalEncoding(BaseTask):
             ml_level = "info"
             ml_title = f"Frequency Encoding Recommended ({cardinality} values)"
             ml_body = (
-                f"{col} has {cardinality} unique values - one-hot would produce "
-                f"{cardinality} features, which is manageable but adds noise for "
-                f"rare categories. Frequency encoding replaces each category with "
-                f"its count (or proportion), preserving ordinality of popularity "
-                f"in a single feature. Group rare categories into 'Other' before "
-                f"encoding to reduce noise from singletons."
+                f"'{col}' has {cardinality} unique values — one-hot would produce "
+                f"{cardinality} features, manageable but noisy for rare categories. "
+                f"Frequency encoding replaces each category with its count, "
+                f"preserving ordinality of popularity in a single feature. Group "
+                f"rare categories into 'Other' before encoding."
             )
             if has_target_encoding:
                 ml_body += (
-                    " Target correlation was detected - target encoding may "
-                    "outperform frequency encoding; use with cross-validation "
-                    "folds to prevent target leakage."
+                    " Target correlation detected — target encoding may outperform "
+                    "frequency encoding; use within cross-validation folds to "
+                    "prevent leakage."
                 )
             ml_actions = [
                 {
@@ -355,48 +367,46 @@ class SuggestCategoricalEncoding(BaseTask):
                 )
 
         else:
-            # frequency (high-cardinality)
             ml_level = "warn"
             ml_title = f"High-Cardinality Encoding Required ({cardinality} values)"
-            ml_body = (
-                f"{col} has {cardinality} unique values. One-hot encoding would "
-                f"create {cardinality} sparse binary features - almost certainly "
-                f"too many. Frequency encoding or hashing are the practical "
-                f"defaults. If a numeric target is available, target encoding "
-                f"(mean of target per category) often gives the best signal in "
-                f"a single feature but must be applied within cross-validation "
-                f"folds to prevent leakage. Verify this is a genuine feature "
-                f"and not an identifier before encoding."
-            )
             if has_target_encoding:
                 ml_body = (
-                    f"{col} has {cardinality} unique values and target correlation "
-                    f"was detected. Target encoding is the recommended strategy - "
-                    f"it distils the predictive relationship between category and "
-                    f"target into a single numeric feature. Apply strictly within "
-                    f"CV folds; fitting on the full training set causes target leakage."
+                    f"'{col}' has {cardinality} unique values and target correlation "
+                    f"was detected. Target encoding is the recommended strategy — it "
+                    f"distils the predictive relationship into a single numeric "
+                    f"feature. Apply strictly within CV folds; fitting on the full "
+                    f"training set causes target leakage."
+                )
+            else:
+                ml_body = (
+                    f"'{col}' has {cardinality} unique values. One-hot would create "
+                    f"{cardinality} sparse binary features — almost certainly too "
+                    f"many. Frequency encoding or hashing are the practical defaults. "
+                    f"If a numeric target is available, target encoding often gives "
+                    f"the best signal in a single feature but must be applied within "
+                    f"CV folds. Confirm this is a genuine feature, not an identifier."
                 )
             ml_actions = [
                 {
                     "action": "encode",
                     "method": "target_encoding",
                     "column": col,
-                    "detail": "Best signal for high-cardinality with a numeric target;"
-                    " use within CV folds",
+                    "detail": "Best for high-cardinality with numeric target; "
+                    "use within CV folds",
                 },
                 {
                     "action": "encode",
                     "method": "frequency_encoding",
                     "column": col,
-                    "detail": "No target needed; encodes popularity as a numeric "
-                    "signal",
+                    "detail": "No target needed; encodes popularity as numeric signal",
                 },
                 {
                     "action": "encode",
                     "method": "hash_encoding",
                     "column": col,
-                    "detail": "Fixed output dimensionality; useful under memory "
-                    "constraints",
+                    "detail": (
+                        "Fixed output dimensionality; useful under memory constraints"
+                    ),
                 },
                 {
                     "action": "drop",

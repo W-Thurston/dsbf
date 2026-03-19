@@ -1,20 +1,22 @@
 # tests/eda/test_tasks/test_detect_high_cardinality.py
 
 import pandas as pd
+import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_high_cardinality import DetectHighCardinality
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
-def test_detect_high_cardinality_expected_output(tmp_path):
-    """
-    Test detection of high-cardinality columns using cardinality_threshold=50.
-    """
+def test_high_cardinality_column_detected(tmp_path) -> None:
+    """A column with more unique values than the threshold must be flagged."""
     df = pd.DataFrame(
         {
-            "a": list(range(100)),  # 100 unique values
-            "b": list("abcde") * 20,  # 5 unique values
+            # 100 unique string values
+            # will be classified as categorical by infer_types
+            "city": [f"city_{i}" for i in range(100)],
+            # 5 unique values — below threshold
+            "region": list("ABCDE") * 20,
         }
     )
 
@@ -24,71 +26,102 @@ def test_detect_high_cardinality_expected_output(tmp_path):
         task_overrides={"cardinality_threshold": 50},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    ctx.set_metadata("semantic_types", {"city": "categorical", "region": "categorical"})
+    result: TaskResult = ctx.run_task(task)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
     assert result.data is not None
-    assert "a" in result.data
-    assert "b" not in result.data
+    # city has 100 unique values > threshold 50
+    assert "city" in result.data
+    # region has only 5 unique values
+    assert "region" not in result.data
     assert result.metadata["cardinality_threshold"] == 50
 
 
-def test_detect_high_cardinality_with_low_cardinality_column(tmp_path):
-    df = pd.DataFrame({"c": ["x", "x", "y", "z", "x", "y", "z"]})
-    ctx, task = make_ctx_and_task(
+def test_low_cardinality_column_not_flagged(tmp_path) -> None:
+    """A column below the threshold must not appear in results."""
+    df = pd.DataFrame({"label": ["x", "x", "y", "z", "x", "y", "z"]})
+
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
         task_overrides={"cardinality_threshold": 10},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
 
-    assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert result.data is not None
-    assert "c" not in result.data.keys()
+    assert "label" not in result.data
 
 
-def test_detect_high_cardinality_with_plots(tmp_path):
-    df = pd.DataFrame(
-        {
-            "uuid": [f"id_{i}" for i in range(100)],
-            "category": ["a", "b", "c", "d"] * 25,
-        }
-    )
+def test_guidance_attached_for_flagged_columns(tmp_path) -> None:
+    """EDA and ML guidance blurbs must be attached for each high-cardinality column."""
+    df = pd.DataFrame({"sku": [f"SKU-{i}" for i in range(100)]})
 
     ctx, task = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
         task_overrides={"cardinality_threshold": 50},
+        global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    ctx.set_metadata("semantic_types", {"sku": "categorical"})
+    result: TaskResult = ctx.run_task(task)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "uuid" in result.plots
-    assert "category" not in result.plots
-
-    static = result.plots["uuid"]["static"]
-    assert static.exists()
-    static.unlink()
-
-    interactive = result.plots["uuid"]["interactive"]
-    assert "annotations" in interactive
-    assert any("unique values" in a for a in interactive["annotations"])
+    assert "sku" in result.data
+    assert result.guidance is not None
+    assert "sku" in result.guidance
+    assert len(result.guidance["sku"]["eda"]) > 0
+    assert len(result.guidance["sku"]["ml"]) > 0
+    ml_actions = result.guidance["sku"]["ml"][0]["actions"]
+    assert any(a["action"] == "encode" for a in ml_actions)
 
 
-def test_detect_high_cardinality_all_null(tmp_path):
-    df = pd.DataFrame({"x": [None, None, None]})
+def test_polars_dataframe_handled(tmp_path) -> None:
+    """Task must work correctly on Polars DataFrames."""
+    df = pl.DataFrame({"cat": [f"val_{i}" for i in range(100)]})
+
     ctx, task = make_ctx_and_task(
+        task_cls=DetectHighCardinality,
+        current_df=df,
+        task_overrides={"cardinality_threshold": 50},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"cat": "categorical"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert "cat" in result.data
+    assert result.data["cat"] == 100
+
+
+def test_all_null_column_not_flagged(tmp_path) -> None:
+    """A column with all null values must not appear in results."""
+    df = pd.DataFrame({"x": [None, None, None]})
+
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
 
     assert result.status == "success"
     assert result.data == {}
-    assert result.plots == {}
+
+
+def test_no_plots_generated(tmp_path) -> None:
+    """High-cardinality detection task must not generate plots."""
+    df = pd.DataFrame({"tag": [f"t{i}" for i in range(100)]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectHighCardinality,
+        current_df=df,
+        task_overrides={"cardinality_threshold": 50},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
+
+    assert result.status == "success"
+    assert result.plots is None

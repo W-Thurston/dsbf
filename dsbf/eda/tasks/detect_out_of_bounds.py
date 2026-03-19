@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/detect_out_of_bounds.py
 
-from typing import Any
-
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
@@ -18,30 +16,51 @@ from dsbf.utils.backend import is_polars
     stage="cleaned",
     domain="core",
     runtime_estimate="fast",
+    phase="eda",
     tags=["bounds", "validation"],
     expected_semantic_types=["continuous"],
 )
 class DetectOutOfBounds(BaseTask):
     """
-    Detects numeric columns with values outside expected or domain-specific bounds.
+    Detects numeric columns with values outside expected domain-specific bounds.
+
+    Checks each numeric column name against a configurable bounds dictionary.
+    Only columns whose names appear in the bounds dict are checked — all others
+    are silently skipped.
+
+    The default bounds cover common column name patterns: ``age``, ``temperature``,
+    ``percent``, and ``score``. Custom bounds can be provided via task config.
+
+    Polars DataFrames are converted to pandas for the bounds check since the
+    filtering logic uses pandas boolean indexing.
+
+    For each flagged column, both EDA and ML guidance blurbs are emitted describing
+    the violation and recommended remediation.
+
+    Configurable parameters (via config["tasks"]["detect_out_of_bounds"]):
+        custom_bounds (dict): Mapping of column name → (lower, upper) tuple.
+            Default: {"age": (0, 120), "temperature": (-100, 150),
+                      "percent": (0, 100), "score": (0, 1)}
     """
 
     def run(self) -> None:
-        try:
-            df: Any = self.input_data
+        """
+        Execute out-of-bounds detection and populate self.output.
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
+        try:
+            df = self.input_data
+
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} 'continuous' column(s)",
+                f"    Processing {len(matched_cols)} 'continuous' column(s)",
                 "debug",
             )
 
-            # Load shared reliability flags in case we
-            #  want to supplement bounds in the future
-            _ = self.ensure_reliability_flags()
-
-            bounds: dict[Any, Any] = dict(
+            bounds: dict[str, tuple[float, float]] = dict(
                 self.get_task_param("custom_bounds")
                 or {
                     "age": (0, 120),
@@ -52,23 +71,25 @@ class DetectOutOfBounds(BaseTask):
             )
 
             if is_polars(df):
+                # pandas boolean indexing is used for violation detection.
                 df = df.to_pandas()
 
-            flagged: dict[str, dict[str, Any]] = {}
+            flagged: dict[str, dict] = {}
 
             for col in df.select_dtypes(include=np.number).columns:
-                if col in bounds:
-                    lower, upper = bounds[col]
-                    series = df[col].dropna()
-                    violations = series[(series < lower) | (series > upper)]
+                if col not in bounds:
+                    continue
+                lower, upper = bounds[col]
+                series = df[col].dropna()
+                violations = series[(series < lower) | (series > upper)]
 
-                    if not violations.empty:
-                        flagged[col] = {
-                            "count": int(violations.count()),
-                            "min_violation": float(violations.min()),
-                            "max_violation": float(violations.max()),
-                            "expected_range": (float(lower), float(upper)),
-                        }
+                if not violations.empty:
+                    flagged[col] = {
+                        "count": int(violations.count()),
+                        "min_violation": float(violations.min()),
+                        "max_violation": float(violations.max()),
+                        "expected_range": (float(lower), float(upper)),
+                    }
 
             self.output = TaskResult(
                 name=self.name,
@@ -81,17 +102,16 @@ class DetectOutOfBounds(BaseTask):
                 data=flagged,
                 metadata={
                     "rule_columns": list(bounds.keys()),
-                    "suggested_viz_type": "None",
+                    "suggested_viz_type": "none",
                     "recommended_section": "Validation",
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys()),
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
 
-            # Generate per-column guidance for each violation
             for col, violation in flagged.items():
                 self._attach_guidance(col, violation)
 
@@ -106,13 +126,20 @@ class DetectOutOfBounds(BaseTask):
             self.output = make_failure_result(self.name, e)
 
     def _attach_guidance(self, col: str, violation: dict) -> None:
-        """Generate EDA + ML guidance for a column with out-of-bounds values."""
+        """
+        Generate EDA and ML guidance for a column with out-of-bounds values.
+
+        Args:
+            col: Column name.
+            violation: Violation dict containing ``count``, ``min_violation``,
+                ``max_violation``, and ``expected_range``.
+
+        """
         count = violation["count"]
         min_v = violation["min_violation"]
         max_v = violation["max_violation"]
         lo, hi = violation["expected_range"]
 
-        # Determine which boundary was breached for a precise description
         if min_v < lo and max_v > hi:
             breach_desc: str = f"below {lo} and above {hi}"
         elif min_v < lo:
@@ -121,21 +148,28 @@ class DetectOutOfBounds(BaseTask):
             breach_desc = f"above the maximum of {hi} (highest seen: {max_v})"
 
         eda_body: str = (
-            f"{col} has {count:,} value(s) outside the expected range "
-            f"[{lo}, {hi}]: {breach_desc}. "
-            f"Out-of-bounds values may indicate data entry errors, unit mismatches "
-            f"(e.g. a temperature recorded in Fahrenheit in a Celsius column), or "
-            f"genuine edge cases that fall outside the defined domain. "
-            f"Investigate the source of these values before treating them as valid."
+            f"'{col}' has {count:,} value(s) outside the expected range "
+            f"[{lo}, {hi}]: {breach_desc}. Out-of-bounds values may indicate "
+            f"data entry errors, unit mismatches (e.g. a temperature recorded in "
+            f"Fahrenheit in a Celsius column), or genuine edge cases outside the "
+            f"defined domain. Investigate the source of these values before "
+            f"treating them as valid."
         )
 
         ml_body: str = (
-            f"{col} has {count:,} value(s) outside [{lo}, {hi}]. "
-            f"If these are errors, cap or remove them before modeling - they will "
-            f"distort learned boundaries and make the model brittle at the edges "
-            f"of the distribution. If they are genuine, confirm the model will "
-            f"encounter similar values at inference time."
+            f"'{col}' has {count:,} value(s) outside [{lo}, {hi}]. If these are "
+            f"errors, cap or remove them before modeling — they will distort learned "
+            f"boundaries and make the model brittle at the edges of the distribution. "
+            f"If they are genuine, confirm the model will encounter similar values "
+            f"at inference time."
         )
+
+        metric: dict = {
+            "violation_count": count,
+            "min_violation": min_v,
+            "max_violation": max_v,
+            "expected_range": [lo, hi],
+        }
 
         self.add_guidance(
             result=self.output,
@@ -145,12 +179,7 @@ class DetectOutOfBounds(BaseTask):
             title=f"Out-of-Bounds Values ({count:,} rows)",
             body=eda_body.strip(),
             actions=[],
-            metric={
-                "violation_count": count,
-                "min_violation": min_v,
-                "max_violation": max_v,
-                "expected_range": [lo, hi],
-            },
+            metric=metric,
         )
 
         self.add_guidance(
@@ -158,14 +187,16 @@ class DetectOutOfBounds(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title="Out-of-Bounds Values - Validate Before Modeling",
+            title="Out-of-Bounds Values — Validate Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "investigate",
                     "column": col,
-                    "detail": f"Confirm whether values outside [{lo}, {hi}] "
-                    "are errors or genuine",
+                    "detail": (
+                        f"Confirm whether values outside [{lo}, {hi}] are "
+                        "errors or genuine observations"
+                    ),
                 },
                 {
                     "action": "winsorize",
@@ -175,14 +206,8 @@ class DetectOutOfBounds(BaseTask):
                 {
                     "action": "remove_rows",
                     "column": col,
-                    "detail": "Remove violating rows if they are confirmed data "
-                    "entry errors",
+                    "detail": "Remove violating rows if confirmed data entry errors",
                 },
             ],
-            metric={
-                "violation_count": count,
-                "min_violation": min_v,
-                "max_violation": max_v,
-                "expected_range": [lo, hi],
-            },
+            metric=metric,
         )

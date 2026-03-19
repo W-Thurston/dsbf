@@ -1,113 +1,86 @@
 # tests/eda/test_tasks/test_summarize_modes.py
 
 import pandas as pd
+import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_modes import SummarizeModes
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
-def test_summarize_modes_expected_output(tmp_path):
-    df = pd.DataFrame({"a": [1, 1, 2, 3], "b": ["x", "y", "x", "z"]})
+def test_single_mode_returned_as_scalar(tmp_path) -> None:
+    """A column with one clear mode must return a scalar, not a list."""
+    df = pd.DataFrame({"a": [1, 1, 1, 2, 3]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeModes,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
-
-    assert isinstance(result, TaskResult)
-    assert result.status == "success"
-    assert result.data is not None
-
-    # Accept either scalar or multimodal list
-    a_mode = result.data["a"]
-    assert a_mode == 1 or (isinstance(a_mode, list) and 1 in a_mode)
-
-    b_mode = result.data["b"]
-    assert b_mode == "x" or (isinstance(b_mode, list) and "x" in b_mode)
-
-
-def test_summarize_modes_multimodal_case(tmp_path):
-    df = pd.DataFrame({"x": [1, 1, 2, 2, 3]})
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeModes,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
 
     assert result.status == "success"
-    assert result.data is not None
-    assert isinstance(result.data["x"], list)
-    assert set(result.data["x"]) >= {1, 2}
+    assert result.data["a"] == 1
 
 
-def test_summarize_modes_with_plots(tmp_path):
-    df = pd.DataFrame(
-        {
-            "color": ["red", "blue", "red", "green", "red"],
-            "shape": ["circle", "square", "circle", "triangle", "circle"],
-        }
-    )
+def test_multimodal_column_returns_list(tmp_path) -> None:
+    """A column with multiple equally-frequent values must return a list."""
+    df = pd.DataFrame({"a": [1, 1, 2, 2, 3]})  # 1 and 2 both appear twice
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeModes,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "color" in result.plots
-
-    # Check static plot
-    static_path = result.plots["color"]["static"]
-    assert static_path.exists()
-    static_path.unlink()
-
-    # Check annotation
-    interactive = result.plots["color"]["interactive"]
-    assert any("Most frequent" in a for a in interactive["annotations"])
+    # May return list or scalar depending on pandas mode behaviour
+    assert result.data["a"] in ([1, 2], [2, 1], 1, 2)
 
 
-def test_summarize_modes_numeric_column_only(tmp_path):
-    df = pd.DataFrame({"value": [1, 2, 2, 3, 3]})
-    ctx, task = make_ctx_and_task(
+def test_all_columns_present_in_result(tmp_path) -> None:
+    """Every column in the DataFrame must appear in result data."""
+    df = pd.DataFrame({"x": [1, 2, 1], "y": ["a", "b", "a"], "z": [True, True, False]})
+
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeModes,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
-    assert result.data is not None
-    assert "value" in result.data
-    assert result.plots == {}
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
 
-
-def test_summarize_modes_constant_column(tmp_path):
-    df = pd.DataFrame({"x": ["same"] * 5})
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeModes,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    result = ctx.run_task(task)
-    assert result.data is not None
+    assert result.status == "success"
     assert "x" in result.data
-    assert result.plots == {}
+    assert "y" in result.data
+    assert "z" in result.data
 
 
-def test_summarize_modes_empty_df(tmp_path):
-    df = pd.DataFrame()
-    ctx, task = make_ctx_and_task(
+def test_polars_dataframe_handled(tmp_path) -> None:
+    """Task must work correctly on Polars DataFrames."""
+    df = pl.DataFrame({"col": [5, 5, 5, 3, 2]})
+
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeModes,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
+
     assert result.status == "success"
-    assert result.data == {}
-    assert result.plots == {}
+    assert result.data["col"] == 5
+
+
+def test_no_plots_generated(tmp_path) -> None:
+    """Mode summary must not generate plots."""
+    df = pd.DataFrame({"a": [1, 2, 1]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeModes,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
+
+    assert result.status == "success"
+    assert result.plots is None

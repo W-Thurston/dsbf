@@ -12,10 +12,11 @@ from dsbf.utils.backend import is_polars
 
 @register_task(
     display_name="Summarize Numeric Columns",
-    description="Computes basic stats (mean, std, min, max, etc.) for numeric columns",
+    description="Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="cleaned",
+    phase="eda",
     domain="core",
     runtime_estimate="fast",
     tags=["numeric", "summary"],
@@ -23,31 +24,49 @@ from dsbf.utils.backend import is_polars
 )
 class SummarizeNumeric(BaseTask):
     """
-    Produces extended summary statistics for all numeric columns.
+    Produce extended summary statistics for all continuous numeric columns.
 
-    Statistics include:
+    Computes descriptive statistics for each continuous column including:
+
     - Count, mean, std, min, max
     - Percentiles: 1%, 5%, 25%, 50%, 75%, 95%, 99%
-    - A flag for near-zero variance columns (variance < 1e-4)
+    - A ``near_zero_variance`` flag (variance < 1e-4)
+
+    Two complementary guidance blurb types are emitted:
+
+    - **Near-zero variance**: column is effectively constant — emits both EDA
+      and ML blurbs advising the column be dropped before modeling.
+    - **Mean-median gap**: asymmetric distribution where the mean is pulled
+      away from the median by a long tail. Complements ``detect_skewness`` —
+      that task reports the skewness coefficient; this one reports the gap
+      in interpretable units (standard deviations) alongside raw stat values.
+
+    Polars DataFrames are converted to pandas before processing.
     """
 
     def run(self) -> None:
-        try:
-            df: Any = self.input_data
+        """
+        Execute numeric summarization and populate self.output.
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
+        try:
+            df = self.input_data
+
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} 'continuous' column(s)",
+                f"    Processing {len(matched_cols)} 'continuous' column(s)",
                 "debug",
             )
 
             if is_polars(df):
-                df = df.to_pandas()
                 self._log(
-                    "    Converting Polars to Pandas for numeric summarization",
+                    "    Converting Polars to pandas for numeric summarization",
                     "debug",
                 )
+                df = df.to_pandas()
 
             numeric_df = df.select_dtypes(include=np.number)
             extended_stats: dict[str, dict[str, Any]] = {}
@@ -56,16 +75,14 @@ class SummarizeNumeric(BaseTask):
                 series = numeric_df[col].dropna()
 
                 if series.empty:
-                    self._log(f"    {col} skipped: empty after dropna()", "debug")
+                    self._log(f"    '{col}' skipped: empty after dropna()", "debug")
                     continue
 
-                # Compute descriptive stats with extended percentiles
                 desc = series.describe(
                     percentiles=[0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99],
                 )
-                # Custom variance check for near-constant features
-                variance = np.var(series)
-                near_zero_var = bool(variance < 1e-4)
+                variance: float = np.var(series)
+                near_zero_var = bool(variance < 1e-4)  # noqa: PLR2004
 
                 extended_stats[col] = {
                     "count": desc.get("count", np.nan),
@@ -94,14 +111,13 @@ class SummarizeNumeric(BaseTask):
                     ),
                 },
                 data=extended_stats,
-                plots={},
                 metadata={
                     "suggested_viz_type": "histogram",
                     "recommended_section": "Summary",
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
@@ -121,20 +137,25 @@ class SummarizeNumeric(BaseTask):
 
     def _attach_guidance(self, col: str, stats: dict[str, Any]) -> None:
         """
-        Generate EDA + ML guidance for a numeric column.
+        Generate EDA and ML guidance for a numeric column.
 
-        Triggers:
-        - near_zero_variance: the column is effectively constant
-        - mean/median gap > 0.5 std: distribution is asymmetric (complementary
-          to detect_skewness - that task reports the skewness coefficient;
-          this one reports the raw central tendency gap in interpretable units)
+        Emits guidance for two patterns:
+
+        - ``near_zero_variance``: the column is effectively constant.
+        - Mean/median gap > 0.5 standard deviations: distribution is asymmetric.
+          Complements ``detect_skewness`` — that task reports the skewness
+          coefficient; this reports the gap in interpretable std-deviation units.
+
+        Args:
+            col: Column name.
+            stats: Extended stats dict from ``extended_stats``.
+
         """
-        mean: Any | None = stats.get("mean")
-        std: Any | None = stats.get("std")
-        median: Any | None = stats.get("50%")
-        near_zero_var = stats.get("near_zero_variance", False)
+        mean: Any = stats.get("mean")
+        std: Any = stats.get("std")
+        median: Any = stats.get("50%")
+        near_zero_var: bool = stats.get("near_zero_variance", False)
 
-        # --- Near-zero variance ---
         if near_zero_var:
             self.add_guidance(
                 result=self.output,
@@ -143,11 +164,11 @@ class SummarizeNumeric(BaseTask):
                 level="warn",
                 title="Near-Zero Variance",
                 body=(
-                    f"{col} has a variance close to zero - nearly all values are "
+                    f"'{col}' has a variance close to zero — nearly all values are "
                     f"identical (mean: {mean:.4g}, std: {std:.4g}). This column "
-                    f"carries almost no variation across rows. Check whether it "
-                    f"is a constant default, a derived field that only changes "
-                    f"under rare conditions, or a data loading artifact."
+                    f"carries almost no variation across rows. Check whether it is a "
+                    f"constant default, a derived field that only changes under rare "
+                    f"conditions, or a data loading artifact."
                 ),
                 actions=[],
                 metric={
@@ -161,28 +182,26 @@ class SummarizeNumeric(BaseTask):
                 column=col,
                 phase="ml",
                 level="warn",
-                title="Near-Zero Variance - Minimal Signal",
+                title="Near-Zero Variance — Minimal Signal",
                 body=(
-                    f"{col} has near-zero variance (std: {std:.4g}). Features with "
+                    f"'{col}' has near-zero variance (std: {std:.4g}). Features with "
                     f"essentially no spread provide no discriminative power to any "
                     f"model and can cause numerical instability in algorithms that "
-                    f"scale by variance (PCA, SVM, regularised regression). "
-                    f"Drop before modelling unless the column is the target variable."
+                    f"scale by variance (PCA, SVM, regularised regression). Drop "
+                    f"before modelling unless the column is the target variable."
                 ),
                 actions=[
                     {
                         "action": "drop",
                         "column": col,
-                        "detail": "Zero variance - no signal for any model",
+                        "detail": "Zero variance — no signal for any model",
                     },
                 ],
                 metric={"mean": round(mean, 6), "std": round(std, 6)},
             )
 
-        # --- Mean / median divergence ---
-        # Only fire when we have enough spread to make the gap meaningful.
-        # Skip if near_zero_var already fired (redundant for effectively constant cols)
-        # and skip if std is zero to avoid division errors.
+        # Mean-median gap — only meaningful when there is sufficient spread.
+        # Skip if near_zero_var already fired (redundant for constant columns).
         if (
             not near_zero_var
             and std is not None
@@ -192,65 +211,64 @@ class SummarizeNumeric(BaseTask):
         ):
             gap_in_std = abs(mean - median) / std
             gap_info = 0.5  # noticeable asymmetry
-            gap_warn = 1.0  # substantial pull - mean is no longer representative
+            gap_warn = 1.0  # substantial pull — mean no longer representative
 
             if gap_in_std >= gap_info:
                 level: Literal["info", "warn"] = (
                     "warn" if gap_in_std >= gap_warn else "info"
                 )
-                direction: Literal["above", "below"] = (
-                    "above" if mean > median else "below"
-                )
-                pull_desc: Literal[
-                    "downward by low values", "upward by high values"
-                ] = (
+                direction: str = "above" if mean > median else "below"
+                pull_desc: str = (
                     "upward by high values"
                     if mean > median
                     else "downward by low values"
                 )
 
+                representative_note: str = (
+                    "For most analytical purposes the median is a more "
+                    "representative centre for this column. "
+                    if level == "warn"
+                    else ""
+                )
+
                 eda_body: str = (
-                    f"The mean of {col} ({mean:.4g}) sits {direction} the median "
+                    f"The mean of '{col}' ({mean:.4g}) sits {direction} the median "
                     f"({median:.4g}) by {gap_in_std:.2f} standard deviations. "
                     f"The mean is being pulled {pull_desc}. "
-                    f"{
-                        'For most analytical purposes the median is a more '
-                        'representative centre for this column. '
-                        if level == 'warn'
-                        else ''
-                    }"
+                    f"{representative_note}"
                     f"Check the histogram to see whether the asymmetry comes from "
                     f"a long tail or from a cluster of outliers at one end."
                 )
                 ml_body: str = (
-                    f"{col} has a mean–median gap of {gap_in_std:.2f} standard "
-                    f"deviations, indicating an asymmetric distribution. "
-                    f"Models that assume normality (linear regression, LDA, "
-                    f"Gaussian NB) will be affected. See the skewness findings "
-                    f"for specific transform recommendations."
+                    f"'{col}' has a mean-median gap of {gap_in_std:.2f} standard "
+                    f"deviations, indicating an asymmetric distribution. Models that "
+                    f"assume normality (linear regression, LDA, Gaussian NB) will be "
+                    f"affected. See the skewness findings for specific transform "
+                    f"recommendations."
                 )
+                metric: dict[str, float] = {
+                    "mean": round(mean, 4),
+                    "median": round(median, 4),
+                    "std": round(std, 4),
+                    "gap_in_std": round(gap_in_std, 4),
+                }
 
                 self.add_guidance(
                     result=self.output,
                     column=col,
                     phase="eda",
                     level=level,
-                    title=f"Mean-Median Gap ({gap_in_std:.2f}σ)",  # noqa: RUF001
+                    title=f"Mean-Median Gap ({gap_in_std:.2f}\u03c3)",
                     body=eda_body.strip(),
                     actions=[],
-                    metric={
-                        "mean": round(mean, 4),
-                        "median": round(median, 4),
-                        "std": round(std, 4),
-                        "gap_in_std": round(gap_in_std, 4),
-                    },
+                    metric=metric,
                 )
                 self.add_guidance(
                     result=self.output,
                     column=col,
                     phase="ml",
                     level=level,
-                    title=f"Distributional Asymmetry ({gap_in_std:.2f}σ gap)",
+                    title=f"Distributional Asymmetry ({gap_in_std:.2f}\u03c3 gap)",
                     body=ml_body.strip(),
                     actions=[
                         {
@@ -261,10 +279,5 @@ class SummarizeNumeric(BaseTask):
                             "recommendations",
                         },
                     ],
-                    metric={
-                        "mean": round(mean, 4),
-                        "median": round(median, 4),
-                        "std": round(std, 4),
-                        "gap_in_std": round(gap_in_std, 4),
-                    },
+                    metric=metric,
                 )

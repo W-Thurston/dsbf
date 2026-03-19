@@ -1,6 +1,6 @@
 # dsbf/eda/tasks/detect_skewness.py
 
-from typing import Any
+from typing import Literal
 
 import numpy as np
 from scipy.stats import skew
@@ -11,10 +11,14 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
 
-# Skewness thresholds (absolute value)
-_SKEW_MILD = 0.5  # below: symmetric, no guidance needed
-_SKEW_MOD = 1.0  # mild → moderate boundary
-_SKEW_HEAVY = 2.0  # moderate → heavy boundary
+# Skewness thresholds (absolute value).
+# |skew| <= 0.5: symmetric — no guidance emitted.
+# 0.5 < |skew| <= 1.0: mild — info level.
+# 1.0 < |skew| <= 2.0: moderate — warn level, transform recommended.
+# |skew| > 2.0: heavy — warn level, transform strongly recommended.
+_SKEW_MILD = 0.5
+_SKEW_MOD = 1.0
+_SKEW_HEAVY = 2.0
 
 
 @register_task(
@@ -25,36 +29,47 @@ _SKEW_HEAVY = 2.0  # moderate → heavy boundary
     stage="cleaned",
     domain="core",
     runtime_estimate="fast",
+    phase="eda",
     tags=["distribution", "skew"],
     expected_semantic_types=["continuous"],
 )
 class DetectSkewness(BaseTask):
     """
-    Computes skewness for all numeric columns tagged as 'continuous'.
+    Computes Fisher skewness for all numeric columns tagged as 'continuous'.
 
-    Skewness quantifies the asymmetry of a distribution. For each column
-    with notable asymmetry, this task generates two guidance blurbs:
+    Skewness quantifies the asymmetry of a distribution. For each column with
+    notable asymmetry (|skew| > 0.5), this task generates two guidance blurbs:
 
-    - EDA guidance: describes the distribution as observed - what the skew
-      value means about the shape of the data, with no modeling language.
-    - ML guidance: prescribes what to do before modeling - which model
-      families are affected, what transforms are recommended, expressed
-      as structured actions an agent or user can act on.
+    - **EDA blurb**: describes the distribution as observed — what the skew value
+      means about the shape of the data, with no modeling language or action chips.
+    - **ML blurb**: prescribes what to do before modeling — which model families
+      are affected, what transforms are recommended, expressed as structured actions
+      a user or agent can act on directly.
 
-    Both blurbs are self-contained (column name, metric value, and context
-    are explicit) so they can be consumed meaningfully without surrounding
-    context by a downstream LLM, agent, or rendering layer.
+    Both blurbs are self-contained (column name, metric value, and context are
+    explicit) so they can be consumed meaningfully without surrounding context
+    by a downstream LLM, agent, or rendering layer.
+
+    Symmetric columns (|skew| ≤ 0.5) receive no blurb — a clean result does not
+    need a finding.
     """
 
-    def run(self) -> None:
+    def run(self) -> None:  # noqa: C901
+        """
+        Execute skewness computation and populate self.output.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
         try:
-            df: Any = self.input_data
-            # col -> {skew, mean, median, std} - collected during computation
+            df = self.input_data
             column_stats: dict[str, dict[str, float]] = {}
 
             numeric_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(numeric_cols)} 'continuous' column(s)", "debug"
+                f"    Processing {len(numeric_cols)} 'continuous' column(s)",
+                "debug",
             )
 
             if is_polars(df):
@@ -62,11 +77,14 @@ class DetectSkewness(BaseTask):
                 for col in df_sel.columns:
                     series = df_sel[col].drop_nulls().to_numpy()
                     if series.size == 0:
-                        self._log(f"    {col} skipped: empty after dropna()", "debug")
+                        self._log(
+                            f"    '{col}' skipped: empty after drop_nulls()",
+                            "debug",
+                        )
                         continue
                     mean = float(np.mean(series))
                     std = float(np.std(series))
-                    skew_val = (
+                    skew_val: float = (
                         float(np.mean(((series - mean) / std) ** 3))
                         if std != 0
                         else 0.0
@@ -77,8 +95,6 @@ class DetectSkewness(BaseTask):
                         "median": float(np.median(series)),
                         "std": std,
                     }
-                    self._log(f"    {col}: skewness computed", "debug")
-
             else:
                 numeric_df = (
                     df[numeric_cols]
@@ -88,55 +104,52 @@ class DetectSkewness(BaseTask):
                 for col in numeric_df.columns:
                     series = numeric_df[col].dropna()
                     if series.empty:
-                        self._log(f"    {col} skipped: empty after dropna()", "debug")
+                        self._log(f"    '{col}' skipped: empty after dropna()", "debug")
                         continue
-                    if series.nunique() == 1:
-                        skew_val = 0.0
-                        self._log(f"    {col} skipped: constant values", "debug")
-                    else:
-                        skew_val = float(skew(series))
+                    # Constant column has undefined skewness — treat as 0.
+                    skew_val = 0.0 if series.nunique() == 1 else float(skew(series))
                     column_stats[col] = {
                         "skew": skew_val,
                         "mean": float(series.mean()),
                         "median": float(series.median()),
                         "std": float(series.std()),
                     }
-                    self._log(f"    {col}: skewness computed", "debug")
 
-            # Build TaskResult - data carries raw skew floats as before
+            # data stores the raw skew float per column for downstream consumption.
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
                     "message": (
                         f"Computed skewness for {len(column_stats)} numeric column(s)."
-                    )
+                    ),
                 },
                 data={col: stats["skew"] for col, stats in column_stats.items()},
-                plots={},
                 metadata={
                     "suggested_viz_type": "histogram",
                     "recommended_section": "Distributions",
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        numeric_cols + list(excluded.keys())
+                        numeric_cols + list(excluded.keys()),
                     ),
                 },
             )
 
-            # Generate per-column EDA + ML guidance blurbs
             for col, stats in column_stats.items():
                 self._attach_guidance(col, stats)
 
-            # ML impact scoring (kept for backward compat)
+            # ML impact scoring — report the first column with meaningful skew.
             if self.get_engine_param("enable_impact_scoring", True):
                 for col, stats in column_stats.items():
-                    abs_skew = abs(stats["skew"])
+                    abs_skew: float = abs(stats["skew"])
                     if abs_skew <= _SKEW_MOD:
                         continue
-                    score = 0.6 if abs_skew <= _SKEW_HEAVY else 0.8
-                    tip = get_recommendation_tip(self.name, {"skew": stats["skew"]})
+                    score: float = 0.6 if abs_skew <= _SKEW_HEAVY else 0.8
+                    tip: str | None = get_recommendation_tip(
+                        self.name,
+                        {"skew": stats["skew"]},
+                    )
                     self.set_ml_signals(
                         result=self.output,
                         score=score,
@@ -161,40 +174,30 @@ class DetectSkewness(BaseTask):
             )
             self.output = make_failure_result(self.name, e)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # Guidance generation
-    # ──────────────────────────────────────────────────────────────────────────
-
     def _attach_guidance(self, col: str, stats: dict[str, float]) -> None:
         """
-        Generate and attach EDA + ML guidance blurbs for a single column.
+        Generate and attach EDA and ML guidance blurbs for a skewed column.
 
-        Both blurbs are self-contained: column name, metric value, direction,
-        and implication are all explicit so each blurb is meaningful without
-        surrounding context (for LLM/agent consumption downstream).
+        Columns with |skew| ≤ 0.5 are symmetric and receive no blurb.
+        Thresholds: mild (0.5-1.0), moderate (1.0-2.0), heavy (>2.0).
 
-        EDA blurbs are purely descriptive - they characterise the distribution
-        as observed. No modeling language, no action chips.
+        Args:
+            col: Column name.
+            stats: Dict containing ``skew``, ``mean``, ``median``, and ``std``.
 
-        ML blurbs are prescriptive - they name affected model families and
-        provide structured actions (method, condition) a user or agent can
-        act on directly.
-
-        Columns with |skew| <= 0.5 are considered symmetric and receive no
-        guidance (a clean result does not need a blurb).
         """
-        skew_val = stats["skew"]
-        mean = stats.get("mean")
-        median = stats.get("median")
-        abs_skew = abs(skew_val)
+        skew_val: float = stats["skew"]
+        mean: float | None = stats.get("mean")
+        median: float | None = stats.get("median")
+        abs_skew: float = abs(skew_val)
 
         if abs_skew <= _SKEW_MILD:
-            return  # Symmetric - nothing to flag
+            return  # Symmetric — no blurb needed
 
-        direction = "right (positive)" if skew_val > 0 else "left (negative)"
-        tail_dir = "higher" if skew_val > 0 else "lower"
-        bulk_dir = "lower" if skew_val > 0 else "higher"
-        dir_word = "Right" if skew_val > 0 else "Left"
+        direction: Literal = "right (positive)" if skew_val > 0 else "left (negative)"
+        tail_dir: Literal["higher", "lower"] = "higher" if skew_val > 0 else "lower"
+        bulk_dir: Literal["higher", "lower"] = "lower" if skew_val > 0 else "higher"
+        dir_word: Literal["Left", "Right"] = "Right" if skew_val > 0 else "Left"
 
         metric: dict[str, float] = {"skewness": round(skew_val, 4)}
         if mean is not None:
@@ -203,54 +206,51 @@ class DetectSkewness(BaseTask):
             metric["median"] = round(median, 4)
 
         if abs_skew <= _SKEW_MOD:
-            # ── Mild skew ─────────────────────────────────────────────────────
             level = "info"
-            title = f"Mild {dir_word} Skew ({skew_val:+.2f})"
+            title: str = f"Mild {dir_word} Skew ({skew_val:+.2f})"
 
-            eda_body = (
-                f"{col} has a mild {direction} skew (skewness = {skew_val:.2f}). "
+            eda_body: str = (
+                f"'{col}' has a mild {direction} skew (skewness = {skew_val:.2f}). "
                 f"The distribution is slightly asymmetric, with a minor lean toward "
                 f"{tail_dir} values. The mean and median are close, so either is a "
-                f"reasonable summary of the center. "
-                f"Glance at the histogram to confirm no unusual clustering or gaps "
-                f"are hiding behind the mild asymmetry."
+                f"reasonable summary of the centre. Glance at the histogram to confirm "
+                f"no unusual clustering or gaps are hiding behind the mild asymmetry."
             )
 
-            ml_body = (
-                f"{col} has mild skewness ({skew_val:.2f}). Most models will handle "
+            ml_body: str = (
+                f"'{col}' has mild skewness ({skew_val:.2f}). Most models will handle "
                 f"this without transformation. If using linear or distance-based "
-                f"models, monitor residuals after fitting - a transform may help "
+                f"models, monitor residuals after fitting — a transform may help "
                 f"marginally. Tree-based models are unaffected."
             )
-            ml_actions = [
+            ml_actions: list[dict] = [
                 {
                     "action": "monitor",
                     "column": col,
                     "detail": "Check residual plots after fitting linear models",
-                }
+                },
             ]
 
         elif abs_skew <= _SKEW_HEAVY:
-            # ── Moderate skew ─────────────────────────────────────────────────
             level = "warn"
             title = f"Moderate {dir_word} Skew ({skew_val:+.2f})"
 
             eda_body = (
-                f"{col} shows moderate {direction} skewness (skewness = {skew_val:.2f})"
-                f". Values are concentrated toward the {bulk_dir} end of the range, "
-                f"with a tail extending toward {tail_dir} values. "
-                f"The median is likely more descriptive than the mean here. "
-                f"Check for outliers or data quality issues to confirm the skew "
-                f"is genuine rather than driven by a small number of anomalous values."
+                f"'{col}' shows moderate {direction} skewness "
+                f"(skewness = {skew_val:.2f}). Values are concentrated toward the "
+                f"{bulk_dir} end of the range, with a tail extending toward {tail_dir} "
+                f"values. The median is likely more descriptive than the mean here. "
+                f"Check for outliers or data quality issues to confirm the skew is "
+                f"genuine rather than driven by a small number of anomalous values."
             )
 
             ml_body = (
-                f"Skewness of {skew_val:.2f} in {col} will affect linear models "
-                "(linear/logistic regression) and distance-based models (SVM, KNN) "
-                "by distorting coefficient scale and distance calculations. "
-                "Tree-based models (Random Forest, XGBoost) are largely robust. "
-                "A transform is recommended before fitting linear or distance-based "
-                "models."
+                f"Skewness of {skew_val:.2f} in '{col}' will affect linear models "
+                f"(linear/logistic regression) and distance-based models (SVM, KNN) "
+                f"by distorting coefficient scale and distance calculations. "
+                f"Tree-based models (Random Forest, XGBoost) are largely robust. "
+                f"A transform is recommended before fitting linear or distance-based "
+                f"models."
             )
             if skew_val > 0:
                 ml_actions = [
@@ -290,27 +290,25 @@ class DetectSkewness(BaseTask):
                 ]
 
         else:
-            # ── Heavy skew ────────────────────────────────────────────────────
             level = "warn"
             title = f"Heavy {dir_word} Skew ({skew_val:+.2f})"
 
             eda_body = (
-                f"{col} has heavy {direction} skewness (skewness = {skew_val:.2f}). "
-                f"The bulk of values cluster near the {bulk_dir} end with a long "
-                f"tail extending toward {tail_dir} values. "
-                f"The mean is significantly distorted by the tail - the median is "
-                f"a much more honest description of the typical value. "
-                f"Inspect the tail values directly: check whether they represent "
-                f"genuine data, outliers, or data entry errors before drawing "
-                f"conclusions about this column."
+                f"'{col}' has heavy {direction} skewness (skewness = {skew_val:.2f}). "
+                f"The bulk of values cluster near the {bulk_dir} end with a long tail "
+                f"extending toward {tail_dir} values. The mean is significantly "
+                f"distorted by the tail — the median is a much more honest description "
+                f"of the typical value. Inspect the tail values directly: check "
+                f"whether they represent genuine data, outliers, or data entry errors "
+                f"before drawing conclusions about this column."
             )
 
             ml_body = (
-                f"Heavy skewness of {skew_val:.2f} in {col} will significantly distort "
-                "linear model coefficients and KNN/SVM distance calculations. "
-                "Tree-based models are robust but may still benefit from "
-                "transformation for interpretability. Transformation is strongly "
-                "recommended before using any non-tree model."
+                f"Heavy skewness of {skew_val:.2f} in '{col}' will significantly "
+                f"distort linear model coefficients and KNN/SVM distance calculations. "
+                f"Tree-based models are robust but may still benefit from "
+                f"transformation for interpretability. Transformation is strongly "
+                f"recommended before using any non-tree model."
             )
             if skew_val > 0:
                 ml_actions = [
@@ -359,7 +357,6 @@ class DetectSkewness(BaseTask):
                     },
                 ]
 
-        # EDA blurb - descriptive only, no actions
         self.add_guidance(
             result=self.output,
             column=col,
@@ -371,7 +368,6 @@ class DetectSkewness(BaseTask):
             metric=metric,
         )
 
-        # ML blurb - prescriptive, structured actions
         self.add_guidance(
             result=self.output,
             column=col,

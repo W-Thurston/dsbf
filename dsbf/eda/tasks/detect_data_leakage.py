@@ -15,25 +15,40 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     stage="modeling",
     domain="core",
     runtime_estimate="moderate",
+    phase="ml_readiness",
     tags=["leakage", "target"],
     expected_semantic_types=["categorical", "continuous"],
 )
 class DetectDataLeakage(BaseTask):
     """
-    Detects potential data leakage by identifying highly correlated numeric features.
+    Detects potential data leakage by identifying near-perfectly correlated features.
 
-    Flags any column pairs with absolute correlation >= threshold.
+    Flags any numeric column pair whose absolute Pearson correlation meets or
+    exceeds a configurable threshold (default: 0.99). Near-perfect correlation
+    almost always indicates that one column is derived from the other, or that
+    both encode the same underlying measurement — either case causes target
+    leakage if one of the columns encodes post-event information.
+
+    Both columns in each flagged pair receive EDA and ML guidance blurbs so
+    the analyst sees the warning regardless of which column they are inspecting.
+
+    Only numeric columns are evaluated. Polars DataFrames are converted to
+    pandas since the pandas correlation matrix is used for the pairwise scan.
+
+    Configurable parameters (via config["tasks"]["detect_data_leakage"]):
+        correlation_threshold (float): Minimum absolute Pearson correlation to
+            flag a pair. Default: 0.99
     """
 
     def run(self) -> None:
         """
-        Run the data leakage detection task.
+        Execute leakage detection and populate self.output.
 
-        Produces a TaskResult containing:
-        - leakage_pairs: dict of "col1|col2" → float correlation
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
         """
         try:
-            # ctx = self.context
             df = self.input_data
 
             correlation_threshold = float(
@@ -41,32 +56,31 @@ class DetectDataLeakage(BaseTask):
             )
 
             if is_polars(df):
+                # pandas corr() is used for the pairwise scan.
                 self._log(
-                    "    Falling back to Pandas: correlation matrix requires "
-                    "numeric types",
+                    "    Converting to pandas: correlation matrix requires pandas.",
                     "debug",
                 )
                 df = df.to_pandas()
 
-            # Use semantic typing to select relevant columns
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_cols)} ['categorical', 'continuous'] "
-                "column(s)",
+                f"    Processing {len(matched_cols)} "
+                "['categorical', 'continuous'] column(s)",
                 "debug",
             )
+
             numeric_df = df.select_dtypes(include="number")
             corr_matrix = numeric_df.corr().abs()
             leakage_pairs: dict[str, float] = {}
 
-            # Scan upper triangle for highly correlated pairs
+            # Scan upper triangle only — each pair is stored once.
             for i, col1 in enumerate(corr_matrix.columns):
                 for j in range(i + 1, len(corr_matrix.columns)):
                     col2 = corr_matrix.columns[j]
                     corr_val = corr_matrix.iloc[i, j]
                     if corr_val >= correlation_threshold:
-                        key: str = f"{col1}|{col2}"
-                        leakage_pairs[key] = float(corr_val)
+                        leakage_pairs[f"{col1}|{col2}"] = float(corr_val)
 
             self.output = TaskResult(
                 name=self.name,
@@ -79,7 +93,7 @@ class DetectDataLeakage(BaseTask):
                 data={"leakage_pairs": leakage_pairs},
                 metadata={
                     "correlation_threshold": correlation_threshold,
-                    "suggested_viz_type": "None",
+                    "suggested_viz_type": "none",
                     "recommended_section": "Target",
                     "display_priority": "high",
                     "excluded_columns": excluded,
@@ -89,15 +103,15 @@ class DetectDataLeakage(BaseTask):
                 },
             )
 
-            # Generate per-column guidance for every column involved in a leakage pair.
-            # Each pair gets a blurb on both columns so the analyst sees the warning
-            # regardless of which column they are inspecting.
+            # Emit guidance for every column in every flagged pair.
+            # Both columns receive a blurb so the warning surfaces regardless
+            # of which column the analyst is currently inspecting.
             for pair_key, corr_val in leakage_pairs.items():
                 col1, col2 = pair_key.split("|")
                 self._attach_guidance(col1, col2, corr_val, correlation_threshold)
                 self._attach_guidance(col2, col1, corr_val, correlation_threshold)
 
-            # Apply ML scoring to self.output
+            # ML impact scoring
             if self.get_engine_param("enable_impact_scoring", True) and leakage_pairs:
                 first_pair: str = next(iter(leakage_pairs))
                 col1, col2 = first_pair.split("|")
@@ -112,9 +126,9 @@ class DetectDataLeakage(BaseTask):
                     tags=["drop", "check_leakage"],
                     recommendation=tip
                     or (
-                        f"Columns '{col1}' and '{col2}' are "
-                        "highly correlated (corr = {corr:.2f}). "
-                        "This may indicate leakage - drop one before modeling."
+                        f"Columns '{col1}' and '{col2}' are highly correlated "
+                        f"(corr = {corr:.2f}). This may indicate leakage — "
+                        "drop one before modeling."
                     ),
                 )
                 self.output.summary["column"] = col1
@@ -137,77 +151,81 @@ class DetectDataLeakage(BaseTask):
         threshold: float,
     ) -> None:
         """
-        Generate EDA + ML guidance for a column involved in a near-perfect
-        correlation pair.
+        Generate EDA and ML guidance for a column in a near-perfect correlation pair.
 
-        Both columns in the pair get a blurb - this way the analyst sees the
-        warning regardless of which column they are currently inspecting.
+        Args:
+            col: The column receiving the guidance blurb.
+            other_col: The column it is correlated with.
+            corr: Absolute Pearson correlation value.
+            threshold: The configured leakage detection threshold.
+
         """
         corr_str: str = f"{corr:.4f}"
 
         eda_body: str = (
-            f"{col} has an absolute Pearson correlation of {corr_str} with {other_col} "
-            f"- near-perfect linear association. This is almost certainly not a "
-            f"coincidence. The most common causes are: one column was derived from "
-            f"the other (e.g. a ratio, running total, or lagged copy), both columns "
-            f"measure the same underlying thing at different scales or units, or a "
-            f"join or merge operation duplicated information. "
+            f"'{col}' has an absolute Pearson correlation of {corr_str} with "
+            f"'{other_col}' — near-perfect linear association. This is almost "
+            f"certainly not a coincidence. The most common causes are: one column "
+            f"was derived from the other (e.g. a ratio, running total, or lagged "
+            f"copy), both columns measure the same underlying thing at different "
+            f"scales or units, or a join/merge operation duplicated information. "
             f"Verify the data lineage of both columns before trusting any analysis "
             f"that uses them together."
         )
 
         ml_body: str = (
-            f"{col} correlates with {other_col} at r = {corr_str}. "
-            f"Including both in a model is almost always harmful: in linear models "
-            f"the coefficients become numerically undefined (perfect multicollinearity)"
-            f"; in tree models one column will shadow the other completely, wasting "
-            f"a split at every node. More critically, if {other_col} contains "
-            f"information that is only available after the prediction target is "
-            f"observed (e.g. it's a post-event measurement), including it causes "
-            f"target leakage - the model will appear to perform well in training "
-            f"and fail completely in deployment. "
-            f"Drop one of the pair. If unsure which is the derived column, "
+            f"'{col}' correlates with '{other_col}' at r = {corr_str}. Including "
+            f"both in a model is almost always harmful: in linear models the "
+            f"coefficients become numerically undefined (perfect multicollinearity); "
+            f"in tree models one column will shadow the other completely, wasting a "
+            f"split at every node. More critically, if '{other_col}' contains "
+            f"information only available after the prediction target is observed "
+            f"(e.g. a post-event measurement), including it causes target leakage — "
+            f"the model will appear to perform well in training and fail completely "
+            f"in deployment. Drop one of the pair. If unsure which is derived, "
             f"trace the data pipeline back to the source."
         )
+
+        metric: dict[str, float | str] = {
+            "correlation": round(corr, 6),
+            "correlated_with": other_col,
+            "threshold": threshold,
+        }
 
         self.add_guidance(
             result=self.output,
             column=col,
             phase="eda",
             level="error",
-            title=f"Near-Perfect Correlation with {other_col} (r = {corr_str})",
+            title=f"Near-Perfect Correlation with '{other_col}' (r = {corr_str})",
             body=eda_body.strip(),
             actions=[],
-            metric={
-                "correlation": round(corr, 6),
-                "correlated_with": other_col,
-                "threshold": threshold,
-            },
+            metric=metric,
         )
         self.add_guidance(
             result=self.output,
             column=col,
             phase="ml",
             level="error",
-            title=f"Possible Data Leakage - Perfect Correlation with {other_col}",
+            title=f"Possible Data Leakage — Perfect Correlation with '{other_col}'",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": f"Drop one of {col} / {other_col} "
-                    "- keeping both is harmful for all model families",
+                    "detail": (
+                        f"Drop one of '{col}' / '{other_col}' — keeping both is "
+                        "harmful for all model families"
+                    ),
                 },
                 {
                     "action": "investigate",
                     "column": col,
-                    "detail": "Check whether either column is derived from the other "
-                    "or encodes post-event information",
+                    "detail": (
+                        "Check whether either column is derived from the other or "
+                        "encodes post-event information"
+                    ),
                 },
             ],
-            metric={
-                "correlation": round(corr, 6),
-                "correlated_with": other_col,
-                "threshold": threshold,
-            },
+            metric=metric,
         )

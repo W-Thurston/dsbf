@@ -1,6 +1,6 @@
 # dsbf/eda/tasks/generate_dataset_summary_plots.py
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -10,66 +10,23 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 from dsbf.utils.plot_factory import PlotFactory
 
-# Colour map for the dtype stacked-bar chart.
-#
-# Keys are pandas dtype.name strings (the inferred_dtype values that become
-# bar segments).  Colours are drawn from the dashboard palette so the chart
-# feels native rather than using Plotly defaults.
-#
-# Grouping logic:
-#   Integer types  → blue family   (numeric, exact)
-#   Float types    → indigo/violet (numeric, approximate)
-#   String/object  → purple        (text-like)
-#   Category       → fuchsia       (structured text)
-#   Boolean        → emerald       (binary)
-#   Datetime types → amber         (temporal)
-#   Fallback/mixed → slate grey    (unknown / mixed)
+if TYPE_CHECKING:
+    from polars import DataFrame
+
 DTYPE_COLOR_MAP: dict[str, str] = {
-    # ── Integer variants ───────────────────────────────────────────────────
-    "int8": "#38bdf8",  # sky-400
-    "int16": "#38bdf8",
-    "int32": "#60a5fa",  # blue-400  (primary accent)
-    "int64": "#60a5fa",
-    "Int8": "#38bdf8",  # nullable integer (pandas ExtensionType)
-    "Int16": "#38bdf8",
-    "Int32": "#60a5fa",
-    "Int64": "#60a5fa",
-    "uint8": "#7dd3fc",  # sky-300
-    "uint16": "#7dd3fc",
-    "uint32": "#93c5fd",  # blue-300
-    "uint64": "#93c5fd",
-    # ── Float variants ─────────────────────────────────────────────────────
-    "float16": "#a78bfa",  # violet-400
-    "float32": "#a78bfa",
-    "float64": "#818cf8",  # indigo-400
-    "Float32": "#a78bfa",  # nullable float
-    "Float64": "#818cf8",
-    # ── String / object ────────────────────────────────────────────────────
-    "object": "#c084fc",  # purple-400
-    "str": "#c084fc",
-    "string": "#c084fc",  # pd.StringDtype
-    # ── Category ───────────────────────────────────────────────────────────
-    "category": "#e879f9",  # fuchsia-400
-    # ── Boolean ────────────────────────────────────────────────────────────
-    "bool": "#34d399",  # emerald-400
-    "boolean": "#34d399",  # pd.BooleanDtype
-    # ── Datetime / timedelta ───────────────────────────────────────────────
-    "datetime64": "#fbbf24",  # amber-400
-    "datetime64[ns]": "#fbbf24",
-    "datetime64[us]": "#fbbf24",
-    "datetime64[ms]": "#fbbf24",
-    "datetime64[s]": "#fbbf24",
-    "datetime64[ns, UTC]": "#f59e0b",  # amber-500
-    "timedelta64": "#fb923c",  # orange-400
-    "timedelta64[ns]": "#fb923c",
-    # ── Complex ────────────────────────────────────────────────────────────
-    "complex64": "#94a3b8",  # slate-400
-    "complex128": "#94a3b8",
-    # ── Unknown / mixed / fallback ─────────────────────────────────────────
-    "unknown": "#475569",  # slate-600
+    "int64": "#1f77b4",
+    "float64": "#17becf",
+    "string": "#9467bd",
+    "object": "#9467bd",
+    "bool": "#2ca02c",
+    "datetime": "#ff7f0e",
+    "category": "#8c564b",
+    "unknown": "#475569",
     "mixed": "#475569",
-    "object_": "#c084fc",  # alias occasionally seen
+    "object_": "#c084fc",
 }
+
+DatasetPlotResults = dict[str, dict[str, Any]]
 
 
 @register_task(
@@ -78,93 +35,214 @@ DTYPE_COLOR_MAP: dict[str, str] = {
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="any",
+    phase="eda",
     domain="core",
     runtime_estimate="fast",
     tags=["visualization", "plotting", "dataset"],
 )
 class GenerateDatasetSummaryPlots(BaseTask):
+    """
+    Generate centralized dataset-level summary visualizations.
+
+    This task owns all plots that describe the dataset as a whole rather than
+    individual columns. It is the authoritative source for:
+
+    - Correlation matrix (numeric column pairs, Pearson)
+    - Null matrix (missingness pattern across rows and columns)
+    - Missingness matrix (missingno-style heatmap)
+    - Dtype stacked bar (inferred vs intent type breakdown per column)
+
+    Individual column plots are owned by ``generate_univariate_plots``.
+    Bivariate scatter and distribution plots are rendered on demand by the
+    Relationships tab frontend.
+
+    Results are stored in ``TaskResult.data`` keyed by plot name. Each entry
+    contains ``static`` (file path string) and/or ``interactive`` (JSON structure)
+    artifact references consumed by the Vue dashboard via the figures API.
+    """
+
     def run(self) -> None:
+        """
+        Generate dataset-level summary plots and store artifact references.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
         try:
-            df: Any = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df: pd.DataFrame = self._to_pandas(self.input_data)
+            results: DatasetPlotResults = {}
 
-            results: dict[str, dict[str, str]] = {}
+            results["correlation_matrix"] = self._build_correlation_plot(df)
+            results["null_matrix"] = self._build_null_matrix_plot(df)
+            results["missingness_matrix"] = self._build_missingness_matrix_plot(df)
 
-            # --- Correlation Matrix (static + interactive) ---
-            corr_static = PlotFactory.plot_correlation_static(
-                df, save_path=self.get_output_path("correlation_matrix.png")
-            )
-            corr_interactive = PlotFactory.plot_correlation_interactive(
-                df, json_path=self.get_output_path("correlation_matrix.json")
-            )
-            results["correlation_matrix"] = {
-                "static": corr_static["path"],
-                "interactive": corr_interactive.get("interactive", {}),
-            }
-            self._log("    Correlation Matrix Plotted.", "debug")
-
-            # --- Null Matrix (binary heatmap) ---
-            static_path = self.get_output_path("null_matrix.png")
-            _ = PlotFactory.plot_null_matrix_static(df, static_path)  # null_result
-            results["null_matrix"] = {"static": str(static_path)}
-
-            interactive_path = self.get_output_path("null_matrix.json")
-            PlotFactory.plot_null_matrix_interactive(df, json_path=interactive_path)
-            results["null_matrix"]["interactive"] = str(interactive_path)
-            self._log("    Null Matrix Plotted.", "debug")
-
-            # --- Missingness Matrix via missingno ---
-            static_path = self.get_output_path("missingness_matrix.png")
-            _ = PlotFactory.plot_missingness_matrix(df, static_path)  # missingno_result
-            results["missingness_matrix"] = {"static": str(static_path)}
-
-            # interactive_path = self.get_output_path("missingness_matrix.json")
-            # PlotFactory.plot_missing_matrix_interactive(df,json_path=interactive_path)
-            # results["missingness_matrix"]["interactive"] = str(interactive_path)
-            self._log("    Missingness Matrix Plotted.", "debug")
-
-            # --- Intent vs. Inferred Dtype Mapping ---
-            if self.context:
-                col_type_info = self.context.get_metadata("semantic_types", {}) or {}
-                inferred_types = self.context.get_metadata("inferred_dtypes", {}) or {}
-                valid_cols = [col for col in col_type_info if col in df.columns]
-                if valid_cols:
-                    mapping_dict = {
-                        col: {
-                            "inferred_dtype": inferred_types.get(col, "unknown"),
-                            "analysis_intent_dtype": col_type_info[col],
-                        }
-                        for col in valid_cols
-                    }
-
-                    mapping_df = pd.DataFrame.from_dict(mapping_dict, orient="index")
-                    mapping_df = mapping_df[["inferred_dtype", "analysis_intent_dtype"]]
-
-                    dtype_bar = PlotFactory.plot_stacked_bar_interactive(
-                        mapping_df,
-                        json_path=self.get_output_path("dtype_stacked_bar.json"),
-                        title="Dtype Mapping: Inferred within Intent",
-                        color_map=DTYPE_COLOR_MAP,
-                    )
-                    results["dtype_stacked_bar"] = {
-                        "interactive": dtype_bar.get("interactive", {}),
-                    }
-
-                    self._log("    Infer Types Stacked Bar Plotted.", "debug")
+            dtype_mapping_plot: dict[str, Any] = self._build_dtype_mapping_plot(df)
+            if dtype_mapping_plot:
+                results["dtype_stacked_bar"] = dtype_mapping_plot
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={"message": f"Generated {len(results)} dataset-level plots."},
                 data=results,
-                plots={},  # plots handled inline
             )
-
-        except Exception as e:
+        except Exception as error:
             if self.context:
                 raise
             self._log(
-                f"[{self.name}] Task failed: {type(e).__name__} - {e}", level="warn"
+                f"Task failed: {type(error).__name__} - {error}",
+                level="warn",
             )
-            self.output = make_failure_result(self.name, e)
+            self.output = make_failure_result(self.name, error)
+
+    def _to_pandas(self, data: Any) -> pd.DataFrame:
+        """
+        Convert a supported dataframe backend to pandas.
+
+        Args:
+            data: Input DataFrame (pandas or Polars).
+
+        Returns:
+            pandas DataFrame.
+
+        Raises:
+            TypeError: If data is neither pandas nor Polars.
+
+        """
+        if is_polars(data):
+            return data.to_pandas()
+        if isinstance(data, pd.DataFrame):
+            return data
+        msg: str = f"Expected pandas or polars dataframe, got {type(data).__name__}."
+        raise TypeError(msg)
+
+    def _build_correlation_plot(self, df: pd.DataFrame) -> dict[str, Any]:
+        """
+        Build static and interactive correlation matrix artifacts.
+
+        Only numeric columns are included. Returns an empty dict when fewer
+        than 2 numeric columns exist or the correlation matrix is empty.
+
+        Args:
+            df: Source pandas DataFrame.
+
+        Returns:
+            Dict with ``static`` and ``interactive`` artifact references,
+            or empty dict if the plot cannot be generated.
+
+        """
+        numeric_df: DataFrame = df.select_dtypes(include=["number"])
+
+        if numeric_df.shape[1] < 2:  # noqa: PLR2004
+            return {}
+
+        corr: DataFrame = numeric_df.corr()
+        if corr.empty:
+            return {}
+
+        # Pass numeric_df (not df) — the correlation plot covers numeric columns only.
+        static_result: dict[str, Any] = PlotFactory.plot_correlation_static(
+            numeric_df,
+            save_path=self.get_output_path("correlation_matrix.png"),
+        )
+        interactive_result: dict[str, Any] = PlotFactory.plot_correlation_interactive(
+            numeric_df,
+            json_path=self.get_output_path("correlation_matrix.json"),
+        )
+        self._log("Correlation matrix plotted.", "debug")
+        return {
+            "static": static_result.get("path", {}),
+            "interactive": interactive_result.get("interactive", {}),
+        }
+
+    def _build_null_matrix_plot(self, df: pd.DataFrame) -> dict[str, Any]:
+        """
+        Build static and interactive null-matrix artifacts.
+
+        The null matrix shows which cells are null vs non-null across the
+        full dataset, useful for spotting row-level or column-level patterns.
+
+        Args:
+            df: Source pandas DataFrame.
+
+        Returns:
+            Dict with ``static`` and ``interactive`` artifact path strings.
+
+        """
+        static_path: str = self.get_output_path("null_matrix.png")
+        PlotFactory.plot_null_matrix_static(df, static_path)
+
+        interactive_path: str = self.get_output_path("null_matrix.json")
+        PlotFactory.plot_null_matrix_interactive(df, json_path=interactive_path)
+
+        self._log("Null matrix plotted.", "debug")
+        return {
+            "static": str(static_path),
+            "interactive": str(interactive_path),
+        }
+
+    def _build_missingness_matrix_plot(self, df: pd.DataFrame) -> dict[str, Any]:
+        """
+        Build the static missingno-style missingness matrix artifact.
+
+        Distinct from the null matrix — uses the missingno library to render
+        a sorted, dendrogram-clustered view of missingness patterns.
+
+        Args:
+            df: Source pandas DataFrame.
+
+        Returns:
+            Dict with ``static`` artifact path string.
+
+        """
+        static_path: str = self.get_output_path("missingness_matrix.png")
+        PlotFactory.plot_missingness_matrix(df, static_path)
+        self._log("Missingness matrix plotted.", "debug")
+        return {"static": str(static_path)}
+
+    def _build_dtype_mapping_plot(self, df: pd.DataFrame) -> dict[str, Any]:
+        """
+        Build the stacked dtype mapping artifact when context metadata is available.
+
+        Visualises the relationship between inferred storage dtypes and DSBF
+        analysis-intent types (e.g. how many int64 columns are treated as
+        continuous vs categorical).
+
+        Args:
+            df: Source pandas DataFrame.
+
+        Returns:
+            Dict with ``interactive`` artifact reference, or empty dict if
+            semantic type metadata is unavailable.
+
+        """
+        if not self.context:
+            return {}
+
+        semantic_types: dict = self.context.get_metadata("semantic_types", {}) or {}
+        inferred_dtypes: dict = self.context.get_metadata("inferred_dtypes", {}) or {}
+        valid_columns: list[str] = [col for col in semantic_types if col in df.columns]
+
+        if not valid_columns:
+            return {}
+
+        mapping_df: DataFrame = pd.DataFrame.from_dict(
+            {
+                col: {
+                    "inferred_dtype": inferred_dtypes.get(col, "unknown"),
+                    "analysis_intent_dtype": semantic_types[col],
+                }
+                for col in valid_columns
+            },
+            orient="index",
+        )[["inferred_dtype", "analysis_intent_dtype"]]
+
+        interactive_result: dict[str, Any] = PlotFactory.plot_stacked_bar_interactive(
+            mapping_df,
+            json_path=self.get_output_path("dtype_stacked_bar.json"),
+            title="Dtype Mapping: Inferred within Intent",
+            color_map=DTYPE_COLOR_MAP,
+        )
+        self._log("Dtype stacked bar plotted.", "debug")
+        return {"interactive": interactive_result.get("interactive", {})}

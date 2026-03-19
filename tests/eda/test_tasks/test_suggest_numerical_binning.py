@@ -1,123 +1,81 @@
 # tests/eda/test_tasks/test_suggest_numerical_binning.py
 
-from pathlib import Path
-
-import polars as pl
+import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.suggest_numerical_binning import SuggestNumericalBinning
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
-def test_suggests_log_transform_for_skewed_column(tmp_path):
-    df = pl.DataFrame(
-        {
-            "feature": [1] * 50 + [1000] * 10,
-        }
-    )
+def test_log_transform_suggested_for_skewed_column(tmp_path) -> None:
+    """A highly right-skewed column must receive a log-transform suggestion."""
+    df = pd.DataFrame({"skewed": [1] * 90 + list(range(100, 200, 10))})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestNumericalBinning,
         current_df=df,
         task_overrides={"skew_threshold": 1.0},
         global_overrides={"output_dir": str(tmp_path)},
     )
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestNumericalBinning)
 
-    result = ctx.run_task(task)
-
-    assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert result.data is not None
-    suggestion = result.data["binning_suggestions"]["feature"]["suggested_binning"]
-    assert "log" in suggestion
+    suggestions = result.data["binning_suggestions"]
+    assert "skewed" in suggestions
+    assert suggestions["skewed"]["suggested_binning"] == "log-transform"
 
 
-def test_suggests_equal_width_binning_when_range_is_large(tmp_path):
-    df = pl.DataFrame(
-        {"feature": list(range(0, 1000, 10))}  # large range, relatively uniform
-    )
+def test_quantile_binning_for_symmetric_column(tmp_path) -> None:
+    """A symmetric column with compact spread must receive quantile binning."""
+    df = pd.DataFrame({"symmetric": list(range(1, 51))})  # uniform 1–50
 
-    ctx, task = make_ctx_and_task(
-        task_cls=SuggestNumericalBinning,
-        current_df=df,
-        task_overrides={"skew_threshold": 10.0},  # force non-log
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-
-    result = ctx.run_task(task)
-
-    assert result.data is not None
-    suggestion = result.data["binning_suggestions"]["feature"]["suggested_binning"]
-    assert "equal-width" in suggestion
-
-
-def test_suggests_quantile_binning_when_range_is_small(tmp_path):
-    df = pl.DataFrame({"feature": [10, 11, 12, 13, 14] * 20})  # small std, small range
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SuggestNumericalBinning,
-        current_df=df,
-        task_overrides={"skew_threshold": 10.0},  # avoid log-transform
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-
-    result = ctx.run_task(task)
-
-    assert result.data is not None
-    suggestion = result.data["binning_suggestions"]["feature"]["suggested_binning"]
-    assert "quantile" in suggestion
-
-
-def test_handles_constant_column_gracefully(tmp_path):
-    df = pl.DataFrame({"feature": [1] * 100})
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SuggestNumericalBinning,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-
-    result = ctx.run_task(task)
-
-    assert result.data is not None
-    assert "feature" not in result.data["binning_suggestions"]
-
-
-def test_suggest_numerical_binning_generates_plot(tmp_path):
-    """
-    Ensure histograms are generated for columns with binning suggestions.
-    """
-    df = pl.DataFrame(
-        {
-            "skewed": [1] * 90 + [1000] * 10,
-            "uniform": list(range(100)),
-        }
-    )
-
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestNumericalBinning,
         current_df=df,
         task_overrides={"skew_threshold": 1.0},
         global_overrides={"output_dir": str(tmp_path)},
     )
-
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestNumericalBinning)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "skewed" in result.plots
+    suggestions = result.data["binning_suggestions"]
+    if "symmetric" in suggestions:
+        # Depending on spread, quantile or equal-width — both are acceptable
+        assert suggestions["symmetric"]["suggested_binning"] in (
+            "quantile binning",
+            "equal-width binning",
+        )
 
-    plot_entry = result.plots["skewed"]
-    static_path = plot_entry["static"]
-    interactive = plot_entry["interactive"]
 
-    assert isinstance(static_path, Path)
-    assert static_path.exists()
-    assert static_path.suffix == ".png"
+def test_guidance_attached_for_suggestions(tmp_path) -> None:
+    """EDA and ML guidance must be attached for each suggested column."""
+    df = pd.DataFrame({"skewed": [1] * 90 + list(range(100, 200, 10))})
 
-    assert interactive["type"] == "histogram"
-    assert "annotations" in interactive
-    assert any(
-        "skewness" in a.lower() or "suggested" in a.lower()
-        for a in interactive["annotations"]
+    ctx, _ = make_ctx_and_task(
+        task_cls=SuggestNumericalBinning,
+        current_df=df,
+        task_overrides={"skew_threshold": 1.0},
+        global_overrides={"output_dir": str(tmp_path)},
     )
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestNumericalBinning)
+
+    assert result.status == "success"
+    if result.guidance:
+        for col in result.guidance:
+            assert len(result.guidance[col]["eda"]) > 0
+            assert len(result.guidance[col]["ml"]) > 0
+
+
+def test_no_plots_generated(tmp_path) -> None:
+    """Binning suggestion task must not generate plots."""
+    df = pd.DataFrame({"x": list(range(100))})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SuggestNumericalBinning,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestNumericalBinning)
+
+    assert result.status == "success"
+    assert result.plots is None

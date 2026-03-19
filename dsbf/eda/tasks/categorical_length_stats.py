@@ -16,116 +16,95 @@ from dsbf.utils.backend import is_polars
     stage="cleaned",
     domain="core",
     runtime_estimate="fast",
+    phase="eda",
     tags=["categorical", "text", "stats"],
     expected_semantic_types=["categorical", "text"],
 )
 class CategoricalLengthStats(BaseTask):
     """
-    Computes string length statistics (mean, min, max) for all text-like categorical
-    columns. Supports both Pandas and Polars DataFrames.
+    Computes string length statistics for all text-like categorical columns.
 
-    Produces a TaskResult with per-column summary stats and length histograms.
+    For each matched column, computes mean, min, and max character length across
+    all non-null values. Supports both Polars and Pandas DataFrames, preferring
+    native Polars operations for performance.
+
+    Output is consumed by the frontend Distributions tab to populate the
+    TextLengthCard component per column.
     """
 
     def run(self) -> None:
         """
-        Run the task and populate self.output with a TaskResult.
-        This method filters for categorical/text-like columns based on semantic types,
-        computes string length stats for each, and attaches static/interactive plots.
+        Execute the task and populate self.output with a TaskResult.
+
+        Selects categorical and text columns via semantic intent, computes
+        string length statistics for each, and assembles the result.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
         """
         df = self.input_data
-        results: dict[str, dict[str, float]] = {}
+        results: dict[str, dict[str, int | float]] = {}
 
         try:
-            # Select matching columns based on semantic type
-            matched_col, excluded = self.get_columns_by_intent()
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} ['categorical', 'text'] column(s)",
+                f"    Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
                 "debug",
             )
 
-            # Compute string length stats per column
-            for col in matched_col:
+            for col in matched_cols:
                 try:
                     if is_polars(df):
+                        # Cast to String to handle mixed or enum types, then
+                        # compute character-level lengths (not byte lengths).
                         lengths = df.select(
-                            pl.col(col).cast(pl.Utf8).str.len_chars().alias("len")
+                            pl.col(col).cast(pl.String).str.len_chars().alias("len"),
                         ).drop_nulls()["len"]
+
                         if lengths.len() == 0:
                             continue
-                        stats = {
-                            "mean_length": lengths.mean(),
-                            "max_length": lengths.max(),
-                            "min_length": lengths.min(),
+
+                        results[col] = {
+                            "mean_length": float(lengths.mean()),
+                            "max_length": int(lengths.max()),
+                            "min_length": int(lengths.min()),
                         }
                     else:
                         lengths = df[col].dropna().astype(str).str.len()
+
                         if len(lengths) == 0:
                             continue
-                        stats = {
-                            "mean_length": lengths.mean(),
-                            "max_length": lengths.max(),
-                            "min_length": lengths.min(),
+
+                        results[col] = {
+                            "mean_length": float(lengths.mean()),
+                            "max_length": int(lengths.max()),
+                            "min_length": int(lengths.min()),
                         }
 
-                    results[col] = stats
-
-                    # Generate histogram plots
-                    lengths_series = (
-                        lengths.to_pandas()
-                        if hasattr(lengths, "to_pandas")
-                        else lengths
-                    )
-                    lengths_series.name = f"{col} length"
-
-                    # annotation = [
-                    #     f"Min: {stats['min_length']:.1f}, "
-                    #     f"Mean: {stats['mean_length']:.1f}, "
-                    #     f"Max: {stats['max_length']:.1f}"
-                    # ]
-
-                    # save_path = self.get_output_path(f"{col}_length_hist.png")
-                    # static = PlotFactory.plot_histogram_static(
-                    #     lengths_series, save_path, title=f"{col} - String Lengths"
-                    # )
-                    # save_path = self.get_output_path(f"{col}_length_hist.json")
-                    # interactive = PlotFactory.plot_histogram_interactive(
-                    #     lengths_series,
-                    #     json_path=save_path,
-                    #     title=f"{col} - String Lengths",
-                    #     annotations=annotation,
-                    # )
-
-                    # plots[col] = {
-                    #     "static": static["path"],
-                    #     "interactive": str(save_path),
-                    # }
-
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     self._log(
-                        f"    [CategoricalLengthStats] Error processing {col}: {e}",
+                        f"    [{self.name}] Error processing column '{col}': {e}",
                         level="debug",
                     )
                     continue
 
-            # Assemble TaskResult
             self.output = TaskResult(
                 name=self.name,
                 status="success",
                 summary={
                     "message": (
                         f"Computed string length stats for {len(results)} column(s)."
-                    )
+                    ),
                 },
                 data=results,
-                plots={},
                 metadata={
                     "suggested_viz_type": "histogram",
                     "recommended_section": "Text Summary",
                     "display_priority": "medium",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )

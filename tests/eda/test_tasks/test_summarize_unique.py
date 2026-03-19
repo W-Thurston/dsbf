@@ -1,77 +1,68 @@
 # tests/eda/test_tasks/test_summarize_unique.py
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
-import pytest
+import polars as pl
 
-from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_unique import SummarizeUnique
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+if TYPE_CHECKING:
+    from dsbf.eda.task_result import TaskResult
 
 
-def test_summarize_unique_expected_output():
-    df = pd.DataFrame(
-        {"a": [1, 2, 2, 3], "b": ["x", "x", "y", "z"], "c": [True, False, True, True]}
-    )
+def test_unique_counts_correct(tmp_path) -> None:
+    """Unique count must equal the number of distinct values per column."""
+    df = pd.DataFrame({"a": [1, 2, 2, 3], "b": ["x", "x", "x", "x"]})
 
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeUnique,
-        current_df=df,
-    )
-    result = ctx.run_task(task)
-
-    assert isinstance(result, TaskResult)
-    assert result.status == "success"
-    assert result.data is not None
-    assert result.data["a"] == 3
-    assert result.data["b"] == 3
-    assert result.data["c"] == 2
-
-
-def test_summarize_unique_empty_column():
-    df = pd.DataFrame({"empty": [None, None, None, None]})
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SummarizeUnique,
-        current_df=df,
-    )
-    result = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert result.data is not None
-    assert result.data["empty"] == 0
-
-
-@pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
-def test_summarize_unique_with_plots(tmp_path):
-    df = pd.DataFrame(
-        {
-            "city": ["NY", "LA", "SF", "NY"],
-            "state": ["NY", "CA", "CA", "NY"],
-            "zip": [10001, 90001, 94101, 10001],
-            "constant": ["yes"] * 4,
-        }
-    )
-
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeUnique,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeUnique)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "unique_counts" in result.plots
+    assert result.data["a"] == 3
+    assert result.data["b"] == 1
 
-    # Check static plot
-    static_path: Path = result.plots["unique_counts"]["static"]
-    assert static_path.exists()
-    static_path.unlink()
 
-    # Check interactive plot
-    interactive = result.plots["unique_counts"]["interactive"]
-    assert isinstance(interactive, dict)
-    assert "annotations" in interactive
-    assert any("constant" in ann.lower() for ann in interactive["annotations"])
+def test_all_columns_present(tmp_path) -> None:
+    """Every column must appear in result data."""
+    df = pd.DataFrame({"x": [1, 2, 3], "y": ["a", "b", "c"]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeUnique,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeUnique)
+
+    assert result.status == "success"
+    assert "x" in result.data
+    assert "y" in result.data
+
+
+def test_polars_dataframe_handled(tmp_path) -> None:
+    df = pl.DataFrame({"col": [1, 2, 2, 3, 3, 3]})
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeUnique,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeUnique)
+    assert result.status == "success"
+    assert result.data["col"] == 3
+
+
+def test_no_plots_generated(tmp_path) -> None:
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeUnique,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeUnique)
+    assert result.status == "success"
+    assert result.plots is None

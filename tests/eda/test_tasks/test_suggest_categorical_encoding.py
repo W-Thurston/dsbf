@@ -1,148 +1,84 @@
 # tests/eda/test_tasks/test_suggest_categorical_encoding.py
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-import polars as pl
+import pandas as pd
 
-from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.suggest_categorical_encoding import SuggestCategoricalEncoding
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+if TYPE_CHECKING:
+    from dsbf.eda.task_result import TaskResult
 
 
-def test_suggest_one_hot_and_frequency(tmp_path):
-    df = pl.DataFrame(
-        {
-            "low_card": ["a", "b", "c", "a", "b"] * 20,  # 100 rows
-            "mid_card": [f"val_{i % 20}" for i in range(100)],
-        }
-    )
+def test_low_cardinality_gets_one_hot(tmp_path) -> None:
+    """Columns with ≤ 10 unique values must receive one-hot encoding suggestion."""
+    df = pd.DataFrame({"color": ["red", "blue", "green", "red", "blue"] * 4})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestCategoricalEncoding,
         current_df=df,
-        task_overrides={
-            "low_cardinality_threshold": 5,
-            "high_cardinality_threshold": 30,
-        },
         global_overrides={"output_dir": str(tmp_path)},
     )
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestCategoricalEncoding)
 
-    result = ctx.run_task(task)
-
-    assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert result.data is not None
     suggestions = result.data["encoding_suggestions"]
-    assert suggestions["low_card"]["suggested_encoding"].startswith("one-hot")
-    assert suggestions["mid_card"]["suggested_encoding"].startswith("frequency")
+    assert "color" in suggestions
+    assert suggestions["color"]["suggested_encoding"] == "one-hot"
 
 
-def test_suggest_high_cardinality_tagging(tmp_path):
-    df = pl.DataFrame(
-        {
-            "high_card": [f"user_{i}" for i in range(100)],
-        }
-    )
+def test_high_cardinality_gets_frequency_encoding(tmp_path) -> None:
+    """Columns with > 50 unique values must receive frequency (high-cardinality)."""
+    df = pd.DataFrame({"city": [f"city_{i}" for i in range(100)]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestCategoricalEncoding,
         current_df=df,
-        task_overrides={
-            "low_cardinality_threshold": 5,
-            "high_cardinality_threshold": 30,
-        },
         global_overrides={"output_dir": str(tmp_path)},
     )
+    # Inject semantic type — 100% unique strings classified as 'id' by infer_types
+    ctx.set_metadata("semantic_types", {"city": "categorical"})
 
-    result = ctx.run_task(task)
+    task = SuggestCategoricalEncoding()
+    task.set_input(df)
+    task.context = ctx
+    result: TaskResult = ctx.run_task(task)
 
-    assert result.data is not None
+    assert result.status == "success"
     suggestions = result.data["encoding_suggestions"]
-    assert suggestions["high_card"]["cardinality"] == 100
-    assert "high-cardinality" in suggestions["high_card"]["suggested_encoding"]
+    assert "city" in suggestions
+    assert "high-cardinality" in suggestions["city"]["suggested_encoding"]
 
 
-def test_target_encoding_is_suggested_for_numeric_target(tmp_path):
-    df = pl.DataFrame(
-        {
-            "cat": ["a"] * 20 + ["b"] * 20 + ["c"] * 20,
-            "target": [1] * 20 + [5] * 20 + [10] * 20,
-        }
-    )
+def test_guidance_attached_for_all_columns(tmp_path) -> None:
+    """EDA and ML guidance must be attached for each suggested column."""
+    df = pd.DataFrame({"flag": ["A", "B", "A", "C"] * 5})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestCategoricalEncoding,
         current_df=df,
-        task_overrides={
-            "low_cardinality_threshold": 2,
-            "high_cardinality_threshold": 10,
-            "target_column": "target",
-        },
         global_overrides={"output_dir": str(tmp_path)},
     )
-
-    result = ctx.run_task(task)
-
-    assert result.data is not None
-    encoding = result.data["encoding_suggestions"]["cat"]["suggested_encoding"]
-    assert "target encoding" in encoding
-
-
-def test_missing_target_column_is_gracefully_handled(tmp_path):
-    df = pl.DataFrame({"color": ["red", "blue", "red", "green"] * 5})
-
-    ctx, task = make_ctx_and_task(
-        task_cls=SuggestCategoricalEncoding,
-        current_df=df,
-        task_overrides={"target_column": "missing_target"},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestCategoricalEncoding)
 
     assert result.status == "success"
-    assert result.data is not None
-    assert (
-        "target encoding"
-        not in result.data["encoding_suggestions"]["color"]["suggested_encoding"]
-    )
+    assert result.guidance is not None
+    assert "flag" in result.guidance
+    assert len(result.guidance["flag"]["eda"]) > 0
+    assert len(result.guidance["flag"]["ml"]) > 0
 
 
-def test_categorical_cardinality_plot_generated(tmp_path):
-    """
-    Check that a barplot of categorical column cardinalities is created.
-    """
-    df = pl.DataFrame(
-        {
-            "low_card": ["a", "b", "a", "b", "c"] * 10,  # 50 rows
-            "high_card": [f"user_{i}" for i in range(50)],
-        }
-    )
+def test_no_plots_generated(tmp_path) -> None:
+    """Encoding suggestion task must not generate plots."""
+    df = pd.DataFrame({"x": ["A", "B", "A"] * 5})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestCategoricalEncoding,
         current_df=df,
-        task_overrides={
-            "low_cardinality_threshold": 3,
-            "high_cardinality_threshold": 20,
-        },
         global_overrides={"output_dir": str(tmp_path)},
     )
-
-    result = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestCategoricalEncoding)
 
     assert result.status == "success"
-    assert result.plots is not None
-    assert "cardinality_distribution" in result.plots
-
-    plot_entry = result.plots["cardinality_distribution"]
-    static_path = plot_entry["static"]
-    interactive = plot_entry["interactive"]
-
-    assert isinstance(static_path, Path)
-    assert static_path.exists()
-    assert static_path.suffix == ".png"
-
-    assert interactive["type"] == "bar"
-    assert "annotations" in interactive
-    assert "cardinal" in interactive["config"]["title"].lower()
+    assert result.plots is None

@@ -15,12 +15,13 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     name="suggest_numerical_binning",
     display_name="Suggest Numerical Binning",
     description=(
-        "Suggests binning or log-transform strategies for numeric"
-        " features with skewed or nonlinear distributions."
+        "Suggests binning or log-transform strategies for numeric "
+        "features with skewed or nonlinear distributions."
     ),
     depends_on=["infer_types"],
     profiling_depth="standard",
     stage="modeling",
+    phase="ml_readiness",
     domain="core",
     runtime_estimate="fast",
     tags=["numeric", "transformation", "ml_readiness"],
@@ -28,31 +29,52 @@ from dsbf.utils.reco_engine import get_recommendation_tip
 )
 class SuggestNumericalBinning(BaseTask):
     """
-    Recommends binning or transformation methods for numeric features based on:
-    - Skewness (log transform)
-    - Distribution spread (equal-width vs quantile)
+    Recommend binning or transformation strategies for numeric features.
+
+    Evaluates each continuous column using precomputed reliability flags
+    (skewness and standard deviation) and assigns a strategy:
+
+    - **log-transform**: skewness > ``skew_threshold`` (default 1.0)
+    - **equal-width binning**: value range > 3x standard deviation
+    - **quantile binning**: compact, roughly symmetric distribution
+
+    EDA and ML guidance blurbs are emitted for each column with a suggestion.
+
+    Configurable parameters (via config["tasks"]["suggest_numerical_binning"]):
+        skew_threshold (float): Skewness above which log-transform is recommended.
+            Default: 1.0
     """
 
-    def run(self) -> None:
+    def run(self) -> None:  # noqa: C901, PLR0912, PLR0915
+        """
+        Execute binning strategy suggestion and populate self.output.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
         try:
             df = self.input_data
 
-            matched_col, excluded = self.get_columns_by_intent()
+            matched_cols, excluded = self.get_columns_by_intent()
             self._log(
-                f"    Processing {len(matched_col)} 'continuous' column(s)", "debug"
+                f"    Processing {len(matched_cols)} 'continuous' column(s)",
+                "debug",
             )
 
-            flags = self.ensure_reliability_flags()
+            flags: dict = self.ensure_reliability_flags()
             skew_vals = flags.get("skew_vals", {})
             stds = flags.get("stds", {})
             skew_threshold = float(self.get_task_param("skew_threshold") or 1.0)
 
             if is_polars(df):
-                numeric_cols = [col for col in df.columns if df[col].dtype.is_numeric()]
+                numeric_cols: list[str] = [
+                    col for col in df.columns if df[col].dtype.is_numeric()
+                ]
             else:
                 numeric_cols = list(df.select_dtypes(include="number").columns)
 
-            suggestions = {}
+            suggestions: dict[str, dict] = {}
 
             for col in numeric_cols:
                 if col not in skew_vals or col not in stds or stds[col] == 0:
@@ -85,7 +107,7 @@ class SuggestNumericalBinning(BaseTask):
                         "suggested_binning": strategy,
                     }
 
-                except Exception:
+                except Exception:  # noqa: BLE001, S112
                     continue
 
             result = TaskResult(
@@ -93,14 +115,14 @@ class SuggestNumericalBinning(BaseTask):
                 status="success",
                 summary={
                     "message": (
-                        f"Binning suggestions generated for {len(suggestions)}"
-                        " numeric columns."
-                    )
+                        f"Binning suggestions generated for {len(suggestions)} "
+                        "numeric columns."
+                    ),
                 },
                 data={"binning_suggestions": suggestions},
                 recommendations=[
                     "Use quantile or equal-width binning for non-linear features. "
-                    "Apply log transform to reduce high skew."
+                    "Apply log transform to reduce high skew.",
                 ],
                 metadata={
                     "suggested_viz_type": "bar",
@@ -108,7 +130,7 @@ class SuggestNumericalBinning(BaseTask):
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
@@ -122,26 +144,22 @@ class SuggestNumericalBinning(BaseTask):
                         "Skewness-based binning strategies may be unstable with N < 30."
                     ),
                     recommendation=(
-                        "Validate binning strategies with"
-                        " visual plots or bootstrapping."
+                        "Validate binning strategies with visual plots or "
+                        "bootstrapping."
                     ),
                 )
 
             # CRITICAL: self.output must be assigned before any add_guidance calls.
-            # add_guidance accesses self.output.guidance — if self.output is None
-            # at that point, the task fails with 'NoneType has no attribute guidance'.
             self.output = result
 
-            # ── Guidance blurbs ───────────────────────────────────────────────────
             for col, info in suggestions.items():
                 skew = info["skewness"]
                 strategy = info["suggested_binning"]
 
-                # ── EDA blurb ────────────────────────────────────────────────────
                 if strategy == "log-transform":
                     eda_level = "warn"
                     eda_title = "Right-skewed distribution — log transform suggested"
-                    eda_body = (
+                    eda_body: str = (
                         f"'{col}' has a skewness of {skew:.2f}, indicating a "
                         f"right-skewed distribution where a few large values pull "
                         f"the tail. Skewed distributions compress most values into "
@@ -153,25 +171,25 @@ class SuggestNumericalBinning(BaseTask):
                     eda_level = "info"
                     eda_title = "Wide value range — equal-width binning may help"
                     eda_body = (
-                        f"'{col}' has a value range that exceeds 3× its standard "
+                        f"'{col}' has a value range that exceeds 3x its standard "
                         f"deviation (skewness {skew:.2f}), suggesting values are "
                         f"spread across a wide scale. Equal-width binning can reveal "
                         f"where values cluster within that range. Inspect whether "
                         f"the spread reflects genuine variation or outlier influence."
                     )
-                else:  # quantile binning
+                else:
                     eda_level = "info"
                     eda_title = "Moderate spread — quantile binning suitable"
                     eda_body = (
                         f"'{col}' has a compact, roughly symmetric distribution "
                         f"(skewness {skew:.2f}) with spread close to its standard "
                         f"deviation. Quantile binning creates equal-frequency groups. "
-                        f"Check the distribution for multimodality or unusual gaps "
-                        f"before binning."
+                        f"Check for multimodality or unusual gaps before binning."
                     )
 
                 self.add_guidance(
-                    col=col,
+                    result=self.output,
+                    column=col,
                     phase="eda",
                     level=eda_level,
                     title=eda_title,
@@ -180,9 +198,8 @@ class SuggestNumericalBinning(BaseTask):
                     metric={"skewness": skew, "suggested_strategy": strategy},
                 )
 
-                # ── ML blurb ─────────────────────────────────────────────────────
                 if strategy == "log-transform":
-                    ml_body = (
+                    ml_body: str = (
                         f"'{col}' is right-skewed (skewness {skew:.2f}). Linear "
                         f"models, regularized regression (Ridge, Lasso), and "
                         f"distance-based models (KNN, SVM) are sensitive to scale "
@@ -191,7 +208,7 @@ class SuggestNumericalBinning(BaseTask):
                         f"models (Random Forest, XGBoost) are scale-invariant and "
                         f"do not require this transformation."
                     )
-                    ml_actions = [
+                    ml_actions: list[dict[str, str]] = [
                         {
                             "action": "Apply log1p transform",
                             "method": "np.log1p",
@@ -212,10 +229,8 @@ class SuggestNumericalBinning(BaseTask):
                         f"'{col}' spans a wide value range relative to its spread "
                         f"(skewness {skew:.2f}). Equal-width binning discretizes "
                         f"the range into fixed-size intervals, which can help linear "
-                        f"models capture non-linear relationships. For tree-based "
-                        f"models this is generally unnecessary. Choose bin count "
-                        f"based on the number of distinct clusters visible in the "
-                        f"distribution."
+                        f"models capture non-linear relationships. Choose bin count "
+                        f"based on the number of distinct clusters in the distribution."
                     )
                     ml_actions = [
                         {
@@ -225,7 +240,7 @@ class SuggestNumericalBinning(BaseTask):
                             "condition": "choose n_bins based on distribution",
                         },
                     ]
-                else:  # quantile
+                else:
                     ml_body = (
                         f"'{col}' has a compact distribution (skewness {skew:.2f}) "
                         f"suitable for quantile binning. Quantile bins ensure equal "
@@ -243,7 +258,8 @@ class SuggestNumericalBinning(BaseTask):
                     ]
 
                 self.add_guidance(
-                    col=col,
+                    result=self.output,
+                    column=col,
                     phase="ml",
                     level="info",
                     title=f"Binning strategy: {strategy}",
@@ -252,13 +268,13 @@ class SuggestNumericalBinning(BaseTask):
                     metric={"skewness": skew, "suggested_strategy": strategy},
                 )
 
-            # ── ML impact scoring ─────────────────────────────────────────────────
             if self.get_engine_param("enable_impact_scoring", True) and suggestions:
-                col = next(iter(suggestions))
-                strategy = suggestions[col]["suggested_binning"]
-                skew_val = suggestions[col].get("skewness", 0.0)
-                tip = get_recommendation_tip(
-                    self.name, {"strategy": strategy, "skew": skew_val}
+                top_col: str = next(iter(suggestions))
+                top_strategy = suggestions[top_col]["suggested_binning"]
+                skew_val = suggestions[top_col].get("skewness", 0.0)
+                tip: str | None = get_recommendation_tip(
+                    self.name,
+                    {"strategy": top_strategy, "skew": skew_val},
                 )
                 self.set_ml_signals(
                     result=result,
@@ -266,11 +282,11 @@ class SuggestNumericalBinning(BaseTask):
                     tags=["transform"],
                     recommendation=tip
                     or (
-                        f"Column '{col}' shows distribution skew or spread. "
-                        f"Recommended strategy: {strategy}."
+                        f"Column '{top_col}' shows distribution skew or spread. "
+                        f"Recommended strategy: {top_strategy}."
                     ),
                 )
-                result.summary["column"] = col
+                result.summary["column"] = top_col
 
         except Exception as e:
             if self.context:

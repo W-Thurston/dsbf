@@ -12,6 +12,7 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="raw",
+    phase="eda",
     domain="core",
     runtime_estimate="fast",
     tags=["preview"],
@@ -20,33 +21,42 @@ from dsbf.utils.backend import is_polars
 class SampleHead(BaseTask):
     """
     Returns the first N rows of the dataset for preview.
-    Works with both Pandas and Polars.
+
+    Supports both Pandas and Polars DataFrames. The output is serialised to a
+    column-oriented dict (``orient="list"``) for JSON portability.
+
+    Configurable parameters (via config["tasks"]["sample_head"]):
+        n (int): Number of rows to return. Default: 5
     """
 
     def run(self) -> None:
+        """
+        Sample the first N rows and populate self.output.
+
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
         try:
-            # ctx = self.context
             df = self.input_data
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
             n = int(self.get_task_param("n") or 5)
-
             df_head = df.head(n)
             self._log(f"    Returning first {n} rows", "debug")
 
             if is_polars(df_head):
-                result = df_head.to_pandas().to_dict(orient="list")
+                sample = df_head.to_pandas().to_dict(orient="list")
             else:
-                result = df_head.to_dict(orient="list")
+                sample = df_head.to_dict(orient="list")
 
             self.output = TaskResult(
                 name=self.name,
                 status="success",
-                summary={"message": (f"Returned first {n} rows.")},
-                data={"sample": result},
+                summary={"message": f"Returned first {n} rows."},
+                data={"sample": sample},
                 metadata={
                     "n": n,
                     "suggested_viz_type": "table",
@@ -54,7 +64,7 @@ class SampleHead(BaseTask):
                     "display_priority": "low",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys())
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )

@@ -1,7 +1,5 @@
 # dsbf/eda/tasks/summarize_nulls.py
 
-from typing import Any
-
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
@@ -14,6 +12,7 @@ from dsbf.utils.backend import is_polars
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="raw",
+    phase="eda",
     domain="core",
     runtime_estimate="fast",
     tags=["nulls", "missing"],
@@ -21,23 +20,39 @@ from dsbf.utils.backend import is_polars
 )
 class SummarizeNulls(BaseTask):
     """
-    Identifies and summarizes missing values in a dataset.
+    Identify and summarize missing values across the dataset.
 
-    Computes:
-    - Null counts per column
-    - Null percentages per column
-    - Columns with >50% missing values
-    - Row-wise null patterns as binary strings (e.g., '101')
+    Computes per-column null counts and percentages, identifies columns with
+    high missingness, and analyses row-level null patterns (encoded as binary
+    strings, e.g. ``"101"`` means columns 0 and 2 are null in that row).
+
+    EDA and ML guidance blurbs are emitted for any column where the null
+    percentage meets or exceeds 5%:
+
+    - ≥ 50% → ``error`` level — imputation would introduce substantial bias
+    - ≥ 20% → ``warn`` level — significant missingness requiring careful handling
+    - ≥ 5%  → ``info`` level — manageable, standard imputation strategies apply
+
+    Polars DataFrames are converted to pandas before processing.
+
+    Configurable parameters (via config["tasks"]["summarize_nulls"]):
+        null_threshold (float): Proportion above which a column is listed in
+            ``high_null_columns``. Default: 0.5
     """
 
     def run(self) -> None:
-        try:
-            # ctx = self.context
-            df: Any = self.input_data
+        """
+        Compute null statistics and populate self.output.
 
-            # Use semantic typing to select relevant columns
-            matched_col, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+        Raises:
+            Exception: Re-raised if a context is present (handled by ExecutionGraph).
+
+        """
+        try:
+            df = self.input_data
+
+            matched_cols, excluded = self.get_columns_by_intent()
+            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
             null_threshold = float(self.get_task_param("null_threshold") or 0.5)
 
@@ -46,7 +61,6 @@ class SummarizeNulls(BaseTask):
 
             n_rows: int = df.shape[0]
 
-            # Column null counts and percentages
             null_counts: dict[str, int] = df.isnull().sum().to_dict()
             null_percentages: dict[str, float] = {
                 col: null_counts[col] / n_rows for col in df.columns
@@ -56,15 +70,16 @@ class SummarizeNulls(BaseTask):
                 col for col, pct in null_percentages.items() if pct >= null_threshold
             ]
             self._log(
-                f"    Detected {len(high_null_columns)} columns with >50% nulls",
+                f"    Detected {len(high_null_columns)} columns with "
+                f">{null_threshold:.0%} nulls",
                 "debug",
             )
 
-            # Row-wise null pattern frequency (e.g., "101" means null in cols 1 and 3)
-            null_mask_df = df.isnull().astype(int)
-            null_patterns = null_mask_df.apply(
-                lambda row: "".join(row.astype(str)),
-                axis=1,
+            # Row-level null pattern: "101" means column 0 and 2 are null in that row.
+            null_patterns = (
+                df.isnull()
+                .astype(int)
+                .apply(lambda row: "".join(row.astype(str)), axis=1)
             )
             pattern_counts: dict[str, int] = null_patterns.value_counts().to_dict()
 
@@ -73,7 +88,8 @@ class SummarizeNulls(BaseTask):
                 status="success",
                 summary={
                     "message": (
-                        f"{len(high_null_columns)} column(s) have >50% missing values."
+                        f"{len(high_null_columns)} column(s) have "
+                        f">{null_threshold:.0%} missing values."
                     ),
                 },
                 data={
@@ -89,12 +105,11 @@ class SummarizeNulls(BaseTask):
                     "display_priority": "high",
                     "excluded_columns": excluded,
                     "column_types": self.get_column_type_info(
-                        matched_col + list(excluded.keys()),
+                        matched_cols + list(excluded.keys()),
                     ),
                 },
             )
 
-            # Generate per-column guidance for any column with notable missingness
             guidance_threshold = 0.05
             for col, pct in null_percentages.items():
                 if pct >= guidance_threshold:
@@ -111,25 +126,34 @@ class SummarizeNulls(BaseTask):
             self.output = make_failure_result(self.name, e)
 
     def _attach_guidance(self, col: str, pct: float, count: int, n_rows: int) -> None:
-        """Generate EDA + ML guidance for a column with notable missingness."""
+        """
+        Generate EDA and ML guidance for a column with notable missingness.
+
+        Args:
+            col: Column name.
+            pct: Proportion of null values (0.0 - 1.0).
+            count: Absolute count of null values.
+            n_rows: Total row count in the dataset.
+
+        """
         pct_str: str = f"{pct:.1%}"
 
-        if pct >= 0.5:
+        if pct >= 0.5:  # noqa: PLR2004
             level = "error"
             title: str = f"Severe Missingness ({pct_str})"
             eda_body: str = (
-                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
-                f"rows). More than half the data is absent - this column is largely "
-                f"unobserved. Before drawing any conclusions from it, investigate why "
-                f"so much data is missing: is this a collection failure, a conditional "
-                f"field only populated in certain cases, or a column that simply was "
-                f"not available for most records?"
+                f"'{col}' is missing {pct_str} of its values ({count:,} of "
+                f"{n_rows:,} rows). More than half the data is absent — this column "
+                f"is largely unobserved. Before drawing any conclusions, investigate "
+                f"why so much data is missing: collection failure, a conditional "
+                f"field only populated in certain cases, or a column that was not "
+                f"available for most records?"
             )
             ml_body: str = (
-                f"{col} has {pct_str} missing values. At this level of missingness "
+                f"'{col}' has {pct_str} missing values. At this level of missingness "
                 f"imputation will introduce substantial bias regardless of method. "
                 f"Consider dropping the column unless the missingness itself is "
-                f"informative - in which case retain a binary is_missing indicator "
+                f"informative — in which case retain a binary is_missing indicator "
                 f"and drop the original."
             )
             ml_actions: list[dict[str, str]] = [
@@ -146,23 +170,23 @@ class SummarizeNulls(BaseTask):
                 },
             ]
 
-        elif pct >= 0.2:
+        elif pct >= 0.2:  # noqa: PLR2004
             level = "warn"
             title = f"Significant Missingness ({pct_str})"
             eda_body = (
-                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
-                "rows). This is substantial enough to affect any analysis that uses "
-                "this column. Consider whether the missing values are random, or "
-                "whether certain subgroups are more likely to have data absent - "
-                "a pattern in missingness can be as informative as the values "
-                "themselves."
+                f"'{col}' is missing {pct_str} of its values ({count:,} of "
+                f"{n_rows:,} rows). This is substantial enough to affect any "
+                f"analysis that uses this column. Consider whether the missing "
+                f"values are random, or whether certain subgroups are more likely "
+                f"to have data absent — a pattern in missingness can be as "
+                f"informative as the values themselves."
             )
             ml_body = (
-                f"{col} has {pct_str} missing values. Simple mean or mode imputation "
-                f"will introduce bias at this level. Prefer median imputation for "
-                f"skewed distributions, or model-based imputation if data is likely "
-                f"missing not at random. Add a binary is_missing indicator alongside "
-                f"any imputed values to preserve the signal."
+                f"'{col}' has {pct_str} missing values. Simple mean or mode "
+                f"imputation will introduce bias at this level. Prefer median "
+                f"imputation for skewed distributions, or model-based imputation "
+                f"if data is likely missing not at random. Add a binary is_missing "
+                f"indicator alongside imputed values to preserve the signal."
             )
             ml_actions = [
                 {
@@ -186,20 +210,19 @@ class SummarizeNulls(BaseTask):
             ]
 
         else:
-            # 5-20%
             level = "info"
             title = f"Some Missingness ({pct_str})"
             eda_body = (
-                f"{col} is missing {pct_str} of its values ({count:,} of {n_rows:,} "
-                f"rows). This is manageable but worth understanding - check whether "
-                f"the missing rows share any common characteristics that might "
-                f"indicate a systematic gap rather than random absence."
+                f"'{col}' is missing {pct_str} of its values ({count:,} of "
+                f"{n_rows:,} rows). This is manageable but worth understanding — "
+                f"check whether the missing rows share common characteristics "
+                f"that might indicate a systematic gap rather than random absence."
             )
             ml_body = (
-                f"{col} has {pct_str} missing values. Tree-based models handle this "
-                f"natively in most frameworks. For linear models, impute before "
-                f"fitting - mean or median imputation is reasonable at this level. "
-                f"If time series, forward fill may be more appropriate."
+                f"'{col}' has {pct_str} missing values. Tree-based models handle "
+                f"this natively in most frameworks. For linear models, impute "
+                f"before fitting — mean or median imputation is reasonable at "
+                f"this level. For time series, forward fill may be more appropriate."
             )
             ml_actions = [
                 {
@@ -216,6 +239,12 @@ class SummarizeNulls(BaseTask):
                 },
             ]
 
+        metric: dict[str, float | int] = {
+            "null_pct": round(pct, 4),
+            "null_count": count,
+            "n_rows": n_rows,
+        }
+
         self.add_guidance(
             result=self.output,
             column=col,
@@ -224,7 +253,7 @@ class SummarizeNulls(BaseTask):
             title=title,
             body=eda_body.strip(),
             actions=[],
-            metric={"null_pct": round(pct, 4), "null_count": count, "n_rows": n_rows},
+            metric=metric,
         )
 
         self.add_guidance(
@@ -235,5 +264,5 @@ class SummarizeNulls(BaseTask):
             title=title,
             body=ml_body.strip(),
             actions=ml_actions,
-            metric={"null_pct": round(pct, 4), "null_count": count, "n_rows": n_rows},
+            metric=metric,
         )

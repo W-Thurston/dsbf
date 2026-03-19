@@ -12,6 +12,7 @@ from dsbf.eda.task_result import TaskResult
     description="Ranks the top-N slowest tasks by runtime duration.",
     profiling_depth="full",
     stage="any",
+    phase="diagnostic",
     domain="core",
     runtime_estimate="fast",
     tags=["diagnostic", "runtime", "performance"],
@@ -19,19 +20,38 @@ from dsbf.eda.task_result import TaskResult
 )
 class IdentifyBottleneckTasks(BaseTask):
     """
-    Analyze task durations and identify top-N slowest bottlenecks.
+    Rank the top-N slowest tasks by runtime duration.
+
+    Reads per-task duration metadata from the analysis context and returns the
+    slowest N tasks sorted by descending duration. Emits a recommendation for
+    any task exceeding 5 seconds.
+
+    Returns a ``"failed"`` result rather than raising if no duration metadata
+    is available — this allows the task to be included in the DAG without
+    breaking the run when timing data has not been populated.
+
+    Configurable parameters (via config["tasks"]["identify_bottleneck_tasks"]):
+        top_n (int): Number of slowest tasks to report. Default: 5
     """
 
     def run(self) -> None:
-        # Use semantic typing to select relevant columns
-        matched_col, excluded = self.get_columns_by_intent()
-        self._log(f"    Processing {len(matched_col)} column(s)", "debug")
+        """
+        Identify slowest tasks and populate self.output.
+
+        Raises:
+            RuntimeError: If no analysis context is attached.
+
+        """
+        matched_cols, excluded = self.get_columns_by_intent()
+        self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
 
         if self.context is None:
             raise RuntimeError("Context is not set for task.")
 
-        durations_raw = self.context.get_metadata("task_durations", {})
-        durations: dict[str, float] = cast(dict[str, float], durations_raw)
+        durations: dict[str, float] = cast(
+            "dict[str, float]",
+            self.context.get_metadata("task_durations", {}),
+        )
         if not durations:
             self.output = TaskResult(
                 name=self.name,
@@ -40,40 +60,40 @@ class IdentifyBottleneckTasks(BaseTask):
             )
             return
 
-        top_n = self.get_task_param("top_n", default=5)
-        sorted_tasks = sorted(durations.items(), key=lambda x: x[1], reverse=True)[
-            :top_n
+        top_n = int(self.get_task_param("top_n") or 5)
+        sorted_tasks: list[tuple[str, float]] = sorted(
+            durations.items(),
+            key=lambda x: x[1],
+            reverse=True,
+        )[:top_n]
+
+        bottlenecks: list[dict[str, float | str]] = [
+            {"task": name, "duration_sec": round(duration, 4)}
+            for name, duration in sorted_tasks
         ]
 
-        summary = {
-            "top_bottlenecks": [
-                {"task": name, "duration_sec": round(duration, 4)}
-                for name, duration in sorted_tasks
-            ],
-            "message": f"Top {top_n} slowest tasks identified.",
-        }
-
-        recommendations = []
-        for task_info in summary["top_bottlenecks"]:
-            if task_info["duration_sec"] > 5.0:
-                recommendations.append(
-                    f"Consider optimizing or parallelizing '{task_info['task']}'"
-                    f" (took {task_info['duration_sec']}s)."
-                )
+        recommendations: list[str] = [
+            f"Consider optimizing or parallelizing '{t['task']}' "
+            f"(took {t['duration_sec']}s)."
+            for t in bottlenecks
+            if t["duration_sec"] > 5.0  # noqa: PLR2004
+        ]
 
         self.output = TaskResult(
             name=self.name,
             status="success",
-            summary=summary,
+            summary={
+                "top_bottlenecks": bottlenecks,
+                "message": f"Top {top_n} slowest tasks identified.",
+            },
             recommendations=recommendations,
-            plots={},
             metadata={
                 "suggested_viz_type": "bar",
                 "recommended_section": "Diagnostics",
                 "display_priority": "low",
                 "excluded_columns": excluded,
                 "column_types": self.get_column_type_info(
-                    matched_col + list(excluded.keys())
+                    matched_cols + list(excluded.keys()),
                 ),
             },
         )
