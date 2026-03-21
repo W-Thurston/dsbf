@@ -47,7 +47,8 @@ class GenerateDatasetSummaryPlots(BaseTask):
     This task owns all plots that describe the dataset as a whole rather than
     individual columns. It is the authoritative source for:
 
-    - Correlation matrix (numeric column pairs, Pearson)
+    - Correlation matrix (reads from ``compute_pairwise_associations`` results;
+      falls back to computing Pearson directly if the task hasn't run)
     - Null matrix (missingness pattern across rows and columns)
     - Missingness matrix (missingno-style heatmap)
     - Dtype stacked bar (inferred vs intent type breakdown per column)
@@ -121,8 +122,10 @@ class GenerateDatasetSummaryPlots(BaseTask):
         """
         Build static and interactive correlation matrix artifacts.
 
-        Only numeric columns are included. Returns an empty dict when fewer
-        than 2 numeric columns exist or the correlation matrix is empty.
+        Prefers the precomputed ``__correlation_matrix__`` from the
+        ``compute_pairwise_associations`` task result in context. Falls back
+        to computing Pearson directly from the DataFrame if the association task
+        has not run or did not produce numeric pairs.
 
         Args:
             df: Source pandas DataFrame.
@@ -132,22 +135,30 @@ class GenerateDatasetSummaryPlots(BaseTask):
             or empty dict if the plot cannot be generated.
 
         """
-        numeric_df: DataFrame = df.select_dtypes(include=["number"])
+        # Prefer precomputed matrix from compute_pairwise_associations.
+        corr_df: pd.DataFrame | None = self._get_precomputed_corr_matrix(df)
 
-        if numeric_df.shape[1] < 2:  # noqa: PLR2004
-            return {}
+        if corr_df is None:
+            # Fallback: compute Pearson from raw DataFrame.
+            self._log(
+                "    No precomputed correlation matrix found — "
+                "computing from DataFrame.",
+                "debug",
+            )
+            numeric_df: DataFrame = df.select_dtypes(include=["number"])
+            if numeric_df.shape[1] < 2:  # noqa: PLR2004
+                return {}
+            corr: DataFrame = numeric_df.corr()
+            if corr.empty:
+                return {}
+            corr_df = numeric_df
 
-        corr: DataFrame = numeric_df.corr()
-        if corr.empty:
-            return {}
-
-        # Pass numeric_df (not df) — the correlation plot covers numeric columns only.
         static_result: dict[str, Any] = PlotFactory.plot_correlation_static(
-            numeric_df,
+            corr_df,
             save_path=self.get_output_path("correlation_matrix.png"),
         )
         interactive_result: dict[str, Any] = PlotFactory.plot_correlation_interactive(
-            numeric_df,
+            corr_df,
             json_path=self.get_output_path("correlation_matrix.json"),
         )
         self._log("Correlation matrix plotted.", "debug")
@@ -156,12 +167,61 @@ class GenerateDatasetSummaryPlots(BaseTask):
             "interactive": interactive_result.get("interactive", {}),
         }
 
+    def _get_precomputed_corr_matrix(self, df: pd.DataFrame) -> pd.DataFrame | None:
+        """
+        Read the precomputed correlation matrix from context task results.
+
+        Extracts ``__correlation_matrix__`` from the ``compute_pairwise_associations``
+        task result and reconstructs it as a symmetric pandas DataFrame suitable
+        for PlotFactory.
+
+        Args:
+            df: Source DataFrame (used to order columns consistently).
+
+        Returns:
+            Symmetric pandas DataFrame of Pearson correlations, or None if the
+            precomputed matrix is unavailable or too small to plot.
+
+        """
+        if not self.context:
+            return None
+
+        assoc_result = self.context.results.get("compute_pairwise_associations")
+        if not assoc_result or assoc_result.status != "success":
+            return None
+
+        matrix_dict: dict | None = (assoc_result.data or {}).get(
+            "__correlation_matrix__",
+        )
+        if not matrix_dict or len(matrix_dict) < 2:
+            return None
+
+        try:
+            cols: list[str] = [c for c in df.columns if c in matrix_dict]
+            if len(cols) < 2:
+                return None
+            corr_df: DataFrame = pd.DataFrame(matrix_dict).reindex(
+                index=cols, columns=cols
+            )
+            # Fill diagonal explicitly in case it wasn't stored.
+            for col in cols:
+                corr_df.loc[col, col] = 1.0
+            self._log(
+                f"    Using precomputed correlation matrix ({len(cols)} columns).",
+                "debug",
+            )
+            return corr_df
+        except Exception as e:
+            self._log(
+                f"    Failed to reconstruct precomputed correlation matrix: {e}. "
+                "Falling back to direct computation.",
+                "debug",
+            )
+            return None
+
     def _build_null_matrix_plot(self, df: pd.DataFrame) -> dict[str, Any]:
         """
         Build static and interactive null-matrix artifacts.
-
-        The null matrix shows which cells are null vs non-null across the
-        full dataset, useful for spotting row-level or column-level patterns.
 
         Args:
             df: Source pandas DataFrame.
@@ -186,9 +246,6 @@ class GenerateDatasetSummaryPlots(BaseTask):
         """
         Build the static missingno-style missingness matrix artifact.
 
-        Distinct from the null matrix — uses the missingno library to render
-        a sorted, dendrogram-clustered view of missingness patterns.
-
         Args:
             df: Source pandas DataFrame.
 
@@ -204,10 +261,6 @@ class GenerateDatasetSummaryPlots(BaseTask):
     def _build_dtype_mapping_plot(self, df: pd.DataFrame) -> dict[str, Any]:
         """
         Build the stacked dtype mapping artifact when context metadata is available.
-
-        Visualises the relationship between inferred storage dtypes and DSBF
-        analysis-intent types (e.g. how many int64 columns are treated as
-        continuous vs categorical).
 
         Args:
             df: Source pandas DataFrame.

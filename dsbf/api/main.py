@@ -21,9 +21,11 @@ Endpoints
   GET  /api/figures/{figure_id}/file           serve the actual figure file
   GET  /api/runs/compare                       compare a task across run_keys
   GET  /api/runs/{run_key}/dq-status           data-health header bar summary
+  GET  /api/runs/{run_key}/ml-readiness        ML readiness score and column report
   GET  /health                                 liveness check
 """
 
+import json as _json
 import os
 from pathlib import Path
 from typing import Annotated, Any
@@ -160,61 +162,6 @@ def get_run_tasks(run_key: str) -> dict[str, Any]:
     return db.get_run_tasks(run_key, _DB_PATH)
 
 
-@app.get("/api/runs/{run_key}/dq-status", tags=["runs"])
-def get_dq_status(run_key: str) -> dict[str, Any]:
-    """
-    Return the data-health header bar summary for a run.
-
-    Reads the data_quality_scorer task result and returns a compact dict
-    with one entry per category, shaped for direct consumption by the
-    Vue header bar component.  The full scorer output (with per-column
-    findings) is still available via /tasks/data_quality_scorer.
-
-    Response shape:
-    {
-     "available": true,
-     "total_columns": 42,
-     "categories": {
-      "completeness": { "level": "amber", "affected_count": 3, "pct_affected": 0.071 },
-      "validity":     { "level": "red",   "affected_count": 9, "pct_affected": 0.214 },
-      "usability":    { "level": "green",  "affected_count": 0, "pct_affected": 0.0   },
-      "redundancy":   { "level": "green",  "affected_count": 1, "pct_affected": 0.024 },
-      "leakage":      { "level": "green",  "affected_count": 0, "pct_affected": 0.0   },
-     }
-    }
-
-    If the scorer has not run (older run, profiler at basic depth), returns
-        { "available": false }
-    so the frontend can render a graceful fallback.
-    """
-    run = db.get_run(run_key, _DB_PATH)
-    if not run:
-        raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
-
-    task = db.get_task(run_key, "data_quality_scorer", _DB_PATH)
-    if not task or not task.get("data"):
-        return {"available": False}
-
-    raw_data = task["data"]
-    categories_raw = raw_data.get("categories") or {}
-    total_columns = raw_data.get("total_columns") or 0
-
-    # Shape each category down to just what the header bar needs
-    categories: dict[str, Any] = {}
-    for name, block in categories_raw.items():
-        categories[name] = {
-            "level": block.get("level", "green"),
-            "affected_count": block.get("affected_count", 0),
-            "pct_affected": block.get("pct_affected", 0.0),
-        }
-
-    return {
-        "available": True,
-        "total_columns": total_columns,
-        "categories": categories,
-    }
-
-
 @app.get("/api/runs/{run_key}/tasks/{task_name}", tags=["runs"])
 def get_task(run_key: str, task_name: str) -> dict[str, Any]:
     """Get a single task result for a run."""
@@ -230,34 +177,36 @@ def get_task(run_key: str, task_name: str) -> dict[str, Any]:
 @app.get("/api/runs/{run_key}/correlations/{column}")
 async def run_column_correlations(run_key: str, column: str, threshold: float = 0.0):
     """
-    Return pairwise correlations for a single column using the stored
-    compute_correlations task result (keyed as "COL_A|COL_B": float).
+    Return pairwise correlations for a single column.
+
+    Reads from compute_pairwise_associations (the single source of truth for
+    all column relationships). Extracts the numeric correlation value from the
+    rich entry dict — for Pearson/Spearman pairs this is entry["metric"]; the
+    metric_type is also returned for the frontend to display appropriately.
     """
-    run = db.get_run(run_key)
+    run: dict | None = db.get_run(run_key)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    task = db.get_task(run_key, "compute_correlations")
+    task: dict | None = db.get_task(run_key, "compute_pairwise_associations")
     if not task or not task.get("data"):
         return {
             "column": column,
             "correlations": [],
             "unavailable": True,
             "reason": (
-                "Correlation data not available. "
-                "Run the profiler at full depth to enable this feature."
+                "Correlation data not available. Run the profiler at full depth "
+                "to enable this feature."
             ),
         }
 
-    import json as _json
-
     try:
-        raw = (
+        raw: dict | Any = (
             task["data"]
             if isinstance(task["data"], dict)
             else _json.loads(task["data"])
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         return {
             "column": column,
             "correlations": [],
@@ -266,19 +215,44 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
         }
 
     results = []
-    for pair_key, val in raw.items():
+    for pair_key, entry in raw.items():
+        # Skip the sentinel correlation matrix key.
+        if pair_key == "__correlation_matrix__":
+            continue
         if "|" not in pair_key:
             continue
         parts = pair_key.split("|", 1)
         if column not in parts:
             continue
+
         other = parts[1] if parts[0] == column else parts[0]
-        try:
-            corr = float(val)
-        except (TypeError, ValueError):
-            continue
+
+        # entry is a rich dict with "metric", "metric_type", "strength", etc.
+        # Fall back to treating entry as a raw float for any legacy data.
+        if isinstance(entry, dict):
+            try:
+                corr = float(entry["metric"])
+                metric_type = entry.get("metric_type", "pearson_r")
+                strength = entry.get("strength", "")
+            except (KeyError, TypeError, ValueError):
+                continue
+        else:
+            try:
+                corr = float(entry)
+                metric_type = "pearson_r"
+                strength = ""
+            except (TypeError, ValueError):
+                continue
+
         if abs(corr) >= threshold:
-            results.append({"column": other, "correlation": round(corr, 4)})
+            results.append(
+                {
+                    "column": other,
+                    "correlation": round(corr, 4),
+                    "metric_type": metric_type,
+                    "strength": strength,
+                },
+            )
 
     results.sort(key=lambda x: abs(x["correlation"]), reverse=True)
     return {"column": column, "correlations": results, "unavailable": False}
@@ -294,6 +268,102 @@ def read_run_sample(run_key: str, n: int = 10):
     return result
 
 
+#################
+# Data health   #
+#################
+
+
+@app.get("/api/runs/{run_key}/dq-status", tags=["runs"])
+def get_dq_status(run_key: str) -> dict[str, Any]:
+    """
+    Return the data-health header bar summary for a run.
+
+    Reads the data_quality_scorer task result and returns a compact dict
+    with one entry per category, shaped for direct consumption by the
+    Vue header bar component.  The full scorer output (with per-column
+    findings) is still available via /tasks/data_quality_scorer.
+
+    Response shape:
+        {
+            "available": true,
+            "total_columns": 42,
+            "categories": {
+                "completeness": {
+                    "level": "amber",
+                    "affected_count": 3,
+                    "pct_affected": 0.071
+                },
+                ...
+            }
+        }
+
+    If the scorer has not run, returns { "available": false }.
+    """
+    run = db.get_run(run_key, _DB_PATH)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
+
+    task = db.get_task(run_key, "data_quality_scorer", _DB_PATH)
+    if not task or not task.get("data"):
+        return {"available": False}
+
+    raw_data = task["data"]
+    categories_raw = raw_data.get("categories") or {}
+    total_columns = raw_data.get("total_columns") or 0
+
+    categories: dict[str, Any] = {}
+    for name, block in categories_raw.items():
+        categories[name] = {
+            "level": block.get("level", "green"),
+            "affected_count": block.get("affected_count", 0),
+            "pct_affected": block.get("pct_affected", 0.0),
+        }
+
+    return {
+        "available": True,
+        "total_columns": total_columns,
+        "categories": categories,
+    }
+
+
+@app.get("/api/runs/{run_key}/ml-readiness", tags=["runs"])
+def get_ml_readiness(run_key: str) -> dict[str, Any]:
+    """
+    Return the ML readiness report for a run.
+
+    Reads the ml_readiness_scorer task result.  Returns the full structured
+    report including overall score, gate, per-column scores, and all ML
+    guidance blurbs sorted by priority (worst columns first).
+
+    Response shape:
+        {
+            "available": true,
+            "overall_score":       int,
+            "readiness_gate":      "ready"|"needs_work"|"not_ready",
+            "total_columns":       int,
+            "columns_ready":       int,
+            "level_summary":       {level: count},
+            "column_scores":       {col: int},
+            "columns_by_priority": [{column, score, worst_level,
+                                     blurb_count, task_count, blurbs}, ...]
+        }
+
+    If the scorer has not run, returns { "available": false }.
+    """
+    run = db.get_run(run_key, _DB_PATH)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
+
+    task = db.get_task(run_key, "ml_readiness_scorer", _DB_PATH)
+    if not task or not task.get("data"):
+        return {"available": False}
+
+    return {
+        "available": True,
+        **task["data"],
+    }
+
+
 ###########
 # Figures #
 ###########
@@ -303,55 +373,32 @@ def read_run_sample(run_key: str, n: int = 10):
 def get_run_associations(run_key: str):
     """
     Return all pairwise association results from compute_pairwise_associations.
-    Falls back to compute_correlations (Pearson-only) if the richer task hasn't run.
+
+    The __correlation_matrix__ sentinel key is excluded from the pairs response
+    since it is a derived artifact consumed by the plots endpoint, not a
+    column-pair association entry.
     """
     run = db.get_run(run_key, _DB_PATH)
     if not run:
         raise HTTPException(status_code=404, detail=f"Run '{run_key}' not found.")
 
     task = db.get_task(run_key, "compute_pairwise_associations", _DB_PATH)
-    if task and task.get("data"):
+    if not task or not task.get("data"):
         return {
             "source": "compute_pairwise_associations",
-            "pairs": task["data"],
-            "summary": task.get("summary", {}),
+            "pairs": {},
+            "summary": {"message": "Association data not available."},
+            "unavailable": True,
         }
 
-    # Fallback: wrap compute_correlations in the same shape
-    fallback = db.get_task(run_key, "compute_correlations", _DB_PATH)
-    if fallback and fallback.get("data"):
-        pairs = {}
-        for key, val in fallback["data"].items():
-            if "|" not in key:
-                continue
-            try:
-                fval = float(val)
-            except (TypeError, ValueError):
-                continue
-            pairs[key] = {
-                "metric": round(fval, 6),
-                "metric_type": "pearson_r",
-                "strength": _pearson_strength(fval),
-                "col_a_intent": "continuous",
-                "col_b_intent": "continuous",
-            }
-        return {
-            "source": "compute_correlations",
-            "pairs": pairs,
-            "summary": {
-                "message": (
-                    "Pearson correlations only "
-                    "(run at full depth for richer associations)."
-                ),
-            },
-        }
+    # Strip the sentinel key before returning to the frontend.
+    pairs = {k: v for k, v in task["data"].items() if k != "__correlation_matrix__"}
 
     return {
-        "source": None,
-        "pairs": {},
-        "summary": {
-            "message": "No association data available. Run the profiler at full depth."
-        },
+        "source": "compute_pairwise_associations",
+        "pairs": pairs,
+        "summary": task.get("summary", {}),
+        "unavailable": False,
     }
 
 
