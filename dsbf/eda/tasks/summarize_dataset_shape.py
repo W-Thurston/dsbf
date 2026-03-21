@@ -1,14 +1,22 @@
 # dsbf/eda/tasks/summarize_dataset_shape.py
 
+
+from typing import TYPE_CHECKING
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
+if TYPE_CHECKING:
+    import pandas as pd
+
 
 @register_task(
     display_name="Summarize Dataset Shape",
-    description="Summarizes dataset dimensions and memory usage.",
+    description=(
+        "Summarizes dataset dimensions, memory usage, and per-column memory breakdown."
+    ),
     depends_on=["infer_types"],
     profiling_depth="basic",
     stage="raw",
@@ -25,9 +33,16 @@ class SummarizeDatasetShape(BaseTask):
     Computes:
     - Row and column counts
     - Percentage of missing cells across the entire dataset
-    - Approximate memory usage in MB (via pandas ``memory_usage(deep=True)``)
+    - Approximate total memory usage in MB
+    - Per-column memory usage in bytes and MB
 
-    Polars DataFrames are converted to pandas for the memory usage estimation.
+    The per-column breakdown feeds ``suggest_dtype_optimizations``, which reads
+    from this task's output and recommends dtype downcasts for columns with
+    unnecessarily large storage types. The shape task describes what *is*;
+    the optimization task recommends what *could be smaller*.
+
+    Polars DataFrames are converted to pandas for memory estimation since
+    ``memory_usage(deep=True)`` is a pandas API.
     """
 
     def run(self) -> None:
@@ -55,9 +70,24 @@ class SummarizeDatasetShape(BaseTask):
             total_cells = n_rows * n_cols
 
             null_pct: float = (
-                df.isnull().sum().sum() / total_cells if total_cells else 0.0
+                df.isna().sum().sum() / total_cells if total_cells else 0.0
             )
-            mem_bytes = df.memory_usage(deep=True).sum()
+
+            # per-column memory — deep=True includes referenced objects (e.g. strings)
+            col_memory: pd.Series = df.memory_usage(deep=True)
+            # pandas includes an "Index" entry; exclude it
+            col_memory_bytes: dict[str, int] = {
+                col: int(col_memory[col])
+                for col in df.columns
+                if col in col_memory.index
+            }
+            total_mem_bytes: int = int(col_memory.sum())
+
+            self._log(
+                f"    Total memory: {total_mem_bytes / 1_048_576:.3f} MB "
+                f"across {n_cols} columns",
+                "debug",
+            )
 
             self.output = TaskResult(
                 name=self.name,
@@ -67,7 +97,14 @@ class SummarizeDatasetShape(BaseTask):
                     "num_rows": n_rows,
                     "num_columns": n_cols,
                     "null_cell_percentage": round(null_pct, 4),
-                    "approx_memory_MB": round(mem_bytes / 1_048_576, 2),
+                    "approx_memory_MB": round(total_mem_bytes / 1_048_576, 2),
+                    # Per-column breakdown — consumed by suggest_dtype_optimizations
+                    # and available to the Overview tab for column-level memory display.
+                    "column_memory_bytes": col_memory_bytes,
+                    "column_memory_MB": {
+                        col: round(b / 1_048_576, 4)
+                        for col, b in col_memory_bytes.items()
+                    },
                 },
                 metadata={
                     "suggested_viz_type": "summary",
