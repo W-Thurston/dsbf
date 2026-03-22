@@ -290,30 +290,14 @@ class ExtractDatetimeFeatures(BaseTask):
 
             datetime_cols: list[str] = []
             for col in df.columns:
-                intent: str = semantic_types.get(col, "")
-                if intent == "datetime" or (
-                    not intent and pd.api.types.is_datetime64_any_dtype(df[col])
-                ):
+                if semantic_types.get(col) == "datetime":
                     datetime_cols.append(col)
-
-            if not datetime_cols:
-                # Attempt to parse object columns that look like dates
-                for col in df.select_dtypes(include=["object"]).columns:
-                    try:
-                        parsed = pd.to_datetime(
-                            df[col],
-                            infer_datetime_format=True,
-                            errors="coerce",
-                        )
-                        if parsed.notna().mean() > 0.9:
-                            df[col] = parsed
-                            datetime_cols.append(col)
-                            self._log(
-                                f"    '{col}' inferred as datetime from object dtype.",
-                                "debug",
-                            )
-                    except Exception:  # noqa: BLE001, PERF203, S110
-                        pass
+                elif not semantic_types and pd.api.types.is_datetime64_any_dtype(
+                    df[col],
+                ):
+                    # Fallback only when infer_types hasn't run at all
+                    # (e.g. standalone tests)
+                    datetime_cols.append(col)
 
             results: dict[str, dict] = {}
 

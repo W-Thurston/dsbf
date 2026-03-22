@@ -10,6 +10,8 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
+    from pandas import Timestamp
+    from pandas._libs import NaTType
     from polars import Series
 
 # Patterns that identify fiscal year, quarter, or date-period labels that look
@@ -164,6 +166,7 @@ class InferTypes(BaseTask):
             return self._infer_numeric_intent(
                 nunique=nunique,
                 unique_ratio=unique_ratio,
+                series=non_null,
             )
 
         if pd.api.types.is_datetime64_any_dtype(non_null):
@@ -180,24 +183,56 @@ class InferTypes(BaseTask):
             return "text"
         return "categorical"
 
-    def _infer_numeric_intent(self, *, nunique: int, unique_ratio: float) -> str:
+    def _infer_numeric_intent(
+        self,
+        *,
+        nunique: int,
+        unique_ratio: float,
+        series: pd.Series | None = None,
+    ) -> str:
         """
         Infer semantic type for a numeric column.
 
+        Evaluates three criteria in priority order:
+
+        1. **Binary columns** (exactly 2 distinct values) → ``categorical``
+        2. **Low-cardinality columns** (unique ratio < 5% and ≤ 20 distinct
+        values) → ``categorical``
+        3. **Unix timestamps** (integer column whose median falls in the
+        epoch-seconds range 2001-2033 or the epoch-milliseconds equivalent)
+        → ``datetime``. Requires ``series`` to be passed; skipped otherwise.
+        4. **Everything else** → ``continuous``
+
         Args:
-            nunique: Number of distinct values.
+            nunique: Number of distinct non-null values.
             unique_ratio: Ratio of distinct values to total non-null values.
+            series: The non-null numeric Series, used for Unix timestamp
+                detection. Optional — pass ``None`` to skip that check.
 
         Returns:
-            ``"categorical"`` for binary or low-cardinality columns,
-            ``"continuous"`` otherwise.
+            One of ``"categorical"``, ``"datetime"``, or ``"continuous"``.
 
         """
-        if nunique == 2:  # noqa: PLR2004
+        if nunique == 2:
             return "categorical"
-        if unique_ratio < 0.05 and nunique <= 20:  # noqa: PLR2004
+        if unique_ratio < 0.05 and nunique <= 20:
             return "categorical"
+        # Unix timestamp heuristic: large integers in plausible epoch range
+        if series is not None and self._is_unix_timestamp(series):
+            return "datetime"
         return "continuous"
+
+    def _is_unix_timestamp(self, series: pd.Series) -> bool:
+        """True if values look like Unix epoch seconds or milliseconds."""
+        non_null: Series = series.dropna()
+        if len(non_null) < 5:
+            return False
+        # Epoch seconds: ~1e9 to ~2e9 (year 2001-2033)
+        # Epoch milliseconds: ~1e12 to ~2e12
+        median = float(non_null.median())
+        return (1_000_000_000 < median < 2_000_000_000) or (
+            1_000_000_000_000 < median < 2_000_000_000_000
+        )
 
     def _as_string_series(self, series: pd.Series) -> pd.Series:
         """
@@ -227,16 +262,20 @@ class InferTypes(BaseTask):
         """
         if series.empty:
             return False
-
         try:
-            pd.to_datetime(series, format="%Y-%m-%d", errors="raise", utc=True)
-            return True  # noqa: TRY300
+            parsed: NaTType | Timestamp = pd.to_datetime(
+                series,
+                format="%Y-%m-%d",
+                errors="coerce",
+                utc=True,
+            )
+            if parsed.notna().mean() > 0.9:
+                return True
         except (TypeError, ValueError):
             pass
-
         try:
-            pd.to_datetime(series, errors="raise", utc=True)
-            return True  # noqa: TRY300
+            parsed = pd.to_datetime(series, errors="coerce", utc=True)
+            return bool(parsed.notna().mean() > 0.9)
         except (TypeError, ValueError):
             return False
 
