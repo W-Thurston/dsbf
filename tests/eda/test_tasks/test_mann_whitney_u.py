@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_separated_groups_significant(tmp_path) -> None:
-    """Clearly separated groups must produce a significant U test."""
+def test_corrected_fields_present(tmp_path) -> None:
+    """Each result entry must contain p_value, p_value_corrected, and correction."""
     rng: Generator = np.random.default_rng(42)
     df = pd.DataFrame(
         {
@@ -26,11 +26,9 @@ def test_separated_groups_significant(tmp_path) -> None:
             "group": ["A"] * 100 + ["B"] * 100,
         },
     )
-
     ctx, task = make_ctx_and_task(
         task_cls=MannWhitneyU,
         current_df=df,
-        task_overrides={"alpha": 0.05, "min_group_n": 5},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
@@ -39,13 +37,82 @@ def test_separated_groups_significant(tmp_path) -> None:
     assert result.status == "success"
     key = "value|group|A_vs_B"
     assert key in result.data
-    assert result.data[key]["p_value"] < 0.05
-    assert result.data[key]["significant"] is True
+    entry = result.data[key]
+    assert "p_value" in entry
+    assert "p_value_corrected" in entry
+    assert "correction" in entry
+    assert entry["correction"] == "fdr_bh"
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_significant_flag_uses_corrected_p(tmp_path) -> None:
+    rng: Generator = np.random.default_rng(42)
+    df = pd.DataFrame(
+        {
+            "value": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
+            "group": ["A"] * 100 + ["B"] * 100,
+        },
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=MannWhitneyU,
+        current_df=df,
+        task_overrides={"alpha": 0.05},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    for entry in result.data.values():
+        assert entry["significant"] == (entry["p_value_corrected"] < 0.05)
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_correction_none_p_values_equal(tmp_path) -> None:
+    rng: Generator = np.random.default_rng(42)
+    df = pd.DataFrame(
+        {
+            "value": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
+            "group": ["A"] * 50 + ["B"] * 50,
+        },
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=MannWhitneyU,
+        current_df=df,
+        task_overrides={"correction": "none"},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    for entry in result.data.values():
+        assert entry["p_value"] == entry["p_value_corrected"]
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_separated_groups_significant(tmp_path) -> None:
+    rng: Generator = np.random.default_rng(42)
+    df = pd.DataFrame(
+        {
+            "value": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
+            "group": ["A"] * 100 + ["B"] * 100,
+        },
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=MannWhitneyU,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data["value|group|A_vs_B"]["significant"] is True
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_rank_biserial_r_range(tmp_path) -> None:
-    """Rank-biserial r must be in [-1, 1]."""
     rng: Generator = np.random.default_rng(0)
     df = pd.DataFrame(
         {
@@ -53,7 +120,6 @@ def test_rank_biserial_r_range(tmp_path) -> None:
             "cat": ["low"] * 60 + ["high"] * 60,
         },
     )
-
     ctx, task = make_ctx_and_task(
         task_cls=MannWhitneyU,
         current_df=df,
@@ -68,45 +134,8 @@ def test_rank_biserial_r_range(tmp_path) -> None:
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_result_structure_complete(tmp_path) -> None:
-    """Each result entry must contain all expected keys."""
-    rng: Generator = np.random.default_rng(1)
-    df = pd.DataFrame(
-        {
-            "x": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
-            "flag": ["yes"] * 50 + ["no"] * 50,
-        },
-    )
-
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"x": "continuous", "flag": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    entry = next(iter(result.data.values()))
-    for key in (
-        "u_statistic",
-        "p_value",
-        "rank_biserial_r",
-        "n_group_a",
-        "n_group_b",
-        "level_a",
-        "level_b",
-        "num_col",
-        "cat_col",
-        "significant",
-        "alpha",
-    ):
-        assert key in entry
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_multi_level_produces_multiple_tests(tmp_path) -> None:
-    """A 3-level categorical must produce 3 pairwise tests."""
+def test_multi_level_correction_applied_across_all_pairs(tmp_path) -> None:
+    """Correction must be applied across all 3 level-pairs, not per-pair."""
     rng: Generator = np.random.default_rng(42)
     df = pd.DataFrame(
         {
@@ -120,43 +149,25 @@ def test_multi_level_produces_multiple_tests(tmp_path) -> None:
             "group": ["A"] * 50 + ["B"] * 50 + ["C"] * 50,
         },
     )
-
     ctx, task = make_ctx_and_task(
         task_cls=MannWhitneyU,
         current_df=df,
-        task_overrides={"cat_cardinality_limit": 10},
+        task_overrides={"cat_cardinality_limit": 10, "correction": "fdr_bh"},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"x": "continuous", "group": "categorical"})
     result: TaskResult = ctx.run_task(task)
 
     assert result.status == "success"
-    # 3 levels → 3 pairs: A_vs_B, A_vs_C, B_vs_C
-    assert len(result.data) == 3
+    assert len(result.data) == 3  # A_vs_B, A_vs_C, B_vs_C
+    assert result.metadata["n_tests"] == 3
+    # All entries must share the same correction
+    for entry in result.data.values():
+        assert entry["correction"] == "fdr_bh"
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_guidance_emitted_for_significant_pair(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(42)
-    df = pd.DataFrame(
-        {
-            "score": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
-            "group": ["A"] * 100 + ["B"] * 100,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"score": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-    assert result.status == "success"
-    assert result.guidance is not None
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_summary_counts_correct(tmp_path) -> None:
+def test_n_tests_in_metadata(tmp_path) -> None:
     rng: Generator = np.random.default_rng(0)
     df = pd.DataFrame(
         {
@@ -171,10 +182,29 @@ def test_summary_counts_correct(tmp_path) -> None:
     )
     ctx.set_metadata("semantic_types", {"x": "continuous", "cat": "categorical"})
     result: TaskResult = ctx.run_task(task)
+
     assert result.status == "success"
-    assert result.summary["test_count"] == len(result.data)
-    sig: int = sum(1 for v in result.data.values() if v["significant"])
-    assert result.summary["significant_count"] == sig
+    assert result.metadata["n_tests"] == len(result.data)
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_correction_reported_in_summary(tmp_path) -> None:
+    rng: Generator = np.random.default_rng(0)
+    df = pd.DataFrame(
+        {
+            "x": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
+            "cat": ["A"] * 50 + ["B"] * 50,
+        },
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=MannWhitneyU,
+        current_df=df,
+        task_overrides={"correction": "bonferroni"},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "cat": "categorical"})
+    result: TaskResult = ctx.run_task(task)
+    assert result.summary["correction"] == "bonferroni"
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")

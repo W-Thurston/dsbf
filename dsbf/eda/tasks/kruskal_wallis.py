@@ -9,6 +9,7 @@ from scipy.stats import kruskal
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.eda.tasks.one_way_anova import _apply_correction
 from dsbf.utils.backend import is_polars
 
 
@@ -18,7 +19,7 @@ from dsbf.utils.backend import is_polars
     description=(
         "Non-parametric alternative to one-way ANOVA. Tests whether distributions "
         "differ across categorical groups without assuming normality or equal "
-        "variances. Appropriate when ANOVA assumptions are violated."
+        "variances. Supports Bonferroni and Benjamini-Hochberg FDR correction."
     ),
     depends_on=["infer_types"],
     profiling_depth="standard",
@@ -35,31 +36,35 @@ class KruskalWallis(BaseTask):
 
     The Kruskal-Wallis H-test is the non-parametric equivalent of one-way
     ANOVA. It tests whether samples from two or more groups come from the
-    same distribution, without assuming normality or equal variances within
-    groups. It operates on ranks rather than raw values.
+    same distribution, without assuming normality or equal variances.
 
-    **When to use Kruskal-Wallis over ANOVA:**
-    - Distribution within groups is clearly non-normal
-    - Group variances are heterogeneous (Levene's test significant)
-    - Ordinal data where arithmetic mean is not meaningful
+    **Multiple testing correction:**
+    Same correction options as ``one_way_anova``: ``"fdr_bh"`` (default),
+    ``"bonferroni"``, or ``"none"``. Both raw and corrected p-values are
+    stored; the ``significant`` flag uses the corrected value. The number
+    of tests run is reported in metadata and guidance blurbs.
+
+    **When to use over ANOVA:**
+    - Non-normal distributions within groups
+    - Heterogeneous group variances
+    - Ordinal data
     - Small group sizes where normality cannot be verified
 
-    **Interpretation:**
-    A significant result (p < alpha) means at least one group's distribution
-    is stochastically different from the others — not necessarily that all
-    group means differ. Post-hoc pairwise Mann-Whitney tests (available in
-    ``mann_whitney_u``) localise which specific pairs drive the difference.
+    A significant result means at least one group differs; use
+    ``mann_whitney_u`` for post-hoc pairwise localisation.
 
     Configurable parameters (via config["tasks"]["kruskal_wallis"]):
         alpha (float): Significance threshold. Default: 0.05
+        correction (str): ``"fdr_bh"`` | ``"bonferroni"`` | ``"none"``.
+            Default: ``"fdr_bh"``
         min_group_n (int): Minimum observations per group. Default: 5
-        cat_cardinality_limit (int): Skip categorical columns with more
-            unique values than this. Default: 20
+        cat_cardinality_limit (int): Skip columns with more unique values.
+            Default: 20
     """
 
     def run(self) -> None:
         """
-        Execute Kruskal-Wallis tests and populate self.output.
+        Execute Kruskal-Wallis tests with multiple testing correction.
 
         Raises:
             Exception: Re-raised if a context is present (handled by ExecutionGraph).
@@ -75,6 +80,18 @@ class KruskalWallis(BaseTask):
 
             alpha_raw: Any | None = self.get_task_param("alpha")
             alpha: float = float(alpha_raw) if alpha_raw is not None else 0.05
+
+            correction_raw: Any | None = self.get_task_param("correction")
+            correction: str = (
+                str(correction_raw) if correction_raw is not None else "fdr_bh"
+            )
+            if correction not in ("none", "bonferroni", "fdr_bh"):
+                self._log(
+                    f"    Unknown correction '{correction}'"
+                    " — falling back to 'fdr_bh'.",
+                    "warn",
+                )
+                correction = "fdr_bh"
 
             min_group_raw: Any | None = self.get_task_param("min_group_n")
             min_group_n: int = int(min_group_raw) if min_group_raw is not None else 5
@@ -110,6 +127,8 @@ class KruskalWallis(BaseTask):
                     data={},
                     metadata={
                         "alpha": alpha,
+                        "correction": correction,
+                        "n_tests": 0,
                         "suggested_viz_type": "bar",
                         "recommended_section": "Relationships",
                         "display_priority": "medium",
@@ -121,8 +140,8 @@ class KruskalWallis(BaseTask):
                 )
                 return
 
-            kw_results: dict[str, dict[str, Any]] = {}
-
+            # Phase 1 — run all tests
+            raw_results: dict[str, dict[str, Any]] = {}
             for cat_col in categorical_cols:
                 for num_col in continuous_cols:
                     paired = df[[num_col, cat_col]].dropna()
@@ -131,34 +150,44 @@ class KruskalWallis(BaseTask):
                         for _, grp in paired.groupby(cat_col)
                         if len(grp) >= min_group_n
                     ]
-
                     if len(groups) < 2:
                         continue
-
                     try:
                         h_stat, p_val = kruskal(*groups)
                     except Exception:
                         continue
-
                     if np.isnan(h_stat) or np.isnan(p_val):
                         continue
-
-                    key: str = f"{num_col}|{cat_col}"
-                    kw_results[key] = {
+                    raw_results[f"{num_col}|{cat_col}"] = {
                         "h_statistic": round(float(h_stat), 4),
                         "p_value": round(float(p_val), 6),
                         "n_groups": len(groups),
                         "n_total": int(sum(len(g) for g in groups)),
-                        "significant": bool(p_val < alpha),
                         "alpha": alpha,
                     }
 
+            # Phase 2 — apply correction
+            keys: list[str] = list(raw_results.keys())
+            corrected: list[float] = _apply_correction(
+                [raw_results[k]["p_value"] for k in keys],
+                correction,
+            )
+
+            kw_results: dict[str, dict[str, Any]] = {}
+            for key, p_corr in zip(keys, corrected, strict=False):
+                entry: dict[str, Any] = raw_results[key].copy()
+                entry["p_value_corrected"] = round(float(p_corr), 6)
+                entry["correction"] = correction
+                entry["significant"] = bool(p_corr < alpha)
+                kw_results[key] = entry
+
+            n_tests: int = len(kw_results)
             significant_count: int = sum(
                 1 for v in kw_results.values() if v["significant"]
             )
             self._log(
-                f"    {len(kw_results)} pair(s) tested, "
-                f"{significant_count} significant at α={alpha}.",
+                f"    {n_tests} test(s), {significant_count} significant "
+                f"at α={alpha} after {correction} correction.",
                 "debug",
             )
 
@@ -167,16 +196,20 @@ class KruskalWallis(BaseTask):
                 status="success",
                 summary={
                     "message": (
-                        f"Kruskal-Wallis run on {len(kw_results)} pair(s); "
-                        f"{significant_count} significant at α={alpha}."
+                        f"Kruskal-Wallis: {n_tests} pair(s); "
+                        f"{significant_count} significant at α={alpha} "
+                        f"after {correction} correction."
                     ),
-                    "pair_count": len(kw_results),
+                    "pair_count": n_tests,
                     "significant_count": significant_count,
                     "alpha": alpha,
+                    "correction": correction,
                 },
                 data=kw_results,
                 metadata={
                     "alpha": alpha,
+                    "correction": correction,
+                    "n_tests": n_tests,
                     "min_group_n": min_group_n,
                     "cat_cardinality_limit": cat_cardinality_limit,
                     "suggested_viz_type": "bar",
@@ -192,7 +225,7 @@ class KruskalWallis(BaseTask):
             for key, entry in kw_results.items():
                 if entry["significant"]:
                     num_col, cat_col = key.split("|", 1)
-                    self._attach_guidance(num_col, cat_col, entry)
+                    self._attach_guidance(num_col, cat_col, entry, n_tests)
 
         except Exception as e:
             if self.context:
@@ -209,27 +242,39 @@ class KruskalWallis(BaseTask):
         num_col: str,
         cat_col: str,
         entry: dict[str, Any],
+        n_tests: int,
     ) -> None:
         """Generate EDA guidance for a significant Kruskal-Wallis result."""
         h = entry["h_statistic"]
-        p = entry["p_value"]
+        p_raw = entry["p_value"]
+        p_corr = entry["p_value_corrected"]
         n = entry["n_total"]
         n_groups = entry["n_groups"]
+        correction = entry["correction"]
+
+        correction_note: str = (
+            f"corrected p={p_corr:.4f} ({correction}, {n_tests} tests; "
+            f"raw p={p_raw:.4f})"
+            if correction != "none"
+            else f"p={p_raw:.4f} (uncorrected; {n_tests} tests run)"
+        )
 
         body: str = (
             f"The distribution of '{num_col}' differs significantly across the "
             f"{n_groups} group(s) of '{cat_col}' "
-            f"(H={h:.2f}, p={p:.4f}, n={n:,}). "
+            f"(H={h:.2f}, {correction_note}, n={n:,}). "
             f"The Kruskal-Wallis test makes no normality or equal-variance "
-            f"assumptions — this result is robust to skewed distributions. "
-            f"At least one group's distribution is stochastically different "
-            f"from the others. Use Mann-Whitney U pairwise tests to identify "
-            f"which specific group pairs drive the difference."
+            f"assumptions. At least one group's distribution is stochastically "
+            f"different from the others. Use Mann-Whitney U pairwise tests to "
+            f"identify which specific group pairs drive the difference."
         )
 
-        metric: dict[str, Any] = {
+        metric: dict[str, int | Any] = {
             "h_statistic": h,
-            "p_value": p,
+            "p_value": p_raw,
+            "p_value_corrected": p_corr,
+            "correction": correction,
+            "n_tests": n_tests,
             "n_groups": n_groups,
             "n_total": n,
         }
@@ -242,7 +287,7 @@ class KruskalWallis(BaseTask):
                 level="info",
                 title=(
                     f"Kruskal-Wallis: '{num_col}' distribution differs "
-                    f"by '{cat_col}' (H={h:.2f}, p={p:.4f})"
+                    f"by '{cat_col}' (H={h:.2f}, p={p_corr:.4f})"
                 ),
                 body=body.strip(),
                 actions=[],
