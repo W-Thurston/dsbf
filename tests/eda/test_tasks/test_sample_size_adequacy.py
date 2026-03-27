@@ -91,7 +91,7 @@ def test_length_outliers_uniform_lengths_returns_none() -> None:
 
 def test_length_outliers_no_extreme_values_returns_none() -> None:
     s: Series[str] = pd.Series(["hi", "hello", "hey", "howdy", "greetings"] * 10)
-    # All lengths similar — no outliers at 3×IQR
+    # All lengths similar — no outliers at 3xIQR
     result: dict | None = _check_length_outliers(s)
     assert result is None or result["affected_count"] == 0
 

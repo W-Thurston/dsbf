@@ -1,0 +1,925 @@
+# dsbf/static_metadata/task_catalog.yaml
+#
+# Living specification for all registered DSBF tasks.
+# Fields mirror the @register_task decorator arguments plus audit metadata.
+# Update this file whenever a task is added, removed, or re-phased.
+#
+# Fields:
+#   name          : registry key (snake_case, matches @register_task name=)
+#   display_name  : human-readable label shown in dashboard
+#   phase         : "eda" | "ml_readiness" | "diagnostic"
+#   stage         : "raw" | "cleaned" | "modeling" | "report" | "any"
+#   profiling_depth: "basic" | "standard" | "full"
+#   runtime_estimate: "fast" | "moderate" | "slow"
+#   depends_on    : list of task names that must run first
+#   semantic_types: expected_semantic_types from decorator
+#   tags          : list of string tags
+#   status        : "stable" | "new" | "planned" | "deprecated"
+#   notes         : optional free-text annotation
+
+# ── Diagnostic tasks ──────────────────────────────────────────────────────────
+
+- name: identify_bottleneck_tasks
+  display_name: Identify Bottleneck Tasks
+  phase: diagnostic
+  stage: any
+  profiling_depth: full
+  runtime_estimate: fast
+  depends_on: []
+  semantic_types: [any]
+  tags: [diagnostic, runtime, performance]
+  status: stable
+
+- name: log_resource_usage
+  display_name: Log Resource Usage
+  phase: diagnostic
+  stage: any
+  profiling_depth: full
+  runtime_estimate: fast
+  depends_on: []
+  semantic_types: [any]
+  tags: [diagnostic, runtime, logging]
+  status: stable
+
+- name: validate_plugin_coverage
+  display_name: Plugin Coverage Check
+  phase: diagnostic
+  stage: any
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: []
+  semantic_types: [any]
+  tags: [plugin, diagnostic, core]
+  status: stable
+
+# ── EDA tasks — type inference & sampling ────────────────────────────────────
+
+- name: infer_types
+  display_name: Infer Column Types
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: []
+  semantic_types: [any]
+  tags: [typing, metadata]
+  status: stable
+  notes: >
+    Root dependency of almost every other task. Writes semantic_types and
+    inferred_dtypes to AnalysisContext metadata. Detects datetime columns
+    using coerce-based parsing with a >90% parseability threshold (handles
+    occasional malformed values). Detects Unix epoch timestamps (seconds and
+    milliseconds) stored as integers via median-range heuristic.
+
+- name: sample_head
+  display_name: Sample Head
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [preview]
+  status: stable
+
+- name: sample_tail
+  display_name: Sample Tail
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [preview]
+  status: stable
+
+# ── EDA tasks — dataset-level summaries ──────────────────────────────────────
+
+- name: summarize_dataset_shape
+  display_name: Summarize Dataset Shape
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [overview, summary]
+  status: stable
+  notes: >
+    Outputs num_rows, num_columns, null_cell_percentage, approx_memory_MB,
+    column_memory_bytes, and column_memory_MB. Per-column memory breakdown
+    feeds suggest_dtype_optimizations.
+
+- name: summarize_nulls
+  display_name: Summarize Nulls
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [nulls, missing]
+  status: stable
+
+- name: summarize_unique
+  display_name: Summarize Unique Values
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [uniqueness, summary]
+  status: stable
+
+- name: missingness_heatmap
+  display_name: Missingness Heatmap
+  phase: eda
+  stage: report
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [missing, summary]
+  status: stable
+  notes: Summary-only task. Plot generation handled by generate_dataset_summary_plots.
+
+- name: missingness_matrix
+  display_name: Missingness Matrix
+  phase: eda
+  stage: report
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [missing, visualization]
+  status: stable
+
+# ── EDA tasks — column-level summaries ───────────────────────────────────────
+
+- name: summarize_numeric
+  display_name: Summarize Numeric Columns
+  phase: eda
+  stage: cleaned
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [numeric, summary]
+  status: stable
+
+- name: summarize_boolean_fields
+  display_name: Summarize Boolean Fields
+  phase: eda
+  stage: cleaned
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [boolean, summary]
+  status: stable
+
+- name: summarize_modes
+  display_name: Summarize Modes
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [modes, summary]
+  status: stable
+
+- name: summarize_value_counts
+  display_name: Summarize Value Counts
+  phase: eda
+  stage: cleaned
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [categorical, summary]
+  status: stable
+
+- name: summarize_text_fields
+  display_name: Summarize Text Fields
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [text]
+  tags: [text, summary]
+  status: stable
+
+# ── EDA tasks — distributional analysis ──────────────────────────────────────
+
+- name: detect_skewness
+  display_name: Detect Skewness
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [distribution, skew]
+  status: stable
+
+- name: detect_bimodal_distribution
+  display_name: Detect Bimodal Distribution
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [distribution, bimodal]
+  status: stable
+
+- name: compute_entropy
+  display_name: Compute Entropy
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [entropy, information]
+  status: stable
+
+- name: compute_kurtosis
+  display_name: Compute Kurtosis
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [distribution, kurtosis, statistics, numeric]
+  status: stable
+  notes: >
+    Fisher excess kurtosis (normal = 0) via scipy.stats.kurtosis(fisher=True,
+    bias=False). Four classifications: mesokurtic, mildly_leptokurtic,
+    strongly_leptokurtic, platykurtic. EDA and ML guidance for notable columns.
+    Complements detect_skewness — skewness measures asymmetry, kurtosis
+    measures tail weight.
+
+- name: normality_tests
+  display_name: Normality Tests
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [distribution, normality, statistics]
+  status: stable
+  notes: >
+    Shapiro-Wilk (n ≤ 5000), Kolmogorov-Smirnov (n > 5000), and Jarque-Bera
+    (all n). Overall verdict is non_normal if either primary test or JB rejects
+    at alpha (default 0.05). EDA and ML guidance with transform recommendations
+    for non-normal columns.
+
+- name: detect_outliers
+  display_name: Detect Outliers
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [outliers, numeric]
+  status: stable
+
+- name: detect_zeros
+  display_name: Detect Zeros
+  phase: eda
+  stage: cleaned
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [zeros, sparsity]
+  status: stable
+
+- name: detect_single_dominant_value
+  display_name: Detect Single Dominant Value
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [redundancy, skew]
+  status: stable
+
+# ── EDA tasks — data quality & structure ─────────────────────────────────────
+
+- name: detect_constant_columns
+  display_name: Detect Constant Columns
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [quality, constants]
+  status: stable
+
+- name: detect_duplicate_columns
+  display_name: Detect Duplicate Columns
+  phase: eda
+  stage: raw
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [redundancy, duplicates]
+  status: stable
+
+- name: detect_duplicates
+  display_name: Detect Duplicates
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [duplicates, rows]
+  status: stable
+
+- name: detect_mixed_type_columns
+  display_name: Detect Mixed-Type Columns
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [type, format, anomaly]
+  status: stable
+
+- name: detect_out_of_bounds
+  display_name: Detect Out of Bounds
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [bounds, validation]
+  status: stable
+
+- name: detect_regex_format_violations
+  display_name: Detect Regex Format Violations
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [text]
+  tags: [format, regex, validation, anomaly]
+  status: stable
+
+- name: detect_string_anomalies
+  display_name: Detect String Anomalies
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical, text]
+  tags: [string, anomaly, categorical, quality]
+  status: stable
+  notes: >
+    Four checks per string column: mixed case, leading/trailing whitespace,
+    invisible Unicode characters (U+200B, U+00A0, U+00AD etc.), and length
+    outliers (3xIQR fence). EDA guidance with action chips per finding type.
+
+- name: schema_validation
+  display_name: Schema Validation
+  phase: eda
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [schema, validation]
+  status: stable
+
+# ── EDA tasks — categorical analysis ─────────────────────────────────────────
+
+- name: categorical_length_stats
+  display_name: Categorical Length Stats
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [categorical, length]
+  status: stable
+
+- name: detect_high_cardinality
+  display_name: Detect High Cardinality
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [categorical, cardinality]
+  status: stable
+
+- name: detect_class_imbalance
+  display_name: Detect Class Imbalance
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [imbalance, classification]
+  status: stable
+
+# ── EDA tasks — identifier & encoding detection ───────────────────────────────
+
+- name: detect_id_columns
+  display_name: Detect ID Columns
+  phase: eda
+  stage: raw
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [id, categorical, text]
+  tags: [metadata, id, index]
+  status: stable
+
+- name: detect_encoded_columns
+  display_name: Detect Encoded Columns
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [text, categorical]
+  tags: [format, encoded, anomaly]
+  status: stable
+
+# ── EDA tasks — relationships & correlations ──────────────────────────────────
+
+- name: compute_pairwise_associations
+  display_name: Compute Pairwise Associations
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [correlation, association, relationships]
+  status: stable
+  notes: >
+    Single source of truth for all pairwise column relationships.
+    Type-aware metric routing: Pearson or Spearman r (continuousxcontinuous,
+    configurable via method param), point-biserial r (continuousxbinary),
+    eta-squared (continuousxcategorical), Cramér's V (categoricalxcategorical).
+    Also produces __correlation_matrix__ nested dict in data for heatmap
+    consumption by generate_dataset_summary_plots. Reliability warnings:
+    low_row_count, zero_variance, extreme_outliers, high_skew.
+
+# ── EDA tasks — drift & comparison ───────────────────────────────────────────
+
+- name: detect_feature_drift
+  display_name: Detect Feature Drift
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: slow
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [drift, comparison]
+  status: stable
+
+- name: detect_target_drift
+  display_name: Detect Target Drift
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: slow
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [drift, comparison]
+  status: stable
+
+- name: compare_with_reference_dataset
+  display_name: Compare With Reference Dataset
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: slow
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [comparison, reference]
+  status: stable
+
+# ── EDA tasks — datetime ──────────────────────────────────────────────────────
+
+- name: check_datetime_consistency
+  display_name: Check Datetime Consistency
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [datetime]
+  tags: [datetime, consistency]
+  status: stable
+
+- name: extract_datetime_features
+  display_name: Extract Datetime Features
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [datetime]
+  tags: [datetime, feature_engineering, ml_readiness]
+  status: stable
+  notes: >
+    Analyses datetime columns and recommends derived features based on temporal
+    range and component variation. Ordinal: year, month, day_of_month,
+    day_of_week, hour, quarter, week_of_year, days_since_epoch. Binary:
+    is_weekend, is_month_start, is_month_end. Cyclic: month_sin_cos,
+    day_of_week_sin_cos, hour_sin_cos. Features filtered to those relevant
+    for the column's actual data. Purely advisory — never modifies the DataFrame.
+
+# ── EDA tasks — scoring & visualization ──────────────────────────────────────
+
+- name: data_quality_scorer
+  display_name: Data Quality Scorer
+  phase: diagnostic
+  stage: report
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on:
+    - infer_types
+    - summarize_nulls
+    - detect_constant_columns
+    - detect_duplicate_columns
+    - detect_duplicates
+    - detect_collinear_features
+    - detect_data_leakage
+  semantic_types: [any]
+  tags: [quality, scoring, summary, meta]
+  status: stable
+
+- name: generate_dataset_summary_plots
+  display_name: Generate Dataset-Level Plots
+  phase: eda
+  stage: any
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, compute_pairwise_associations]
+  semantic_types: [any]
+  tags: [visualization, plotting, dataset]
+  status: stable
+  notes: >
+    Owns correlation matrix, null matrix, missingness matrix, dtype stacked bar.
+    Reads __correlation_matrix__ from compute_pairwise_associations result in
+    context for heatmap rendering; falls back to direct Pearson computation if
+    the associations task has not run.
+
+- name: generate_univariate_plots
+  display_name: Generate Univariate Plots
+  phase: eda
+  stage: any
+  profiling_depth: standard
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [visualization, plotting, univariate]
+  status: stable
+  notes: Owns all per-column bar/histogram/boxplot/composite artifacts.
+
+# ── ML readiness tasks ────────────────────────────────────────────────────────
+
+- name: detect_collinear_features
+  display_name: Detect Collinear Features
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [collinearity, vif, ml_readiness]
+  status: stable
+
+- name: detect_data_leakage
+  display_name: Detect Data Leakage
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [categorical, continuous]
+  tags: [leakage, target]
+  status: stable
+
+- name: detect_near_zero_variance
+  display_name: Detect Near-Zero Variance
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [numeric, variance, ml_readiness]
+  status: stable
+
+- name: suggest_categorical_encoding
+  display_name: Suggest Categorical Encoding
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [categorical, encoding, ml_readiness]
+  status: stable
+
+- name: suggest_numerical_binning
+  display_name: Suggest Numerical Binning
+  phase: ml_readiness
+  stage: modeling
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [numeric, transformation, ml_readiness]
+  status: stable
+
+- name: suggest_dtype_optimizations
+  display_name: Suggest Dtype Optimizations
+  phase: eda
+  stage: raw
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, summarize_dataset_shape]
+  semantic_types: [any]
+  tags: [memory, dtype, optimization, overview]
+  status: stable
+  notes: >
+    Recommends dtype downcasts: int64→int8/16/32 (range-based), float64→float32
+    (safe-range check), object→category (categorical intent), int/object→bool
+    (two distinct values). Reads column_memory_bytes from summarize_dataset_shape
+    for exact savings estimates. min_savings_bytes threshold (default 1024)
+    prevents noise on small columns. Purely advisory — never modifies the DataFrame.
+
+- name: sample_size_adequacy
+  display_name: Sample Size Adequacy
+  phase: ml_readiness
+  stage: raw
+  profiling_depth: basic
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [any]
+  tags: [sample_size, ml_readiness, overview]
+  status: stable
+  notes: >
+    Three rule-of-thumb checks: linear/logistic (20 rows/feature, min 50),
+    tree-based (10 rows/feature, min 100), general ML (5 rows/feature, min 1000).
+    Verdict: adequate / limited / insufficient. Feature count excludes id/datetime
+    columns. n_features_override param for partial-column modeling scenarios.
+    ML guidance with collect_more_data, reduce_features, use_cross_validation
+    action chips emitted under __dataset__ sentinel key for failing rules.
+
+- name: imputation_strategy_suggestions
+  display_name: Imputation Strategy Suggestions
+  phase: ml_readiness
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, summarize_nulls]
+  semantic_types: [any]
+  tags: [missingness, imputation, ml_readiness]
+  status: stable
+  notes: >
+    Per-column imputation strategy based on null tier (severe ≥50%, significant
+    ≥20%, moderate ≥5%, low <5%), semantic intent, and distribution skew.
+    Categorical → mode; datetime → forward fill; continuous → mean/median/KNN
+    based on tier and skew. Reads null_percentages from summarize_nulls context
+    result; reads skewed columns from detect_skewness context result. Both fall
+    back to direct computation if upstream tasks have not run.
+
+- name: ml_readiness_scorer
+  display_name: ML Readiness Scorer
+  phase: ml_readiness
+  stage: report
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on:
+    - infer_types
+    - summarize_nulls
+    - summarize_numeric
+    - summarize_boolean_fields
+    - detect_skewness
+    - detect_outliers
+    - detect_zeros
+    - detect_constant_columns
+    - detect_id_columns
+    - detect_single_dominant_value
+    - detect_high_cardinality
+    - detect_bimodal_distribution
+    - detect_data_leakage
+    - suggest_categorical_encoding
+    - data_quality_scorer
+  semantic_types: [any]
+  tags: [ml_readiness, scoring, summary, meta]
+  status: stable
+  notes: >
+    Aggregates ML-phase guidance blurbs into five dimensions:
+    Transformations, Encoding, Missingness, Leakage Risk, Unusable Features.
+
+- name: compute_mutual_information
+  display_name: Compute Mutual Information
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [continuous, categorical]
+  tags: [mutual_information, relationships, feature_selection]
+  status: stable
+  notes: >
+    mutual_info_regression (continuous target) or mutual_info_classif
+    (categorical target) via sklearn. Type-aware: categorical features passed
+    with discrete_features=True. Normalised MI score (÷ log(n_samples)) for
+    cross-dataset comparability. Strength labels: high/moderate/low/negligible.
+    Graceful no-op when target_column not configured.
+
+- name: contingency_tables
+  display_name: Contingency Tables
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [categorical]
+  tags: [categorical, association, chi_squared, relationships]
+  status: stable
+  notes: >
+    Joint frequency tables for categoricalxcategorical pairs with chi-squared
+    independence test (statistic, p-value, dof) and Cramér's V effect size.
+    top_n (default 10) limits table size; truncated flag set when full
+    cardinality not used. Complements compute_pairwise_associations by
+    providing raw frequency structure behind the scalar V.
+
+- name: transformation_preview
+  display_name: Transformation Preview
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, detect_skewness]
+  semantic_types: [continuous]
+  tags: [transformation, distribution, numeric, preview]
+  status: stable
+  notes: >
+    Before/after distribution stats for log1p, sqrt, square, and Yeo-Johnson
+    transforms on skewed columns. Skewness reduction percentage computed per
+    transform; recommended flag set on best. Reads detect_skewness context
+    result; falls back to direct computation. Purely advisory.
+
+- name: normality_qq_plots
+  display_name: Normality QQ Plots
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, normality_tests]
+  semantic_types: [continuous]
+  tags: [distribution, normality, visualization, numeric]
+  status: stable
+  notes: >
+    Theoretical vs empirical quantile pairs for normal QQ plots. Reference
+    line via Q1/Q3 anchor points. Deviation summary: mean_abs_deviation,
+    tail_deviation_lower/upper. Prioritises non_normal columns from
+    normality_tests; include_normal param extends to passing columns.
+    Data-only output — feeds frontend QQ renderer, no static images generated.
+
+# ── EDA tasks — statistical tests & robust methods ───────────────────────────
+
+- name: outlier_detection_mad
+  display_name: Outlier Detection (MAD)
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [outliers, numeric, robust, mad]
+  status: stable
+  notes: >
+    Modified Z-score (0.6745 x (x - median) / MAD) with default threshold 3.5
+    (Iglewicz & Hoaglin 1993). Robust to skewed distributions and existing
+    outliers — median and MAD are not corrupted by the values being detected.
+    Complements detect_outliers (IQR/Z-score). Columns where MAD=0 are skipped.
+
+- name: kendalls_tau
+  display_name: Kendall's Tau
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [correlation, rank, relationships, numeric]
+  status: stable
+  notes: >
+    Kendall's tau-b rank correlation for all continuous column pairs.
+    Preferred over Spearman for small samples (n < 30) and tied data.
+    Direct probabilistic interpretation: tau=0.6 means 60% more concordant
+    than discordant pairs. EDA guidance for significant pairs with |tau| ≥ 0.2.
+
+- name: one_way_anova
+  display_name: One-Way ANOVA
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous, categorical]
+  tags: [anova, statistics, relationships, numeric, categorical]
+  status: stable
+  notes: >
+    F-test for whether group means differ across categorical levels.
+    p-value companion to the eta-squared effect sizes in
+    compute_pairwise_associations. Assumes normality within groups and
+    equal variances; use kruskal_wallis when these are violated.
+
+- name: kruskal_wallis
+  display_name: Kruskal-Wallis Test
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous, categorical]
+  tags: [kruskal_wallis, statistics, relationships, non_parametric]
+  status: stable
+  notes: >
+    Non-parametric alternative to one-way ANOVA. Tests distributional
+    differences across groups without normality or equal-variance assumptions.
+    A significant result means at least one group differs; use mann_whitney_u
+    for post-hoc pairwise localisation.
+
+- name: mann_whitney_u
+  display_name: Mann-Whitney U Test
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [continuous, categorical]
+  tags: [mann_whitney, statistics, relationships, non_parametric]
+  status: stable
+  notes: >
+    Non-parametric pairwise comparison for continuous vs two-level categorical.
+    Reports U statistic, p-value, and rank-biserial r effect size.
+    Tests all level pairs for multi-level categoricals (up to max_pairs_per_column).
+    Post-hoc complement to kruskal_wallis.
+
+- name: temporal_gap_detection
+  display_name: Temporal Gap Detection
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types]
+  semantic_types: [datetime]
+  tags: [datetime, gaps, time_series, quality]
+  status: stable
+  notes: >
+    Identifies gaps in datetime columns exceeding 2x the dominant (most common)
+    inter-observation interval. Dominant gap computed as mode of rounded gap
+    lengths; falls back to median for irregular event data. EDA guidance with
+    investigate_gaps and resample_or_interpolate action chips.
+
+# ── Wave 4 — architectural decisions required ────────────────────────────────
+
+- name: detect_multivariate_outliers
+  display_name: Detect Multivariate Outliers
+  phase: eda
+  stage: cleaned
+  profiling_depth: full
+  runtime_estimate: slow
+  depends_on: [infer_types]
+  semantic_types: [continuous]
+  tags: [outliers, multivariate, isolation_forest]
+  status: planned
+  notes: >
+    Isolation Forest-based multivariate outlier detection on continuous columns.
+    Complements univariate detect_outliers — a row can be normal on every
+    individual axis but anomalous in the joint distribution. Requires design
+    decision: row-level findings in a column-oriented guidance system (likely
+    via __dataset__ sentinel key with flagged row indices in data).
