@@ -46,7 +46,7 @@ def _run_ks(values: np.ndarray) -> dict:
     Run one-sample Kolmogorov-Smirnov test against a fitted normal distribution.
 
     Parameters of the normal (mean, std) are estimated from the sample itself.
-    This is a conservative test — fitting on the same data slightly inflates
+    This is a conservative test - fitting on the same data slightly inflates
     the p-value (Lilliefors correction is not applied here).
 
     Args:
@@ -126,15 +126,15 @@ class NormalityTests(BaseTask):
 
     Test selection strategy:
 
-    - **Shapiro-Wilk** — optimal for small to medium samples (n ≤ 5000).
+    - **Shapiro-Wilk** - optimal for small to medium samples (n ≤ 5000).
       Most powerful normality test for samples in this range. Not used for
       larger samples because it becomes over-sensitive and rejects normality
       for trivial deviations.
-    - **Kolmogorov-Smirnov** (one-sample, against fitted normal) — used when
+    - **Kolmogorov-Smirnov** (one-sample, against fitted normal) - used when
       n > 5000. Parameters (mean, std) are estimated from the data. Note:
       fitting on the same data inflates the p-value slightly; treat KS results
       as conservative.
-    - **Jarque-Bera** — always run regardless of sample size. Tests whether
+    - **Jarque-Bera** - always run regardless of sample size. Tests whether
       skewness and excess kurtosis jointly match a normal distribution.
       Fast chi-squared test, useful for quick screening across many columns.
 
@@ -306,7 +306,7 @@ class NormalityTests(BaseTask):
         eda_body: str = (
             f"'{col}' (n={n}) rejects normality at α={alpha}: {tests_str}. "
             f"This means the distribution is statistically distinguishable from "
-            f"a normal distribution — likely due to skewness, heavy or light tails, "
+            f"a normal distribution - likely due to skewness, heavy or light tails, "
             f"multimodality, or a hard boundary at zero. Inspect the histogram, "
             f"skewness, and kurtosis findings to understand the specific pattern. "
             f"Many analysis methods assume normality in residuals rather than raw "
@@ -315,8 +315,8 @@ class NormalityTests(BaseTask):
 
         ml_body: str = (
             f"'{col}' is non-normal (rejected at α={alpha} by {tests_str}). "
-            f"Models that explicitly assume normality — linear/logistic regression "
-            f"coefficient tests, LDA, Gaussian Naive Bayes — will produce less "
+            f"Models that explicitly assume normality - linear/logistic regression "
+            f"coefficient tests, LDA, Gaussian Naive Bayes - will produce less "
             f"reliable inference. For inference validity, consider a log1p, Box-Cox, "
             f"or Yeo-Johnson transform. Tree-based models (Random Forest, XGBoost, "
             f"LightGBM) are distribution-free and unaffected. Normality of model "

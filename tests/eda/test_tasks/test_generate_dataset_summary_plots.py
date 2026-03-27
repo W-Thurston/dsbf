@@ -40,7 +40,7 @@ def test_typical_dataset_produces_all_expected_plots(tmp_path) -> None:
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject metadata directly — GenerateDatasetSummaryPlots reads context metadata
+    # Inject metadata directly - GenerateDatasetSummaryPlots reads context metadata
     # for the dtype stacked bar, and run_task_with_dependencies runs infer_types first.
     result: TaskResult = run_task_with_dependencies(ctx, GenerateDatasetSummaryPlots)
 
@@ -88,7 +88,7 @@ def test_single_numeric_column_skips_correlation(tmp_path) -> None:
 
 
 def test_no_column_plots_generated(tmp_path) -> None:
-    """Task must not populate result.plots — it stores artifacts in result.data."""
+    """Task must not populate result.plots - it stores artifacts in result.data."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
     ctx, _ = make_ctx_and_task(

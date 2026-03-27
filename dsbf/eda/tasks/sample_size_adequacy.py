@@ -113,7 +113,7 @@ class SampleSizeAdequacy(BaseTask):
     Applies three independent rule-of-thumb checks:
 
     - **Linear / Logistic Regression**: ≥ 20 rows per feature, minimum 50 rows.
-      Based on the events-per-variable (EPV) principle — fewer than 20 obs/feature
+      Based on the events-per-variable (EPV) principle - fewer than 20 obs/feature
       produces unstable coefficient estimates (Harrell 2001).
     - **Tree-Based Models**: ≥ 10 rows per feature, minimum 100 rows.
       Tree models are less sensitive to the ratio but below ~100 rows
@@ -127,7 +127,7 @@ class SampleSizeAdequacy(BaseTask):
 
     For each failing rule an ML guidance blurb is emitted explaining the
     shortfall and concrete remediation options. Passing rules produce no
-    guidance — the overall signal is surfaced through the summary verdict.
+    guidance - the overall signal is surfaced through the summary verdict.
 
     Configurable parameters (via config["tasks"]["sample_size_adequacy"]):
         n_features_override (int): Override the feature count used in ratio
@@ -153,7 +153,7 @@ class SampleSizeAdequacy(BaseTask):
 
             n_rows: int = len(df)
 
-            # Feature count: exclude id/datetime/unknown columns — they are not
+            # Feature count: exclude id/datetime/unknown columns - they are not
             # predictors. Use an override if configured.
             override_raw: Any | None = self.get_task_param("n_features_override")
             if override_raw is not None:

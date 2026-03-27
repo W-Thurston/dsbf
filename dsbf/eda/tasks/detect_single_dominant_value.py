@@ -29,7 +29,7 @@ class DetectSingleDominantValue(BaseTask):
     are counted as dominant.
 
     All columns are stored in ``data`` with their mode, proportion, unique value
-    count, and dominance level — not just the flagged ones. This gives the
+    count, and dominance level - not just the flagged ones. This gives the
     data_quality_scorer a complete picture to work from.
 
     EDA and ML guidance blurbs are emitted for columns where mode proportion
@@ -192,7 +192,7 @@ class DetectSingleDominantValue(BaseTask):
         if prop >= 0.9:
             eda_body: str = (
                 f"'{col}' is dominated by a single value: \"{mode}\" appears in "
-                f"{pct_str} of rows. The column carries almost no variation — it is "
+                f"{pct_str} of rows. The column carries almost no variation - it is "
                 f"close to constant. This could indicate a default value being "
                 f"applied across most records, a data collection gap, or a genuine "
                 f"characteristic of the population. Verify whether the rare "
@@ -210,7 +210,7 @@ class DetectSingleDominantValue(BaseTask):
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": "Near-zero variance — minimal signal for any model",
+                    "detail": "Near-zero variance - minimal signal for any model",
                 },
                 {
                     "action": "class_weight",
@@ -226,7 +226,7 @@ class DetectSingleDominantValue(BaseTask):
         else:
             eda_body = (
                 f"'{col}' has a dominant value: \"{mode}\" appears in {pct_str} of "
-                f"rows across {unique} unique values. The distribution is uneven — "
+                f"rows across {unique} unique values. The distribution is uneven - "
                 f"most observations share the same value while a minority are spread "
                 f"across others. This is normal in many real-world categorical "
                 f"columns, but worth noting when interpreting frequency counts or "
@@ -273,7 +273,7 @@ class DetectSingleDominantValue(BaseTask):
             column=col,
             phase="ml",
             level=level,
-            title=f'Class Imbalance — "{mode}" Dominates ({pct_str})',
+            title=f'Class Imbalance - "{mode}" Dominates ({pct_str})',
             body=ml_body.strip(),
             actions=ml_actions,
             metric=metric,

@@ -69,7 +69,7 @@ def test_compute_qq_data_normal_distribution_low_deviation() -> None:
     s: Series = pd.Series(rng.normal(0, 1, 5000))
     result: dict[str, Any] = _compute_qq_data(s, n_quantiles=200)
     dev: dict[str, Any] = _deviation_summary(result["theoretical"], result["empirical"])
-    # Large normal sample — mean absolute deviation should be small
+    # Large normal sample - mean absolute deviation should be small
     assert dev["mean_abs_deviation"] < 0.2
 
 

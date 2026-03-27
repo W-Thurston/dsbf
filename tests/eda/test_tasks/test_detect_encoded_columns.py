@@ -32,7 +32,7 @@ def test_detects_base64_strings(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"token": "categorical"})
@@ -69,7 +69,7 @@ def test_detects_hex_strings(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"hex_id": "categorical"})
@@ -105,7 +105,7 @@ def test_detects_uuid_strings(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"uuid": "categorical"})
@@ -141,7 +141,7 @@ def test_ignores_regular_text_columns(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"names": "categorical"})
@@ -179,7 +179,7 @@ def test_ignores_low_entropy_text(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"letters": "categorical"})
@@ -220,7 +220,7 @@ def test_detects_high_entropy_without_regex_match(tmp_path) -> None:
         },
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"hashy": "categorical"})
@@ -256,7 +256,7 @@ def test_pandas_dataframe_handled(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"token": "categorical"})
@@ -292,7 +292,7 @@ def test_guidance_attached_for_flagged_columns(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"uuid": "categorical"})
@@ -302,7 +302,7 @@ def test_guidance_attached_for_flagged_columns(tmp_path):
     assert result.guidance is not None
     assert "uuid" in result.guidance
     assert len(result.guidance["uuid"]["eda"]) > 0
-    # Encoded columns are EDA-only (eda phase) — no ML blurb
+    # Encoded columns are EDA-only (eda phase) - no ML blurb
     assert result.guidance["uuid"]["eda"][0]["level"] == "info"
 
 
@@ -330,7 +330,7 @@ def test_no_plots_generated(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly — infer_types classifies high-uniqueness
+    # Inject semantic type directly - infer_types classifies high-uniqueness
     # string columns as 'id'. We inject 'categorical' to test detection logic
     # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"hex_id": "categorical"})

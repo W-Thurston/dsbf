@@ -24,7 +24,7 @@ class DetectDuplicates(BaseTask):
 
     A duplicate row is one whose values are identical across all columns to at
     least one other row. The count reported is the number of rows that are
-    non-first occurrences — consistent with pandas ``duplicated(keep='first')``.
+    non-first occurrences - consistent with pandas ``duplicated(keep='first')``.
 
     For Polars, duplicate count is derived as total rows minus unique rows, which
     is equivalent.

@@ -20,7 +20,7 @@ from dsbf.utils.backend import is_polars
 )
 class SummarizeModes(BaseTask):
     """
-    Summarize the mode(s) — most frequent value(s) — for each column.
+    Summarize the mode(s) - most frequent value(s) - for each column.
 
     For columns with a single mode, stores the scalar value. For columns with
     multiple equally-frequent modes, stores a list.

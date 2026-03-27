@@ -39,7 +39,7 @@ class DetectMixedTypeColumns(BaseTask):
     after iterating the column. Only columns with at least two distinct types
     that each represent ≥ ``min_ratio`` of non-null values are flagged.
 
-    For Polars, only ``pl.Object`` dtype columns are inspected — strictly typed
+    For Polars, only ``pl.Object`` dtype columns are inspected - strictly typed
     columns (``String``, ``Int64``, etc.) cannot contain mixed types by definition.
     For Pandas, only ``object`` dtype columns are inspected.
 

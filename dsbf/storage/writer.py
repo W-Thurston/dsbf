@@ -290,7 +290,7 @@ def persist_run(engine, db_path=None) -> int:
     row_count = shape_data.get("num_rows")
     col_count = shape_data.get("num_columns")
 
-    # Quality score — the scorer no longer produces a single numeric score.
+    # Quality score - the scorer no longer produces a single numeric score.
     # The runs table quality_score column is retained for schema compatibility
     # but always written as None. The dashboard uses the per-category levels
     # from the scorer's data field instead.

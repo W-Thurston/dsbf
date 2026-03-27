@@ -30,7 +30,7 @@ def test_mad_score_symmetric_outlier() -> None:
 
 
 def test_mad_score_constant_series_returns_none() -> None:
-    """MAD is zero for a constant series — must return None."""
+    """MAD is zero for a constant series - must return None."""
     s: Series = pd.Series([5.0] * 50)
     assert _mad_score(s) is None
 

@@ -128,7 +128,7 @@ def test_categorical_target_uses_classif(tmp_path) -> None:
 
     assert result.status == "success"
     assert "feature" in result.data["mi_scores"]
-    # Feature perfectly separates the classes — must have high MI
+    # Feature perfectly separates the classes - must have high MI
     assert result.data["mi_scores"]["feature"]["mi_score"] > 0.0
     assert result.metadata["target_intent"] == "categorical"
 

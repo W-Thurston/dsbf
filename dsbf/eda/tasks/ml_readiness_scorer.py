@@ -8,7 +8,7 @@ from dsbf.eda.task_result import TaskResult
 
 # ── Dimension → source task mapping ──────────────────────────────────────────
 # Each task's ML blurbs are routed to exactly one dimension.
-# A column can appear in multiple dimensions if multiple tasks flag it —
+# A column can appear in multiple dimensions if multiple tasks flag it -
 # that is intentional and honest (e.g. a high-cardinality ID column is
 # both Unusable and has Encoding implications).
 
@@ -144,7 +144,7 @@ class MlReadinessScorer(BaseTask):
 
     Routes ML guidance blurbs emitted by EDA tasks into five preparation-focused
     dimensions. Unlike a numeric score, the output is organized around what a
-    data scientist needs to *do* before modeling — not how "bad" the data is.
+    data scientist needs to *do* before modeling - not how "bad" the data is.
 
     The gate (not_ready / needs_work / ready) is the primary signal; dimension-level
     traffic lights show where the work is.
@@ -229,7 +229,7 @@ class MlReadinessScorer(BaseTask):
             for col, phases in guidance.items():
                 if not isinstance(phases, dict):
                     continue
-                # Encoding suggestions are not meaningful for identifier columns —
+                # Encoding suggestions are not meaningful for identifier columns -
                 # ID-intent columns are better routed to the Unusable dimension.
                 if dimension == "encoding" and col in id_intent_cols:
                     continue

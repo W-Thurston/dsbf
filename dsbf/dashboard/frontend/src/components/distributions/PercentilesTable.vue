@@ -61,7 +61,7 @@ const outlierNote = computed(() => {
   const iqr     = p75 - p25
   const upperFence = p75 + 3 * iqr
   if (max > upperFence) {
-    return `Max value (${fmt(max)}) exceeds the 3×IQR upper fence (${fmt(upperFence)}), indicating potential outliers beyond p99.`
+    return `Max value (${fmt(max)}) exceeds the 3xIQR upper fence (${fmt(upperFence)}), indicating potential outliers beyond p99.`
   }
   return null
 })

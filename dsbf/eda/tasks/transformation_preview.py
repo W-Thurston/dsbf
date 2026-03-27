@@ -41,8 +41,8 @@ def _apply_yeo_johnson(series: pd.Series) -> pd.Series:
 
 # ── Transform definitions ─────────────────────────────────────────────────────
 #
-# precondition_fn(series) → bool  — True if the transform is safe to apply
-# apply_fn(series) → pd.Series    — applies the transform and returns result
+# precondition_fn(series) → bool  - True if the transform is safe to apply
+# apply_fn(series) → pd.Series    - applies the transform and returns result
 
 _TRANSFORMS: list[dict] = [
     {
@@ -151,10 +151,10 @@ class TransformationPreview(BaseTask):
     above ``skew_threshold`` when computed directly), applies a set of
     candidate transforms and computes before/after distribution statistics:
 
-    - **log1p** — ``log(1 + x)``, for right-skewed non-negative values
-    - **sqrt** — ``√x``, for mild right skew with non-negative values
-    - **square** — ``x²``, for left-skewed distributions
-    - **Yeo-Johnson** — power transform that handles any distribution
+    - **log1p** - ``log(1 + x)``, for right-skewed non-negative values
+    - **sqrt** - ``√x``, for mild right skew with non-negative values
+    - **square** - ``x²``, for left-skewed distributions
+    - **Yeo-Johnson** - power transform that handles any distribution
       including negative values; fits optimal lambda on the data
 
     Each transform result includes:
@@ -169,7 +169,7 @@ class TransformationPreview(BaseTask):
     EDA guidance is emitted for each column, ranking transforms by
     effectiveness and noting the preconditions for the recommended approach.
 
-    This task is purely advisory — it never modifies the DataFrame.
+    This task is purely advisory - it never modifies the DataFrame.
     The actual transform should be applied by the user before modeling.
 
     Configurable parameters (via config["tasks"]["transformation_preview"]):
@@ -227,7 +227,7 @@ class TransformationPreview(BaseTask):
 
             if not skewed_cols:
                 self._log(
-                    "    No detect_skewness result in context — computing "
+                    "    No detect_skewness result in context - computing "
                     "skewness directly.",
                     "debug",
                 )
@@ -388,14 +388,14 @@ class TransformationPreview(BaseTask):
         )
 
         if recommended_name is None:
-            # All transforms were skipped — still emit an informational blurb
+            # All transforms were skipped - still emit an informational blurb
             self.add_guidance(
                 result=self.output,
                 column=col,
                 phase="eda",
                 level="info",
                 title=(
-                    f"Skewed Distribution — No Transform Applicable "
+                    f"Skewed Distribution - No Transform Applicable "
                     f"(skew={original_skew:.2f})"
                 ),
                 body=(

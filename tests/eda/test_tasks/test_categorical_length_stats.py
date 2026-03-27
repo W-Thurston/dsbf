@@ -20,7 +20,7 @@ def test_categorical_length_stats_expected_output(tmp_path) -> None:
         {
             "name": ["Alice", "Bob", "Charlotte", None],
             "city": ["New York", "Paris", "Berlin", "New York"],
-            "age": [25, 30, 35, 40],  # numeric — should be excluded
+            "age": [25, 30, 35, 40],  # numeric - should be excluded
         },
     )
 
@@ -79,7 +79,7 @@ def test_categorical_length_stats_no_text_columns(tmp_path) -> None:
 
     assert result.status == "success"
     assert result.data == {}
-    # Computation tasks do not generate plots — rendering is owned by
+    # Computation tasks do not generate plots - rendering is owned by
     # generate_univariate_plots and generate_dataset_summary_plots.
     assert result.plots is None
     assert result.metadata.get("column_types") is not None

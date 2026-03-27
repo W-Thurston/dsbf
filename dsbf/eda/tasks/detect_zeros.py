@@ -31,7 +31,7 @@ class DetectZeros(BaseTask):
     are flagged in ``zero_flags``.
 
     EDA and ML guidance blurbs are emitted for columns where the zero proportion
-    ≥ 30% — a lower threshold than the flag threshold to surface structural zeros
+    ≥ 30% - a lower threshold than the flag threshold to surface structural zeros
     before they become critical.
 
     The key interpretive question for zero-heavy columns is whether zeros
@@ -146,8 +146,8 @@ class DetectZeros(BaseTask):
 
         eda_body: str = (
             f"'{col}' has {pct_str} zero values ({count:,} rows). Consider whether "
-            f"zeros here represent 'none' or 'absent' — a genuine measurement of "
-            f"zero — or whether they are placeholders for missing data. The "
+            f"zeros here represent 'none' or 'absent' - a genuine measurement of "
+            f"zero - or whether they are placeholders for missing data. The "
             f"distinction matters: genuine zeros are informative and should be kept, "
             f"while placeholder zeros should be treated as nulls. Check the data "
             f"source or documentation to confirm the intended meaning."
@@ -155,7 +155,7 @@ class DetectZeros(BaseTask):
 
         ml_body: str = (
             f"'{col}' has {pct_str} zero values. If zeros are genuine measurements, "
-            f"this column follows a zero-inflated distribution — consider a log1p "
+            f"this column follows a zero-inflated distribution - consider a log1p "
             f"transform or a separate binary indicator (is_zero) to help models "
             f"distinguish the zero mass from the non-zero distribution. If zeros are "
             f"missing-value placeholders, replace them with NaN before fitting to "

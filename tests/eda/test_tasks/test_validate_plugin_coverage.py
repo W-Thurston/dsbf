@@ -57,7 +57,7 @@ def test_reliability_warning_emitted_when_warnings_present(tmp_path) -> None:
     assert result.status == "success"
     assert result.reliability_warnings is not None
     assert len(result.reliability_warnings) > 0
-    # reliability_warnings is a list of strings — check content rather than keys
+    # reliability_warnings is a list of strings - check content rather than keys
     assert any(
         "missing" in str(w).lower() or "plugin" in str(w).lower()
         for w in result.reliability_warnings

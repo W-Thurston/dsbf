@@ -52,7 +52,7 @@
   tags: [plugin, diagnostic, core]
   status: stable
 
-# ── EDA tasks — type inference & sampling ────────────────────────────────────
+# ── EDA tasks - type inference & sampling ────────────────────────────────────
 
 - name: infer_types
   display_name: Infer Column Types
@@ -93,7 +93,7 @@
   tags: [preview]
   status: stable
 
-# ── EDA tasks — dataset-level summaries ──────────────────────────────────────
+# ── EDA tasks - dataset-level summaries ──────────────────────────────────────
 
 - name: summarize_dataset_shape
   display_name: Summarize Dataset Shape
@@ -155,7 +155,7 @@
   tags: [missing, visualization]
   status: stable
 
-# ── EDA tasks — column-level summaries ───────────────────────────────────────
+# ── EDA tasks - column-level summaries ───────────────────────────────────────
 
 - name: summarize_numeric
   display_name: Summarize Numeric Columns
@@ -212,7 +212,7 @@
   tags: [text, summary]
   status: stable
 
-# ── EDA tasks — distributional analysis ──────────────────────────────────────
+# ── EDA tasks - distributional analysis ──────────────────────────────────────
 
 - name: detect_skewness
   display_name: Detect Skewness
@@ -261,7 +261,7 @@
     Fisher excess kurtosis (normal = 0) via scipy.stats.kurtosis(fisher=True,
     bias=False). Four classifications: mesokurtic, mildly_leptokurtic,
     strongly_leptokurtic, platykurtic. EDA and ML guidance for notable columns.
-    Complements detect_skewness — skewness measures asymmetry, kurtosis
+    Complements detect_skewness - skewness measures asymmetry, kurtosis
     measures tail weight.
 
 - name: normality_tests
@@ -313,7 +313,7 @@
   tags: [redundancy, skew]
   status: stable
 
-# ── EDA tasks — data quality & structure ─────────────────────────────────────
+# ── EDA tasks - data quality & structure ─────────────────────────────────────
 
 - name: detect_constant_columns
   display_name: Detect Constant Columns
@@ -407,7 +407,7 @@
   tags: [schema, validation]
   status: stable
 
-# ── EDA tasks — categorical analysis ─────────────────────────────────────────
+# ── EDA tasks - categorical analysis ─────────────────────────────────────────
 
 - name: categorical_length_stats
   display_name: Categorical Length Stats
@@ -442,7 +442,7 @@
   tags: [imbalance, classification]
   status: stable
 
-# ── EDA tasks — identifier & encoding detection ───────────────────────────────
+# ── EDA tasks - identifier & encoding detection ───────────────────────────────
 
 - name: detect_id_columns
   display_name: Detect ID Columns
@@ -466,7 +466,7 @@
   tags: [format, encoded, anomaly]
   status: stable
 
-# ── EDA tasks — relationships & correlations ──────────────────────────────────
+# ── EDA tasks - relationships & correlations ──────────────────────────────────
 
 - name: compute_pairwise_associations
   display_name: Compute Pairwise Associations
@@ -487,7 +487,7 @@
     consumption by generate_dataset_summary_plots. Reliability warnings:
     low_row_count, zero_variance, extreme_outliers, high_skew.
 
-# ── EDA tasks — drift & comparison ───────────────────────────────────────────
+# ── EDA tasks - drift & comparison ───────────────────────────────────────────
 
 - name: detect_feature_drift
   display_name: Detect Feature Drift
@@ -522,7 +522,7 @@
   tags: [comparison, reference]
   status: stable
 
-# ── EDA tasks — datetime ──────────────────────────────────────────────────────
+# ── EDA tasks - datetime ──────────────────────────────────────────────────────
 
 - name: check_datetime_consistency
   display_name: Check Datetime Consistency
@@ -551,9 +551,9 @@
     day_of_week, hour, quarter, week_of_year, days_since_epoch. Binary:
     is_weekend, is_month_start, is_month_end. Cyclic: month_sin_cos,
     day_of_week_sin_cos, hour_sin_cos. Features filtered to those relevant
-    for the column's actual data. Purely advisory — never modifies the DataFrame.
+    for the column's actual data. Purely advisory - never modifies the DataFrame.
 
-# ── EDA tasks — scoring & visualization ──────────────────────────────────────
+# ── EDA tasks - scoring & visualization ──────────────────────────────────────
 
 - name: data_quality_scorer
   display_name: Data Quality Scorer
@@ -673,7 +673,7 @@
     (safe-range check), object→category (categorical intent), int/object→bool
     (two distinct values). Reads column_memory_bytes from summarize_dataset_shape
     for exact savings estimates. min_savings_bytes threshold (default 1024)
-    prevents noise on small columns. Purely advisory — never modifies the DataFrame.
+    prevents noise on small columns. Purely advisory - never modifies the DataFrame.
 
 - name: sample_size_adequacy
   display_name: Sample Size Adequacy
@@ -805,9 +805,9 @@
     line via Q1/Q3 anchor points. Deviation summary: mean_abs_deviation,
     tail_deviation_lower/upper. Prioritises non_normal columns from
     normality_tests; include_normal param extends to passing columns.
-    Data-only output — feeds frontend QQ renderer, no static images generated.
+    Data-only output - feeds frontend QQ renderer, no static images generated.
 
-# ── EDA tasks — statistical tests & robust methods ───────────────────────────
+# ── EDA tasks - statistical tests & robust methods ───────────────────────────
 
 - name: outlier_detection_mad
   display_name: Outlier Detection (MAD)
@@ -822,7 +822,7 @@
   notes: >
     Modified Z-score (0.6745 x (x - median) / MAD) with default threshold 3.5
     (Iglewicz & Hoaglin 1993). Robust to skewed distributions and existing
-    outliers — median and MAD are not corrupted by the values being detected.
+    outliers - median and MAD are not corrupted by the values being detected.
     Complements detect_outliers (IQR/Z-score). Columns where MAD=0 are skipped.
 
 - name: kendalls_tau
@@ -905,7 +905,7 @@
     lengths; falls back to median for irregular event data. EDA guidance with
     investigate_gaps and resample_or_interpolate action chips.
 
-# ── Wave 4 — architectural decisions required ────────────────────────────────
+# ── Wave 4 - architectural decisions required ────────────────────────────────
 
 - name: detect_multivariate_outliers
   display_name: Detect Multivariate Outliers
@@ -919,7 +919,7 @@
   status: planned
   notes: >
     Isolation Forest-based multivariate outlier detection on continuous columns.
-    Complements univariate detect_outliers — a row can be normal on every
+    Complements univariate detect_outliers - a row can be normal on every
     individual axis but anomalous in the joint distribution. Requires design
     decision: row-level findings in a column-oriented guidance system (likely
     via __dataset__ sentinel key with flagged row indices in data).

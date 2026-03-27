@@ -11,15 +11,15 @@ from dsbf.utils.backend import is_polars
 #
 # Strategy is selected based on three signals, in priority order:
 #
-#   1. Null percentage tier — high missingness changes what is even possible
-#   2. Semantic intent — categorical vs continuous vs datetime require different methods
-#   3. Distribution shape — skewed continuous columns prefer median over mean
+#   1. Null percentage tier - high missingness changes what is even possible
+#   2. Semantic intent - categorical vs continuous vs datetime require different methods
+#   3. Distribution shape - skewed continuous columns prefer median over mean
 #
 # Tiers:
-#   severe:      pct >= 0.5  — imputation likely introduces more bias than dropping
-#   significant: pct >= 0.2  — mean/mode unreliable; prefer model-based or indicator
-#   moderate:    pct >= 0.05 — standard imputation applicable; method depends on dist
-#   low:         pct <  0.05 — any method works; mean/mode/ffill all reasonable
+#   severe:      pct >= 0.5  - imputation likely introduces more bias than dropping
+#   significant: pct >= 0.2  - mean/mode unreliable; prefer model-based or indicator
+#   moderate:    pct >= 0.05 - standard imputation applicable; method depends on dist
+#   low:         pct <  0.05 - any method works; mean/mode/ffill all reasonable
 
 
 def _select_strategy(
@@ -120,7 +120,7 @@ def _select_strategy(
                 "add_indicator": True,
                 "rationale": (
                     f"{pct:.1%} missing in a skewed continuous column. "
-                    "Mean imputation is pulled by the long tail — median is "
+                    "Mean imputation is pulled by the long tail - median is "
                     "more robust. At this missingness level also add a binary "
                     "is_missing indicator."
                 ),
@@ -148,7 +148,7 @@ def _select_strategy(
                 "add_indicator": False,
                 "rationale": (
                     f"{pct:.1%} missing in a skewed continuous column. "
-                    "Median is preferred over mean for skewed distributions — "
+                    "Median is preferred over mean for skewed distributions - "
                     "it is not pulled by extreme values."
                 ),
             }
@@ -171,7 +171,7 @@ def _select_strategy(
         "tier": tier,
         "add_indicator": False,
         "rationale": (
-            f"{pct:.1%} missing — any standard imputation method is appropriate. "
+            f"{pct:.1%} missing - any standard imputation method is appropriate. "
             "Use mean for symmetric distributions, median for skewed ones."
         ),
     }
@@ -207,16 +207,16 @@ class ImputationStrategySuggestions(BaseTask):
 
     Strategy selection is driven by three signals in priority order:
 
-    1. **Null percentage tier** — severe (≥50%), significant (≥20%),
+    1. **Null percentage tier** - severe (≥50%), significant (≥20%),
        moderate (≥5%), low (<5%).
-    2. **Semantic intent** — categorical columns use mode; datetime columns
+    2. **Semantic intent** - categorical columns use mode; datetime columns
        use forward fill; continuous columns use mean/median/KNN.
-    3. **Distribution shape** — skewed continuous columns prefer median over
+    3. **Distribution shape** - skewed continuous columns prefer median over
        mean. Skew is detected by checking the ``detect_skewness`` task result
        in context, or by falling back to a direct skewness calculation.
 
     Only columns meeting the ``min_null_pct`` threshold (default 0.01, i.e. 1%)
-    are evaluated — completely clean columns produce no suggestion.
+    are evaluated - completely clean columns produce no suggestion.
 
     For each column with a suggestion an ML guidance blurb is emitted with
     the recommended method and rationale. Severe missingness columns receive
@@ -266,7 +266,7 @@ class ImputationStrategySuggestions(BaseTask):
 
             if not null_percentages:
                 self._log(
-                    "    summarize_nulls not in context — computing null "
+                    "    summarize_nulls not in context - computing null "
                     "percentages directly.",
                     "debug",
                 )

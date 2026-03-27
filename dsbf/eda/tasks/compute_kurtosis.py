@@ -15,10 +15,10 @@ from dsbf.utils.backend import is_polars
 # (leptokurtic), negative values indicate lighter tails (platykurtic).
 #
 # Guidance thresholds:
-#   |k| < 1.0   → mesokurtic — normal-like tails, no guidance needed
-#   k >= 1.0    → mildly leptokurtic — info
-#   k >= 3.0    → strongly leptokurtic — warn (meaningful outlier risk)
-#   k <= -1.0   → platykurtic — info (thin tails, uniform-like distribution)
+#   |k| < 1.0   → mesokurtic - normal-like tails, no guidance needed
+#   k >= 1.0    → mildly leptokurtic - info
+#   k >= 3.0    → strongly leptokurtic - warn (meaningful outlier risk)
+#   k <= -1.0   → platykurtic - info (thin tails, uniform-like distribution)
 
 
 def _classify_kurtosis(k: float) -> str:
@@ -77,19 +77,19 @@ class ComputeKurtosis(BaseTask):
 
     Classification thresholds (Fisher excess kurtosis):
 
-    - ``mesokurtic``:          |k| < 1.0 — normal-like tails
-    - ``mildly_leptokurtic``:  1.0 ≤ k < 3.0 — moderately heavier tails
-    - ``strongly_leptokurtic``: k ≥ 3.0 — fat tails, significant outlier risk
-    - ``platykurtic``:          k ≤ -1.0 — thin tails, uniform-like
+    - ``mesokurtic``:          |k| < 1.0 - normal-like tails
+    - ``mildly_leptokurtic``:  1.0 ≤ k < 3.0 - moderately heavier tails
+    - ``strongly_leptokurtic``: k ≥ 3.0 - fat tails, significant outlier risk
+    - ``platykurtic``:          k ≤ -1.0 - thin tails, uniform-like
 
     EDA guidance blurbs are emitted for leptokurtic and platykurtic columns.
-    Mesokurtic columns produce no guidance — their tail behaviour is unremarkable.
+    Mesokurtic columns produce no guidance - their tail behaviour is unremarkable.
 
     ML guidance is emitted for strongly leptokurtic columns, noting that
     distance-based models (KNN, SVM) and regularised regression are sensitive
     to fat-tailed features.
 
-    Columns with fewer than 4 non-null values are skipped — kurtosis requires
+    Columns with fewer than 4 non-null values are skipped - kurtosis requires
     at least 4 observations to produce a meaningful estimate.
     """
 
@@ -206,23 +206,23 @@ class ComputeKurtosis(BaseTask):
 
         if classification == "strongly_leptokurtic":
             eda_level = "warn"
-            eda_title: str = f"Fat Tails — Strongly Leptokurtic (kurtosis {k_str})"
+            eda_title: str = f"Fat Tails - Strongly Leptokurtic (kurtosis {k_str})"
             eda_body: str = (
                 f"'{col}' has an excess kurtosis of {k_str}, well above the normal "
                 f"distribution baseline of 0. Fat-tailed distributions concentrate "
                 f"most observations near the centre but produce extreme values far "
                 f"more often than a normal distribution would. Standard deviation "
-                f"understates the true spread — check the 95th and 99th percentiles "
+                f"understates the true spread - check the 95th and 99th percentiles "
                 f"for a better sense of tail extent. Outlier detection and "
                 f"distributional tests will be heavily influenced by these extremes."
             )
             ml_level = "warn"
-            ml_title: str = f"Fat-Tailed Feature — Outlier Risk (kurtosis {k_str})"
+            ml_title: str = f"Fat-Tailed Feature - Outlier Risk (kurtosis {k_str})"
             ml_body: str = (
                 f"'{col}' has strongly leptokurtic distribution (kurtosis {k_str}). "
                 f"Fat tails mean outliers are structurally common, not anomalous. "
                 f"Distance-based models (KNN, SVM) and regularised regression "
-                f"(Ridge, Lasso) are sensitive to extreme values — consider "
+                f"(Ridge, Lasso) are sensitive to extreme values - consider "
                 f"Winsorising at the 1st/99th percentile or applying a log1p or "
                 f"Box-Cox transform before training. Tree-based models are "
                 f"invariant to monotonic transforms and generally unaffected."
@@ -244,13 +244,13 @@ class ComputeKurtosis(BaseTask):
 
         elif classification == "mildly_leptokurtic":
             eda_level = "info"
-            eda_title = f"Slightly Heavy Tails — Leptokurtic (kurtosis {k_str})"
+            eda_title = f"Slightly Heavy Tails - Leptokurtic (kurtosis {k_str})"
             eda_body = (
                 f"'{col}' has an excess kurtosis of {k_str}, indicating moderately "
                 f"heavier tails than a normal distribution. Extreme values are more "
                 f"common than the standard deviation alone suggests. Check the "
                 f"histogram and 99th percentile before concluding that outliers "
-                f"are anomalous — at this kurtosis level they may simply be "
+                f"are anomalous - at this kurtosis level they may simply be "
                 f"characteristic of the distribution."
             )
             ml_level = "info"
@@ -272,11 +272,11 @@ class ComputeKurtosis(BaseTask):
 
         else:  # platykurtic
             eda_level = "info"
-            eda_title = f"Thin Tails — Platykurtic (kurtosis {k_str})"
+            eda_title = f"Thin Tails - Platykurtic (kurtosis {k_str})"
             eda_body = (
                 f"'{col}' has an excess kurtosis of {k_str}, below the normal "
                 f"distribution baseline of 0. Platykurtic distributions have "
-                f"fewer extreme values than normal — the data is more uniformly "
+                f"fewer extreme values than normal - the data is more uniformly "
                 f"spread across its range with less concentration in the centre "
                 f"and tails. This is common in bounded or discretised features. "
                 f"Outlier detection methods calibrated for normal distributions "

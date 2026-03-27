@@ -134,7 +134,7 @@ class GenerateUnivariatePlots(BaseTask):
         if not self.context:
             self._log(
                 (
-                    "    [GenerateUnivariatePlots] No context — semantic types "
+                    "    [GenerateUnivariatePlots] No context - semantic types "
                     "unavailable."
                 ),
                 "debug",

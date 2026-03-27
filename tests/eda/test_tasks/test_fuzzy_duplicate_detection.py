@@ -64,7 +64,7 @@ def test_similarity_one_empty() -> None:
 
 
 def test_similarity_typo() -> None:
-    # Single character difference — should be high but not 1.0
+    # Single character difference - should be high but not 1.0
     score: float = _similarity("new york", "new york ")  # trailing space
     assert 0.8 < score < 1.0
 

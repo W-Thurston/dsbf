@@ -9,8 +9,8 @@
 
   Props
   ─────
-  runKey  : String  — current run key, used to fetch /dq-status
-  activeTab : String  — current tab key; used to subtly highlight the
+  runKey  : String  - current run key, used to fetch /dq-status
+  activeTab : String  - current tab key; used to subtly highlight the
                         dimensions that are most relevant to this tab
 
   The component fetches its own data independently so it doesn't need to
@@ -129,7 +129,7 @@ const DIMENSION_META = {
   usability: {
     label: 'Usability',
     description:
-      'Columns that are structurally unsuitable for direct analysis — likely ' +
+      'Columns that are structurally unsuitable for direct analysis - likely ' +
       'ID columns, near-constant dominant values, or extremely high cardinality ' +
       'categoricals that would need transformation before use.',
   },
@@ -143,7 +143,7 @@ const DIMENSION_META = {
     label: 'Leakage',
     description:
       'Column pairs with near-perfect correlation that may indicate data ' +
-      'leakage — one column encoding the same information as another. ' +
+      'leakage - one column encoding the same information as another. ' +
       'This is a correctness risk, not just a modelling inefficiency.',
   },
 }
@@ -164,13 +164,14 @@ const dimensions = computed(() =>
 
 // ── Tab relevance ─────────────────────────────────────────────────────────────
 // Which dimensions to highlight (brighter opacity) based on the active tab.
-// Dimensions not in the active tab's list are dimmed slightly — not hidden.
+// Dimensions not in the active tab's list are dimmed slightly - not hidden.
 
 const tabRelevance = {
   overview:      ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
   distributions: ['completeness', 'validity', 'usability'],
   relationships: ['redundancy', 'leakage'],
   quality:       ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  ml_readiness:  ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
 }
 </script>
 
@@ -216,7 +217,7 @@ const tabRelevance = {
 
 .dh-item:last-child { border-right: none; }
 
-/* Dim dimensions not relevant to the current tab — but only if a tab that
+/* Dim dimensions not relevant to the current tab - but only if a tab that
    defines relevance is active. Overview and quality show all at full opacity. */
 .dh-bar:has(.dh-item--active-tab) .dh-item:not(.dh-item--active-tab) {
   opacity: 0.4;

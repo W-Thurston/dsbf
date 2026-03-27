@@ -34,10 +34,10 @@ class SummarizeNumeric(BaseTask):
 
     Two complementary guidance blurb types are emitted:
 
-    - **Near-zero variance**: column is effectively constant — emits both EDA
+    - **Near-zero variance**: column is effectively constant - emits both EDA
       and ML blurbs advising the column be dropped before modeling.
     - **Mean-median gap**: asymmetric distribution where the mean is pulled
-      away from the median by a long tail. Complements ``detect_skewness`` —
+      away from the median by a long tail. Complements ``detect_skewness`` -
       that task reports the skewness coefficient; this one reports the gap
       in interpretable units (standard deviations) alongside raw stat values.
 
@@ -143,7 +143,7 @@ class SummarizeNumeric(BaseTask):
 
         - ``near_zero_variance``: the column is effectively constant.
         - Mean/median gap > 0.5 standard deviations: distribution is asymmetric.
-          Complements ``detect_skewness`` — that task reports the skewness
+          Complements ``detect_skewness`` - that task reports the skewness
           coefficient; this reports the gap in interpretable std-deviation units.
 
         Args:
@@ -164,7 +164,7 @@ class SummarizeNumeric(BaseTask):
                 level="warn",
                 title="Near-Zero Variance",
                 body=(
-                    f"'{col}' has a variance close to zero — nearly all values are "
+                    f"'{col}' has a variance close to zero - nearly all values are "
                     f"identical (mean: {mean:.4g}, std: {std:.4g}). This column "
                     f"carries almost no variation across rows. Check whether it is a "
                     f"constant default, a derived field that only changes under rare "
@@ -182,7 +182,7 @@ class SummarizeNumeric(BaseTask):
                 column=col,
                 phase="ml",
                 level="warn",
-                title="Near-Zero Variance — Minimal Signal",
+                title="Near-Zero Variance - Minimal Signal",
                 body=(
                     f"'{col}' has near-zero variance (std: {std:.4g}). Features with "
                     f"essentially no spread provide no discriminative power to any "
@@ -194,13 +194,13 @@ class SummarizeNumeric(BaseTask):
                     {
                         "action": "drop",
                         "column": col,
-                        "detail": "Zero variance — no signal for any model",
+                        "detail": "Zero variance - no signal for any model",
                     },
                 ],
                 metric={"mean": round(mean, 6), "std": round(std, 6)},
             )
 
-        # Mean-median gap — only meaningful when there is sufficient spread.
+        # Mean-median gap - only meaningful when there is sufficient spread.
         # Skip if near_zero_var already fired (redundant for constant columns).
         if (
             not near_zero_var
@@ -211,7 +211,7 @@ class SummarizeNumeric(BaseTask):
         ):
             gap_in_std = abs(mean - median) / std
             gap_info = 0.5  # noticeable asymmetry
-            gap_warn = 1.0  # substantial pull — mean no longer representative
+            gap_warn = 1.0  # substantial pull - mean no longer representative
 
             if gap_in_std >= gap_info:
                 level: Literal["info", "warn"] = (

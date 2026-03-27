@@ -116,7 +116,7 @@ def test_object_column_deep_memory_counted(tmp_path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, SummarizeDatasetShape)
 
     assert result.status == "success"
-    # 100 strings of 1000 chars each — deep memory must be substantially larger than
+    # 100 strings of 1000 chars each - deep memory must be substantially larger than
     # the shallow pointer-only estimate of 100 * 8 = 800 bytes.
     assert result.data["column_memory_bytes"]["text"] > 800
 
@@ -134,7 +134,7 @@ def test_aggregate_memory_equals_sum_of_columns(tmp_path) -> None:
 
     assert result.status == "success"
     # The aggregate includes the pandas Index entry which is excluded from
-    # column_memory_bytes — so aggregate >= sum of columns.
+    # column_memory_bytes - so aggregate >= sum of columns.
     col_sum_mb = sum(result.data["column_memory_MB"].values())
     assert result.data["approx_memory_MB"] >= col_sum_mb - 0.001  # float tolerance
 

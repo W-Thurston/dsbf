@@ -29,7 +29,7 @@ def _mad_score(series: pd.Series) -> pd.Series | None:
     distribution.
 
     Unlike the standard Z-score, the Modified Z-score uses the median and
-    MAD rather than the mean and std — both of which are corrupted by the
+    MAD rather than the mean and std - both of which are corrupted by the
     very outliers being detected. It is therefore robust to outliers and
     appropriate for skewed or contaminated distributions.
 
@@ -58,7 +58,7 @@ def _mad_score(series: pd.Series) -> pd.Series | None:
     display_name="Outlier Detection (MAD)",
     description=(
         "Detects outliers using the Modified Z-score (Median Absolute Deviation). "
-        "Robust to skewed distributions and existing outliers — unlike standard "
+        "Robust to skewed distributions and existing outliers - unlike standard "
         "Z-score, the median and MAD are not corrupted by the values being detected."
     ),
     depends_on=["infer_types"],
@@ -93,12 +93,12 @@ class OutlierDetectionMAD(BaseTask):
 
     **Comparison with detect_outliers:**
     ``detect_outliers`` uses IQR fences and standard Z-score. This task uses
-    the more robust MAD method. The two tasks are complementary — a value
+    the more robust MAD method. The two tasks are complementary - a value
     flagged by both methods is more likely a genuine outlier than one flagged
     by only one.
 
     Columns where MAD = 0 (constant or near-constant after median subtraction)
-    are skipped — the Modified Z-score is undefined for such columns.
+    are skipped - the Modified Z-score is undefined for such columns.
 
     Configurable parameters (via config["tasks"]["outlier_detection_mad"]):
         threshold (float): |MZS| above which a value is flagged as an outlier.
@@ -264,7 +264,7 @@ class OutlierDetectionMAD(BaseTask):
             f"{mad:.4g}. Maximum Modified Z-score: {max_score:.2f}. "
             f"Most extreme values: {top_vals}. "
             f"Unlike IQR or standard Z-score, the MAD method is robust to "
-            f"existing outliers — these flagged values are genuinely anomalous "
+            f"existing outliers - these flagged values are genuinely anomalous "
             f"relative to the bulk of the distribution, not artefacts of "
             f"an inflated standard deviation. Investigate whether they represent "
             f"genuine rare events, data entry errors, or a separate sub-population."
@@ -273,7 +273,7 @@ class OutlierDetectionMAD(BaseTask):
         ml_body: str = (
             f"'{col}' has {count} MAD outlier(s) ({pct:.1%}). "
             f"Distance-based models (KNN, SVM), linear models, and PCA are "
-            f"sensitive to extreme values — these {count} point(s) may "
+            f"sensitive to extreme values - these {count} point(s) may "
             f"disproportionately influence decision boundaries and coefficient "
             f"estimates. Consider Winsorising at the 1st/99th percentile or "
             f"applying a robust scaler before training. Tree-based models "

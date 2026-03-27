@@ -23,7 +23,7 @@ from dsbf.utils.reco_engine import get_recommendation_tip
     runtime_estimate="fast",
     phase="ml_readiness",
     tags=["target", "imbalance", "ml_readiness"],
-    # Target column can be any semantic type — categorical targets are the
+    # Target column can be any semantic type - categorical targets are the
     # most common case but numeric binary targets (0/1) also apply.
     expected_semantic_types=["any"],
 )
@@ -146,7 +146,7 @@ class DetectClassImbalance(BaseTask):
                     phase="eda",
                     level="warn",
                     title=(
-                        f"Class Imbalance — '{majority_class}' "
+                        f"Class Imbalance - '{majority_class}' "
                         f"dominates ({majority_ratio:.1%})"
                     ),
                     body=(
@@ -174,10 +174,10 @@ class DetectClassImbalance(BaseTask):
                     column=target_col,
                     phase="ml",
                     level="warn",
-                    title="Severe Class Imbalance — Adjust Training Strategy",
+                    title="Severe Class Imbalance - Adjust Training Strategy",
                     body=(
                         f"'{target_col}' has {majority_ratio:.1%} majority class "
-                        f"proportion. Standard accuracy will be misleading — "
+                        f"proportion. Standard accuracy will be misleading - "
                         f"use precision, recall, F1, or AUC-PR as primary metrics. "
                         f"For tree-based models, set class_weight='balanced' or use "
                         f"scale_pos_weight (XGBoost). For neural networks, use "

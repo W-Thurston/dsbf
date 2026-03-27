@@ -127,7 +127,7 @@ def test_skewed_column_routed_to_transformations(tmp_path) -> None:
     assert result.status == "success"
     transformations = result.data["categories"]["transformations"]
     # If skewness was flagged, it should appear in transformations findings
-    # (may not trigger on small dataset — check the level is valid regardless)
+    # (may not trigger on small dataset - check the level is valid regardless)
     assert transformations["level"] in ("green", "amber", "red")
 
 

@@ -51,12 +51,12 @@ class InferTypes(BaseTask):
 
     Supported semantic types:
 
-    - ``continuous`` — numeric column with many distinct values
-    - ``categorical`` — low-cardinality column or boolean
-    - ``datetime`` — parseable date/time column
-    - ``text`` — long free-text string column (mean length > 30 chars)
-    - ``id`` — near-unique string column (identifier)
-    - ``unknown`` — all-null or unclassifiable
+    - ``continuous`` - numeric column with many distinct values
+    - ``categorical`` - low-cardinality column or boolean
+    - ``datetime`` - parseable date/time column
+    - ``text`` - long free-text string column (mean length > 30 chars)
+    - ``id`` - near-unique string column (identifier)
+    - ``unknown`` - all-null or unclassifiable
     """
 
     def run(self) -> None:
@@ -207,7 +207,7 @@ class InferTypes(BaseTask):
             nunique: Number of distinct non-null values.
             unique_ratio: Ratio of distinct values to total non-null values.
             series: The non-null numeric Series, used for Unix timestamp
-                detection. Optional — pass ``None`` to skip that check.
+                detection. Optional - pass ``None`` to skip that check.
 
         Returns:
             One of ``"categorical"``, ``"datetime"``, or ``"continuous"``.

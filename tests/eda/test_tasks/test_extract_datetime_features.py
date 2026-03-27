@@ -51,7 +51,7 @@ def test_temporal_summary_no_time_component() -> None:
 
 
 def test_relevant_features_always_includes_days_since_epoch() -> None:
-    # Minimal column — short range, single day
+    # Minimal column - short range, single day
     summary: dict[str, bool | int | list] = {
         "range_days": 10,
         "has_time_component": False,

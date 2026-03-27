@@ -154,7 +154,7 @@ class SummarizeBooleanFields(BaseTask):
                 f"event, or whether it reflects a data collection gap or miscoding."
             )
             ml_body: str = (
-                f"'{col}' has {pct_str} {dominant_val} values — severe class "
+                f"'{col}' has {pct_str} {dominant_val} values - severe class "
                 f"imbalance. A naive classifier will achieve high accuracy by always "
                 f"predicting {dominant_val}, while completely failing on the minority "
                 f"class. Use stratified splits, class weighting, or oversampling "

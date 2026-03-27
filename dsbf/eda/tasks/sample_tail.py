@@ -28,7 +28,7 @@ class SampleTail(BaseTask):
     column-oriented dict (``orient="list"``) for JSON portability.
 
     When ``n=0`` is configured, returns an empty sample rather than the full
-    dataset tail — this is intentional behavior for callers that want schema
+    dataset tail - this is intentional behavior for callers that want schema
     inspection without row data.
 
     Configurable parameters (via config["tasks"]["sample_tail"]):
@@ -52,7 +52,7 @@ class SampleTail(BaseTask):
             n_raw: Any | None = self.get_task_param("n")
             n: int = int(n_raw) if n_raw is not None else 5
 
-            # n=0 returns an empty sample rather than the full tail — see docstring.
+            # n=0 returns an empty sample rather than the full tail - see docstring.
             df_tail = df.head(0) if n == 0 else df.tail(n)
             self._log(f"    Returning last {n} rows", "debug")
 

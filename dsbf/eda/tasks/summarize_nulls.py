@@ -29,9 +29,9 @@ class SummarizeNulls(BaseTask):
     EDA and ML guidance blurbs are emitted for any column where the null
     percentage meets or exceeds 5%:
 
-    - ≥ 50% → ``error`` level — imputation would introduce substantial bias
-    - ≥ 20% → ``warn`` level — significant missingness requiring careful handling
-    - ≥ 5%  → ``info`` level — manageable, standard imputation strategies apply
+    - ≥ 50% → ``error`` level - imputation would introduce substantial bias
+    - ≥ 20% → ``warn`` level - significant missingness requiring careful handling
+    - ≥ 5%  → ``info`` level - manageable, standard imputation strategies apply
 
     Polars DataFrames are converted to pandas before processing.
 
@@ -143,7 +143,7 @@ class SummarizeNulls(BaseTask):
             title: str = f"Severe Missingness ({pct_str})"
             eda_body: str = (
                 f"'{col}' is missing {pct_str} of its values ({count:,} of "
-                f"{n_rows:,} rows). More than half the data is absent — this column "
+                f"{n_rows:,} rows). More than half the data is absent - this column "
                 f"is largely unobserved. Before drawing any conclusions, investigate "
                 f"why so much data is missing: collection failure, a conditional "
                 f"field only populated in certain cases, or a column that was not "
@@ -153,7 +153,7 @@ class SummarizeNulls(BaseTask):
                 f"'{col}' has {pct_str} missing values. At this level of missingness "
                 f"imputation will introduce substantial bias regardless of method. "
                 f"Consider dropping the column unless the missingness itself is "
-                f"informative — in which case retain a binary is_missing indicator "
+                f"informative - in which case retain a binary is_missing indicator "
                 f"and drop the original."
             )
             ml_actions: list[dict[str, str]] = [
@@ -178,7 +178,7 @@ class SummarizeNulls(BaseTask):
                 f"{n_rows:,} rows). This is substantial enough to affect any "
                 f"analysis that uses this column. Consider whether the missing "
                 f"values are random, or whether certain subgroups are more likely "
-                f"to have data absent — a pattern in missingness can be as "
+                f"to have data absent - a pattern in missingness can be as "
                 f"informative as the values themselves."
             )
             ml_body = (
@@ -214,14 +214,14 @@ class SummarizeNulls(BaseTask):
             title = f"Some Missingness ({pct_str})"
             eda_body = (
                 f"'{col}' is missing {pct_str} of its values ({count:,} of "
-                f"{n_rows:,} rows). This is manageable but worth understanding — "
+                f"{n_rows:,} rows). This is manageable but worth understanding - "
                 f"check whether the missing rows share common characteristics "
                 f"that might indicate a systematic gap rather than random absence."
             )
             ml_body = (
                 f"'{col}' has {pct_str} missing values. Tree-based models handle "
                 f"this natively in most frameworks. For linear models, impute "
-                f"before fitting — mean or median imputation is reasonable at "
+                f"before fitting - mean or median imputation is reasonable at "
                 f"this level. For time series, forward fill may be more appropriate."
             )
             ml_actions = [

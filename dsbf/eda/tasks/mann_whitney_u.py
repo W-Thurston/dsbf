@@ -85,7 +85,7 @@ class MannWhitneyU(BaseTask):
             if correction not in ("none", "bonferroni", "fdr_bh"):
                 self._log(
                     f"    Unknown correction '{correction}'"
-                    " — falling back to 'fdr_bh'.",
+                    " - falling back to 'fdr_bh'.",
                     "warn",
                 )
                 correction = "fdr_bh"
@@ -140,7 +140,7 @@ class MannWhitneyU(BaseTask):
                 )
                 return
 
-            # Phase 1 — run all tests
+            # Phase 1 - run all tests
             raw_results: dict[str, dict[str, Any]] = {}
 
             for cat_col in categorical_cols:
@@ -189,7 +189,7 @@ class MannWhitneyU(BaseTask):
                             "alpha": alpha,
                         }
 
-            # Phase 2 — apply correction
+            # Phase 2 - apply correction
             keys: list[str] = list(raw_results.keys())
             corrected: list[float] = _apply_correction(
                 [raw_results[k]["p_value"] for k in keys], correction
@@ -287,7 +287,7 @@ class MannWhitneyU(BaseTask):
         body: str = (
             f"The distribution of '{num_col}' differs significantly between "
             f"'{lev_a}' (n={n1}) and '{lev_b}' (n={n2}) in '{cat_col}' "
-            f"(U={u:.1f}, {correction_note}, r={r:.3f} — {effect_desc} effect). "
+            f"(U={u:.1f}, {correction_note}, r={r:.3f} - {effect_desc} effect). "
             f"Values in '{lev_a}' tend to be {direction} than in '{lev_b}'. "
             f"Rank-biserial r={r:.3f} means "
             f"{'%.0f' % ((abs(r) + 1) / 2 * 100)}% of observations in "

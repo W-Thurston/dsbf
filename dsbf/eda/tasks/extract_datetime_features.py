@@ -23,7 +23,7 @@ _ORDINAL_FEATURES: list[dict] = [
         "name": "year",
         "extractor": lambda s: s.dt.year,
         "description": "Calendar year",
-        "ml_note": "Captures long-term trend. Use with caution — may cause leakage "
+        "ml_note": "Captures long-term trend. Use with caution - may cause leakage "
         "if the target shifts over time.",
     },
     {
@@ -252,11 +252,11 @@ class ExtractDatetimeFeatures(BaseTask):
     - Binary flags: is_weekend, is_month_start, is_month_end
     - Cyclic encodings: month_sin_cos, day_of_week_sin_cos, hour_sin_cos
 
-    Features are filtered to those relevant for the column's actual data —
+    Features are filtered to those relevant for the column's actual data -
     hour features are not recommended when all timestamps are midnight, year
     is not recommended for sub-annual datasets, etc.
 
-    This task is purely advisory — it never modifies the DataFrame. Raw
+    This task is purely advisory - it never modifies the DataFrame. Raw
     datetime columns are not usable as model inputs directly; their value
     lies entirely in the extracted components.
 
@@ -406,7 +406,7 @@ class ExtractDatetimeFeatures(BaseTask):
             f"with {summary['n_unique_dates']:,} unique timestamp(s). "
             f"Varying components: {components_str}. "
             f"{'A time-of-day component is present. ' if has_time else ''}"
-            f"Raw datetime values are not interpretable by most models — "
+            f"Raw datetime values are not interpretable by most models - "
             f"their predictive signal lives in extracted components such as "
             f"day-of-week, month, or hour. Inspect the distribution of each "
             f"recommended component to understand seasonal and cyclical patterns."
@@ -417,7 +417,7 @@ class ExtractDatetimeFeatures(BaseTask):
             column=col,
             phase="eda",
             level="info",
-            title=f"Datetime Column — {len(recommended)} Feature(s) Suggested",
+            title=f"Datetime Column - {len(recommended)} Feature(s) Suggested",
             body=eda_body.strip(),
             actions=[],
             metric={
@@ -453,7 +453,7 @@ class ExtractDatetimeFeatures(BaseTask):
             return
 
         ml_body: str = (
-            f"'{col}' cannot be used as a raw model input — datetime values "
+            f"'{col}' cannot be used as a raw model input - datetime values "
             f"must be decomposed into numeric features. "
             f"{len(actions)} extraction(s) recommended based on the column's "
             f"temporal range and variation. Cyclic encodings (sin/cos) are "

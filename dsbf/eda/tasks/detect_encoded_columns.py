@@ -42,7 +42,7 @@ class DetectEncodedColumns(BaseTask):
     - **Hex**: Values composed entirely of hexadecimal characters.
     - **Base64**: Values composed of ``[A-Za-z0-9+/=]`` characters.
     - **High entropy**: Shannon entropy above threshold with low length variance
-      — catches hashes and fingerprints not matching the above patterns.
+      - catches hashes and fingerprints not matching the above patterns.
 
     Detection runs on both Polars and Pandas DataFrames. For Polars, only
     columns with String/Utf8 dtype are processed. For Pandas, only object dtype
@@ -143,7 +143,7 @@ class DetectEncodedColumns(BaseTask):
 
                 match_type = None
 
-                # Entropy + length uniformity — catches hashes not matching
+                # Entropy + length uniformity - catches hashes not matching
                 # the specific format patterns below.
                 if entropy > min_entropy and std_len < length_std_threshold:
                     match_type = "high_entropy"

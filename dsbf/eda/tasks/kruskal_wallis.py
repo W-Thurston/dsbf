@@ -88,7 +88,7 @@ class KruskalWallis(BaseTask):
             if correction not in ("none", "bonferroni", "fdr_bh"):
                 self._log(
                     f"    Unknown correction '{correction}'"
-                    " — falling back to 'fdr_bh'.",
+                    " - falling back to 'fdr_bh'.",
                     "warn",
                 )
                 correction = "fdr_bh"
@@ -140,7 +140,7 @@ class KruskalWallis(BaseTask):
                 )
                 return
 
-            # Phase 1 — run all tests
+            # Phase 1 - run all tests
             raw_results: dict[str, dict[str, Any]] = {}
             for cat_col in categorical_cols:
                 for num_col in continuous_cols:
@@ -166,7 +166,7 @@ class KruskalWallis(BaseTask):
                         "alpha": alpha,
                     }
 
-            # Phase 2 — apply correction
+            # Phase 2 - apply correction
             keys: list[str] = list(raw_results.keys())
             corrected: list[float] = _apply_correction(
                 [raw_results[k]["p_value"] for k in keys],

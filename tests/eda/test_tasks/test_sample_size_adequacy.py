@@ -84,14 +84,14 @@ def test_length_outliers_detects_extreme_length() -> None:
 
 
 def test_length_outliers_uniform_lengths_returns_none() -> None:
-    # All same length — IQR = 0, skip
+    # All same length - IQR = 0, skip
     s: Series[str] = pd.Series(["abc"] * 50)
     assert _check_length_outliers(s) is None
 
 
 def test_length_outliers_no_extreme_values_returns_none() -> None:
     s: Series[str] = pd.Series(["hi", "hello", "hey", "howdy", "greetings"] * 10)
-    # All lengths similar — no outliers at 3xIQR
+    # All lengths similar - no outliers at 3xIQR
     result: dict | None = _check_length_outliers(s)
     assert result is None or result["affected_count"] == 0
 
@@ -196,7 +196,7 @@ def test_clean_column_produces_no_findings(tmp_path) -> None:
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_multiple_anomaly_types_per_column(tmp_path) -> None:
-    """A column can have multiple anomaly types — all must be reported."""
+    """A column can have multiple anomaly types - all must be reported."""
     df = pd.DataFrame({"messy": ["  Active", "active", "ACTIVE", "inactive"] * 10})
 
     ctx, _ = make_ctx_and_task(

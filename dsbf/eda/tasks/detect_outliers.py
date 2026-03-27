@@ -33,7 +33,7 @@ class DetectOutliers(BaseTask):
     outliers exceeds ``flag_threshold`` (default: 1%). EDA and ML guidance
     blurbs are attached for any column with at least one outlier.
 
-    Supports both Polars and Pandas DataFrames — Polars input is converted to
+    Supports both Polars and Pandas DataFrames - Polars input is converted to
     pandas before processing since the IQR fence computation uses pandas quantile.
 
     Note: ``method`` parameter is accepted but only IQR is currently implemented.
@@ -63,7 +63,7 @@ class DetectOutliers(BaseTask):
                 "debug",
             )
 
-            # method is read for future extensibility — only IQR is implemented.
+            # method is read for future extensibility - only IQR is implemented.
             method = str(self.get_task_param("method") or "iqr")
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.01)
 
@@ -213,7 +213,7 @@ class DetectOutliers(BaseTask):
             level = "error"
             severity = "severe"
             eda_tail = (
-                "At this rate, calling them outliers is misleading — more than one "
+                "At this rate, calling them outliers is misleading - more than one "
                 "in seven rows falls outside the normal range, which suggests the "
                 "distribution is simply heavy-tailed or multimodal rather than "
                 "contaminated by a few anomalous points."
@@ -222,7 +222,7 @@ class DetectOutliers(BaseTask):
             level = "warn"
             severity = "notable"
             eda_tail = (
-                "This is a notable minority — enough to materially affect mean-based "
+                "This is a notable minority - enough to materially affect mean-based "
                 "statistics but small enough that these could be genuine rare events."
             )
         else:
@@ -251,7 +251,7 @@ class DetectOutliers(BaseTask):
         ml_body: str = (
             f"'{col}' has {count:,} outlier values ({pct_str}) by the IQR method. "
             f"Linear models (regression, SVM with RBF kernel) and distance-based "
-            f"methods (KNN, K-means) are most sensitive to extreme values — a single "
+            f"methods (KNN, K-means) are most sensitive to extreme values - a single "
             f"high-leverage point can shift a regression line substantially. "
             f"{winsorise_detail} Tree-based models are largely robust to outliers "
             f"in features but remain sensitive when they appear in the target variable."

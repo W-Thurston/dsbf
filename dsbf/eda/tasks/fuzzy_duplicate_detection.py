@@ -167,19 +167,19 @@ class FuzzyDuplicateDetection(BaseTask):
     by a single character, case difference, or minor formatting variation.
     This task catches those near-duplicates using a two-phase approach:
 
-    **Phase 1 — Blocking (token overlap):**
+    **Phase 1 - Blocking (token overlap):**
     Only row pairs that share at least one word token in their string
     representations are treated as candidates. This reduces the O(n²) search
     space to a tractable subset without missing most genuine near-duplicates.
 
-    **Phase 2 — Scoring (character similarity):**
+    **Phase 2 - Scoring (character similarity):**
     Each candidate pair is scored with ``difflib.SequenceMatcher.ratio()``,
     which compares character sequences and returns a similarity in [0, 1].
     Pairs above ``similarity_threshold`` (default: 0.85) are flagged.
 
     **Comparison surface:**
     Only string/categorical columns are included. Numeric and datetime columns
-    are excluded — small numeric differences are handled by ``detect_outliers``,
+    are excluded - small numeric differences are handled by ``detect_outliers``,
     not by string similarity.
 
     **Large dataset handling:**
@@ -256,7 +256,7 @@ class FuzzyDuplicateDetection(BaseTask):
 
             if len(string_cols) < min_string_cols:
                 self._log(
-                    f"    Fewer than {min_string_cols} string column(s) found — "
+                    f"    Fewer than {min_string_cols} string column(s) found - "
                     "skipping fuzzy duplicate detection.",
                     "debug",
                 )
@@ -295,7 +295,7 @@ class FuzzyDuplicateDetection(BaseTask):
                 ).reset_index(drop=True)
                 sampled = True
                 self._log(
-                    f"    Dataset has {len(df):,} rows — sampling "
+                    f"    Dataset has {len(df):,} rows - sampling "
                     f"{max_comparison_rows:,} for comparison.",
                     "debug",
                 )
@@ -316,7 +316,7 @@ class FuzzyDuplicateDetection(BaseTask):
             valid_indices: list[int] = [i for i, s in enumerate(row_strings) if s]
             if len(valid_indices) < 2:
                 self._log(
-                    "    Fewer than 2 non-empty rows — nothing to compare.",
+                    "    Fewer than 2 non-empty rows - nothing to compare.",
                     "debug",
                 )
                 self.output = TaskResult(
@@ -445,7 +445,7 @@ class FuzzyDuplicateDetection(BaseTask):
                     code="sampled_comparison",
                     description=(
                         f"Dataset has {len(df):,} rows. Fuzzy comparison was run "
-                        f"on a random sample of {max_comparison_rows:,} rows — "
+                        f"on a random sample of {max_comparison_rows:,} rows - "
                         f"near-duplicates outside the sample are not detected."
                     ),
                     recommendation=(
@@ -506,7 +506,7 @@ class FuzzyDuplicateDetection(BaseTask):
         examples_str: str = "\n".join(example_lines)
 
         sample_note: str = (
-            " Note: results are from a sampled subset — actual count may be higher."
+            " Note: results are from a sampled subset - actual count may be higher."
             if sampled
             else ""
         )

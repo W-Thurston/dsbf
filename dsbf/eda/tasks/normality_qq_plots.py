@@ -160,7 +160,7 @@ class NormalityQQPlots(BaseTask):
 
     **Output format:**
     Each column result contains ``theoretical`` and ``empirical`` lists of
-    equal length — paired quantile values ready for direct plotting — plus
+    equal length - paired quantile values ready for direct plotting - plus
     a ``reference_line`` with two anchor points (Q1 and Q3) and a
     ``deviation_summary`` with quantified departure statistics.
 
@@ -171,7 +171,7 @@ class NormalityQQPlots(BaseTask):
         include_normal (bool): Also compute QQ data for columns that passed
             normality tests. Default: False
         n_quantiles (int): Number of quantile points per plot. Default: 100
-        skew_threshold (float): Fallback — compute QQ for columns with
+        skew_threshold (float): Fallback - compute QQ for columns with
             |skewness| ≥ this value when normality_tests has not run.
             Default: 0.5
         min_n (int): Minimum non-null values to compute QQ data. Default: 8
@@ -236,7 +236,7 @@ class NormalityQQPlots(BaseTask):
             if not target_cols:
                 # Fallback: use skewness threshold on numeric columns
                 self._log(
-                    "    No normality_tests result in context — using "
+                    "    No normality_tests result in context - using "
                     "skewness fallback.",
                     "debug",
                 )
@@ -353,17 +353,17 @@ class NormalityQQPlots(BaseTask):
 
         # Characterise the deviation pattern from tail behaviour
         if tail_lower > mean_dev * 1.5 and tail_upper > mean_dev * 1.5:
-            pattern = "heavy tails (both ends deviate) — consistent with high kurtosis"
+            pattern = "heavy tails (both ends deviate) - consistent with high kurtosis"
         elif tail_upper > mean_dev * 1.5:
             pattern = (
-                "right tail deviation — consistent with right skew or upper outliers"
+                "right tail deviation - consistent with right skew or upper outliers"
             )
         elif tail_lower > mean_dev * 1.5:
             pattern = (
-                "left tail deviation — consistent with left skew or lower outliers"
+                "left tail deviation - consistent with left skew or lower outliers"
             )
         elif max_dev < 0.1:
-            pattern = "minor deviation — distribution is approximately normal"
+            pattern = "minor deviation - distribution is approximately normal"
         else:
             pattern = "moderate overall deviation"
 
@@ -393,7 +393,7 @@ class NormalityQQPlots(BaseTask):
             column=col,
             phase="eda",
             level="info" if verdict != "non_normal" else "warn",
-            title=f"QQ Plot: {pattern.split(' —')[0].title()}",
+            title=f"QQ Plot: {pattern.split(' -')[0].title()}",
             body=body.strip(),
             actions=[],
             metric={

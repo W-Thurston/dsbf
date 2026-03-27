@@ -183,7 +183,7 @@ def test_already_optimal_column_not_suggested(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_min_savings_threshold_filters_small_columns(tmp_path) -> None:
     """Columns with savings below min_savings_bytes must not be suggested."""
-    # 4 rows of int64 — savings = 4 * (8-1) = 28 bytes, below default 1024
+    # 4 rows of int64 - savings = 4 * (8-1) = 28 bytes, below default 1024
     df = pd.DataFrame({"tiny_int": pd.array([0, 1, 2, 3], dtype="int64")})
 
     ctx, _ = make_ctx_and_task(

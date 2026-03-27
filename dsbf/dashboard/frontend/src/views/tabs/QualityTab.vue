@@ -1,12 +1,12 @@
 <!-- dsbf/dashboard/frontend/src/views/tabs/QualityTab.vue
 
-  The Quality tab — aggregated data-health findings across all five
+  The Quality tab - aggregated data-health findings across all five
   dimensions. Three sections:
 
-    1. Summary cards  — one per dimension, click to jump to that section
-    2. Dimension sections — full findings list per dimension, collapsible,
+    1. Summary cards  - one per dimension, click to jump to that section
+    2. Dimension sections - full findings list per dimension, collapsible,
                             sortable by column name / issue / severity
-    3. Clean columns  — columns with zero findings across all dimensions
+    3. Clean columns  - columns with zero findings across all dimensions
 
   Data sources
   ────────────
@@ -101,7 +101,7 @@
             </span>
           </div>
           <div class="qt-section-controls" @click.stop>
-            <!-- Sort controls — only shown when there are findings -->
+            <!-- Sort controls - only shown when there are findings -->
             <template v-if="dim.affectedCount > 0">
               <span class="qt-sort-label">Sort:</span>
               <button
@@ -142,7 +142,7 @@
                   <span class="qt-col-detail">Detail</span>
                   <span class="qt-col-sev">Severity</span>
                 </div>
-                <!-- Finding rows — scrollable, max 10 rows visible -->
+                <!-- Finding rows - scrollable, max 10 rows visible -->
                 <div class="qt-findings-scroll">
                   <div
                     v-for="(finding, i) in sortedFindings(dim)"
@@ -233,7 +233,7 @@ const totalColumns = ref(0)
 const allColumns   = ref([])   // full ordered column list from scorer
 const categories   = ref({})
 
-// Section collapse — all open by default
+// Section collapse - all open by default
 const openSections = ref(new Set([
   'completeness', 'validity', 'usability', 'redundancy', 'leakage', '__clean__'
 ]))
@@ -270,7 +270,7 @@ async function fetchData(runKey) {
 
   try {
     // Step 1: check availability via the lightweight dq-status endpoint.
-    // This never 404s for a valid run — it returns { available: false } when
+    // This never 404s for a valid run - it returns { available: false } when
     // the scorer was skipped or not yet run (e.g. a failed dependency caused
     // the scorer to be skipped by the graph executor).
     const status = await getDqStatus(runKey)
@@ -280,7 +280,7 @@ async function fetchData(runKey) {
     if (!available.value) return
 
     // Step 2: only fetch the full task result when the scorer actually ran.
-    // Calling getTask when the scorer was skipped would 404 — skipped tasks
+    // Calling getTask when the scorer was skipped would 404 - skipped tasks
     // are never written to the database.
     const task = await getTask(runKey, 'data_quality_scorer')
     if (task?.data?.categories) {
@@ -346,7 +346,7 @@ const cleanColumns = computed(() => {
 
   // Use the authoritative full column list from the scorer output.
   // Deriving it from findings misses columns that have zero findings
-  // across all dimensions — they never appear in any finding and would
+  // across all dimensions - they never appear in any finding and would
   // be incorrectly omitted from the clean list.
   const affected = new Set()
   for (const cat of Object.values(categories.value)) {
@@ -364,7 +364,7 @@ const cleanColumns = computed(() => {
 function findingColumn(finding) {
   if (finding.column) return finding.column
   if (finding.col_a)  return `${finding.col_a} / ${finding.col_b}`
-  return '—'
+  return '-'
 }
 
 const ISSUE_LABELS = {
@@ -380,7 +380,7 @@ const ISSUE_LABELS = {
 }
 
 function issueLabel(issue) {
-  return ISSUE_LABELS[issue] ?? issue?.replace(/_/g, ' ') ?? '—'
+  return ISSUE_LABELS[issue] ?? issue?.replace(/_/g, ' ') ?? '-'
 }
 
 /** Build a human-readable detail string from a finding's metrics */
@@ -392,7 +392,7 @@ function findingDetail(finding) {
   if (finding.n_unique     != null) return `${finding.n_unique.toLocaleString()} unique values`
   if (finding.vif_score    != null) return `VIF ${finding.vif_score.toFixed(1)}`
   if (finding.correlation  != null) return `r = ${finding.correlation.toFixed(3)}`
-  return '—'
+  return '-'
 }
 
 // ── Sort options per dimension ─────────────────────────────────────────────────
@@ -403,7 +403,7 @@ function sortOptions(dimKey) {
     { key: 'issue',    label: 'Issue'    },
     { key: 'severity', label: 'Severity' },
   ]
-  // Leakage findings are pairs — no single column to sort on
+  // Leakage findings are pairs - no single column to sort on
   if (dimKey === 'leakage') {
     return base.filter(o => o.key !== 'column')
   }
@@ -419,7 +419,7 @@ function setSort(dimKey, by) {
       [dimKey]: { by, dir: cur.dir === 'asc' ? 'desc' : 'asc' },
     }
   } else {
-    // New field — default direction: severity desc, others asc
+    // New field - default direction: severity desc, others asc
     sortState.value = {
       ...sortState.value,
       [dimKey]: { by, dir: by === 'severity' ? 'desc' : 'asc' },

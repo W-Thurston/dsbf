@@ -73,7 +73,7 @@ class SummarizeDatasetShape(BaseTask):
                 df.isna().sum().sum() / total_cells if total_cells else 0.0
             )
 
-            # per-column memory — deep=True includes referenced objects (e.g. strings)
+            # per-column memory - deep=True includes referenced objects (e.g. strings)
             col_memory: pd.Series = df.memory_usage(deep=True)
             # pandas includes an "Index" entry; exclude it
             col_memory_bytes: dict[str, int] = {
@@ -98,7 +98,7 @@ class SummarizeDatasetShape(BaseTask):
                     "num_columns": n_cols,
                     "null_cell_percentage": round(null_pct, 4),
                     "approx_memory_MB": round(total_mem_bytes / 1_048_576, 2),
-                    # Per-column breakdown — consumed by suggest_dtype_optimizations
+                    # Per-column breakdown - consumed by suggest_dtype_optimizations
                     # and available to the Overview tab for column-level memory display.
                     "column_memory_bytes": col_memory_bytes,
                     "column_memory_MB": {

@@ -140,7 +140,7 @@ class DetectDuplicateColumns(BaseTask):
 
         """
         eda_body: str = (
-            f"'{col}' is an exact duplicate of '{other_col}' — every value, "
+            f"'{col}' is an exact duplicate of '{other_col}' - every value, "
             f"including nulls, is identical across all rows. This most commonly "
             f"occurs when a column is copied under a different name during a join "
             f"or transformation step, or when two features were derived from the "
@@ -173,14 +173,14 @@ class DetectDuplicateColumns(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title="Duplicate Column — Drop Before Modeling",
+            title="Duplicate Column - Drop Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "drop",
                     "column": col,
                     "detail": (
-                        f"Keep '{other_col}' or '{col}', drop the other — "
+                        f"Keep '{other_col}' or '{col}', drop the other - "
                         "identical columns provide no additional signal"
                     ),
                 },

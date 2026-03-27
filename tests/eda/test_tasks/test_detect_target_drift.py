@@ -89,7 +89,7 @@ def test_handles_empty_current_series_gracefully(tmp_path) -> None:
     An empty current target series must complete without raising an exception.
 
     scipy ks_2samp returns NaN on empty input and numpy silently produces
-    NaN PSI — the task returns success with NaN/Inf metrics rather than
+    NaN PSI - the task returns success with NaN/Inf metrics rather than
     failing. This is acceptable behavior; callers should not pass empty series
     in production but the task must not crash.
 
@@ -106,7 +106,7 @@ def test_handles_empty_current_series_gracefully(tmp_path) -> None:
     )
     result: TaskResult = ctx.run_task(task)
 
-    # Task must complete without raising — status may be success, failed, or skipped
+    # Task must complete without raising - status may be success, failed, or skipped
     assert result.status in ("success", "failed", "skipped", "error")
     assert isinstance(result.summary, dict)
 

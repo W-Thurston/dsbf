@@ -31,7 +31,7 @@ class DetectRegexFormatViolations(BaseTask):
 
     For each column name present in the ``custom_patterns`` config dict, checks
     whether every non-null value matches the specified regex via ``re.fullmatch``.
-    Columns not listed in ``custom_patterns`` are silently skipped — this task
+    Columns not listed in ``custom_patterns`` are silently skipped - this task
     is a no-op unless patterns are configured.
 
     Only Polars String/Utf8 columns are checked (via ``is_text_polars``). Non-text

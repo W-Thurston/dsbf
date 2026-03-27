@@ -25,11 +25,11 @@ class ValidatePluginCoverageTask(BaseTask):
     """
     Validate that every loaded plugin file registered at least one task.
 
-    Reads ``plugin_warnings`` from the analysis context metadata — a list of
+    Reads ``plugin_warnings`` from the analysis context metadata - a list of
     plugin file paths that were loaded but did not register any tasks via
     ``@register_task``. Emits a reliability warning if any are found.
 
-    This task is diagnostic infrastructure — it runs after all plugin files
+    This task is diagnostic infrastructure - it runs after all plugin files
     are loaded and surfaces silent registration failures that would otherwise
     cause tasks to be missing from the DAG with no error.
     """

@@ -220,7 +220,7 @@ def test_reads_null_percentages_from_summarize_nulls_context(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_min_null_pct_threshold_respected(tmp_path) -> None:
     """Columns below min_null_pct must not receive suggestions."""
-    # 1/100 = 1% null — below default 1% threshold only if exactly 0
+    # 1/100 = 1% null - below default 1% threshold only if exactly 0
     df = pd.DataFrame({"almost_clean": [None, *list(range(999))]})
 
     ctx, task = make_ctx_and_task(

@@ -418,7 +418,7 @@ class DetectTargetDrift(BaseTask):
             column=target_col,
             phase="eda",
             level=level,
-            title=f"Target Drift Detected — {severity.title()} (PSI={psi:.3f})",
+            title=f"Target Drift Detected - {severity.title()} (PSI={psi:.3f})",
             body=eda_body.strip(),
             actions=[],
             metric={
@@ -465,7 +465,7 @@ class DetectTargetDrift(BaseTask):
             phase="eda",
             level=level,
             title=(
-                f"Target Class Distribution Drift — {severity.title()} (TVD={tvd:.3f})"
+                f"Target Class Distribution Drift - {severity.title()} (TVD={tvd:.3f})"
             ),
             body=eda_body.strip(),
             actions=[],

@@ -23,7 +23,7 @@ class DetectConstantColumns(BaseTask):
     """
     Identifies columns with exactly one unique value across all rows.
 
-    A constant column carries no information — every row is identical for that
+    A constant column carries no information - every row is identical for that
     feature. This is most often caused by a data loading artefact, an upstream
     filter that collapsed variation, or a column populated in error.
 
@@ -117,7 +117,7 @@ class DetectConstantColumns(BaseTask):
 
         """
         eda_body: str = (
-            f"'{col}' has only one unique value across all rows — it is a constant "
+            f"'{col}' has only one unique value across all rows - it is a constant "
             "column. It carries no information and cannot distinguish between "
             "observations. Verify this is not a data loading artefact, a column "
             "populated in error, or a filter applied upstream that collapsed "
@@ -135,7 +135,7 @@ class DetectConstantColumns(BaseTask):
             column=col,
             phase="eda",
             level="error",
-            title="Constant Column — Zero Information",
+            title="Constant Column - Zero Information",
             body=eda_body.strip(),
             actions=[],
             metric={"n_unique": 1},
@@ -146,13 +146,13 @@ class DetectConstantColumns(BaseTask):
             column=col,
             phase="ml",
             level="error",
-            title="Constant Column — Drop Before Modeling",
+            title="Constant Column - Drop Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": "Zero variance — provides no signal to any model",
+                    "detail": "Zero variance - provides no signal to any model",
                 },
             ],
             metric={"n_unique": 1},

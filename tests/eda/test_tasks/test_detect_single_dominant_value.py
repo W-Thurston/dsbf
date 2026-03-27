@@ -29,10 +29,10 @@ def test_dominant_columns_flagged_in_summary(tmp_path) -> None:
     assert result.status == "success"
     assert result.data is not None
 
-    # All columns are stored in data — check proportions rather than presence/absence
+    # All columns are stored in data - check proportions rather than presence/absence
     assert result.data["mostly_ones"]["mode_proportion"] >= 0.9
     assert result.data["binary"]["mode_proportion"] >= 0.9
-    # uniform has 5 equal values — proportion ~0.2, well below threshold
+    # uniform has 5 equal values - proportion ~0.2, well below threshold
     assert result.data["uniform"]["mode_proportion"] < 0.9
 
     # Summary count should reflect dominant columns

@@ -77,7 +77,7 @@ class OneWayANOVA(BaseTask):
     rate. The ``correction`` param controls the adjustment:
 
     - ``"fdr_bh"`` (default): Benjamini-Hochberg FDR. Best for exploratory
-      EDA — less conservative than Bonferroni, retains more true signals.
+      EDA - less conservative than Bonferroni, retains more true signals.
     - ``"bonferroni"``: Multiply each p-value by n_tests. Controls family-wise
       error rate. Use when any single false positive is costly.
     - ``"none"``: Raw p-values only. Not recommended for wide datasets.
@@ -121,7 +121,7 @@ class OneWayANOVA(BaseTask):
             if correction not in ("none", "bonferroni", "fdr_bh"):
                 self._log(
                     f"    Unknown correction '{correction}'"
-                    " — falling back to 'fdr_bh'.",
+                    " - falling back to 'fdr_bh'.",
                     "warn",
                 )
                 correction = "fdr_bh"
@@ -173,7 +173,7 @@ class OneWayANOVA(BaseTask):
                 )
                 return
 
-            # Phase 1 — run all tests, collect raw results
+            # Phase 1 - run all tests, collect raw results
             raw_results: dict[str, dict[str, Any]] = {}
             for cat_col in categorical_cols:
                 for num_col in continuous_cols:
@@ -199,7 +199,7 @@ class OneWayANOVA(BaseTask):
                         "alpha": alpha,
                     }
 
-            # Phase 2 — apply correction across all collected p-values
+            # Phase 2 - apply correction across all collected p-values
             keys: list[str] = list(raw_results.keys())
             corrected: list[float] = _apply_correction(
                 [raw_results[k]["p_value"] for k in keys],
@@ -299,7 +299,7 @@ class OneWayANOVA(BaseTask):
             f"Inspect group means and distributions to understand which "
             f"specific levels drive the difference. "
             f"Note: ANOVA assumes approximate normality within groups and "
-            f"equal variances — use Kruskal-Wallis if these are in doubt."
+            f"equal variances - use Kruskal-Wallis if these are in doubt."
         )
 
         metric: dict[str, int | Any] = {

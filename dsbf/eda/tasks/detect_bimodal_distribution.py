@@ -218,11 +218,11 @@ class DetectBimodalDistribution(BaseTask):
         )
 
         eda_body: str = (
-            f"'{col}' {strength} has a bimodal distribution — a two-component "
+            f"'{col}' {strength} has a bimodal distribution - a two-component "
             f"Gaussian model fits the data {rel_str} better than a single "
             f"Gaussian (BIC improvement: {delta_str}). This means the values "
             f"cluster around two distinct centres rather than one. Bimodality "
-            f"often signals a mixture of two underlying populations — for example, "
+            f"often signals a mixture of two underlying populations - for example, "
             f"two seasons, two measurement instruments, two demographic groups, or "
             f"two distinct processes generating the data. Examine the histogram "
             f"and consider whether a known categorical split (e.g. by group or "
@@ -232,8 +232,8 @@ class DetectBimodalDistribution(BaseTask):
         ml_body: str = (
             f"'{col}' has a bimodal distribution (BIC improvement: {delta_str}, "
             f"{rel_str} relative). A single Gaussian assumption will misfit this "
-            f"column. Models sensitive to distributional shape — linear regression, "
-            f"LDA, Gaussian Naive Bayes — will be affected. Tree-based models "
+            f"column. Models sensitive to distributional shape - linear regression, "
+            f"LDA, Gaussian Naive Bayes - will be affected. Tree-based models "
             f"(Random Forest, Gradient Boosting) handle bimodality natively by "
             f"splitting on thresholds. If the source of bimodality is known "
             f"(e.g. a group variable), consider adding that variable or an "
@@ -263,7 +263,7 @@ class DetectBimodalDistribution(BaseTask):
             column=col,
             phase="eda",
             level=level,
-            title=f"Bimodal Distribution ({strength.title()} — {rel_str} "
+            title=f"Bimodal Distribution ({strength.title()} - {rel_str} "
             "BIC improvement)",
             body=eda_body.strip(),
             actions=[],
@@ -275,7 +275,7 @@ class DetectBimodalDistribution(BaseTask):
             column=col,
             phase="ml",
             level=level,
-            title="Non-Gaussian Shape — Two Peaks Detected",
+            title="Non-Gaussian Shape - Two Peaks Detected",
             body=ml_body.strip(),
             actions=[
                 {

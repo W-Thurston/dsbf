@@ -168,7 +168,7 @@ class ContingencyTables(BaseTask):
 
     This task complements ``compute_pairwise_associations``, which stores a
     single Cramér's V scalar per pair. Contingency tables provide the raw
-    frequency structure that the scalar cannot — revealing which specific
+    frequency structure that the scalar cannot - revealing which specific
     value combinations co-occur most or least often.
 
     **High-cardinality handling:** Only the top-N most frequent values per
@@ -178,7 +178,7 @@ class ContingencyTables(BaseTask):
 
     **Chi-squared validity:** The chi-squared approximation requires expected
     cell frequencies ≥ 5 in most cells. Results for small samples or
-    sparse tables should be treated with caution — a ``low_sample_warning``
+    sparse tables should be treated with caution - a ``low_sample_warning``
     flag is set when n < 50 or > 20% of expected cells are below 5.
 
     EDA guidance is emitted for pairs where the chi-squared test rejects
@@ -373,7 +373,7 @@ class ContingencyTables(BaseTask):
 
         eda_body: str = (
             f"'{col_a}' and '{col_b}' are not independent "
-            f"(χ²={chi2:.2f}, p={p:.4f}, n={n:,}, V={v:.3f} — {strength} "
+            f"(χ²={chi2:.2f}, p={p:.4f}, n={n:,}, V={v:.3f} - {strength} "
             f"association){truncation_note}. The distribution of '{col_b}' "
             f"varies significantly across levels of '{col_a}'. Inspect the "
             f"frequency table to identify which specific value combinations "
@@ -386,7 +386,7 @@ class ContingencyTables(BaseTask):
             ml_body: str = (
                 f"'{col_a}' and '{col_b}' have a {strength} association "
                 f"(V={v:.3f}). Including both as features introduces "
-                f"redundancy — the second column provides limited additional "
+                f"redundancy - the second column provides limited additional "
                 f"information beyond the first. Tree-based models handle this "
                 f"naturally but linear models may suffer from multicollinearity "
                 f"effects on coefficient estimates. Consider encoding only one "
@@ -398,7 +398,7 @@ class ContingencyTables(BaseTask):
                     "column": col_b,
                     "detail": (
                         f"'{col_b}' is strongly associated with '{col_a}' "
-                        f"(V={v:.3f}) — may be redundant as a feature"
+                        f"(V={v:.3f}) - may be redundant as a feature"
                     ),
                 },
                 {

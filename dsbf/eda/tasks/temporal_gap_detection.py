@@ -33,7 +33,7 @@ def _analyse_gaps(series: pd.Series) -> dict[str, Any] | None:
     gaps: Series[float] = sorted_s.diff().dropna()
     gaps_days = gaps.dt.total_seconds() / 86_400
 
-    # Detect the dominant (most common) gap — the expected interval
+    # Detect the dominant (most common) gap - the expected interval
     # Use mode of rounded gap in days; fall back to median
     try:
         dominant_gap_days = float(gaps_days.round(0).mode().iloc[0])
@@ -103,8 +103,8 @@ class TemporalGapDetection(BaseTask):
     **Why this matters:**
     Gaps in time series data cause ACF/PACF and decomposition analyses to
     produce misleading results. Forward-fill imputation silently propagates
-    stale values across gaps. Knowing where gaps occur — and how large they
-    are — is prerequisite for any temporal analysis.
+    stale values across gaps. Knowing where gaps occur - and how large they
+    are - is prerequisite for any temporal analysis.
 
     **Dominant gap detection:**
     The dominant gap is the mode of rounded gap lengths in days. For datasets

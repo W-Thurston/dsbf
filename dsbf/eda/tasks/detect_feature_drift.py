@@ -23,8 +23,8 @@ def compute_psi(ref: np.ndarray, cur: np.ndarray, bins: int = 10) -> float:
 
     PSI measures how much a distribution has shifted. Industry thresholds:
     - PSI < 0.1: negligible drift
-    - 0.1 ≤ PSI < 0.2: moderate drift — worth monitoring
-    - PSI ≥ 0.2: significant drift — model may need retraining
+    - 0.1 ≤ PSI < 0.2: moderate drift - worth monitoring
+    - PSI ≥ 0.2: significant drift - model may need retraining
 
     Args:
         ref: Reference distribution as a 1-D numpy array.
@@ -49,7 +49,7 @@ def compute_psi(ref: np.ndarray, cur: np.ndarray, bins: int = 10) -> float:
         range=(combined_min, combined_max),
         density=True,
     )
-    # Replace zeros to avoid log(0) — small epsilon preserves direction of change.
+    # Replace zeros to avoid log(0) - small epsilon preserves direction of change.
     ref_percents: ndarray = np.where(ref_percents == 0, 1e-6, ref_percents)
     cur_percents: ndarray = np.where(cur_percents == 0, 1e-6, cur_percents)
     return float(
@@ -251,7 +251,7 @@ class DetectFeatureDrift(BaseTask):
                         drift_results[col] = {
                             "type": "unsupported",
                             "error": (
-                                f"'{col}' is neither numeric nor string — skipped."
+                                f"'{col}' is neither numeric nor string - skipped."
                             ),
                         }
 
@@ -318,7 +318,7 @@ class DetectFeatureDrift(BaseTask):
                     or (
                         f"Column '{top_col}' shows high drift "
                         f"({metric_name} = {value}). This may indicate a shift "
-                        "in data distribution — monitor closely or retrain."
+                        "in data distribution - monitor closely or retrain."
                     ),
                 )
                 self.output.summary["column"] = top_col

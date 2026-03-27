@@ -40,7 +40,7 @@ def test_quantile_binning_for_symmetric_column(tmp_path) -> None:
     assert result.status == "success"
     suggestions = result.data["binning_suggestions"]
     if "symmetric" in suggestions:
-        # Depending on spread, quantile or equal-width — both are acceptable
+        # Depending on spread, quantile or equal-width - both are acceptable
         assert suggestions["symmetric"]["suggested_binning"] in (
             "quantile binning",
             "equal-width binning",

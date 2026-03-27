@@ -138,7 +138,7 @@ def test_polars_dataframe_handled(tmp_path) -> None:
 
 
 def test_no_column_plots_field(tmp_path) -> None:
-    """result.plots must be None — plot artifacts are stored in result.data."""
+    """result.plots must be None - plot artifacts are stored in result.data."""
     df = pd.DataFrame({"x": [1, 2, 3]})
 
     ctx, _ = make_ctx_and_task(

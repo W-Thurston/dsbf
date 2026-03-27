@@ -92,7 +92,7 @@ def test_build_contingency_single_level_returns_none() -> None:
 
 
 def test_build_contingency_top_n_truncation() -> None:
-    # 20 unique values in col_a — top_n=3 should truncate
+    # 20 unique values in col_a - top_n=3 should truncate
     cats: list[str] = [f"cat_{i}" for i in range(20)]
     df = pd.DataFrame(
         {
@@ -158,7 +158,7 @@ def test_independent_pair_not_significant(tmp_path) -> None:
 
     assert result.status == "success"
     if "a|b" in result.data:
-        # May or may not reject by chance — just check it computed without error
+        # May or may not reject by chance - just check it computed without error
         assert result.data["a|b"]["p_value"] >= 0.0
 
 
@@ -219,7 +219,7 @@ def test_high_cardinality_column_excluded(tmp_path) -> None:
     result: TaskResult = ctx.run_task(task)
 
     assert result.status == "success"
-    # high_card has 100 unique values — must not appear in any pair key
+    # high_card has 100 unique values - must not appear in any pair key
     for key in result.data:
         assert "high_card" not in key
 

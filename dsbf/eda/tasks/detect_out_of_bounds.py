@@ -25,7 +25,7 @@ class DetectOutOfBounds(BaseTask):
     Detects numeric columns with values outside expected domain-specific bounds.
 
     Checks each numeric column name against a configurable bounds dictionary.
-    Only columns whose names appear in the bounds dict are checked — all others
+    Only columns whose names appear in the bounds dict are checked - all others
     are silently skipped.
 
     The default bounds cover common column name patterns: ``age``, ``temperature``,
@@ -158,7 +158,7 @@ class DetectOutOfBounds(BaseTask):
 
         ml_body: str = (
             f"'{col}' has {count:,} value(s) outside [{lo}, {hi}]. If these are "
-            f"errors, cap or remove them before modeling — they will distort learned "
+            f"errors, cap or remove them before modeling - they will distort learned "
             f"boundaries and make the model brittle at the edges of the distribution. "
             f"If they are genuine, confirm the model will encounter similar values "
             f"at inference time."
@@ -187,7 +187,7 @@ class DetectOutOfBounds(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title="Out-of-Bounds Values — Validate Before Modeling",
+            title="Out-of-Bounds Values - Validate Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {

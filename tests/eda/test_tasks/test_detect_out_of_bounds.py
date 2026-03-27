@@ -14,7 +14,7 @@ def test_violations_detected_for_named_columns(tmp_path) -> None:
             "age": [25, 30, -5, 150],  # -5 and 150 are violations
             "score": [0.8, 0.95, 1.1, 0.5],  # 1.1 is a violation
             "percent": [50, 110, 20, -10],  # 110 and -10 are violations
-            "weight": [150, 180, 200, 175],  # no default rule — should be ignored
+            "weight": [150, 180, 200, 175],  # no default rule - should be ignored
         },
     )
 

@@ -36,14 +36,14 @@ drop_duplicate_column:
   applicable_to:
     - detect_duplicate_columns
   message: >
-    This column is a perfect duplicate of another — remove one to avoid redundant signals.
+    This column is a perfect duplicate of another - remove one to avoid redundant signals.
 
 leaky_feature:
   condition: "correlation_with_target > 0.99"
   applicable_to:
     - detect_data_leakage
   message: >
-    This feature is nearly identical to the target — likely due to leakage.
+    This feature is nearly identical to the target - likely due to leakage.
     Drop it unless it was intentionally derived from the target.
 
 drop_constant_column:
@@ -51,7 +51,7 @@ drop_constant_column:
   applicable_to:
     - detect_constant_columns
   message: >
-    This feature has the same value for all rows — drop it before modeling.
+    This feature has the same value for all rows - drop it before modeling.
 
 # ===================
 # LOW INFORMATION VALUE

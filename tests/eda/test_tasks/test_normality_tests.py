@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 def test_verdict_normal() -> None:
     assert _verdict(0.10, 0.05) == "normal"
-    assert _verdict(0.05, 0.05) == "normal"  # boundary — p == alpha is normal
+    assert _verdict(0.05, 0.05) == "normal"  # boundary - p == alpha is normal
 
 
 def test_verdict_non_normal() -> None:
@@ -153,7 +153,7 @@ def test_jarque_bera_always_present(tmp_path) -> None:
     """Jarque-Bera result must always be present regardless of sample size."""
     rng: Generator = np.random.default_rng(42)
 
-    # Small sample — uses Shapiro-Wilk as primary
+    # Small sample - uses Shapiro-Wilk as primary
     df_small = pd.DataFrame({"x": rng.normal(0, 1, 50)})
     ctx_s, _ = make_ctx_and_task(
         task_cls=NormalityTests,
@@ -162,7 +162,7 @@ def test_jarque_bera_always_present(tmp_path) -> None:
     )
     result_small: TaskResult = run_task_with_dependencies(ctx_s, NormalityTests)
 
-    # Large sample — uses KS as primary
+    # Large sample - uses KS as primary
     df_large = pd.DataFrame({"x": rng.normal(0, 1, 8_000)})
     ctx_l, _ = make_ctx_and_task(
         task_cls=NormalityTests,
@@ -204,7 +204,7 @@ def test_column_below_min_n_skipped(tmp_path) -> None:
 def test_custom_alpha_respected(tmp_path) -> None:
     """A strict alpha=0.01 must produce fewer non-normal verdicts than alpha=0.10."""
     rng: Generator = np.random.default_rng(42)
-    # Mild non-normality — will reject at alpha=0.10 but may pass at alpha=0.01
+    # Mild non-normality - will reject at alpha=0.10 but may pass at alpha=0.01
     df = pd.DataFrame({"x": rng.lognormal(0, 0.3, 300)})
 
     ctx_strict, task_strict = make_ctx_and_task(

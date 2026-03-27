@@ -74,14 +74,14 @@ def _fits_float32(series: pd.Series, inferred: str, intent: str) -> bool:
 
 
 def _fits_category(series: pd.Series, inferred: str, intent: str) -> bool:
-    """Object column classified as categorical — category encoding saves memory."""
+    """Object column classified as categorical - category encoding saves memory."""
     return inferred == "object" and intent == "categorical"
 
 
 # Ordered list of (check_fn, target_dtype, savings_note).
 # bool check runs before int checks since bool takes priority.
 _DOWNCAST_RULES: list[tuple] = [
-    (_fits_bool, "bool", "2 values stored as int/object — bool uses 1 byte per row"),
+    (_fits_bool, "bool", "2 values stored as int/object - bool uses 1 byte per row"),
     (_fits_int8, "int8", "range fits in int8 (1 byte vs 8 bytes per row)"),
     (_fits_int16, "int16", "range fits in int16 (2 bytes vs 8 bytes per row)"),
     (_fits_int32, "int32", "range fits in int32 (4 bytes vs 8 bytes per row)"),
@@ -93,7 +93,7 @@ _DOWNCAST_RULES: list[tuple] = [
     (
         _fits_category,
         "category",
-        "low-cardinality string — category encoding stores one int per row",
+        "low-cardinality string - category encoding stores one int per row",
     ),
 ]
 
@@ -160,7 +160,7 @@ class SuggestDtypeOptimizations(BaseTask):
     emitted with the suggested dtype, estimated byte savings, and a note on
     when the downcast is appropriate.
 
-    This task is purely advisory — it never modifies the DataFrame. The
+    This task is purely advisory - it never modifies the DataFrame. The
     optimization should be applied by the user before training or storage,
     not automatically by the profiling engine.
 
@@ -344,7 +344,7 @@ class SuggestDtypeOptimizations(BaseTask):
             body = (
                 f"'{col}' is stored as ``{current}`` but contains only 2 distinct "
                 f"values. Converting to ``bool`` uses 1 byte per row vs "
-                f"{note.split('—')[0].strip()}. Estimated saving: ~{savings_mb:.4f}"
+                f"{note.split('-')[0].strip()}. Estimated saving: ~{savings_mb:.4f}"
                 f" MB. Apply with: ``df['{col}'] = df['{col}'].astype(bool)``. "
                 "Verify that the two values map correctly to True/False before"
                 "converting."
@@ -356,7 +356,7 @@ class SuggestDtypeOptimizations(BaseTask):
                 f"Estimated saving: ~{savings_mb:.4f} MB. "
                 f"Apply with: ``df['{col}'] = df['{col}'].astype('{suggested}')``. "
                 f"Caution: if new data arrives with values outside the current range, "
-                f"the smaller dtype will overflow silently — only downcast when the "
+                f"the smaller dtype will overflow silently - only downcast when the "
                 f"range is known to be stable."
             )
         else:  # float32

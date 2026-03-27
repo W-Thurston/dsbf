@@ -31,16 +31,16 @@ class DetectCollinearFeatures(BaseTask):
     Detects multicollinearity among numeric features using Variance Inflation Factor.
 
     Computes VIF for every numeric column. VIF quantifies how much of a feature's
-    variance is explained by linear combinations of all other features — a VIF of 10
+    variance is explained by linear combinations of all other features - a VIF of 10
     means 90% of the column's variance is shared with others, making its coefficient
     highly unstable in linear models.
 
     VIF tiers (standard statistical convention):
 
-    - 1 - 5: low multicollinearity — acceptable
-    - 5 - 10: moderate — guidance emitted at info level
-    - 10 - 20: high — guidance emitted at warn level
-    - > 20: severe — guidance emitted at error level
+    - 1 - 5: low multicollinearity - acceptable
+    - 5 - 10: moderate - guidance emitted at info level
+    - 10 - 20: high - guidance emitted at warn level
+    - > 20: severe - guidance emitted at error level
 
     Polars DataFrames are converted to pandas since ``variance_inflation_factor``
     requires numpy arrays. Rows with any null are dropped before fitting to avoid
@@ -66,7 +66,7 @@ class DetectCollinearFeatures(BaseTask):
             vif_threshold = float(self.get_task_param("vif_threshold") or 10.0)
 
             if is_polars(df):
-                # statsmodels VIF requires numpy arrays — must convert.
+                # statsmodels VIF requires numpy arrays - must convert.
                 self._log(
                     "    Converting to pandas: VIF calculation requires numpy arrays.",
                     "debug",
@@ -234,7 +234,7 @@ class DetectCollinearFeatures(BaseTask):
             )
 
         eda_body: str = (
-            f"'{col}' has a Variance Inflation Factor of {vif_str} — {tier} "
+            f"'{col}' has a Variance Inflation Factor of {vif_str} - {tier} "
             f"multicollinearity. {eda_interp} Check the correlation matrix "
             f"(Relationships tab) to identify which features are most strongly "
             f"associated with '{col}'."
@@ -272,14 +272,14 @@ class DetectCollinearFeatures(BaseTask):
                     "action": "transform",
                     "method": "pca",
                     "detail": (
-                        "PCA produces orthogonal components — eliminates "
+                        "PCA produces orthogonal components - eliminates "
                         "multicollinearity entirely"
                     ),
                 },
             ]
         else:
             ml_linear_impact = (
-                "Linear models may show coefficient instability for this feature — "
+                "Linear models may show coefficient instability for this feature - "
                 "interpret its coefficient cautiously in any regularised or "
                 "unregularised regression."
             )
@@ -326,7 +326,7 @@ class DetectCollinearFeatures(BaseTask):
             column=col,
             phase="ml",
             level=level,
-            title=f"VIF = {vif_str} — Collinearity Impact on Models",
+            title=f"VIF = {vif_str} - Collinearity Impact on Models",
             body=ml_body.strip(),
             actions=ml_actions,
             metric=metric,

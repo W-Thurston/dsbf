@@ -84,7 +84,7 @@ def test_normal_distribution_near_zero_kurtosis(tmp_path) -> None:
 
     assert result.status == "success"
     k = result.data["normal"]["kurtosis"]
-    assert abs(k) < 0.5  # large sample — excess kurtosis should be near 0
+    assert abs(k) < 0.5  # large sample - excess kurtosis should be near 0
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
@@ -149,7 +149,7 @@ def test_column_with_fewer_than_4_values_skipped(tmp_path) -> None:
     df = pd.DataFrame(
         {
             "tiny": [1.0, 2.0, 3.0]
-            + [None] * 97,  # 3 non-null values — below threshold
+            + [None] * 97,  # 3 non-null values - below threshold
             "normal": list(range(100)),
         },
     )
@@ -219,7 +219,7 @@ def test_no_guidance_for_mesokurtic_column(tmp_path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, ComputeKurtosis)
 
     assert result.status == "success"
-    # Normal distribution should be classified mesokurtic — no guidance
+    # Normal distribution should be classified mesokurtic - no guidance
     classification = result.data["normal"]["classification"]
     if classification == "mesokurtic":
         assert result.guidance is None or "normal" not in (result.guidance or {})

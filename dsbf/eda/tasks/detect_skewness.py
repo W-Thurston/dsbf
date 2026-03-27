@@ -12,10 +12,10 @@ from dsbf.utils.backend import is_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 # Skewness thresholds (absolute value).
-# |skew| <= 0.5: symmetric — no guidance emitted.
-# 0.5 < |skew| <= 1.0: mild — info level.
-# 1.0 < |skew| <= 2.0: moderate — warn level, transform recommended.
-# |skew| > 2.0: heavy — warn level, transform strongly recommended.
+# |skew| <= 0.5: symmetric - no guidance emitted.
+# 0.5 < |skew| <= 1.0: mild - info level.
+# 1.0 < |skew| <= 2.0: moderate - warn level, transform recommended.
+# |skew| > 2.0: heavy - warn level, transform strongly recommended.
 _SKEW_MILD = 0.5
 _SKEW_MOD = 1.0
 _SKEW_HEAVY = 2.0
@@ -40,9 +40,9 @@ class DetectSkewness(BaseTask):
     Skewness quantifies the asymmetry of a distribution. For each column with
     notable asymmetry (|skew| > 0.5), this task generates two guidance blurbs:
 
-    - **EDA blurb**: describes the distribution as observed — what the skew value
+    - **EDA blurb**: describes the distribution as observed - what the skew value
       means about the shape of the data, with no modeling language or action chips.
-    - **ML blurb**: prescribes what to do before modeling — which model families
+    - **ML blurb**: prescribes what to do before modeling - which model families
       are affected, what transforms are recommended, expressed as structured actions
       a user or agent can act on directly.
 
@@ -50,7 +50,7 @@ class DetectSkewness(BaseTask):
     explicit) so they can be consumed meaningfully without surrounding context
     by a downstream LLM, agent, or rendering layer.
 
-    Symmetric columns (|skew| ≤ 0.5) receive no blurb — a clean result does not
+    Symmetric columns (|skew| ≤ 0.5) receive no blurb - a clean result does not
     need a finding.
     """
 
@@ -106,7 +106,7 @@ class DetectSkewness(BaseTask):
                     if series.empty:
                         self._log(f"    '{col}' skipped: empty after dropna()", "debug")
                         continue
-                    # Constant column has undefined skewness — treat as 0.
+                    # Constant column has undefined skewness - treat as 0.
                     skew_val = 0.0 if series.nunique() == 1 else float(skew(series))
                     column_stats[col] = {
                         "skew": skew_val,
@@ -139,7 +139,7 @@ class DetectSkewness(BaseTask):
             for col, stats in column_stats.items():
                 self._attach_guidance(col, stats)
 
-            # ML impact scoring — report the first column with meaningful skew.
+            # ML impact scoring - report the first column with meaningful skew.
             if self.get_engine_param("enable_impact_scoring", True):
                 for col, stats in column_stats.items():
                     abs_skew: float = abs(stats["skew"])
@@ -192,7 +192,7 @@ class DetectSkewness(BaseTask):
         abs_skew: float = abs(skew_val)
 
         if abs_skew <= _SKEW_MILD:
-            return  # Symmetric — no blurb needed
+            return  # Symmetric - no blurb needed
 
         direction: Literal = "right (positive)" if skew_val > 0 else "left (negative)"
         tail_dir: Literal["higher", "lower"] = "higher" if skew_val > 0 else "lower"
@@ -220,7 +220,7 @@ class DetectSkewness(BaseTask):
             ml_body: str = (
                 f"'{col}' has mild skewness ({skew_val:.2f}). Most models will handle "
                 f"this without transformation. If using linear or distance-based "
-                f"models, monitor residuals after fitting — a transform may help "
+                f"models, monitor residuals after fitting - a transform may help "
                 f"marginally. Tree-based models are unaffected."
             )
             ml_actions: list[dict] = [
@@ -297,7 +297,7 @@ class DetectSkewness(BaseTask):
                 f"'{col}' has heavy {direction} skewness (skewness = {skew_val:.2f}). "
                 f"The bulk of values cluster near the {bulk_dir} end with a long tail "
                 f"extending toward {tail_dir} values. The mean is significantly "
-                f"distorted by the tail — the median is a much more honest description "
+                f"distorted by the tail - the median is a much more honest description "
                 f"of the typical value. Inspect the tail values directly: check "
                 f"whether they represent genuine data, outliers, or data entry errors "
                 f"before drawing conclusions about this column."

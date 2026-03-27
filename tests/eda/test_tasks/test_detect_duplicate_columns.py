@@ -31,7 +31,7 @@ def test_duplicate_pair_detected(tmp_path):
 
     pairs = result.data["duplicate_column_pairs"]
     assert any(set(pair) == {"a", "b"} for pair in pairs)
-    # c is distinct — must not appear in any pair
+    # c is distinct - must not appear in any pair
     assert not any("c" in pair for pair in pairs)
 
 

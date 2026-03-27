@@ -54,7 +54,7 @@ def test_skips_non_numeric_columns(tmp_path) -> None:
 
     assert result.status == "success"
     assert result.data == {"low_variance_columns": {}}
-    # No recommendations field — guidance blurbs are used instead
+    # No recommendations field - guidance blurbs are used instead
     assert result.recommendations is None
 
 

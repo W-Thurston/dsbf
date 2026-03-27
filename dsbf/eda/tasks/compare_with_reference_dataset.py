@@ -119,7 +119,7 @@ class CompareWithReferenceDataset(BaseTask):
                     if cur_dtype != ref_dtype:
                         type_mismatches.append(col)
 
-                    # Numeric range comparison — only meaningful when types match
+                    # Numeric range comparison - only meaningful when types match
                     # and both are numeric.
                     is_numeric: bool = pd.api.types.is_numeric_dtype(cur_dtype)
                     if is_numeric and cur_dtype == ref_dtype:

@@ -83,7 +83,7 @@ def _category_block(
     expected_semantic_types=["any"],
     # Explicit depends_on is critical: without it the topological sort places
     # this task at level 0, causing it to run before any source tasks have
-    # written their results to context.results — producing all-green output.
+    # written their results to context.results - producing all-green output.
     depends_on=[
         "infer_types",
         "summarize_dataset_shape",
@@ -97,7 +97,7 @@ def _category_block(
         # detect_collinear_features is intentionally excluded: it can fail on
         # datasets with constant or near-constant numeric columns (zero-size
         # array error in VIF computation). The scorer handles a missing or
-        # failed result gracefully — Redundancy simply shows no findings.
+        # failed result gracefully - Redundancy simply shows no findings.
         # Including it as a hard dependency would cause the scorer to be
         # skipped whenever VIF fails, producing no health data at all.
         "detect_data_leakage",
@@ -112,16 +112,16 @@ class DataQualityScorer(BaseTask):
 
     Categories and source tasks:
 
-    - **Completeness** — ``summarize_nulls``: columns where ≥ 5% of values are
+    - **Completeness** - ``summarize_nulls``: columns where ≥ 5% of values are
       missing.
-    - **Validity** — ``detect_out_of_bounds`` (domain violations),
+    - **Validity** - ``detect_out_of_bounds`` (domain violations),
       ``detect_constant_columns`` (zero-information columns),
-      ``detect_zeros`` (> 95% zeros — structural empties).
-    - **Usability** — ``detect_id_columns`` (IDs masquerading as features),
+      ``detect_zeros`` (> 95% zeros - structural empties).
+    - **Usability** - ``detect_id_columns`` (IDs masquerading as features),
       ``detect_single_dominant_value`` (≥ 95% single value),
       ``detect_high_cardinality`` (near-unique categoricals).
-    - **Redundancy** — ``detect_collinear_features`` (VIF > 10).
-    - **Leakage** — ``detect_data_leakage`` (near-perfectly correlated pairs).
+    - **Redundancy** - ``detect_collinear_features`` (VIF > 10).
+    - **Leakage** - ``detect_data_leakage`` (near-perfectly correlated pairs).
 
     Output data shape::
 
@@ -178,7 +178,7 @@ class DataQualityScorer(BaseTask):
                     candidate: int = len(task.data)
                     total_columns = max(total_columns, candidate)
 
-        # Full ordered column list — used by the frontend to derive clean columns.
+        # Full ordered column list - used by the frontend to derive clean columns.
         all_columns: list[str] = []
         types_task = results.get("infer_types")
         if types_task and types_task.status == "success" and types_task.data:
@@ -218,7 +218,7 @@ class DataQualityScorer(BaseTask):
         #   detect_out_of_bounds    → data {col: {count, min_violation, …}}
         #   detect_constant_columns → data.constant_columns [col, …]
         #   detect_zeros            → data.zero_flags {col: bool}
-        #                             (task threshold is > 95% zeros — structural)
+        #                             (task threshold is > 95% zeros - structural)
         validity_cols: list[str] = []
         validity_findings: list[dict[str, Any]] = []
 
@@ -410,7 +410,7 @@ class DataQualityScorer(BaseTask):
             "leakage": _category_block(leakage_cols, total_columns, leakage_findings),
         }
 
-        # Flat level summary — convenient for the API and Data Health Bar.
+        # Flat level summary - convenient for the API and Data Health Bar.
         level_summary: dict[str, str] = {
             name: cat["level"] for name, cat in categories.items()
         }

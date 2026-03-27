@@ -19,7 +19,7 @@ def test_entropy_computed_for_categorical_column(tmp_path) -> None:
     df = pd.DataFrame(
         {
             "cat": ["a", "a", "b", "b", "b", "c", "c", "c", "c"],
-            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # numeric — must be excluded
+            "num": [1, 2, 3, 4, 5, 6, 7, 8, 9],  # numeric - must be excluded
         },
     )
 
@@ -98,7 +98,7 @@ def test_entropy_metadata_fields_populated(tmp_path) -> None:
     df = pd.DataFrame(
         {
             "col1": ["a", "b", "c", "a"],
-            "col2": [1, 2, 3, 4],  # numeric — must be excluded
+            "col2": [1, 2, 3, 4],  # numeric - must be excluded
         }
     )
 
@@ -120,7 +120,7 @@ def test_entropy_metadata_fields_populated(tmp_path) -> None:
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_no_plots_generated(tmp_path) -> None:
-    """Entropy task must not generate plots — rendering is owned by
+    """Entropy task must not generate plots - rendering is owned by
     generate_univariate_plots and generate_dataset_summary_plots."""
     df = pd.DataFrame({"cat": ["a", "b", "c"] * 10})
 

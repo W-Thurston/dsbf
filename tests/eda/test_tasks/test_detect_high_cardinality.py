@@ -15,7 +15,7 @@ def test_high_cardinality_column_detected(tmp_path) -> None:
             # 100 unique string values
             # will be classified as categorical by infer_types
             "city": [f"city_{i}" for i in range(100)],
-            # 5 unique values — below threshold
+            # 5 unique values - below threshold
             "region": list("ABCDE") * 20,
         }
     )

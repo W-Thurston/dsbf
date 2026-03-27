@@ -69,7 +69,7 @@ class ComputeMutualInformation(BaseTask):
     Compute mutual information between each feature and a designated target.
 
     Mutual information (MI) is a non-parametric dependence measure that
-    captures any functional relationship — linear or non-linear — between
+    captures any functional relationship - linear or non-linear - between
     a feature and a target. It complements ``compute_pairwise_associations``,
     which uses Pearson/Spearman (linear/monotonic only) for continuous pairs.
 
@@ -80,7 +80,7 @@ class ComputeMutualInformation(BaseTask):
 
     **Target column requirement:**
     A ``target_column`` must be configured. Without a target, MI cannot be
-    computed — the task returns a success result with an empty suggestions
+    computed - the task returns a success result with an empty suggestions
     dict and an explanatory message.
 
     **Target type routing:**
@@ -145,7 +145,7 @@ class ComputeMutualInformation(BaseTask):
             if not target_col or target_col not in df.columns:
                 self._log(
                     "    No target_column configured or column not found in "
-                    "DataFrame — MI cannot be computed without a target.",
+                    "DataFrame - MI cannot be computed without a target.",
                     "debug",
                 )
                 self.output = TaskResult(
@@ -393,7 +393,7 @@ class ComputeMutualInformation(BaseTask):
             f"'{col}' has {strength} mutual information with '{target_col}' "
             f"(MI={mi:.4f}, normalised={mi_norm:.4f}, n={n_samples:,}). "
             f"Unlike Pearson correlation, mutual information captures any "
-            f"functional relationship — including non-linear, step-function, "
+            f"functional relationship - including non-linear, step-function, "
             f"and interaction patterns. A high MI score means '{col}' shares "
             f"meaningful information with the target, but does not indicate "
             f"the shape of that relationship. Inspect scatter plots or "
@@ -408,7 +408,7 @@ class ComputeMutualInformation(BaseTask):
             f"High-MI features are strong candidates for inclusion even if their "
             f"linear correlation with the target is low. "
             f"Note: MI scores can be inflated for high-cardinality categorical "
-            f"features — verify that the signal is genuine and not an artefact "
+            f"features - verify that the signal is genuine and not an artefact "
             f"of cardinality."
         )
 
@@ -443,7 +443,7 @@ class ComputeMutualInformation(BaseTask):
                     "action": "include_in_model",
                     "column": col,
                     "detail": (
-                        f"MI={mi:.4f} — {strength} predictive signal for '{target_col}'"
+                        f"MI={mi:.4f} - {strength} predictive signal for '{target_col}'"
                     ),
                 },
             ],

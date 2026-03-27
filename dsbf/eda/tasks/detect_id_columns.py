@@ -27,7 +27,7 @@ class DetectIdColumns(BaseTask):
     order numbers, and other opaque keys that carry no analytical signal and
     should be excluded from model features.
 
-    Near-unique numeric columns are excluded — high cardinality in a continuous
+    Near-unique numeric columns are excluded - high cardinality in a continuous
     column is expected and is not evidence of an identifier. The data_quality_scorer
     applies this filter when consuming this task's output.
 
@@ -132,7 +132,7 @@ class DetectIdColumns(BaseTask):
             f"'{col}' has near-unique values across all rows, indicating it is "
             f"likely a row identifier (e.g. a user ID, order number, or UUID) "
             f"rather than an analytical feature. ID columns carry no signal "
-            f"about the phenomenon being studied — they simply label each row. "
+            f"about the phenomenon being studied - they simply label each row. "
             f"Confirm this is intentional and exclude it from feature selection "
             f"before modeling."
         )
@@ -142,7 +142,7 @@ class DetectIdColumns(BaseTask):
             column=col,
             phase="eda",
             level="info",
-            title="Likely Identifier Column — High Uniqueness",
+            title="Likely Identifier Column - High Uniqueness",
             body=eda_body.strip(),
             actions=[],
             metric={"flagged_as": "id"},
@@ -153,7 +153,7 @@ class DetectIdColumns(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title="ID Column — Exclude from Model Features",
+            title="ID Column - Exclude from Model Features",
             body=(
                 f"'{col}' is a likely identifier. Including it as a model feature "
                 f"causes memorisation: the model learns to associate each row's "
@@ -165,7 +165,7 @@ class DetectIdColumns(BaseTask):
                 {
                     "action": "drop",
                     "column": col,
-                    "detail": "Identifier columns cause target leakage — "
+                    "detail": "Identifier columns cause target leakage - "
                     "exclude from all feature matrices",
                 },
             ],

@@ -15,7 +15,7 @@ def test_fully_valid_datetime_column(tmp_path) -> None:
     df = pd.DataFrame(
         {
             "valid_dates": ["2020-01-01", "2021-02-02", "2022-03-03"],
-            "age": [25, 30, 35],  # numeric — should be excluded
+            "age": [25, 30, 35],  # numeric - should be excluded
         },
     )
 

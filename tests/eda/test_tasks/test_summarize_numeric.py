@@ -75,7 +75,7 @@ def test_skewed_column_emits_mean_median_guidance(tmp_path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, SummarizeNumeric)
 
     assert result.status == "success"
-    # Guidance may or may not fire depending on the gap — check it runs cleanly
+    # Guidance may or may not fire depending on the gap - check it runs cleanly
     assert result.data["skewed"]["near_zero_variance"] is False
 
 

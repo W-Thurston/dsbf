@@ -158,7 +158,7 @@ class SuggestNumericalBinning(BaseTask):
 
                 if strategy == "log-transform":
                     eda_level = "warn"
-                    eda_title = "Right-skewed distribution — log transform suggested"
+                    eda_title = "Right-skewed distribution - log transform suggested"
                     eda_body: str = (
                         f"'{col}' has a skewness of {skew:.2f}, indicating a "
                         f"right-skewed distribution where a few large values pull "
@@ -169,7 +169,7 @@ class SuggestNumericalBinning(BaseTask):
                     )
                 elif strategy == "equal-width binning":
                     eda_level = "info"
-                    eda_title = "Wide value range — equal-width binning may help"
+                    eda_title = "Wide value range - equal-width binning may help"
                     eda_body = (
                         f"'{col}' has a value range that exceeds 3x its standard "
                         f"deviation (skewness {skew:.2f}), suggesting values are "
@@ -179,7 +179,7 @@ class SuggestNumericalBinning(BaseTask):
                     )
                 else:
                     eda_level = "info"
-                    eda_title = "Moderate spread — quantile binning suitable"
+                    eda_title = "Moderate spread - quantile binning suitable"
                     eda_body = (
                         f"'{col}' has a compact, roughly symmetric distribution "
                         f"(skewness {skew:.2f}) with spread close to its standard "
@@ -203,7 +203,7 @@ class SuggestNumericalBinning(BaseTask):
                         f"'{col}' is right-skewed (skewness {skew:.2f}). Linear "
                         f"models, regularized regression (Ridge, Lasso), and "
                         f"distance-based models (KNN, SVM) are sensitive to scale "
-                        f"and skew — applying log1p before training improves "
+                        f"and skew - applying log1p before training improves "
                         f"coefficient stability and distance metrics. Tree-based "
                         f"models (Random Forest, XGBoost) are scale-invariant and "
                         f"do not require this transformation."

@@ -37,7 +37,7 @@ def test_high_cardinality_gets_frequency_encoding(tmp_path) -> None:
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type — 100% unique strings classified as 'id' by infer_types
+    # Inject semantic type - 100% unique strings classified as 'id' by infer_types
     ctx.set_metadata("semantic_types", {"city": "categorical"})
 
     task = SuggestCategoricalEncoding()

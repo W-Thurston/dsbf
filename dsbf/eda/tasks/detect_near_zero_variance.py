@@ -30,7 +30,7 @@ class DetectNearZeroVariance(BaseTask):
     Near-zero variance features provide almost no discriminative power to any
     model. They slow training, inflate feature counts, and can cause numerical
     instability in gradient-based algorithms. This is the continuous analogue of
-    ``detect_constant_columns`` — where constant columns have exactly zero
+    ``detect_constant_columns`` - where constant columns have exactly zero
     variance, near-zero variance columns have nearly identical values with only
     tiny perturbations.
 
@@ -60,7 +60,7 @@ class DetectNearZeroVariance(BaseTask):
             threshold = float(self.get_task_param("threshold") or 1e-4)
 
             # Reliability flags include per-column standard deviations computed
-            # in a single pass over the data — no additional DataFrame scan needed.
+            # in a single pass over the data - no additional DataFrame scan needed.
             flags: dict = self.ensure_reliability_flags()
             low_variance: dict[str, float] = {
                 col: round(std**2, 8)
@@ -155,14 +155,14 @@ class DetectNearZeroVariance(BaseTask):
         eda_body: str = (
             f"'{col}' has a variance of {var_str}, which is at or below the "
             f"near-zero threshold of {threshold:.2e}. This means almost all values "
-            f"in this column are identical or nearly identical — it is essentially "
+            f"in this column are identical or nearly identical - it is essentially "
             f"a constant feature with minor noise. Verify whether this reflects a "
             f"genuine property of the data or a data collection artefact (e.g. a "
             f"sensor stuck at a fixed reading)."
         )
 
         ml_body: str = (
-            f"'{col}' has variance {var_str} — effectively constant. Features with "
+            f"'{col}' has variance {var_str} - effectively constant. Features with "
             f"near-zero variance provide negligible discriminative signal to any "
             f"model. In gradient-based models they can cause numerical instability. "
             f"In tree-based models they waste a split candidate slot at every node. "
@@ -185,7 +185,7 @@ class DetectNearZeroVariance(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title="Near-Zero Variance — Drop Before Modeling",
+            title="Near-Zero Variance - Drop Before Modeling",
             body=ml_body.strip(),
             actions=[
                 {

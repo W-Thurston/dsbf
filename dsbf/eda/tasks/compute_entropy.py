@@ -81,7 +81,7 @@ class ComputeEntropy(BaseTask):
                         continue
                     try:
                         counts_df = df[col].drop_nulls().value_counts()
-                        # Extract the count array as numpy for scipy — avoids a
+                        # Extract the count array as numpy for scipy - avoids a
                         # full DataFrame-to-pandas conversion for a single column.
                         counts_array = counts_df["count"].to_numpy()
                         if counts_array.sum() == 0:

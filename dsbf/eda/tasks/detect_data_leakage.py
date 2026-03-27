@@ -26,7 +26,7 @@ class DetectDataLeakage(BaseTask):
     Flags any numeric column pair whose absolute Pearson correlation meets or
     exceeds a configurable threshold (default: 0.99). Near-perfect correlation
     almost always indicates that one column is derived from the other, or that
-    both encode the same underlying measurement — either case causes target
+    both encode the same underlying measurement - either case causes target
     leakage if one of the columns encodes post-event information.
 
     Both columns in each flagged pair receive EDA and ML guidance blurbs so
@@ -74,7 +74,7 @@ class DetectDataLeakage(BaseTask):
             corr_matrix = numeric_df.corr().abs()
             leakage_pairs: dict[str, float] = {}
 
-            # Scan upper triangle only — each pair is stored once.
+            # Scan upper triangle only - each pair is stored once.
             for i, col1 in enumerate(corr_matrix.columns):
                 for j in range(i + 1, len(corr_matrix.columns)):
                     col2 = corr_matrix.columns[j]
@@ -127,7 +127,7 @@ class DetectDataLeakage(BaseTask):
                     recommendation=tip
                     or (
                         f"Columns '{col1}' and '{col2}' are highly correlated "
-                        f"(corr = {corr:.2f}). This may indicate leakage — "
+                        f"(corr = {corr:.2f}). This may indicate leakage - "
                         "drop one before modeling."
                     ),
                 )
@@ -164,7 +164,7 @@ class DetectDataLeakage(BaseTask):
 
         eda_body: str = (
             f"'{col}' has an absolute Pearson correlation of {corr_str} with "
-            f"'{other_col}' — near-perfect linear association. This is almost "
+            f"'{other_col}' - near-perfect linear association. This is almost "
             f"certainly not a coincidence. The most common causes are: one column "
             f"was derived from the other (e.g. a ratio, running total, or lagged "
             f"copy), both columns measure the same underlying thing at different "
@@ -180,7 +180,7 @@ class DetectDataLeakage(BaseTask):
             f"in tree models one column will shadow the other completely, wasting a "
             f"split at every node. More critically, if '{other_col}' contains "
             f"information only available after the prediction target is observed "
-            f"(e.g. a post-event measurement), including it causes target leakage — "
+            f"(e.g. a post-event measurement), including it causes target leakage - "
             f"the model will appear to perform well in training and fail completely "
             f"in deployment. Drop one of the pair. If unsure which is derived, "
             f"trace the data pipeline back to the source."
@@ -207,14 +207,14 @@ class DetectDataLeakage(BaseTask):
             column=col,
             phase="ml",
             level="error",
-            title=f"Possible Data Leakage — Perfect Correlation with '{other_col}'",
+            title=f"Possible Data Leakage - Perfect Correlation with '{other_col}'",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "drop",
                     "column": col,
                     "detail": (
-                        f"Drop one of '{col}' / '{other_col}' — keeping both is "
+                        f"Drop one of '{col}' / '{other_col}' - keeping both is "
                         "harmful for all model families"
                     ),
                 },

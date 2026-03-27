@@ -141,7 +141,7 @@ class GenerateDatasetSummaryPlots(BaseTask):
         if corr_df is None:
             # Fallback: compute Pearson from raw DataFrame.
             self._log(
-                "    No precomputed correlation matrix found — "
+                "    No precomputed correlation matrix found - "
                 "computing from DataFrame.",
                 "debug",
             )

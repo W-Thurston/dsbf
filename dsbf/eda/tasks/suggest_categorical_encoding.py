@@ -161,7 +161,7 @@ class SuggestCategoricalEncoding(BaseTask):
                             strategy: str = f"{strategy} + target encoding"
 
                     except Exception as e:  # noqa: BLE001
-                        # Log and skip target encoding for this column — do not
+                        # Log and skip target encoding for this column - do not
                         # abort the entire task or corrupt self.output.
                         self._log(
                             f"    [{self.name}] Target correlation failed for "
@@ -243,10 +243,10 @@ class SuggestCategoricalEncoding(BaseTask):
         Generate EDA and ML guidance for a categorical column's encoding posture.
 
         Strategy families:
-        - ``one-hot`` — cardinality ≤ low_threshold (default 10)
-        - ``frequency`` — low < cardinality ≤ high_threshold (default 50)
-        - ``frequency (high-cardinality)`` — cardinality > high_threshold
-        - any of the above ``+ target encoding`` — numeric target correlation found
+        - ``one-hot`` - cardinality ≤ low_threshold (default 10)
+        - ``frequency`` - low < cardinality ≤ high_threshold (default 50)
+        - ``frequency (high-cardinality)`` - cardinality > high_threshold
+        - any of the above ``+ target encoding`` - numeric target correlation found
 
         Args:
             col: Column name.
@@ -261,7 +261,7 @@ class SuggestCategoricalEncoding(BaseTask):
             eda_level = "good"
             eda_title: str = f"Low Cardinality ({cardinality} values)"
             eda_body: str = (
-                f"'{col}' has {cardinality} unique values — a manageable number of "
+                f"'{col}' has {cardinality} unique values - a manageable number of "
                 f"distinct categories. Frequency distributions are easy to read and "
                 f"group comparisons are statistically tractable. Bar charts and "
                 f"grouped summaries will give a clear picture of value distribution."
@@ -270,7 +270,7 @@ class SuggestCategoricalEncoding(BaseTask):
             eda_level = "info"
             eda_title = f"Moderate Cardinality ({cardinality} values)"
             eda_body = (
-                f"'{col}' has {cardinality} unique values — enough categories that "
+                f"'{col}' has {cardinality} unique values - enough categories that "
                 f"individual bars will be small but the column is still "
                 f"comprehensible. Focus on the top 10-15 most frequent values first. "
                 f"Check whether the long tail of rare categories represents genuine "
@@ -280,7 +280,7 @@ class SuggestCategoricalEncoding(BaseTask):
             eda_level = "warn"
             eda_title = f"High Cardinality ({cardinality} values)"
             eda_body = (
-                f"'{col}' has {cardinality} unique values — too many to analyse "
+                f"'{col}' has {cardinality} unique values - too many to analyse "
                 f"category-by-category. Standard frequency plots will be unreadable "
                 f"at this scale. Focus on the top-N most frequent values, the "
                 f"distribution of frequency counts (how many categories appear only "
@@ -302,14 +302,14 @@ class SuggestCategoricalEncoding(BaseTask):
             ml_level = "good"
             ml_title: str = f"One-Hot Encoding Recommended ({cardinality} values)"
             ml_body: str = (
-                f"'{col}' has {cardinality} unique values — one-hot encoding is the "
+                f"'{col}' has {cardinality} unique values - one-hot encoding is the "
                 f"standard choice. It adds {cardinality} binary features, compact at "
                 f"this cardinality. Drop one category to avoid perfect "
                 f"multicollinearity in linear models (drop='first' or 'if_binary')."
             )
             if has_target_encoding:
                 ml_body += (
-                    " Target correlation was detected — target encoding is also "
+                    " Target correlation was detected - target encoding is also "
                     f"viable if you want a single ordinal feature rather than "
                     f"{cardinality} binary columns."
                 )
@@ -331,7 +331,7 @@ class SuggestCategoricalEncoding(BaseTask):
             ml_level = "info"
             ml_title = f"Frequency Encoding Recommended ({cardinality} values)"
             ml_body = (
-                f"'{col}' has {cardinality} unique values — one-hot would produce "
+                f"'{col}' has {cardinality} unique values - one-hot would produce "
                 f"{cardinality} features, manageable but noisy for rare categories. "
                 f"Frequency encoding replaces each category with its count, "
                 f"preserving ordinality of popularity in a single feature. Group "
@@ -339,7 +339,7 @@ class SuggestCategoricalEncoding(BaseTask):
             )
             if has_target_encoding:
                 ml_body += (
-                    " Target correlation detected — target encoding may outperform "
+                    " Target correlation detected - target encoding may outperform "
                     "frequency encoding; use within cross-validation folds to "
                     "prevent leakage."
                 )
@@ -372,7 +372,7 @@ class SuggestCategoricalEncoding(BaseTask):
             if has_target_encoding:
                 ml_body = (
                     f"'{col}' has {cardinality} unique values and target correlation "
-                    f"was detected. Target encoding is the recommended strategy — it "
+                    f"was detected. Target encoding is the recommended strategy - it "
                     f"distils the predictive relationship into a single numeric "
                     f"feature. Apply strictly within CV folds; fitting on the full "
                     f"training set causes target leakage."
@@ -380,7 +380,7 @@ class SuggestCategoricalEncoding(BaseTask):
             else:
                 ml_body = (
                     f"'{col}' has {cardinality} unique values. One-hot would create "
-                    f"{cardinality} sparse binary features — almost certainly too "
+                    f"{cardinality} sparse binary features - almost certainly too "
                     f"many. Frequency encoding or hashing are the practical defaults. "
                     f"If a numeric target is available, target encoding often gives "
                     f"the best signal in a single feature but must be applied within "

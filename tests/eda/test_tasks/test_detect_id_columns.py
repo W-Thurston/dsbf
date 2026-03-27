@@ -12,11 +12,11 @@ def test_string_id_columns_detected(tmp_path) -> None:
     """String columns with near-unique values must be flagged as likely IDs."""
     df = pd.DataFrame(
         {
-            # 100 unique strings — near-100% uniqueness → id
+            # 100 unique strings - near-100% uniqueness → id
             "uuid": [f"user_{i}" for i in range(100)],
-            # 100 unique strings — also id
+            # 100 unique strings - also id
             "order_id": [f"ord_{i}" for i in range(100)],
-            # repeating values — not an id
+            # repeating values - not an id
             "status": ["active", "inactive"] * 50,
         }
     )

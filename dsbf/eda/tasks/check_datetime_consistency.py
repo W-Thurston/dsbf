@@ -67,7 +67,7 @@ class CheckDatetimeConsistency(BaseTask):
                 try:
                     if is_polars(df):
                         # strict=False coerces unparseable values to null rather
-                        # than raising — equivalent to pandas errors="coerce".
+                        # than raising - equivalent to pandas errors="coerce".
                         parsed = df[col].cast(pl.Datetime, strict=False)
                         total: int = len(parsed)
                         nulls = int(parsed.is_null().sum())

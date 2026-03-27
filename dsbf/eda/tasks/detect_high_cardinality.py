@@ -24,7 +24,7 @@ class DetectHighCardinality(BaseTask):
     Detects categorical columns whose unique value count exceeds a threshold.
 
     A high-cardinality categorical column has so many distinct values that
-    standard one-hot encoding becomes impractical — it inflates dimensionality,
+    standard one-hot encoding becomes impractical - it inflates dimensionality,
     creates sparse features, and degrades model performance. Common examples
     include city names, product SKUs, and user IDs stored as categoricals.
 
@@ -149,7 +149,7 @@ class DetectHighCardinality(BaseTask):
         eda_body: str = (
             f"'{col}' has {n_unique} unique values, exceeding the high-cardinality "
             f"threshold of {int(threshold)}. High-cardinality categoricals are "
-            f"difficult to summarise in a frequency table — the long tail of rare "
+            f"difficult to summarise in a frequency table - the long tail of rare "
             f"values may contain meaningful patterns or may be noise. Check the "
             f"value count distribution and decide whether to keep all levels, "
             f"group rare values into an 'Other' bucket, or treat the column as "
@@ -162,7 +162,7 @@ class DetectHighCardinality(BaseTask):
             f"degrading tree-based model performance through split fragmentation. "
             f"Preferred alternatives: frequency encoding (replace each category "
             f"with its occurrence count), target encoding (replace with mean target "
-            f"value — apply only on training fold to prevent leakage), or hashing "
+            f"value - apply only on training fold to prevent leakage), or hashing "
             f"trick for very high cardinality. For linear models, target encoding "
             f"or embeddings are typically most effective."
         )
@@ -183,21 +183,21 @@ class DetectHighCardinality(BaseTask):
             column=col,
             phase="ml",
             level="warn",
-            title=f"High Cardinality — Avoid One-Hot Encoding ({n_unique} levels)",
+            title=f"High Cardinality - Avoid One-Hot Encoding ({n_unique} levels)",
             body=ml_body.strip(),
             actions=[
                 {
                     "action": "encode",
                     "method": "frequency_encoding",
                     "column": col,
-                    "detail": "Replace each category with its row count — "
+                    "detail": "Replace each category with its row count - "
                     "simple and leakage-free",
                 },
                 {
                     "action": "encode",
                     "method": "target_encoding",
                     "column": col,
-                    "detail": "Replace with mean target value — apply on "
+                    "detail": "Replace with mean target value - apply on "
                     "training fold only to prevent leakage",
                 },
                 {

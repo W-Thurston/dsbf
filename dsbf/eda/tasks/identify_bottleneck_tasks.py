@@ -27,7 +27,7 @@ class IdentifyBottleneckTasks(BaseTask):
     any task exceeding 5 seconds.
 
     Returns a ``"failed"`` result rather than raising if no duration metadata
-    is available — this allows the task to be included in the DAG without
+    is available - this allows the task to be included in the DAG without
     breaking the run when timing data has not been populated.
 
     Configurable parameters (via config["tasks"]["identify_bottleneck_tasks"]):

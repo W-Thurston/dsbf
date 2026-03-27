@@ -46,7 +46,7 @@ def test_skew_reduction_pct_zero_before() -> None:
 
 
 def test_skew_reduction_pct_worsening() -> None:
-    # After skew is larger — negative reduction
+    # After skew is larger - negative reduction
     result: float = _skew_reduction_pct(1.0, 2.0)
     assert result < 0
 
@@ -129,7 +129,7 @@ def test_log1p_applied_to_positive_skewed(tmp_path) -> None:
 def test_log1p_skipped_for_negative_values(tmp_path) -> None:
     """log1p must be skipped when the column contains negative values."""
     rng: Generator = np.random.default_rng(42)
-    # Heavy-tailed with negatives — Yeo-Johnson should handle it
+    # Heavy-tailed with negatives - Yeo-Johnson should handle it
     df = pd.DataFrame({"x": rng.standard_t(df=2, size=500)})
 
     ctx, task = make_ctx_and_task(
@@ -210,7 +210,7 @@ def test_reads_skewness_from_detect_skewness_context(tmp_path) -> None:
         global_overrides={"output_dir": str(tmp_path)},
     )
 
-    # Inject mock detect_skewness result — only 'a' listed as skewed
+    # Inject mock detect_skewness result - only 'a' listed as skewed
     mock_skewness = TaskResult(
         name="detect_skewness",
         status="success",

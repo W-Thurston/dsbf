@@ -6,7 +6,7 @@ DSBF FastAPI application.
 Start locally:
     uvicorn dsbf.api.main:app --reload
 
-The API is intentionally thin — it reads from the SQLite database and serves
+The API is intentionally thin - it reads from the SQLite database and serves
 figure files from disk.  All heavy computation stays in the profiling engine.
 
 Endpoints
@@ -41,11 +41,11 @@ from dsbf.api import db
 #############
 app = FastAPI(
     title="DSBF API",
-    description="Data Scientist's Best Friend — profiling run history and report data.",
+    description="Data Scientist's Best Friend - profiling run history and report data.",
     version="0.1.0",
 )
 
-# CORS — allow the Vue frontend (any localhost port during dev, configurable in prod)
+# CORS - allow the Vue frontend (any localhost port during dev, configurable in prod)
 _CORS_ORIGINS: list[str] = os.environ.get(
     "DSBF_CORS_ORIGINS",
     "http://localhost:5173",
@@ -58,7 +58,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional db_path override — falls back to schema.py resolution if not set
+# Optional db_path override - falls back to schema.py resolution if not set
 _DB_PATH: str | None = os.environ.get("DSBF_DB_PATH") or None
 
 
@@ -154,7 +154,7 @@ def get_run_tasks(run_key: str) -> dict[str, Any]:
     """
     Get all task results for a run.
 
-    Returns a dict keyed by task_name — mirrors the structure of report.json.
+    Returns a dict keyed by task_name - mirrors the structure of report.json.
     """
     run = db.get_run(run_key, _DB_PATH)
     if not run:
@@ -181,7 +181,7 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
 
     Reads from compute_pairwise_associations (the single source of truth for
     all column relationships). Extracts the numeric correlation value from the
-    rich entry dict — for Pearson/Spearman pairs this is entry["metric"]; the
+    rich entry dict - for Pearson/Spearman pairs this is entry["metric"]; the
     metric_type is also returned for the frontend to display appropriately.
     """
     run: dict | None = db.get_run(run_key)
@@ -262,7 +262,7 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
 def read_run_sample(run_key: str, n: int = 10):
     result = db.get_run_sample(run_key, n=min(n, 50))
     if result is None:
-        # source_path not recorded or file no longer on disk — return empty
+        # source_path not recorded or file no longer on disk - return empty
         # payload rather than 404 so the frontend can show a friendly message
         return {"columns": [], "rows": [], "unavailable": True}
     return result

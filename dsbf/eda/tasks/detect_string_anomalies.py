@@ -57,7 +57,7 @@ def _check_whitespace(series: pd.Series) -> dict | None:
     """
     Detect values with leading or trailing whitespace.
 
-    '  active' and 'active' are different strings — joins, groupbys, and
+    '  active' and 'active' are different strings - joins, groupbys, and
     value counts will treat them as distinct categories.
 
     Args:
@@ -172,7 +172,7 @@ def _check_length_outliers(series: pd.Series) -> dict | None:
     }
 
 
-# Ordered list of (check_fn, finding_type) — all checks run for every column
+# Ordered list of (check_fn, finding_type) - all checks run for every column
 _CHECKS = [
     _check_mixed_case,
     _check_whitespace,
@@ -211,7 +211,7 @@ class DetectStringAnomalies(BaseTask):
       (e.g. ``"New York"`` vs ``"new york"``). These profile as separate
       categories, silently inflating cardinality and corrupting value counts.
     - **Leading/trailing whitespace**: ``"  active"`` and ``"active"`` are
-      different strings — groupbys and joins fail silently.
+      different strings - groupbys and joins fail silently.
     - **Invisible Unicode characters**: zero-width spaces (U+200B),
       non-breaking spaces (U+00A0), soft hyphens, and control characters that
       are invisible in most displays but break string equality.
@@ -254,7 +254,7 @@ class DetectStringAnomalies(BaseTask):
             min_values_raw: Any | None = self.get_task_param("min_values")
             min_values: int = int(min_values_raw) if min_values_raw is not None else 10
 
-            # Operate on object-dtype columns only — numeric/bool/datetime
+            # Operate on object-dtype columns only - numeric/bool/datetime
             # columns have no string anomalies.
             string_cols = df.select_dtypes(include=["object"]).columns.tolist()
 
@@ -357,11 +357,11 @@ class DetectStringAnomalies(BaseTask):
             example_str: str = "; ".join(
                 f"{k!r} → {v}" for k, v in list(examples.items())[:3]
             )
-            title: str = f"Mixed Case — {n_groups} Collision Group(s)"
+            title: str = f"Mixed Case - {n_groups} Collision Group(s)"
             body: str = (
                 f"'{col}' contains values that differ only by capitalisation "
                 f"({n_groups} collision group(s)). These are treated as separate "
-                f"categories — value counts, groupbys, and joins will produce "
+                f"categories - value counts, groupbys, and joins will produce "
                 f"incorrect results. Examples: {example_str}. "
                 f"Standardise to a single case (e.g. lower) before analysis."
             )
@@ -376,7 +376,7 @@ class DetectStringAnomalies(BaseTask):
             count = finding["affected_count"]
             pct: str = f"{finding['affected_pct']:.1%}"
             examples = finding["examples"][:3]
-            title = f"Whitespace Padding — {count} Value(s) ({pct})"
+            title = f"Whitespace Padding - {count} Value(s) ({pct})"
             body = (
                 f"'{col}' has {count} value(s) ({pct}) with leading or trailing "
                 f"whitespace. These are treated as distinct from their trimmed "
@@ -394,12 +394,12 @@ class DetectStringAnomalies(BaseTask):
         elif ftype == "invisible_characters":
             count = finding["affected_count"]
             pct = f"{finding['affected_pct']:.1%}"
-            title = f"Invisible Characters — {count} Value(s) ({pct})"
+            title = f"Invisible Characters - {count} Value(s) ({pct})"
             body = (
                 f"'{col}' has {count} value(s) ({pct}) containing invisible Unicode "
                 f"characters (zero-width spaces, non-breaking spaces, control "
                 f"characters). These are invisible in display but break string "
-                f"equality — two visually identical values may compare as unequal. "
+                f"equality - two visually identical values may compare as unequal. "
                 f"Strip or normalise Unicode before analysis."
             )
             action = {
@@ -417,7 +417,7 @@ class DetectStringAnomalies(BaseTask):
             pct = f"{finding['affected_pct']:.1%}"
             upper = finding["upper_fence"]
             examples = finding["examples"][:2]
-            title = f"Length Outliers — {count} Value(s) ({pct})"
+            title = f"Length Outliers - {count} Value(s) ({pct})"
             body = (
                 f"'{col}' has {count} value(s) ({pct}) with string lengths far "
                 f"outside the typical range (fence: {upper:.0f} chars). "
@@ -430,7 +430,7 @@ class DetectStringAnomalies(BaseTask):
                 "action": "investigate",
                 "column": col,
                 "detail": (
-                    f"Inspect values longer than {upper:.0f} characters — "
+                    f"Inspect values longer than {upper:.0f} characters - "
                     "they may need to be split, truncated, or excluded"
                 ),
             }

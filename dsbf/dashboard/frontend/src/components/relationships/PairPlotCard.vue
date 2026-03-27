@@ -108,7 +108,7 @@ function buildTraces(data) {
     }}
   }
 
-  // continuous × categorical → grouped box
+  // continuous x categorical → grouped box
   const [contCol, catCol, contVals, catVals] =
     a === 'continuous'
       ? [props.colA, props.colB, valA, valB]
@@ -136,7 +136,7 @@ function buildTraces(data) {
     }}
   }
 
-  // categorical × categorical → grouped bar (top 10 per axis)
+  // categorical x categorical → grouped bar (top 10 per axis)
   if (a === 'categorical' && b === 'categorical') {
     const counts = {}
     valA.forEach((va, i) => {

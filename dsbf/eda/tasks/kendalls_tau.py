@@ -72,9 +72,9 @@ class KendallsTau(BaseTask):
     **When to use Kendall's tau over Spearman:**
 
     - **Small samples** (n < 30): Kendall's tau has better statistical
-      properties than Spearman for small n — it is more robust to outliers
+      properties than Spearman for small n - it is more robust to outliers
       and its p-value is more accurate.
-    - **Interpretability**: tau has a direct probabilistic interpretation —
+    - **Interpretability**: tau has a direct probabilistic interpretation -
       a tau of 0.6 means 60% more concordant pairs than discordant ones.
     - **Tied data**: tau-b handles ties explicitly without approximation.
 
