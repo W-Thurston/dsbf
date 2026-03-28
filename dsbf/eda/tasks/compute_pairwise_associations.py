@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from numpy import ndarray
 from pandas import DataFrame
-from scipy.stats import chi2_contingency, pointbiserialr, spearmanr
+from scipy.stats import chi2_contingency, kendalltau, pointbiserialr, spearmanr
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -68,6 +68,29 @@ def _spearman_r(a: pd.Series, b: pd.Series) -> float | None:
         return None
     r, _ = spearmanr(paired.iloc[:, 0].values, paired.iloc[:, 1].values)
     return float(r)
+
+
+def _kendalls_tau(a: pd.Series, b: pd.Series) -> float | None:
+    """
+    Compute Kendall's tau-b rank correlation between two continuous Series.
+
+    Preferred over Spearman for small samples (n < 30): the p-value is more
+    accurate, and tau has a direct probabilistic interpretation (proportion of
+    concordant minus discordant pairs). Also robust to ties via the -b variant.
+
+    Args:
+        a: First numeric Series.
+        b: Second numeric Series.
+
+    Returns:
+        Kendall's tau-b in [-1, 1], or None if fewer than 3 complete pairs.
+
+    """
+    paired: DataFrame = pd.concat([a, b], axis=1).dropna()
+    if len(paired) < 3:
+        return None
+    tau, _ = kendalltau(paired.iloc[:, 0].values, paired.iloc[:, 1].values)
+    return float(tau)
 
 
 def _cramers_v(a: pd.Series, b: pd.Series) -> float | None:
@@ -190,7 +213,7 @@ def _strength(value: float, metric_type: str) -> str:
 
     """
     v: float = abs(value)
-    if metric_type in ("pearson_r", "spearman_r", "point_biserial_r"):
+    if metric_type in ("pearson_r", "spearman_r", "point_biserial_r", "kendalls_tau"):
         if v >= 0.7:
             return "strong"
         if v >= 0.4:
@@ -233,17 +256,27 @@ def _metric_for_pair(
     col_b: str,
     intent_a: str,
     intent_b: str,
-    method: str = "pearson",
+    method: str = "auto",
+    n_valid_pairs: int = 0,
 ) -> tuple[float, str] | None:
     """
     Choose and compute the appropriate association metric for a column pair.
 
     Dispatch table:
 
-    - ``continuous x continuous``             → Pearson r, Spearman r, or both
+    - ``continuous x continuous``             → Pearson, Spearman, Kendall's, or auto
     - ``continuous x categorical`` (binary)   → point-biserial r
     - ``continuous x categorical`` (multi)    → eta squared (η²)
     - ``categorical x categorical``           → Cramér's V
+
+    For continuous pairs, ``method`` controls which metric is used:
+
+    - ``"auto"`` (default): Kendall's tau when ``n_valid_pairs < 30`` (small
+      sample, tau's p-value is more accurate); Pearson otherwise.
+    - ``"pearson"``: always Pearson r.
+    - ``"spearman"``: always Spearman r.
+    - ``"kendall"``: always Kendall's tau.
+    - ``"both"``: Pearson as primary (Spearman stored separately by caller).
 
     Args:
         df: Source DataFrame (pandas).
@@ -251,8 +284,8 @@ def _metric_for_pair(
         col_b: Second column name.
         intent_a: Semantic intent of col_a.
         intent_b: Semantic intent of col_b.
-        method: For continuous pairs: ``"pearson"``, ``"spearman"``, or ``"both"``.
-            ``"both"`` returns Pearson (Spearman stored separately in caller).
+        method: Correlation method for continuous pairs. Default: ``"auto"``.
+        n_valid_pairs: Number of complete row pairs (used for auto routing).
 
     Returns:
         ``(value, metric_type)`` tuple, or None if the pair should be skipped.
@@ -261,10 +294,14 @@ def _metric_for_pair(
     a, b = df[col_a], df[col_b]
 
     if intent_a == "continuous" and intent_b == "continuous":
+        # Auto routing: tau for small samples, pearson for large
+        if method == "kendall" or (method == "auto" and n_valid_pairs < 30):
+            val: float | None = _kendalls_tau(a, b)
+            return (val, "kendalls_tau") if val is not None else None
         if method == "spearman":
-            val: float | None = _spearman_r(a, b)
+            val = _spearman_r(a, b)
             return (val, "spearman_r") if val is not None else None
-        # "pearson" or "both" - primary metric is Pearson
+        # "pearson", "both", or "auto" with n >= 30 → Pearson
         val = _pearson_r(a, b)
         return (val, "pearson_r") if val is not None else None
 
@@ -296,10 +333,12 @@ def _metric_for_pair(
     display_name="Compute Pairwise Associations",
     description=(
         "Computes the most appropriate association metric for every column pair: "
-        "Pearson r and/or Spearman r (continuousxcontinuous), point-biserial r "
-        "(continuousxbinary), eta squared (continuousxcategorical), or Cramér's V "
-        "(categoricalxcategorical). Columns typed as id, datetime, or text are "
-        "skipped. Also produces a correlation_matrix dict for heatmap rendering."
+        "Pearson r, Spearman r, or Kendall's tau (continuousxcontinuous), "
+        "point-biserial r (continuousxbinary), eta squared (continuousxcategorical), "
+        "or Cramér's V (categoricalxcategorical). Default method='auto' routes to "
+        "Kendall's tau for small samples (n<30) and Pearson for large samples. "
+        "Columns typed as id, datetime, or text are skipped. Also produces a "
+        "correlation_matrix dict for heatmap rendering."
     ),
     depends_on=["infer_types"],
     profiling_depth="full",
@@ -316,11 +355,19 @@ class ComputePairwiseAssociations(BaseTask):
 
     Selects the metric based on the semantic intent of each column:
 
-    - ``continuous x continuous``           → Pearson r (default), Spearman r, or both
+    - ``continuous x continuous``           → auto-routed (see below), Pearson r,
+      Spearman r, Kendall's tau, or both
     - ``continuous x binary categorical``   → point-biserial r
     - ``continuous x multi-level categorical`` → eta squared (η²)
     - ``categorical x categorical``         → Cramér's V
     - Any column typed as ``id``, ``datetime``, ``text``, or ``unknown`` is skipped.
+
+    **method="auto" (default):**
+    Routes continuous pairs to Kendall's tau when ``n_valid_pairs < 30`` and to
+    Pearson r otherwise. Kendall's tau is preferred for small samples because its
+    p-value is more accurate than Spearman's and it has a direct probabilistic
+    interpretation (proportion of concordant minus discordant pairs). This
+    supersedes the standalone ``kendalls_tau`` task.
 
     When ``method="both"``, each continuous-continuous pair entry includes both
     ``pearson_r`` and ``spearman_r`` values, and ``metric_type`` is set to
@@ -328,16 +375,16 @@ class ComputePairwiseAssociations(BaseTask):
     in the entry dict for direct access.
 
     Additionally produces a ``correlation_matrix`` nested dict in ``data``
-    (continuous numeric pairs only) for consumption by
-    ``generate_dataset_summary_plots`` - replacing the former
-    ``compute_correlations`` task.
+    (continuous numeric pairs only, for all continuous-pair metric types) for
+    consumption by ``generate_dataset_summary_plots``.
 
     Reliability warnings (low_n, zero_variance, extreme_outliers, high_skew)
-    are attached when data conditions may distort Pearson results.
+    are attached when data conditions may distort results.
 
     Configurable parameters (via config["tasks"]["compute_pairwise_associations"]):
         method (str): Correlation method for continuous pairs.
-            ``"pearson"`` (default), ``"spearman"``, or ``"both"``.
+            ``"auto"`` (default), ``"pearson"``, ``"spearman"``, ``"kendall"``,
+            or ``"both"``.
         min_sample_size (int): Minimum complete row pairs required to compute
             an association. Default: 30
         cat_cardinality_limit (int): Maximum unique values in a categorical
@@ -348,7 +395,7 @@ class ComputePairwiseAssociations(BaseTask):
         {
             "YARDS_WINNER|YARDS_LOSER": {
                 "metric":       0.412,
-                "metric_type":  "pearson_r",
+                "metric_type":  "pearson_r",   # or "kendalls_tau", "spearman_r"
                 "strength":     "moderate",
                 "col_a_intent": "continuous",
                 "col_b_intent": "continuous",
@@ -380,7 +427,7 @@ class ComputePairwiseAssociations(BaseTask):
                 )
                 df = df.to_pandas()
 
-            method: str = str(self.get_task_param("method") or "pearson")
+            method: str = str(self.get_task_param("method") or "auto")
             min_sample_size = int(self.get_task_param("min_sample_size") or 30)
             cat_cardinality_limit = int(
                 self.get_task_param("cat_cardinality_limit") or 50
@@ -454,13 +501,16 @@ class ComputePairwiseAssociations(BaseTask):
                     intent_b: str = semantic_types.get(col_b, "unknown")
 
                     # Skip high-cardinality categorical pairs.
-                    if intent_a == "categorical" and intent_b == "categorical":
-                        if (
+                    if (
+                        intent_a == "categorical"
+                        and intent_b == "categorical"
+                        and (
                             cat_unique.get(col_a, 0) > cat_cardinality_limit
                             or cat_unique.get(col_b, 0) > cat_cardinality_limit
-                        ):
-                            spearman_skipped.append(f"{col_a}|{col_b}")
-                            continue
+                        )
+                    ):
+                        spearman_skipped.append(f"{col_a}|{col_b}")
+                        continue
 
                     # Skip pairs with insufficient complete rows.
                     valid_n = df[[col_a, col_b]].dropna().shape[0]
@@ -479,6 +529,7 @@ class ComputePairwiseAssociations(BaseTask):
                         intent_a,
                         intent_b,
                         method,
+                        n_valid_pairs=valid_n,
                     )
                     if pair_result is None:
                         continue
@@ -522,7 +573,11 @@ class ComputePairwiseAssociations(BaseTask):
                 for col in numeric_cols:
                     correlation_matrix[col] = {col: 1.0}
                 for key, entry in associations.items():
-                    if entry["metric_type"] in ("pearson_r",):
+                    if entry["metric_type"] in (
+                        "pearson_r",
+                        "spearman_r",
+                        "kendalls_tau",
+                    ):
                         col_a, col_b = key.split("|", 1)
                         val = entry["metric"]
                         correlation_matrix.setdefault(col_a, {})[col_b] = val
@@ -621,7 +676,8 @@ class ComputePairwiseAssociations(BaseTask):
                         "using robust statistics."
                         if flags.get("low_row_count")
                         else "Winsorize outliers or use Spearman correlation "
-                        "(set method='spearman')."
+                        "(set method='spearman') or Kendall's tau "
+                        "(set method='kendall' or method='auto' on small samples)."
                     ),
                 )
 

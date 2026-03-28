@@ -479,13 +479,15 @@
   tags: [correlation, association, relationships]
   status: stable
   notes: >
-    Single source of truth for all pairwise column relationships.
-    Type-aware metric routing: Pearson or Spearman r (continuousxcontinuous,
-    configurable via method param), point-biserial r (continuousxbinary),
-    eta-squared (continuousxcategorical), Cramér's V (categoricalxcategorical).
-    Also produces __correlation_matrix__ nested dict in data for heatmap
-    consumption by generate_dataset_summary_plots. Reliability warnings:
-    low_row_count, zero_variance, extreme_outliers, high_skew.
+    Single source of truth for all pairwise column relationships. Supersedes
+    kendalls_tau (now deprecated). Type-aware metric routing:
+    continuousxcontinuous via method param (see below), point-biserial r
+    (continuousxbinary), eta-squared (continuousxcategorical), Cramers V
+    (categoricalxcategorical). Method options: "auto" (default) routes to
+    Kendalls tau-b for n<30 and Pearson r for n>=30; "pearson"; "spearman";
+    "kendall" (always tau); "both" (Pearson primary + Spearman secondary).
+    Produces __correlation_matrix__ for heatmap rendering. Reliability
+    warnings: low_row_count, zero_variance, extreme_outliers, high_skew.
 
 # ── EDA tasks - drift & comparison ───────────────────────────────────────────
 
@@ -825,22 +827,6 @@
     outliers - median and MAD are not corrupted by the values being detected.
     Complements detect_outliers (IQR/Z-score). Columns where MAD=0 are skipped.
 
-- name: kendalls_tau
-  display_name: Kendall's Tau
-  phase: eda
-  stage: cleaned
-  profiling_depth: full
-  runtime_estimate: moderate
-  depends_on: [infer_types]
-  semantic_types: [continuous]
-  tags: [correlation, rank, relationships, numeric]
-  status: stable
-  notes: >
-    Kendall's tau-b rank correlation for all continuous column pairs.
-    Preferred over Spearman for small samples (n < 30) and tied data.
-    Direct probabilistic interpretation: tau=0.6 means 60% more concordant
-    than discordant pairs. EDA guidance for significant pairs with |tau| ≥ 0.2.
-
 - name: one_way_anova
   display_name: One-Way ANOVA
   phase: eda
@@ -853,9 +839,13 @@
   status: stable
   notes: >
     F-test for whether group means differ across categorical levels.
-    p-value companion to the eta-squared effect sizes in
-    compute_pairwise_associations. Assumes normality within groups and
-    equal variances; use kruskal_wallis when these are violated.
+    p-value companion to eta-squared in compute_pairwise_associations.
+    FDR/Bonferroni correction via correction param (default "fdr_bh"):
+    all tests collected first, corrected p-values computed in a single pass.
+    Both raw p_value and p_value_corrected stored per entry; significant flag
+    uses corrected value. n_tests reported in metadata and guidance blurbs.
+    Assumes normality within groups and equal variances; use kruskal_wallis
+    when these are violated.
 
 - name: kruskal_wallis
   display_name: Kruskal-Wallis Test
@@ -870,8 +860,9 @@
   notes: >
     Non-parametric alternative to one-way ANOVA. Tests distributional
     differences across groups without normality or equal-variance assumptions.
-    A significant result means at least one group differs; use mann_whitney_u
-    for post-hoc pairwise localisation.
+    FDR/Bonferroni correction via correction param (default "fdr_bh"); same
+    two-phase approach as one_way_anova. A significant result means at least
+    one group differs; use mann_whitney_u for post-hoc pairwise localisation.
 
 - name: mann_whitney_u
   display_name: Mann-Whitney U Test
@@ -885,8 +876,10 @@
   status: stable
   notes: >
     Non-parametric pairwise comparison for continuous vs two-level categorical.
-    Reports U statistic, p-value, and rank-biserial r effect size.
-    Tests all level pairs for multi-level categoricals (up to max_pairs_per_column).
+    Reports U statistic, p-value, rank-biserial r effect size, and corrected
+    p-value. FDR/Bonferroni correction via correction param (default "fdr_bh")
+    applied across all (continuous x categorical x level_pair) combinations in
+    a single pass. Tests all level pairs up to max_pairs_per_column.
     Post-hoc complement to kruskal_wallis.
 
 - name: temporal_gap_detection
@@ -904,6 +897,24 @@
     inter-observation interval. Dominant gap computed as mode of rounded gap
     lengths; falls back to median for irregular event data. EDA guidance with
     investigate_gaps and resample_or_interpolate action chips.
+
+- name: fuzzy_duplicate_detection
+  display_name: Fuzzy Duplicate Detection
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: moderate
+  depends_on: [infer_types]
+  semantic_types: [categorical, text]
+  tags: [duplicates, rows, fuzzy, quality, string]
+  status: stable
+  notes: >
+    Detects near-duplicate rows via token-based blocking (inverted index) +
+    difflib.SequenceMatcher character similarity. No extra dependencies (stdlib
+    only). similarity_threshold configurable (default 0.85). Sampling when
+    n > max_comparison_rows (default 5000) with reliability warning. Findings
+    stored under __dataset__ sentinel key (row-level, not column-level).
+    Complements detect_duplicates (exact matches).
 
 # ── Wave 4 - architectural decisions required ────────────────────────────────
 

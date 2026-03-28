@@ -1,10 +1,7 @@
 # tests/eda/test_tasks/test_compute_pairwise_associations.py
-#
-# Also covers the behaviour formerly tested in test_compute_correlations.py,
-# which has been removed alongside compute_correlations.py.
 
 import warnings
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import pandas as pd
 import polars as pl
@@ -13,15 +10,12 @@ import pytest
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compute_pairwise_associations import (
     ComputePairwiseAssociations,
+    _kendalls_tau,
     _pearson_r,
     _spearman_r,
     _strength,
 )
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
-
-if TYPE_CHECKING:
-    pass
-
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -49,8 +43,8 @@ def test_spearman_r_monotonic_non_linear() -> None:
     b: pd.Series = pd.Series(
         [1.0, 4.0, 9.0, 16.0, 25.0]
     )  # y = x², perfect Spearman, non-linear Pearson
-    sp = _spearman_r(a, b)
-    pe = _pearson_r(a, b)
+    sp: float | None = _spearman_r(a, b)
+    pe: float | None = _pearson_r(a, b)
     assert sp is not None
     assert abs(sp - 1.0) < 1e-6  # perfect monotonic
     assert pe is not None
@@ -61,6 +55,28 @@ def test_spearman_r_returns_none_for_small_sample() -> None:
     a: pd.Series = pd.Series([1.0, 2.0])
     b: pd.Series = pd.Series([2.0, 4.0])
     assert _spearman_r(a, b) is None
+
+
+def test_kendalls_tau_perfect_monotonic() -> None:
+    a: pd.Series = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
+    b: pd.Series = pd.Series([2.0, 4.0, 6.0, 8.0, 10.0])
+    result: float | None = _kendalls_tau(a, b)
+    assert result is not None
+    assert abs(result - 1.0) < 1e-6
+
+
+def test_kendalls_tau_returns_none_for_small_sample() -> None:
+    a: pd.Series = pd.Series([1.0, 2.0])
+    b: pd.Series = pd.Series([2.0, 4.0])
+    assert _kendalls_tau(a, b) is None
+
+
+def test_kendalls_tau_negative_monotonic() -> None:
+    a: pd.Series = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
+    b: pd.Series = pd.Series([5.0, 4.0, 3.0, 2.0, 1.0])
+    result: float | None = _kendalls_tau(a, b)
+    assert result is not None
+    assert abs(result - (-1.0)) < 1e-6
 
 
 def test_strength_labels() -> None:
@@ -77,6 +93,9 @@ def test_strength_labels() -> None:
     assert _strength(0.02, "eta_squared") == "weak"
     assert _strength(0.005, "eta_squared") == "negligible"
     assert _strength(0.8, "spearman_r") == "strong"
+    assert _strength(0.8, "kendalls_tau") == "strong"
+    assert _strength(0.3, "kendalls_tau") == "weak"
+    assert _strength(0.1, "kendalls_tau") == "negligible"
 
 
 # ── Integration tests ─────────────────────────────────────────────────────────
@@ -349,7 +368,7 @@ def test_summary_counts_match_data(tmp_path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, ComputePairwiseAssociations)
 
     assert result.status == "success"
-    pair_entries = {
+    pair_entries: dict = {
         k: v for k, v in result.data.items() if k != "__correlation_matrix__"
     }
     assert result.summary["pair_count"] == len(pair_entries)
@@ -466,6 +485,149 @@ def test_no_warnings_on_clean_data(tmp_path) -> None:
 
     w = result.reliability_warnings
     assert not w or all(not v for v in w.values())
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_auto_routes_to_tau_for_small_samples(tmp_path) -> None:
+    """method='auto' must use Kendall's tau when n_valid_pairs < 30."""
+    df = pd.DataFrame(
+        {
+            "x": list(range(1, 16)),
+            "y": list(range(1, 16)),
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"method": "auto", "min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert "x|y" in result.data
+    assert result.data["x|y"]["metric_type"] == "kendalls_tau"
+    assert abs(result.data["x|y"]["metric"] - 1.0) < 1e-4
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_auto_routes_to_pearson_for_large_samples(tmp_path) -> None:
+    """method='auto' must use Pearson when n_valid_pairs >= 30."""
+    df = pd.DataFrame(
+        {
+            "x": [float(i) for i in range(1, 51)],
+            "y": [float(i) * 2 for i in range(1, 51)],
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"method": "auto", "min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data["x|y"]["metric_type"] == "pearson_r"
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_method_kendall_always_uses_tau(tmp_path) -> None:
+    """method='kendall' must use Kendall's tau regardless of sample size."""
+    df = pd.DataFrame(
+        {
+            "x": [float(i) for i in range(1, 51)],
+            "y": [float(i) * 2 for i in range(1, 51)],
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"method": "kendall", "min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data["x|y"]["metric_type"] == "kendalls_tau"
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_tau_in_correlation_matrix(tmp_path) -> None:
+    """Kendall's tau values must be included in the correlation matrix."""
+    df = pd.DataFrame(
+        {
+            "x": list(range(1, 16)),
+            "y": list(range(1, 16)),
+            "z": list(range(15, 0, -1)),
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"method": "auto", "min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata(
+        "semantic_types", {"x": "continuous", "y": "continuous", "z": "continuous"}
+    )
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert "__correlation_matrix__" in result.data
+    matrix = result.data["__correlation_matrix__"]
+    # tau values must populate the matrix for small-sample pairs
+    assert "x" in matrix
+    assert "y" in matrix["x"]
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_tau_negative_correlation(tmp_path) -> None:
+    """Kendall's tau must produce negative values for inverse relationships."""
+    df = pd.DataFrame(
+        {
+            "x": list(range(1, 16)),
+            "y": list(range(15, 0, -1)),
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"method": "kendall", "min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    assert result.data["x|y"]["metric"] < 0
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_auto_default_is_used_when_no_method_override(tmp_path) -> None:
+    """When no method is configured, 'auto' must be the default."""
+    df = pd.DataFrame(
+        {
+            "x": list(range(1, 16)),
+            "y": list(range(1, 16)),
+        }
+    )
+    ctx, task = make_ctx_and_task(
+        task_cls=ComputePairwiseAssociations,
+        current_df=df,
+        task_overrides={"min_sample_size": 2},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
+    result: TaskResult = ctx.run_task(task)
+
+    assert result.status == "success"
+    # n=15 < 30 → auto should route to tau
+    assert result.data["x|y"]["metric_type"] == "kendalls_tau"
+    assert result.metadata["method"] == "auto"
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
