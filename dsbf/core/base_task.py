@@ -60,6 +60,28 @@ class BaseTask(ABC):
         """
         return self.config.get(key, default)
 
+    def get_shared_param(self, block_name: str, key: str, default=None):
+        """
+        Get a config parameter from a named shared block config["tasks"][block_name].
+
+        Used for cross-task shared configuration such as time_series settings,
+        where multiple tasks read from the same config block rather than their
+        own task-specific section.
+
+        Args:
+            block_name: The shared block name under config["tasks"].
+            key: The parameter key within that block.
+            default: Value to return if not found.
+
+        Returns:
+            The config value, or default if not found.
+
+        """
+        ctx = self.context
+        if ctx and isinstance(ctx.config, dict):
+            return ctx.config.get("tasks", {}).get(block_name, {}).get(key, default)
+        return default
+
     def get_engine_param(self, key: str, default=None):
         """
         Get a value from the 'engine' section of the global config.
