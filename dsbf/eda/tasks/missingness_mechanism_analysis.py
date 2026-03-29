@@ -3,19 +3,19 @@
 # Analyses the likely mechanism behind missing values in each column.
 #
 # The three missing data mechanisms (Rubin 1976):
-#   MCAR — Missing Completely At Random: missingness is independent of both
+#   MCAR - Missing Completely At Random: missingness is independent of both
 #           observed and unobserved data. Testable via Little's MCAR test.
-#   MAR  — Missing At Random: missingness depends on observed data but not on
-#           the missing values themselves. NOT directly testable — only
+#   MAR  - Missing At Random: missingness depends on observed data but not on
+#           the missing values themselves. NOT directly testable - only
 #           evidence consistent with MAR can be found.
-#   MNAR — Missing Not At Random: missingness depends on the unobserved missing
+#   MNAR - Missing Not At Random: missingness depends on the unobserved missing
 #           values themselves. FUNDAMENTALLY UNVERIFIABLE from observed data.
 #
 # This task deliberately avoids claiming to confirm any mechanism. It reports:
 #   1. What the data shows (correlations, group differences, MCAR test)
 #   2. What each finding is consistent with
 #   3. Explicit epistemic caveats for every column
-#   4. A structured "consistent_with" assessment — never a definitive verdict
+#   4. A structured "consistent_with" assessment - never a definitive verdict
 #
 # Analysts should treat all outputs as hypothesis-generating, not confirmatory.
 # Domain knowledge is the only reliable guide to mechanism.
@@ -48,7 +48,7 @@ def _little_mcar_test(
     Little's test examines whether the means of observed variables differ
     across groups defined by missing-data patterns. A significant result
     (p < alpha) suggests the data is NOT consistent with MCAR. A non-
-    significant result is consistent with MCAR but does not confirm it —
+    significant result is consistent with MCAR but does not confirm it -
     the test has low power with small samples.
 
     This implementation uses the pattern-mean comparison approach:
@@ -105,7 +105,7 @@ def _little_mcar_test(
         diff = (group_means - overall_means_sub).to_numpy()
 
         # Use diagonal covariance (full covariance inversion is numerically
-        # unstable for small groups — diagonal is a conservative approximation)
+        # unstable for small groups - diagonal is a conservative approximation)
         cov_diag = group[observed_in_pattern].var(ddof=1).to_numpy()
         cov_diag: ndarray = np.where(cov_diag > 1e-10, cov_diag, 1e-10)
 
@@ -119,7 +119,7 @@ def _little_mcar_test(
 
     caveats: list[str] = [
         "A non-significant result (p >= alpha) is consistent with MCAR but "
-        "does not confirm it — the test has low statistical power on small "
+        "does not confirm it - the test has low statistical power on small "
         "samples and can miss subtle non-random patterns.",
         "This implementation uses a diagonal covariance approximation for "
         "numerical stability. Results may differ from software that uses the "
@@ -130,7 +130,7 @@ def _little_mcar_test(
 
     if n < 50:
         caveats.append(
-            f"Sample size is small (n={n}). Test power is low — the result "
+            f"Sample size is small (n={n}). Test power is low - the result "
             "should be treated with extra caution.",
         )
 
@@ -292,12 +292,12 @@ def _assess_mechanism(
         if mcar_result["p_value"] < alpha:
             evidence.append(
                 f"Little's MCAR test rejected (p={mcar_result['p_value']:.4f} "
-                f"< {alpha}) — data is not consistent with MCAR.",
+                f"< {alpha}) - data is not consistent with MCAR.",
             )
         else:
             evidence.append(
                 f"Little's MCAR test not rejected (p={mcar_result['p_value']:.4f} "
-                f">= {alpha}) — data is consistent with MCAR.",
+                f">= {alpha}) - data is consistent with MCAR.",
             )
             consistent_with.append("mcar")
             caveats.append(
@@ -371,7 +371,7 @@ def _assess_mechanism(
     confidence: str = (
         "low"
         if n_evidence == 0
-        else "moderate"  # never "high" — mechanism analysis is inherently uncertain
+        else "moderate"  # never "high" - mechanism analysis is inherently uncertain
     )
 
     return {
@@ -411,29 +411,29 @@ class MissingnessMechanismAnalysis(BaseTask):
 
     - **MCAR** (Missing Completely At Random): Missingness is unrelated to
       any data. Complete-case analysis is unbiased. *Testable* via Little's
-      test — but only absence of evidence, not evidence of absence.
+      test - but only absence of evidence, not evidence of absence.
     - **MAR** (Missing At Random): Missingness depends on observed data only.
-      Multiple imputation is valid. *Not directly testable* — only
+      Multiple imputation is valid. *Not directly testable* - only
       evidence consistent with MAR can be found from the data.
     - **MNAR** (Missing Not At Random): Missingness depends on the missing
       value itself. All standard imputation methods introduce bias.
-      *Fundamentally unverifiable* from observed data — requires domain
+      *Fundamentally unverifiable* from observed data - requires domain
       knowledge.
 
     **What this task does:**
 
-    1. **Little's MCAR test** — chi-squared test on all numeric columns jointly.
+    1. **Little's MCAR test** - chi-squared test on all numeric columns jointly.
        Reports whether data is inconsistent with MCAR, not whether it is MCAR.
-    2. **Missingness correlations** — point-biserial correlation between each
+    2. **Missingness correlations** - point-biserial correlation between each
        column's is_missing indicator and other observed columns.
-    3. **Group difference tests** — Mann-Whitney U comparing distributions of
+    3. **Group difference tests** - Mann-Whitney U comparing distributions of
        observed columns between rows where a column is missing vs present.
-    4. **Mechanism assessment** — structured ``consistent_with`` field
+    4. **Mechanism assessment** - structured ``consistent_with`` field
        (never a definitive verdict) with explicit caveats per column.
 
     **Epistemic design principles:**
 
-    - Confidence is capped at ``"moderate"`` — mechanism analysis is
+    - Confidence is capped at ``"moderate"`` - mechanism analysis is
       inherently uncertain.
     - Every column result includes a ``caveats`` list explaining limitations.
     - MNAR is noted as unverifiable in every column result.
@@ -605,7 +605,7 @@ class MissingnessMechanismAnalysis(BaseTask):
                         f"Missingness mechanism analysis on {len(results)} column(s). "
                         f"MCAR {mcar} "
                         f"at α={alpha}. "
-                        f"Note: mechanism diagnosis is inherently uncertain — "
+                        f"Note: mechanism diagnosis is inherently uncertain - "
                         f"see per-column caveats."
                     ),
                     "columns_analysed": len(results),

@@ -74,11 +74,11 @@ def test_mad_robust_to_outlier_inflation() -> None:
     assert r1 is not None
     assert r2 is not None
     # The count of flagged non-outlier values must not substantially increase
-    # when the extreme value is added — robustness property of MAD
+    # when the extreme value is added - robustness property of MAD
     assert r2["outlier_count"] - r1["outlier_count"] <= 1
 
 
-# ── Integration tests — univariate methods ────────────────────────────────────
+# ── Integration tests - univariate methods ────────────────────────────────────
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
@@ -125,7 +125,7 @@ def test_consensus_flag_set_when_multiple_methods_agree(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_clean_column_not_flagged(tmp_path) -> None:
     """A perfectly uniform column must have no outliers and no consensus."""
-    # Arithmetic sequence — no tails, no outliers by any method
+    # Arithmetic sequence - no tails, no outliers by any method
     df = pd.DataFrame({"clean": [float(i) for i in range(1, 201)]})
 
     ctx, task = make_ctx_and_task(
@@ -201,7 +201,7 @@ def test_constant_column_not_in_results(tmp_path) -> None:
     result: TaskResult = ctx.run_task(task)
 
     assert result.status == "success"
-    # const has MAD=0, zscore std=0 — it should appear but with empty
+    # const has MAD=0, zscore std=0 - it should appear but with empty
     # methods_flagging, or be skipped due to min_n/zero variance
     if "const" in result.data:
         assert result.data["const"]["consensus"] is False
@@ -310,7 +310,7 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     assert "x" in result.data
 
 
-# ── Integration tests — Isolation Forest ─────────────────────────────────────
+# ── Integration tests - Isolation Forest ─────────────────────────────────────
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")

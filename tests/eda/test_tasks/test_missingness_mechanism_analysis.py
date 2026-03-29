@@ -162,7 +162,7 @@ def test_assess_mechanism_never_claims_mnar_confirmed() -> None:
 
 
 def test_assess_mechanism_confidence_capped_at_moderate() -> None:
-    """Confidence must never exceed 'moderate' — mechanism analysis is uncertain."""
+    """Confidence must never exceed 'moderate' - mechanism analysis is uncertain."""
     assessment: dict[str, Any] = _assess_mechanism(
         mcar_result={
             "p_value": 0.8,
@@ -226,7 +226,7 @@ def test_mcar_consistent_for_random_missingness(tmp_path) -> None:
             "c": rng.normal(0, 1, n),
         },
     )
-    # Introduce missingness at random — truly MCAR
+    # Introduce missingness at random - truly MCAR
     for col in ["a", "b"]:
         idx = rng.choice(n, size=20, replace=False)
         df.loc[idx, col] = np.nan

@@ -3,11 +3,11 @@
 # Consolidated outlier detection task. Supersedes outlier_detection_mad.py.
 #
 # Methods:
-#   iqr              — Tukey IQR fences (Q1 - 1.5xIQR, Q3 + 1.5xIQR)
-#   zscore           — Standard Z-score (|z| > threshold, default 3.0)
-#   mad              — Modified Z-score / MAD (Iglewicz & Hoaglin 1993)
-#   isolation_forest — Isolation Forest multivariate anomaly detection
-#   all              — Run iqr + zscore + mad on every column; isolation_forest
+#   iqr              - Tukey IQR fences (Q1 - 1.5xIQR, Q3 + 1.5xIQR)
+#   zscore           - Standard Z-score (|z| > threshold, default 3.0)
+#   mad              - Modified Z-score / MAD (Iglewicz & Hoaglin 1993)
+#   isolation_forest - Isolation Forest multivariate anomaly detection
+#   all              - Run iqr + zscore + mad on every column; isolation_forest
 #                      when enabled (default True when method="all")
 #
 # Output data structure:
@@ -172,7 +172,7 @@ def _isolation_forest_outliers(
 
     Operates on the joint distribution of all continuous columns. A row
     can be normal on every individual axis but anomalous in the joint
-    distribution — this method catches such cases.
+    distribution - this method catches such cases.
 
     Args:
         df: Full DataFrame (pandas).
@@ -262,7 +262,7 @@ class DetectOutliers(BaseTask):
     on the joint distribution of all continuous columns. Row-level findings are
     stored under the ``__dataset__`` sentinel key since they cannot be attributed
     to a single column. This catches multivariate anomalies invisible to univariate
-    methods — a row can be normal on every individual axis but anomalous in the
+    methods - a row can be normal on every individual axis but anomalous in the
     joint distribution.
 
     **Output structure:**
@@ -425,7 +425,7 @@ class DetectOutliers(BaseTask):
                     "debug",
                 )
 
-            # Isolation Forest — dataset-level, __dataset__ sentinel key
+            # Isolation Forest - dataset-level, __dataset__ sentinel key
             dataset_entry: dict[str, Any] = {}
             if run_if and continuous_cols:
                 self._log(
@@ -567,9 +567,9 @@ class DetectOutliers(BaseTask):
                 )
 
         status = (
-            "consensus — high confidence"
+            "consensus - high confidence"
             if consensus
-            else "single method only — verify"
+            else "single method only - verify"
         )
         consensus_note: str = (
             f" Flagged by {len(methods_flagging)} of 3 methods ({status})."
@@ -666,7 +666,7 @@ class DetectOutliers(BaseTask):
             f"(contamination={contamination}). "
             f"Features used: {features[:5]}"
             f"{'...' if len(features) > 5 else ''}. "
-            f"These rows are anomalous in the joint distribution of features — "
+            f"These rows are anomalous in the joint distribution of features - "
             f"they may appear normal on any individual column but fall in a "
             f"low-density region of the feature space. "
             f"Review the flagged row indices in the data output. "
