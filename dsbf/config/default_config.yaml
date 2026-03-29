@@ -1,7 +1,7 @@
 # dsbf/config/default_config.yaml
 
 metadata:
-  dataset_name: "titanic"
+  dataset_name: "NFL_wk_by_wk"
   dataset_source: "seaborn"
   message_verbosity: debug      # quiet | info | debug
   profiling_depth: full         # basic | standard | full
@@ -80,8 +80,19 @@ tasks:
       redundancy: 1
       drift: 1
 
+  compute_pairwise_associations:
+    min_sample_size: 30        # Minimum complete (non-null) rows required to compute
+                               # an association metric for a column pair.
+    method: "auto"              # "auto" | "pearson" | "spearman" | "kendall" | "both"
+                               # auto: Kendall tau for n<30, Pearson for n>=30
+    cat_cardinality_limit: 50
+
   detect_bimodal_distribution:
-    bic_threshold: 10.0
+    bic_threshold: 10.0            # Minimum absolute BIC improvement (1-component vs 2-component)
+    relative_bic_threshold: 0.01   # Minimum relative BIC improvement (delta / |BIC_1|).
+                                   # Prevents false positives on large datasets where BIC
+                                   # scales with N and tiny absolute deltas get flagged.
+                                   # Both thresholds must be exceeded to flag a column.
 
   detect_class_imbalance:
     target_column: target
@@ -131,8 +142,14 @@ tasks:
     }
 
   detect_outliers:
-    method: "iqr"
-    flag_threshold: 0.01
+    method: "all"              # "all" | "iqr" | "zscore" | "mad" | "isolation_forest"
+    flag_threshold: 0.01       # Min outlier proportion to count a column as flagged
+    zscore_threshold: 3.0      # |z| threshold for Z-score method
+    mad_threshold: 3.5         # |MZS| threshold for MAD method (Iglewicz & Hoaglin 1993)
+    min_n: 10                  # Minimum non-null values to analyse a column
+    run_isolation_forest: true # Run Isolation Forest when method="all"
+    contamination: 0.05        # Expected outlier proportion for Isolation Forest
+    random_state: 42
 
   detect_regex_format_violations:
     match_threshold: 0.6           # % of values that must match pattern to treat as a structured field
@@ -176,3 +193,111 @@ tasks:
 
   summarize_value_counts:
     top_k: 5
+
+  compute_mutual_information:
+    target_column: null        # Required - set to your target column name
+    n_neighbors: 3             # k for KNN entropy estimator
+    random_state: 42
+    min_mi_for_guidance: 0.05  # Normalised MI threshold for guidance emission
+
+  contingency_tables:
+    alpha: 0.05
+    top_n: 10                  # Max unique values per column in each table
+    cat_cardinality_limit: 50
+
+  extract_datetime_features:
+    skew_threshold: 1.0        # Fallback when detect_skewness has not run
+
+  fuzzy_duplicate_detection:
+    similarity_threshold: 0.85
+    max_comparison_rows: 5000  # Sample when dataset exceeds this
+    max_candidates: 50000      # Cap on blocking step candidate pairs
+    min_string_cols: 1
+
+  imputation_strategy_suggestions:
+    min_null_pct: 0.01         # Minimum null proportion to evaluate a column
+    skew_threshold: 1.0
+
+  missingness_mechanism_analysis:
+    alpha: 0.05
+    min_null_pct: 0.01
+    min_n: 10
+    notable_correlation_threshold: 0.2
+
+  normality_qq_plots:
+    include_normal: false      # Also compute QQ for columns that passed normality tests
+    n_quantiles: 100
+    skew_threshold: 0.5        # Fallback when normality_tests has not run
+    min_n: 8
+
+  normality_tests:
+    alpha: 0.05
+
+  one_way_anova:
+    alpha: 0.05
+    correction: "fdr_bh"       # "fdr_bh" | "bonferroni" | "none"
+    min_group_n: 5
+    cat_cardinality_limit: 20
+
+  kruskal_wallis:
+    alpha: 0.05
+    correction: "fdr_bh"
+    min_group_n: 5
+    cat_cardinality_limit: 20
+
+  mann_whitney_u:
+    alpha: 0.05
+    correction: "fdr_bh"
+    min_group_n: 5
+    cat_cardinality_limit: 10
+    max_pairs_per_column: 10
+
+  sample_size_adequacy:
+    n_features_override: null  # Override feature count (e.g. for partial-column models)
+
+  suggest_dtype_optimizations:
+    min_savings_bytes: 1024    # Skip suggestions below this memory saving threshold
+
+  temporal_gap_detection:
+    min_n: 10                  # Minimum non-null observations to analyse
+
+  transformation_preview:
+    skew_threshold: 1.0
+    min_n: 10
+
+  # ── Time series ───────────────────────────────────────────────────────────
+  #
+  # Time series analysis is disabled by default. DSBF will not guess which
+  # datetime column represents the time axis - the risk of running ACF/PACF
+  # or stationarity tests on the wrong column (e.g. a record creation date
+  # rather than an event timestamp) is too high.
+  #
+  # To enable time series analysis, set:
+  #   time_series.enabled: true
+  #   time_series.datetime_index_column: <your datetime column name>
+  #
+  # You can do this here, via the dashboard Settings → Time Series panel,
+  # or by adding a user_config.yaml in your project root that overrides
+  # only these fields.
+
+  time_series:
+    enabled: false
+    datetime_index_column: null    # Required to enable - must be set explicitly
+    value_columns: []              # Empty = use all continuous columns
+    frequency: null                # null = inferred from data (e.g. "D", "W", "M")
+    group_by_column: null          # Reserved - grouped/panel time series not yet supported.
+                                   # Set this to get a clear "not yet supported" message
+                                   # rather than silently ignoring it.
+    tasks:
+      acf_pacf:
+        max_lags: 40
+        alpha: 0.05                # Confidence interval level for ACF/PACF bands
+      stationarity:
+        alpha: 0.05
+        tests: ["adf", "kpss"]    # Augmented Dickey-Fuller and KPSS
+      stl_decomposition:
+        seasonal_period: null      # null = inferred from frequency; set explicitly
+                                   # if auto-detection is wrong (e.g. 7 for daily/weekly)
+        robust: true               # Use robust STL (resistant to outliers)
+      temporal_gap_detection:
+        min_n: 10                  # Minimum observations to analyse a column
