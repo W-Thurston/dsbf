@@ -288,8 +288,17 @@
   runtime_estimate: moderate
   depends_on: [infer_types]
   semantic_types: [continuous]
-  tags: [outliers, numeric]
+  tags: [outliers, numeric, robust, mad, isolation_forest]
   status: stable
+  notes: >
+    Unified outlier detection: IQR fences, standard Z-score, Modified Z-score
+    (MAD), and Isolation Forest (multivariate). method="all" (default) runs all
+    three univariate methods in a single pass. consensus flag set when >= 2
+    methods independently flag a column. Isolation Forest stored under
+    __dataset__ sentinel key (row-level findings). run_isolation_forest=true
+    by default with method="all". Supersedes outlier_detection_mad.
+    BREAKING: old flat dict keys (outlier_counts, outlier_flags, outlier_rows)
+    replaced by column-keyed sub-dicts with iqr/zscore/mad sub-entries.
 
 - name: detect_zeros
   display_name: Detect Zeros
@@ -479,15 +488,13 @@
   tags: [correlation, association, relationships]
   status: stable
   notes: >
-    Single source of truth for all pairwise column relationships. Supersedes
-    kendalls_tau (now deprecated). Type-aware metric routing:
-    continuousxcontinuous via method param (see below), point-biserial r
-    (continuousxbinary), eta-squared (continuousxcategorical), Cramers V
-    (categoricalxcategorical). Method options: "auto" (default) routes to
-    Kendalls tau-b for n<30 and Pearson r for n>=30; "pearson"; "spearman";
-    "kendall" (always tau); "both" (Pearson primary + Spearman secondary).
-    Produces __correlation_matrix__ for heatmap rendering. Reliability
-    warnings: low_row_count, zero_variance, extreme_outliers, high_skew.
+    Single source of truth for all pairwise column relationships.
+    Type-aware metric routing: Pearson or Spearman r (continuousxcontinuous,
+    configurable via method param), point-biserial r (continuousxbinary),
+    eta-squared (continuousxcategorical), Cramér's V (categoricalxcategorical).
+    Also produces __correlation_matrix__ nested dict in data for heatmap
+    consumption by generate_dataset_summary_plots. Reliability warnings:
+    low_row_count, zero_variance, extreme_outliers, high_skew.
 
 # ── EDA tasks - drift & comparison ───────────────────────────────────────────
 
@@ -811,21 +818,21 @@
 
 # ── EDA tasks - statistical tests & robust methods ───────────────────────────
 
-- name: outlier_detection_mad
-  display_name: Outlier Detection (MAD)
+- name: kendalls_tau
+  display_name: Kendall's Tau
   phase: eda
   stage: cleaned
-  profiling_depth: standard
-  runtime_estimate: fast
+  profiling_depth: full
+  runtime_estimate: moderate
   depends_on: [infer_types]
   semantic_types: [continuous]
-  tags: [outliers, numeric, robust, mad]
+  tags: [correlation, rank, relationships, numeric]
   status: stable
   notes: >
-    Modified Z-score (0.6745 x (x - median) / MAD) with default threshold 3.5
-    (Iglewicz & Hoaglin 1993). Robust to skewed distributions and existing
-    outliers - median and MAD are not corrupted by the values being detected.
-    Complements detect_outliers (IQR/Z-score). Columns where MAD=0 are skipped.
+    Kendall's tau-b rank correlation for all continuous column pairs.
+    Preferred over Spearman for small samples (n < 30) and tied data.
+    Direct probabilistic interpretation: tau=0.6 means 60% more concordant
+    than discordant pairs. EDA guidance for significant pairs with |tau| ≥ 0.2.
 
 - name: one_way_anova
   display_name: One-Way ANOVA
@@ -842,10 +849,9 @@
     p-value companion to eta-squared in compute_pairwise_associations.
     FDR/Bonferroni correction via correction param (default "fdr_bh"):
     all tests collected first, corrected p-values computed in a single pass.
-    Both raw p_value and p_value_corrected stored per entry; significant flag
-    uses corrected value. n_tests reported in metadata and guidance blurbs.
-    Assumes normality within groups and equal variances; use kruskal_wallis
-    when these are violated.
+    Both raw p_value and p_value_corrected stored; significant flag uses
+    corrected value. Assumes normality within groups and equal variances;
+    use kruskal_wallis when these are violated.
 
 - name: kruskal_wallis
   display_name: Kruskal-Wallis Test
@@ -878,9 +884,9 @@
     Non-parametric pairwise comparison for continuous vs two-level categorical.
     Reports U statistic, p-value, rank-biserial r effect size, and corrected
     p-value. FDR/Bonferroni correction via correction param (default "fdr_bh")
-    applied across all (continuous x categorical x level_pair) combinations in
-    a single pass. Tests all level pairs up to max_pairs_per_column.
-    Post-hoc complement to kruskal_wallis.
+    applied across all (continuous x categorical x level_pair) combinations.
+    Tests all level pairs up to max_pairs_per_column. Post-hoc complement to
+    kruskal_wallis.
 
 - name: temporal_gap_detection
   display_name: Temporal Gap Detection
@@ -916,21 +922,77 @@
     stored under __dataset__ sentinel key (row-level, not column-level).
     Complements detect_duplicates (exact matches).
 
-# ── Wave 4 - architectural decisions required ────────────────────────────────
-
-- name: detect_multivariate_outliers
-  display_name: Detect Multivariate Outliers
+- name: missingness_mechanism_analysis
+  display_name: Missingness Mechanism Analysis
   phase: eda
   stage: cleaned
-  profiling_depth: full
-  runtime_estimate: slow
-  depends_on: [infer_types]
-  semantic_types: [continuous]
-  tags: [outliers, multivariate, isolation_forest]
-  status: planned
+  profiling_depth: standard
+  runtime_estimate: moderate
+  depends_on: [infer_types, summarize_nulls]
+  semantic_types: [any]
+  tags: [missingness, mcar, mar, mnar, quality]
+  status: stable
   notes: >
-    Isolation Forest-based multivariate outlier detection on continuous columns.
-    Complements univariate detect_outliers - a row can be normal on every
-    individual axis but anomalous in the joint distribution. Requires design
-    decision: row-level findings in a column-oriented guidance system (likely
-    via __dataset__ sentinel key with flagged row indices in data).
+    Analyses the likely mechanism behind missing values (Rubin 1976).
+    Little's MCAR test (diagonal covariance approximation); missingness
+    indicator correlations via point-biserial r; group difference tests via
+    Mann-Whitney U. consistent_with field replaces verdicts - never claims
+    to confirm MNAR (unverifiable) or MAR (not directly testable). Confidence
+    capped at "moderate". epistemic_note in summary documents test limitations.
+    Reads null_percentages from summarize_nulls context result.
+
+# ── EDA tasks - time series ──────────────────────────────────────────────────────────────
+
+- name: compute_acf_pacf
+  display_name: ACF / PACF
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, temporal_gap_detection]
+  semantic_types: [continuous]
+  tags: [time_series, autocorrelation, acf, pacf]
+  status: stable
+  notes: >
+    ACF and PACF via statsmodels for each value column. Confidence bands at
+    configured alpha using Bartlett (ACF) and asymptotic (PACF) formulas.
+    Significant lags identified; guidance interprets AR/MA/ARMA pattern.
+    Reduces max_lags automatically for short series. Graceful no-op when
+    time_series.enabled=false or datetime_index_column not set. Warnings
+    logged when temporal_gap_detection found large gaps in the index column.
+
+- name: detect_stationarity
+  display_name: Stationarity Tests (ADF / KPSS)
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: fast
+  depends_on: [infer_types, temporal_gap_detection]
+  semantic_types: [continuous]
+  tags: [time_series, stationarity, adf, kpss, unit_root]
+  status: stable
+  notes: >
+    ADF (H0: unit root) and KPSS (H0: stationary) - opposite null hypotheses.
+    Four outcomes: agree-stationary, agree-non-stationary, both-reject (ambiguous/
+    trend-stationary), neither-rejects (inconclusive). consistent_with field
+    never produces a definitive verdict. Confidence capped at "moderate".
+    epistemic_note in summary explains complementary test design. Caveats always
+    present per column. Graceful no-op when time series disabled.
+
+- name: decompose_time_series
+  display_name: Time Series Decomposition (STL)
+  phase: eda
+  stage: cleaned
+  profiling_depth: standard
+  runtime_estimate: moderate
+  depends_on: [infer_types, temporal_gap_detection]
+  semantic_types: [continuous]
+  tags: [time_series, decomposition, stl, trend, seasonal]
+  status: stable
+  notes: >
+    STL decomposition via statsmodels (robust=True default). Seasonal period:
+    configured -> inferred from frequency alias (D->7, ME->12 etc.) -> graceful
+    skip. Trend and seasonal strength via Wang/Smith/Hyndman 2006 variance
+    decomposition. Timestamps serialised as ISO strings. group_by_column
+    reserved for future panel TS support - warns if set, does not fail.
+    Graceful no-op when time series disabled or period cannot be determined.
