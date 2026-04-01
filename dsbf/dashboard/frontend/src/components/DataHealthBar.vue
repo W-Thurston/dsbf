@@ -64,7 +64,7 @@
               ({{ (dim.pctAffected * 100).toFixed(1) }}%)
             </div>
             <div v-else class="dh-tooltip-stat dh-tooltip-stat--good">
-              No issues detected
+              Nothing flagged
             </div>
           </div>
         </Transition>
@@ -123,8 +123,8 @@ const DIMENSION_META = {
     label: 'Validity',
     description:
       'Columns with out-of-bounds values, constant columns (zero information), ' +
-      'or columns that are structurally empty (>95% zeros). These indicate ' +
-      'data collection or pipeline problems.',
+      'or columns that are structurally empty (>95% zeros). Worth investigating ' +
+      'for data collection or pipeline anomalies.',
   },
   usability: {
     label: 'Usability',
@@ -171,7 +171,9 @@ const tabRelevance = {
   distributions: ['completeness', 'validity', 'usability'],
   relationships: ['redundancy', 'leakage'],
   quality:       ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  time_series:   ['completeness', 'validity'],
   ml_readiness:  ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  findings:      ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
 }
 </script>
 

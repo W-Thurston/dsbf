@@ -4,18 +4,21 @@
       Dataset Lineage
       <TooltipIcon text="Source file information - where the data came from and its on-disk properties at the time of this run." align="right" />
     </div>
-    <div v-if="!run?.source_path && !isBuiltin" class="lineage-note">
-      ⓘ Source path not recorded for this run. Re-run the profiler to capture full lineage.
-    </div>
-    <div class="lineage-grid">
-      <div class="lineage-item" v-for="item in lineageItems" :key="item.label">
-        <span class="lineage-label">
-          {{ item.label }}
-          <TooltipIcon :text="item.tooltip" align="center" />
-        </span>
-        <span class="lineage-value" :title="item.full ?? item.value">{{ item.value }}</span>
+    <div v-if="!run" class="es-not-run">Lineage information not available.</div>
+    <template v-else>
+      <div v-if="!run?.source_path && !isBuiltin" class="lineage-note">
+        ⓘ Source path not recorded for this run. Re-run the profiler to capture full lineage.
       </div>
-    </div>
+      <div class="lineage-grid">
+        <div class="lineage-item" v-for="item in lineageItems" :key="item.label">
+          <span class="lineage-label">
+            {{ item.label }}
+            <TooltipIcon :text="item.tooltip" align="center" />
+          </span>
+          <span class="lineage-value" :title="item.full ?? item.value">{{ item.value }}</span>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -126,6 +129,13 @@ const lineageItems = computed(() => {
 
 <style scoped>
 .lineage-card { height: 100%; }
+
+.es-not-run {
+  color: #475569;
+  font-size: 13px;
+  padding: 20px 0;
+  text-align: center;
+}
 
 .lineage-note {
   font-size: 12px;

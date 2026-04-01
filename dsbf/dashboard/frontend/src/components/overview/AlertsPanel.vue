@@ -1,11 +1,11 @@
 <template>
   <div class="card alerts-card">
-    <div class="card-title">Data Alerts</div>
+    <div class="card-title">Data Signals</div>
 
     <!-- Filters -->
     <div class="filters">
       <div class="filter-group">
-        <span class="filter-label">Severity</span>
+        <span class="filter-label">Priority</span>
         <div class="filter-pills">
           <button
             v-for="s in severities" :key="s.key"
@@ -26,8 +26,10 @@
       </div>
     </div>
 
-    <div v-if="filteredAlerts.length === 0" class="no-alerts">
-      {{ alerts.length === 0 ? '✅ No alerts detected.' : '✅ No alerts match the current filters.' }}
+    <div v-if="noTasksLoaded" class="es-not-run">Loading signals…</div>
+
+    <div v-else-if="filteredAlerts.length === 0" class="no-alerts">
+      {{ alerts.length === 0 ? '✓ Nothing flagged.' : '✓ Nothing matches the current filters.' }}
     </div>
 
     <div v-else class="alerts-list">
@@ -49,11 +51,14 @@ const props = defineProps({
   tasks: { type: Object, default: () => ({}) },
 })
 
+// ── Empty state ───────────────────────────────────────────────────────────────
+const noTasksLoaded = computed(() => Object.keys(props.tasks).length === 0)
+
 // ── Severity filter ──────────────────────────────────────────────────────────
 const severities = [
-  { key: 'error', label: '● High'   },
-  { key: 'warn',  label: '● Medium' },
-  { key: 'info',  label: '● Low'    },
+  { key: 'error', label: '● Priority 1' },
+  { key: 'warn',  label: '● Priority 2' },
+  { key: 'info',  label: '● Priority 3' },
 ]
 const activeSeverities = ref(new Set(['error', 'warn', 'info']))
 
@@ -80,7 +85,7 @@ const alerts = computed(() => {
   for (const col of highNull) {
     const pct = props.tasks.summarize_nulls?.data?.null_percentages?.[col] ?? 0
     out.push({ level: pct >= 0.5 ? 'error' : 'warn', icon: '⚠️', type: 'Missingness',
-      message: `High missingness: ${col} (${(pct * 100).toFixed(1)}% null)` })
+      message: `${col} has ${(pct * 100).toFixed(1)}% missing values` })
   }
 
   const hcData    = props.tasks.detect_high_cardinality?.data    ?? {}
@@ -89,21 +94,21 @@ const alerts = computed(() => {
   for (const [col, count] of Object.entries(hcData)) {
     if (typeof count === 'number' && count > threshold) {
       out.push({ level: 'warn', icon: '🔢', type: 'Cardinality',
-        message: `High cardinality: ${col} (${count.toLocaleString()} unique values)` })
+        message: `${col} has high cardinality (${count.toLocaleString()} unique values)` })
     }
   }
 
   const constCols = props.tasks.detect_constant_columns?.data?.constant_columns ?? []
   for (const col of constCols) {
     out.push({ level: 'error', icon: '🚫', type: 'Constant',
-      message: `Constant column: ${col} has only one unique value` })
+      message: `${col} appears constant - only one unique value found` })
   }
 
   const dupData   = props.tasks.detect_duplicate_columns?.data ?? {}
   const dupGroups = dupData.duplicate_groups ?? []
   for (const group of dupGroups) {
     out.push({ level: 'warn', icon: '♊', type: 'Duplicates',
-      message: `Duplicate columns detected: ${group.join(', ')}` })
+      message: `Likely duplicate columns: ${group.join(', ')}` })
   }
 
   const skewData     = props.tasks.detect_skewness?.data ?? {}
@@ -112,14 +117,14 @@ const alerts = computed(() => {
     .map(([col, v]) => ({ col, v }))
   for (const { col, v } of highlySkewed) {
     out.push({ level: 'info', icon: '📐', type: 'Skewness',
-      message: `Highly skewed: ${col} (skew = ${v.toFixed(2)})` })
+      message: `${col} is highly skewed (skew = ${v.toFixed(2)})` })
   }
 
   const domData = props.tasks.detect_single_dominant_value?.data ?? {}
   for (const [col, info] of Object.entries(domData)) {
     if (info?.dominance_level === 'high') {
       out.push({ level: 'warn', icon: '📊', type: 'Dominance',
-        message: `Dominant value: "${info.mode}" makes up ${(info.mode_proportion * 100).toFixed(1)}% of ${col}` })
+        message: `${col} has a dominant value - "${info.mode}" covers ${(info.mode_proportion * 100).toFixed(1)}% of rows` })
     }
   }
 
@@ -202,13 +207,14 @@ const filteredAlerts = computed(() => {
 
 /* ── Alerts list ─────────────────────────────────────────────────────────── */
 .no-alerts   { color: #4ade80; font-size: 13px; padding: 8px 0; }
+.es-not-run  { color: #475569; font-size: 13px; padding: 24px 0; text-align: center; }
 .alerts-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow-y: auto;
-  max-height: 335px;
   flex: 1;
+  min-height: 0;
 }
 
 .alert-item {

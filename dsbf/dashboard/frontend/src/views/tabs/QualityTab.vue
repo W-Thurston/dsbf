@@ -6,16 +6,21 @@
     1. Summary cards  - one per dimension, click to jump to that section
     2. Dimension sections - full findings list per dimension, collapsible,
                             sortable by column name / issue / severity
-    3. Clean columns  - columns with zero findings across all dimensions
+    3. Missingness Mechanism Analysis - separate card below Completeness
+    4. Fuzzy Duplicate Detection - separate card below Redundancy
+    5. Clean columns  - columns with zero findings across all dimensions
 
   Data sources
   ────────────
   GET /api/runs/{run_key}/dq-status          → summary cards
   GET /api/runs/{run_key}/tasks/data_quality_scorer → full findings
+  tasks prop (pre-loaded by RunDetailView)   → missingness mechanism,
+                                               fuzzy duplicates
 
   Props
   ─────
   runKey : String  (required)
+  tasks  : Object  (optional, pre-loaded task results)
 -->
 
 <template>
@@ -35,14 +40,38 @@
         <div class="qt-unavailable-icon">📊</div>
         <div class="qt-unavailable-title">Data health analysis unavailable</div>
         <div class="qt-unavailable-body">
-          This run was profiled before the data health scorer was introduced,
-          or was run at a depth that excludes the scorer. Re-run the profiler
-          to see quality findings here.
+          Data health findings are not available for this run. Re-run the profiler at standard depth or higher to generate them.
         </div>
       </div>
     </template>
 
     <template v-else>
+
+      <!-- ── 0. Trust banner ──────────────────────────────────────────────── -->
+      <div class="qt-trust-banner card" :class="`qt-trust-banner--${overallLevel}`">
+        <div class="qt-trust-left">
+          <span class="qt-trust-badge" :class="`qt-trust-badge--${overallLevel}`">
+            {{ trustLabel }}
+          </span>
+          <span class="qt-trust-desc">{{ trustDescription }}</span>
+        </div>
+        <div class="qt-trust-stats">
+          <div class="qt-trust-stat">
+            <div class="qt-trust-stat-value">{{ totalColumns }}</div>
+            <div class="qt-trust-stat-label">Columns checked</div>
+          </div>
+          <div class="qt-trust-stat">
+            <div class="qt-trust-stat-value qt-text--green">{{ cleanColumns.length }}</div>
+            <div class="qt-trust-stat-label">Fully clean</div>
+          </div>
+          <div class="qt-trust-stat">
+            <div class="qt-trust-stat-value" :class="dimensionsWithIssues > 0 ? 'qt-text--amber' : 'qt-text--green'">
+              {{ dimensionsWithIssues }} / 5
+            </div>
+            <div class="qt-trust-stat-label">Dimensions flagged</div>
+          </div>
+        </div>
+      </div>
 
       <!-- ── 1. Summary cards ─────────────────────────────────────────────── -->
       <div class="qt-summary-grid">
@@ -79,12 +108,11 @@
       </div>
 
       <!-- ── 2. Dimension sections ────────────────────────────────────────── -->
-      <div
-        v-for="dim in dimensions"
-        :key="dim.key"
-        :ref="el => sectionRefs[dim.key] = el"
-        class="qt-section card"
-      >
+      <template v-for="dim in dimensions" :key="dim.key">
+        <div
+          :ref="el => sectionRefs[dim.key] = el"
+          class="qt-section card"
+        >
         <!-- Section header -->
         <div class="qt-section-header" @click="toggleSection(dim.key)">
           <div class="qt-section-title">
@@ -92,7 +120,7 @@
             <span>{{ dim.label }}</span>
             <span class="qt-section-count" :class="`qt-text--${dim.level}`">
               {{ dim.affectedCount === 0
-                ? 'No issues'
+                ? 'Nothing flagged'
                 : dim.key === 'leakage'
                   ? `${dim.findings.length} pair${dim.findings.length === 1 ? '' : 's'} · ${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}`
                   : dim.findings.length !== dim.affectedCount
@@ -101,8 +129,8 @@
             </span>
           </div>
           <div class="qt-section-controls" @click.stop>
-            <!-- Sort controls - only shown when there are findings -->
-            <template v-if="dim.affectedCount > 0">
+            <!-- Sort controls - only shown when section is open and has findings -->
+            <template v-if="openSections.has(dim.key) && dim.affectedCount > 0">
               <span class="qt-sort-label">Sort:</span>
               <button
                 v-for="opt in sortOptions(dim.key)"
@@ -129,7 +157,7 @@
 
             <!-- All clear state -->
             <div v-if="dim.affectedCount === 0" class="qt-all-clear">
-              ✅ No issues detected in this dimension.
+              ✓ Nothing flagged in this dimension.
             </div>
 
             <!-- Findings table -->
@@ -137,10 +165,12 @@
               <div class="qt-findings-table">
                 <!-- Header row -->
                 <div class="qt-findings-header">
+                  <span></span>
                   <span class="qt-col-col">Column</span>
-                  <span class="qt-col-issue">Issue</span>
+                  <span class="qt-col-issue">Finding</span>
                   <span class="qt-col-detail">Detail</span>
                   <span class="qt-col-sev">Severity</span>
+                  <span></span>
                 </div>
                 <!-- Finding rows - scrollable, max 10 rows visible -->
                 <div class="qt-findings-scroll">
@@ -150,10 +180,19 @@
                     class="qt-finding-row"
                     :class="[
                       `qt-finding-row--${finding.severity}`,
-                      { 'qt-finding-row--highlighted': highlighted.has(`${dim.key}:${i}`) }
+                      { 'qt-finding-row--expanded':    expanded.has(`${dim.key}:${i}`),
+                        'qt-finding-row--highlighted': reviewed.has(`${dim.key}:${i}`) }
                     ]"
-                    @click="toggleHighlight(dim.key, i)"
+                    @click="toggleExpanded(dim.key, i)"
                   >
+                    <!-- Star / reviewed button -->
+                    <button
+                      class="qt-mark-btn"
+                      :class="{ active: reviewed.has(`${dim.key}:${i}`) }"
+                      :title="reviewed.has(`${dim.key}:${i}`) ? 'Marked as reviewed' : 'Mark as reviewed'"
+                      @click.stop="toggleReviewed(dim.key, i)"
+                    >{{ reviewed.has(`${dim.key}:${i}`) ? '★' : '☆' }}</button>
+
                     <span class="qt-col-col qt-finding-col">
                       {{ findingColumn(finding) }}
                     </span>
@@ -168,6 +207,46 @@
                         {{ finding.severity }}
                       </span>
                     </span>
+                    <span class="qt-expand-hint">
+                      {{ expanded.has(`${dim.key}:${i}`) ? '▴' : '▾' }}
+                    </span>
+
+                    <!-- Expanded detail - spans full grid width -->
+                    <Transition name="qt-detail-expand">
+                      <div
+                        v-if="expanded.has(`${dim.key}:${i}`)"
+                        class="qt-finding-detail-body"
+                        @click.stop
+                      >
+                        <!-- Guidance blurbs from tasks -->
+                        <template v-if="findingGuidance(finding).length">
+                          <div
+                            v-for="(blurb, bi) in findingGuidance(finding)"
+                            :key="bi"
+                            class="qt-blurb"
+                            :class="`qt-blurb--${blurb.level}`"
+                          >
+                            <span class="qt-blurb-icon">{{ blurbIcon(blurb.level) }}</span>
+                            <div class="qt-blurb-content">
+                              <div class="qt-blurb-title">{{ blurb.title }}</div>
+                              <p v-if="blurb.body" class="qt-blurb-body">{{ blurb.body }}</p>
+                              <div v-if="blurb.actions?.length" class="qt-blurb-actions">
+                                <span
+                                  v-for="(act, ai) in blurb.actions"
+                                  :key="ai"
+                                  class="qt-action-chip"
+                                >{{ formatAction(act) }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </template>
+
+                        <!-- Fallback: raw metrics when no guidance -->
+                        <div v-else class="qt-blurb-fallback">
+                          {{ findingDetail(finding) }} - no additional context available.
+                        </div>
+                      </div>
+                    </Transition>
                   </div>
                 </div>
               </div>
@@ -176,6 +255,10 @@
           </div>
         </Transition>
       </div>
+
+        <!-- (supplementary cards grouped at bottom) -->
+
+      </template>
 
       <!-- ── 3. Clean columns ─────────────────────────────────────────────── -->
       <div class="qt-section card">
@@ -212,6 +295,11 @@
         </Transition>
       </div>
 
+      <!-- ── 4. Supplementary analysis ──────────────────────────────────────── -->
+      <div class="qt-supplementary-label">Supplementary Analysis</div>
+      <MissingnessMechanismCard :tasks="tasks" />
+      <FuzzyDuplicateCard :tasks="tasks" />
+
     </template>
   </div>
 </template>
@@ -219,9 +307,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { getDqStatus, getTask } from '../../api.js'
+import MissingnessMechanismCard from '../../components/quality/MissingnessMechanismCard.vue'
+import FuzzyDuplicateCard       from '../../components/quality/FuzzyDuplicateCard.vue'
 
 const props = defineProps({
   runKey: { type: String, required: true },
+  tasks:  { type: Object, default: () => ({}) },
 })
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -233,10 +324,8 @@ const totalColumns = ref(0)
 const allColumns   = ref([])   // full ordered column list from scorer
 const categories   = ref({})
 
-// Section collapse - all open by default
-const openSections = ref(new Set([
-  'completeness', 'validity', 'usability', 'redundancy', 'leakage', '__clean__'
-]))
+// Section collapse - start all collapsed; open sections with findings once data loads
+const openSections = ref(new Set())
 
 // Sort state per dimension: { by: 'severity'|'column'|'issue', dir: 'asc'|'desc' }
 const sortState = ref({
@@ -250,8 +339,26 @@ const sortState = ref({
 // Section element refs for scroll-to
 const sectionRefs = ref({})
 
-// Highlighted rows: Set of "dimKey:rowIndex" or "__clean__:colName" strings
+// expanded: Set of "dimKey:rowIndex" - which finding rows are open
+const expanded  = ref(new Set())
+// reviewed: Set of "dimKey:rowIndex" - which findings are starred/marked
+const reviewed  = ref(new Set())
+// highlighted: kept for clean-column chip highlighting
 const highlighted = ref(new Set())
+
+function toggleExpanded(dimKey, i) {
+  const key = `${dimKey}:${i}`
+  const s = new Set(expanded.value)
+  s.has(key) ? s.delete(key) : s.add(key)
+  expanded.value = s
+}
+
+function toggleReviewed(dimKey, i) {
+  const key = `${dimKey}:${i}`
+  const s = new Set(reviewed.value)
+  s.has(key) ? s.delete(key) : s.add(key)
+  reviewed.value = s
+}
 
 function toggleHighlight(dimKey, id) {
   const key = `${dimKey}:${id}`
@@ -298,6 +405,17 @@ async function fetchData(runKey) {
 
 onMounted(() => fetchData(props.runKey))
 watch(() => props.runKey, key => { if (key) fetchData(key) })
+
+// Auto-open sections that have findings once data arrives.
+// Watch categories (defined above) rather than dimensions (defined below)
+// to avoid a temporal dead zone error during setup.
+watch(categories, (cats) => {
+  const s = new Set(openSections.value)
+  for (const [key, cat] of Object.entries(cats)) {
+    if ((cat.affected_count ?? 0) > 0) s.add(key)
+  }
+  openSections.value = s
+}, { immediate: false })
 
 // ── Dimension metadata ────────────────────────────────────────────────────────
 
@@ -358,7 +476,60 @@ const cleanColumns = computed(() => {
   return allColumns.value.filter(col => !affected.has(col)).sort()
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Trust banner ──────────────────────────────────────────────────────────────
+
+const LEVEL_RANK = { green: 0, amber: 1, red: 2 }
+
+const overallLevel = computed(() => {
+  const levels = dimensions.value.map(d => d.level)
+  if (levels.includes('red'))   return 'red'
+  if (levels.includes('amber')) return 'amber'
+  return 'green'
+})
+
+const dimensionsWithIssues = computed(() =>
+  dimensions.value.filter(d => d.affectedCount > 0).length
+)
+
+const trustLabel = computed(() => ({
+  green: '✓  Looking Good',
+  amber: '⚠  A Few Things to Note',
+  red:   '⚠  Worth Investigating',
+}[overallLevel.value]))
+
+const trustDescription = computed(() => ({
+  green: 'No notable data quality issues found across all five dimensions. Good to explore.',
+  amber: 'Some columns flagged across one or more dimensions. Worth reviewing before drawing conclusions.',
+  red:   'Several quality signals detected. Keep these in mind as you explore - they may affect how you interpret results.',
+}[overallLevel.value]))
+
+// ── Guidance helpers ──────────────────────────────────────────────────────────
+
+/** Collect all EDA-phase guidance blurbs for the column in a finding */
+function findingGuidance(finding) {
+  const col = finding.column ?? finding.col_a ?? null
+  if (!col) return []
+  const out = []
+  for (const task of Object.values(props.tasks)) {
+    const blurbs = task?.guidance?.[col]?.eda
+    if (Array.isArray(blurbs)) out.push(...blurbs)
+  }
+  return out
+}
+
+function blurbIcon(level) {
+  return { error: '🚫', warn: '⚠️', info: 'ℹ️', good: '✅' }[level] ?? 'ℹ️'
+}
+
+function formatAction(action) {
+  if (typeof action === 'string') return action
+  if (action.method) {
+    return action.condition || action.detail
+      ? `${action.method} - ${action.condition ?? action.detail}`
+      : action.method
+  }
+  return action.action ?? ''
+}
 
 /** Extract the primary column name from a finding (handles pair findings) */
 function findingColumn(finding) {
@@ -400,7 +571,7 @@ function findingDetail(finding) {
 function sortOptions(dimKey) {
   const base = [
     { key: 'column',   label: 'Column'   },
-    { key: 'issue',    label: 'Issue'    },
+    { key: 'issue',    label: 'Finding'  },
     { key: 'severity', label: 'Severity' },
   ]
   // Leakage findings are pairs - no single column to sort on
@@ -474,7 +645,219 @@ function scrollTo(key) {
   gap: 16px;
 }
 
-/* ── Loading skeleton ──────────────────────────────────────────────────────── */
+/* ── Trust banner ──────────────────────────────────────────────────────────── */
+.qt-trust-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 24px;
+  border-left: 4px solid;
+  flex-wrap: wrap;
+}
+.qt-trust-banner--green { border-left-color: #4ade80; }
+.qt-trust-banner--amber { border-left-color: #fbbf24; }
+.qt-trust-banner--red   { border-left-color: #f87171; }
+
+.qt-trust-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.qt-trust-badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 6px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.qt-trust-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
+.qt-trust-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
+.qt-trust-badge--red   { background: #3d0f0f; color: #f87171; border-color: #f87171; }
+
+.qt-trust-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.qt-trust-stats {
+  display: flex;
+  gap: 32px;
+  flex-shrink: 0;
+}
+
+.qt-trust-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.qt-trust-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f1f5f9;
+  line-height: 1;
+}
+.qt-trust-stat-label {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* ── Supplementary section label ───────────────────────────────────────────── */
+.qt-supplementary-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #334155;
+  padding: 4px 2px;
+  margin-top: 4px;
+}
+
+/* ── Finding row grid (updated for star + expand hint columns) ─────────────── */
+.qt-findings-header,
+.qt-finding-row {
+  display: grid;
+  grid-template-columns: 32px 2fr 2fr 2fr 100px 20px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+/* ── Star / reviewed button ────────────────────────────────────────────────── */
+.qt-mark-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+.qt-mark-btn:hover { border-color: #fbbf24; color: #fbbf24; }
+.qt-mark-btn.active { border-color: #fbbf24; color: #fbbf24; background: #451a03; }
+
+/* ── Expand hint ───────────────────────────────────────────────────────────── */
+.qt-expand-hint {
+  font-size: 11px;
+  color: #475569;
+  text-align: center;
+  transition: color 0.1s;
+}
+.qt-finding-row:hover .qt-expand-hint { color: #94a3b8; }
+
+/* ── Expanded finding detail ───────────────────────────────────────────────── */
+.qt-finding-detail-body {
+  grid-column: 1 / -1;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.qt-blurb {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid;
+}
+.qt-blurb--error { background: #3d0f0f; border-color: #f87171; }
+.qt-blurb--warn  { background: #3d2510; border-color: #fb923c; }
+.qt-blurb--info  { background: #1e3a5f; border-color: #60a5fa; }
+.qt-blurb--good  { background: #0f2718; border-color: #4ade80; }
+
+.qt-blurb-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+.qt-blurb-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.qt-blurb-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+.qt-blurb--error .qt-blurb-title { color: #fca5a5; }
+.qt-blurb--warn  .qt-blurb-title { color: #fed7aa; }
+.qt-blurb--info  .qt-blurb-title { color: #bfdbfe; }
+.qt-blurb--good  .qt-blurb-title { color: #bbf7d0; }
+
+.qt-blurb-body {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.qt-blurb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.qt-action-chip {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #64748b;
+  border: 1px solid #334155;
+  white-space: nowrap;
+}
+
+.qt-blurb-fallback {
+  font-size: 12px;
+  color: #475569;
+  font-style: italic;
+}
+
+/* ── Detail expand transition ──────────────────────────────────────────────── */
+.qt-detail-expand-enter-active,
+.qt-detail-expand-leave-active {
+  transition: opacity 0.15s, max-height 0.18s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+.qt-detail-expand-enter-from,
+.qt-detail-expand-leave-to { opacity: 0; max-height: 0; }
+
+/* ── Light theme additions ─────────────────────────────────────────────────── */
+:global(.theme-light) .qt-trust-badge--green { background: #f0fdf4; }
+:global(.theme-light) .qt-trust-badge--amber { background: #fffbeb; }
+:global(.theme-light) .qt-trust-badge--red   { background: #fef2f2; }
+:global(.theme-light) .qt-trust-desc         { color: #64748b; }
+:global(.theme-light) .qt-trust-stat-value   { color: #1e293b; }
+:global(.theme-light) .qt-supplementary-label { color: #94a3b8; }
+:global(.theme-light) .qt-finding-detail-body { background: #f8fafc; border-color: #e2e8f0; }
+:global(.theme-light) .qt-blurb-body         { color: #64748b; }
+:global(.theme-light) .qt-blurb-fallback     { color: #94a3b8; }
+:global(.theme-light) .qt-action-chip        { background: #f1f5f9; border-color: #e2e8f0; }
+
+
 .qt-loading {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -680,15 +1063,6 @@ function scrollTo(key) {
 .qt-findings-scroll::-webkit-scrollbar { width: 5px; }
 .qt-findings-scroll::-webkit-scrollbar-track { background: transparent; }
 .qt-findings-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-
-.qt-findings-header,
-.qt-finding-row {
-  display: grid;
-  grid-template-columns: 2fr 2fr 2fr 100px;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-}
 
 .qt-findings-header {
   font-size: 10px;

@@ -3,8 +3,8 @@
 # ADF and KPSS stationarity tests.
 #
 # Epistemics - these two tests have OPPOSITE null hypotheses:
-#   ADF  H₀: unit root present (non-stationary) -reject → evidence FOR stationarity
-#   KPSS H₀: stationary                         -reject → evidence AGAINST stationarity
+#   ADF  H₀: unit root present (non-stationary) - reject → evidence FOR stationarity
+#   KPSS H₀: stationary                         - reject → evidence AGAINST stationarity
 #
 # This means:
 #   ADF reject + KPSS not reject → consistent with stationary
@@ -154,13 +154,14 @@ class DetectStationarity(BaseTask):
                 )
                 return
 
-            ts_tasks_cfg: dict = self.get_shared_param("time_series", "tasks") or {}
-            stat_cfg: dict = (
-                ts_tasks_cfg.get("stationarity", {}) if ts_tasks_cfg else {}
+            # Task-level params via get_task_param
+            # (reads from config["tasks"]["detect_stationarity"])
+            alpha_raw: Any | None = self.get_task_param("alpha")
+            alpha: float = float(alpha_raw) if alpha_raw is not None else 0.05
+            tests_raw: Any | None = self.get_task_param("tests")
+            tests_to_run: list[str] | list = (
+                list(tests_raw) if tests_raw is not None else ["adf", "kpss"]
             )
-
-            alpha = float(stat_cfg.get("alpha", 0.05))
-            tests_to_run: list = list(stat_cfg.get("tests", ["adf", "kpss"]))
 
             frequency: str | None = infer_frequency(
                 df[ts_config.index_col],

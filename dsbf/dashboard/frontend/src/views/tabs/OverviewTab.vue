@@ -8,7 +8,15 @@
           {{ m.label }}
           <TooltipIcon :text="m.tooltip" align="center" />
         </span>
-        <span class="meta-value" :title="m.fullValue ?? m.value" :data-key="m.dataKey">{{ m.value }}</span>
+        <span class="meta-value"
+          :title="m.fullValue ?? m.value"
+          :data-key="m.dataKey"
+          :class="{
+            'adequacy-adequate':     m.dataKey === 'adequacy' && m.value === 'Adequate',
+            'adequacy-limited':      m.dataKey === 'adequacy' && m.value === 'Limited',
+            'adequacy-insufficient': m.dataKey === 'adequacy' && m.value === 'Insufficient',
+          }"
+        >{{ m.value }}</span>
       </div>
     </div>
 
@@ -41,18 +49,14 @@
       />
     </div>
 
-    <!-- Correlation matrix (full width) -->
-    <PlotCard
-      title="Correlation Matrix"
-      :figure="figureFor('correlation_matrix', 'interactive')"
-      :theme="theme"
-    />
-
+    <!-- Dtype optimization suggestions -->
+    <DtypeOptimizationsCard :tasks="tasks" />
 
   </div>
 </template>
 
 <script setup>
+import DtypeOptimizationsCard  from '../../components/overview/DtypeOptimizationsCard.vue'
 import ColumnMetadataTable  from '../../components/overview/ColumnMetadataTable.vue'
 import AlertsPanel          from '../../components/overview/AlertsPanel.vue'
 import PlotCard             from '../../components/overview/PlotCard.vue'
@@ -117,6 +121,16 @@ const runMetrics = computed(() => {
       dataKey: 'dup',
     },
     {
+      label:   'Sample Adequacy',
+      tooltip: 'Whether the dataset has sufficient rows for reliable modelling. Based on rule-of-thumb checks for linear, tree-based, and general ML models.',
+      value:   (() => {
+        const verdict = props.tasks?.sample_size_adequacy?.data?.overall_verdict ?? null
+        if (!verdict) return '-'
+        return { adequate: 'Adequate', limited: 'Limited', insufficient: 'Insufficient' }[verdict] ?? verdict
+      })(),
+      dataKey: 'adequacy',
+    },
+    {
       label:   'Depth',
       tooltip: 'Profiling depth used for this run: basic (fast, core stats), standard (recommended), or full (all tasks including expensive checks).',
       value:   props.run.profiling_depth ?? '-',
@@ -176,12 +190,17 @@ const runMetrics = computed(() => {
 .meta-metric:has(.meta-value[data-key="dup"]) .meta-value {
   font-size: 15px;
 }
+.meta-metric:has(.meta-value[data-key="adequacy"]) .meta-value[data-key="adequacy"] {
+  /* coloured at render time via inline class - see template */
+  font-size: 14px;
+}
 
-/* metadata table (wider) + alerts (narrower) */
+/* metadata table (wider) + alerts (narrower) - fixed height so both cards match */
 .row-split {
   display: flex;
   gap: 16px;
   align-items: stretch;
+  height: 500px;
 }
 .row-split > :first-child { flex: 2 1 0; min-width: 0; }
 .row-split > :last-child  { flex: 1 1 0; min-width: 240px; }
@@ -216,15 +235,20 @@ const runMetrics = computed(() => {
   flex: 1 1 0;
 }
 
-/* equal-width chart pairs */
-.row-equal { display: flex; gap: 16px; align-items: stretch; }
+/* equal-width chart pairs - fixed height so static and interactive cards match */
+.row-equal { display: flex; gap: 16px; align-items: stretch; height: 420px; }
 .row-equal > * { flex: 1 1 0; min-width: 0; }
 
 @media (max-width: 900px) {
+  /* Stack all multi-column rows vertically */
   .row-split,
+  .row-sample,
   .row-equal {
     flex-direction: column;
+    height: auto;       /* release fixed heights so each card takes natural height */
   }
+
+  /* All children go full-width */
   .row-split > :first-child,
   .row-split > :last-child,
   .row-sample > :first-child,
@@ -233,8 +257,21 @@ const runMetrics = computed(() => {
     flex: none;
     width: 100%;
     min-width: 0;
+    height: auto;
   }
+
+  /* Restore metadata table and alerts to sensible heights when stacked */
+  .row-split > :first-child { max-height: 480px; }
+  .row-split > :last-child  { max-height: 360px; }
+
+  /* Each plot card gets its own natural height when stacked */
+  .row-equal > * { min-height: 360px; }
 }
+
+/* ── Sample adequacy colouring ───────────────────────────────────────────── */
+.adequacy-adequate     { color: #4ade80 !important; }
+.adequacy-limited      { color: #fbbf24 !important; }
+.adequacy-insufficient { color: #f87171 !important; }
 
 /* ── Light theme overrides ───────────────────────────────────────────────── */
 :global(body.theme-light) .meta-metric { border-right-color: #e2e8f0; }

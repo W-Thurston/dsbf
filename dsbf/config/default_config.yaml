@@ -280,24 +280,24 @@ tasks:
   # or by adding a user_config.yaml in your project root that overrides
   # only these fields.
 
-  time_series:
+  time_series:                     # Shared settings read by all TS tasks via get_shared_param
     enabled: false
     datetime_index_column: null    # Required to enable - must be set explicitly
     value_columns: []              # Empty = use all continuous columns
     frequency: null                # null = inferred from data (e.g. "D", "W", "M")
-    group_by_column: null          # Reserved - grouped/panel time series not yet supported.
-                                   # Set this to get a clear "not yet supported" message
-                                   # rather than silently ignoring it.
-    tasks:
-      acf_pacf:
-        max_lags: 40
-        alpha: 0.05                # Confidence interval level for ACF/PACF bands
-      stationarity:
-        alpha: 0.05
-        tests: ["adf", "kpss"]    # Augmented Dickey-Fuller and KPSS
-      stl_decomposition:
-        seasonal_period: null      # null = inferred from frequency; set explicitly
+    group_by_column: null          # Reserved - grouped/panel TS not yet supported.
+                                   # Setting this produces a clear warning rather than
+                                   # silently ignoring it.
+
+  compute_acf_pacf:
+    max_lags: 40
+    alpha: 0.05                    # Confidence interval level for ACF/PACF bands
+
+  detect_stationarity:
+    alpha: 0.05
+    tests: ["adf", "kpss"]        # Augmented Dickey-Fuller and KPSS (opposite nulls)
+
+  decompose_time_series:
+    seasonal_period: null          # null = inferred from frequency; set explicitly
                                    # if auto-detection is wrong (e.g. 7 for daily/weekly)
-        robust: true               # Use robust STL (resistant to outliers)
-      temporal_gap_detection:
-        min_n: 10                  # Minimum observations to analyse a column
+    robust: true                   # Use robust STL (resistant to outliers)

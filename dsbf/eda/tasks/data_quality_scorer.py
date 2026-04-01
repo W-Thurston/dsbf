@@ -7,19 +7,29 @@ from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult
 
 
-def _level(pct_affected: float, any_affected: bool) -> str:
+def _level(pct_affected: float, any_affected: bool, max_severity: str = "info") -> str:
     """
     Map a proportion of affected columns to a traffic-light level.
+
+    With a severity floor so that error-level findings never produce a green result.
 
     Thresholds are proportional to dataset size so that e.g. 3 affected
     columns means something very different in a 10-column dataset vs a
     1000-column one.
+
+    Severity floor rules:
+        - ``"error"`` findings → minimum level is ``"amber"`` (green → amber;
+          amber and red unchanged). A dimension cannot be green if any finding
+          is error-severity.
+        - ``"warn"`` / ``"info"`` → no floor; proportion alone determines level.
 
     Args:
         pct_affected: Fraction of total columns affected (0.0 - 1.0).
         any_affected: True if at least one column is affected. Used to
             return ``"green"`` cleanly when the count is zero, avoiding
             edge cases when total_columns is very small.
+        max_severity: The highest severity among all findings in the dimension.
+            Defaults to ``"info"`` (no floor).
 
     Returns:
         One of ``"green"``, ``"amber"``, or ``"red"``.
@@ -27,11 +37,20 @@ def _level(pct_affected: float, any_affected: bool) -> str:
     """
     if not any_affected:
         return "green"
+
+    # Proportion-based level
     if pct_affected <= 0.05:
-        return "green"
-    if pct_affected <= 0.15:
-        return "amber"
-    return "red"
+        prop_level = "green"
+    elif pct_affected <= 0.15:
+        prop_level = "amber"
+    else:
+        prop_level = "red"
+
+    # Severity floor: error findings can never be green
+    _rank: dict[str, int] = {"green": 0, "amber": 1, "red": 2}
+    floor_level: str = "amber" if max_severity == "error" else "green"
+
+    return max(prop_level, floor_level, key=lambda lv: _rank[lv])
 
 
 def _category_block(
@@ -54,13 +73,21 @@ def _category_block(
     """
     affected_count: int = len(affected_columns)
     pct: float = affected_count / total_columns if total_columns else 0.0
+
+    _sev_rank: dict[str, int] = {"error": 2, "warn": 1, "info": 0}
+    max_severity: str = max(
+        (f.get("severity", "info") for f in findings),
+        key=lambda s: _sev_rank.get(s, 0),
+        default="info",
+    )
+
     return {
         "label": "",  # populated by caller if needed
         "affected_columns": affected_columns,
         "affected_count": affected_count,
         "total_columns": total_columns,
         "pct_affected": round(pct, 4),
-        "level": _level(pct, bool(affected_columns)),
+        "level": _level(pct, bool(affected_columns), max_severity),
         "findings": findings,
     }
 

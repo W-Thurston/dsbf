@@ -5,14 +5,27 @@
       <slot name="controls" /></div>
 
     <div v-if="loading" class="loading">Loading chart…</div>
-    <div v-else-if="error" class="plot-error">{{ error }}</div>
+    <div v-else-if="error" class="plot-error">
+      <span class="plot-error-icon">⚠</span>
+      {{ error }}
+    </div>
 
     <!-- Plotly interactive -->
     <div v-else-if="isInteractive && plotData" ref="plotEl" class="plot-container" />
 
-    <!-- Static image -->
-    <img v-else-if="imageUrl" :src="imageUrl" class="plot-img" :alt="title" />
+    <!-- Static image - wrapped so it centers and fills the card height -->
+    <div v-else-if="imageUrl" class="plot-img-wrap">
+      <img :src="imageUrl" class="plot-img" :alt="title" />
+    </div>
 
+    <!-- No figure provided at all (task didn't produce this plot type) -->
+    <div v-else-if="!props.figure" class="no-figure">
+      <span class="no-figure-icon">📊</span>
+      Chart not available for this run.
+      <span class="no-figure-hint">Re-run at full depth to generate this visualisation.</span>
+    </div>
+
+    <!-- Figure provided but nothing rendered (theme mismatch or other) -->
     <div v-else class="no-figure">No figure available for this theme.</div>
   </div>
 </template>
@@ -183,7 +196,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.plot-card { min-height: 200px; display: flex; flex-direction: column; }
+.plot-card { min-height: 200px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
 
 .card-title-row {
   display: flex;
@@ -207,14 +220,30 @@ onBeforeUnmount(() => {
   font-size: 13px;
   padding: 40px 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
+
+.no-figure-icon { font-size: 24px; opacity: 0.4; }
+.no-figure-hint { font-size: 11px; color: #475569; }
 
 .plot-error {
   color: #f87171;
   font-size: 13px;
-  padding: 20px 0;
+  padding: 16px;
   text-align: center;
+  background: #3d0f0f;
+  border-radius: 6px;
+  border-left: 3px solid #f87171;
+  margin: 8px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
 }
+.plot-error-icon { flex-shrink: 0; }
 
 .plot-container {
   width: 100%;
@@ -222,9 +251,21 @@ onBeforeUnmount(() => {
   /* height is set dynamically by Plotly layout for heatmaps */
 }
 
+.plot-img-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .plot-img {
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
   border-radius: 6px;
   display: block;
 }

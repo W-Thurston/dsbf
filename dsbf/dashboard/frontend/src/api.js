@@ -78,12 +78,22 @@ export function getRunSample(runKey, n = 10) {
 
 /**
  * Get the data-health header bar summary for a run.
- * Returns { available, total_columns, categories } where categories is
- * keyed by dimension name and each value has { level, affected_count, pct_affected }.
- * If the scorer has not run, returns { available: false }.
+ * Returns { available, total_columns, categories } where each category
+ * has { level, affected_count, pct_affected }.
+ * Returns { available: false } if the scorer did not run.
  */
 export function getDqStatus(runKey) {
   return client.get(`/runs/${runKey}/dq-status`).then(r => r.data)
+}
+
+/**
+ * Get the full ML readiness report for a run.
+ * Returns { available, overall_score, readiness_gate, total_columns,
+ *           columns_ready, level_summary, column_scores, columns_by_priority }.
+ * Returns { available: false } if the scorer did not run.
+ */
+export function getMlReadiness(runKey) {
+  return client.get(`/runs/${runKey}/ml-readiness`).then(r => r.data)
 }
 
 // ── Relationships ────────────────────────────────────────────────────────────

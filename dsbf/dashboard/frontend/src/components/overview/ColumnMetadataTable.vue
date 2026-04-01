@@ -6,11 +6,17 @@
     </div>
 
     <div class="table-wrap">
-      <table class="meta-table">
+      <div v-if="state === 'not_run'" class="es-not-run">
+        Column metadata unavailable - <code>infer_types</code> did not run for this profiling depth.
+      </div>
+      <div v-else-if="state === 'empty'" class="es-empty">
+        ✓ No columns found in this dataset.
+      </div>
+      <table v-else class="meta-table">
         <thead>
           <tr>
             <th class="col-frozen" @click="sortBy('column')" :class="sortClass('column')">
-              Column <TooltipIcon text="The name of the column as it appears in the dataset." align="right" direction="down"/>
+              Column <TooltipIcon text="The name of the column as it appears in the dataset." align="left" direction="down"/>
             </th>
             <th @click="sortBy('inferred')" :class="sortClass('inferred')">
               Inferred Type <TooltipIcon text="The raw data type inferred from the column values - e.g. int64, float64, object." direction="down"/>
@@ -37,7 +43,7 @@
               Skew <TooltipIcon text="Statistical skewness of the distribution. Values beyond ±1 indicate asymmetry; beyond ±2 indicate heavy skew that may affect modelling." direction="down"/>
             </th>
             <th @click="sortBy('range')" :class="sortClass('range')">
-              Range <TooltipIcon text="The [min, max] value range for numeric columns." align="left" direction="down"/>
+              Range <TooltipIcon text="The [min, max] value range for numeric columns." align="right" direction="down"/>
             </th>
           </tr>
         </thead>
@@ -55,7 +61,7 @@
             <td class="muted mono-sm" :title="row.range">{{ trunc(row.range, 22) }}</td>
           </tr>
         </tbody>
-      </table>
+        </table>
     </div>
   </div>
 </template>
@@ -72,6 +78,14 @@ const props = defineProps({
 const search  = ref('')
 const sortKey = ref('column')
 const sortDir = ref(1)
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+const state = computed(() => {
+  const types = props.tasks?.infer_types?.data
+  if (!types) return 'not_run'
+  if (Object.keys(types).length === 0) return 'empty'
+  return 'ready'
+})
 
 function sortBy(key) {
   if (sortKey.value === key) { sortDir.value *= -1 }
@@ -155,6 +169,14 @@ function propClass(prop) { return prop == null ? '' : prop >= 0.9 ? 'warn-high' 
 <style scoped>
 .col-meta-card { overflow: hidden; }
 
+.es-not-run, .es-empty {
+  font-size: 13px;
+  padding: 32px 0;
+  text-align: center;
+}
+.es-not-run { color: #475569; }
+.es-empty   { color: #4ade80; }
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -189,7 +211,6 @@ function propClass(prop) { return prop == null ? '' : prop >= 0.9 ? 'warn-high' 
   border-spacing: 0;
   font-size: 13px;
   width: max-content;
-  min-width: 100%;
 }
 
 .meta-table th {
@@ -207,6 +228,12 @@ function propClass(prop) { return prop == null ? '' : prop >= 0.9 ? 'warn-high' 
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
+}
+
+/* Align tooltip icon inline with header text without breaking table layout */
+.meta-table th :deep(.tip-wrap) {
+  vertical-align: baseline;
+  margin-left: 0px;
 }
 
 .col-frozen { position: sticky !important; left: 0; z-index: 2; background: #1e293b; }

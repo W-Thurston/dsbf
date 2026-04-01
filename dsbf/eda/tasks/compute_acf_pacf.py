@@ -111,14 +111,12 @@ class ComputeACFPACF(BaseTask):
                 )
                 return
 
-            # Task-level params from the nested time_series.tasks.acf_pacf block
-            ts_tasks_cfg: dict = self.get_shared_param("time_series", "tasks") or {}
-            acf_cfg: dict = ts_tasks_cfg.get("acf_pacf", {}) if ts_tasks_cfg else {}
-
-            max_lags_raw = acf_cfg.get("max_lags", 40)
-            max_lags = int(max_lags_raw)
-            alpha_raw = acf_cfg.get("alpha", 0.05)
-            alpha = float(alpha_raw)
+            # Task-level params via get_task_param
+            # (reads from config["tasks"]["compute_acf_pacf"])
+            max_lags_raw: Any | None = self.get_task_param("max_lags")
+            max_lags: int = int(max_lags_raw) if max_lags_raw is not None else 40
+            alpha_raw: Any | None = self.get_task_param("alpha")
+            alpha: float = float(alpha_raw) if alpha_raw is not None else 0.05
 
             frequency: str | None = infer_frequency(
                 df[ts_config.index_col],
@@ -155,7 +153,7 @@ class ComputeACFPACF(BaseTask):
                         alpha=alpha,
                         method="ywm",
                     )
-                except Exception as e:  # noqa: BLE001
+                except Exception as e:
                     self._log(f"    '{col}' ACF/PACF failed: {e}", "warn")
                     continue
 

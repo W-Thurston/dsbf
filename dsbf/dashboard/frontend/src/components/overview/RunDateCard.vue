@@ -7,7 +7,8 @@
         align="right"
       />
     </div>
-    <div class="run-date-grid">
+    <div v-if="!run" class="es-not-run">Run metadata not available.</div>
+    <div v-else class="run-date-grid">
       <div class="run-date-item" v-for="item in items" :key="item.label">
         <span class="run-date-label">
           {{ item.label }}
@@ -49,6 +50,13 @@ const items = computed(() => {
 .run-date-card {
   display: flex;
   flex-direction: column;
+}
+
+.es-not-run {
+  color: #475569;
+  font-size: 13px;
+  padding: 20px 0;
+  text-align: center;
 }
 
 .run-date-grid {

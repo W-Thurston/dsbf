@@ -56,7 +56,7 @@ def _infer_seasonal_period(
 
     """
     if frequency is None:
-        task_instance._log(
+        task_instance._log(  # noqa: SLF001
             "    No frequency available - cannot infer seasonal period. "
             "Set time_series.frequency or time_series.tasks.stl_decomposition"
             ".seasonal_period in config.",
@@ -68,7 +68,7 @@ def _infer_seasonal_period(
     for alias, period in _FREQ_TO_PERIOD.items():
         if frequency.upper().startswith(alias):
             if period == 1:
-                task_instance._log(
+                task_instance._log(  # noqa: SLF001
                     f"    Frequency '{frequency}' maps to period=1 - "
                     "STL requires period >= 2. Skipping decomposition.",
                     "warn",
@@ -76,20 +76,20 @@ def _infer_seasonal_period(
                 return None
             # Need at least 2 full cycles
             if n < period * 2:
-                task_instance._log(
+                task_instance._log(  # noqa: SLF001
                     f"    n={n} < 2 x period={period}. Series is too short "
                     f"for reliable seasonal decomposition with "
                     f"frequency='{frequency}'.",
                     "warn",
                 )
                 return None
-            task_instance._log(
+            task_instance._log(  # noqa: SLF001
                 f"    Inferred seasonal period {period} from frequency '{frequency}'.",
                 "debug",
             )
             return period
 
-    task_instance._log(
+    task_instance._log(  # noqa: SLF001
         f"    Unknown frequency alias '{frequency}' - cannot infer seasonal period.",
         "warn",
     )
@@ -189,15 +189,13 @@ class DecomposeTimeSeries(BaseTask):
                 )
                 return
 
-            ts_tasks_cfg: dict = self.get_shared_param("time_series", "tasks") or {}
-            stl_cfg: dict = (
-                ts_tasks_cfg.get("stl_decomposition", {}) if ts_tasks_cfg else {}
-            )
-
-            configured_period = stl_cfg.get("seasonal_period")
+            # Task-level params via get_task_param
+            # (reads from config["tasks"]["decompose_time_series"])
+            configured_period: Any | None = self.get_task_param("seasonal_period")
             if configured_period is not None:
                 configured_period = int(configured_period)
-            robust = bool(stl_cfg.get("robust", True))
+            robust_raw: Any | None = self.get_task_param("robust")
+            robust: bool = bool(robust_raw) if robust_raw is not None else True
 
             frequency: str | None = infer_frequency(
                 df[ts_config.index_col],

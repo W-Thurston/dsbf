@@ -1,0 +1,938 @@
+{
+  "categorical_length_stats": {
+    "domain": "core",
+    "tags": [
+      "categorical",
+      "text",
+      "stats"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes string length statistics for text-like categorical columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "check_datetime_consistency": {
+    "domain": "core",
+    "tags": [
+      "datetime",
+      "validation"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Checks for consistency in datetime columns across the dataset.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compare_with_reference_dataset": {
+    "domain": "core",
+    "tags": [
+      "schema",
+      "drift",
+      "comparison"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Compares schema and structural differences between the current and reference dataset.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compute_acf_pacf": {
+    "domain": "core",
+    "tags": [
+      "time_series",
+      "autocorrelation",
+      "acf",
+      "pacf"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes autocorrelation (ACF) and partial autocorrelation (PACF) functions for each configured value column. Requires time_series.datetime_index_column to be set in config.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compute_entropy": {
+    "domain": "core",
+    "tags": [
+      "info",
+      "distribution",
+      "categorical"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Estimates Shannon entropy of categorical columns to measure information content and distributional uniformity.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compute_kurtosis": {
+    "domain": "core",
+    "tags": [
+      "distribution",
+      "kurtosis",
+      "statistics",
+      "numeric"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes Fisher excess kurtosis for continuous numeric columns. Positive values indicate heavier tails than normal (leptokurtic); negative values indicate lighter tails (platykurtic).",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compute_mutual_information": {
+    "domain": "core",
+    "tags": [
+      "mutual_information",
+      "relationships",
+      "feature_selection"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Computes mutual information between each feature and a target column using sklearn's mutual_info_regression (continuous target) or mutual_info_classif (categorical target). Captures non-linear relationships that Pearson correlation misses.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "compute_pairwise_associations": {
+    "domain": "core",
+    "tags": [
+      "correlation",
+      "association",
+      "relationships"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Computes the most appropriate association metric for every column pair: Pearson r, Spearman r, or Kendall's tau (continuousxcontinuous), point-biserial r (continuousxbinary), eta squared (continuousxcategorical), or Cram\u00e9r's V (categoricalxcategorical). Default method='auto' routes to Kendall's tau for small samples (n<30) and Pearson for large samples. Columns typed as id, datetime, or text are skipped. Also produces a correlation_matrix dict for heatmap rendering.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "contingency_tables": {
+    "domain": "core",
+    "tags": [
+      "categorical",
+      "association",
+      "chi_squared",
+      "relationships"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes joint frequency distributions for categorical column pairs with chi-squared independence tests and Cram\u00e9r's V effect sizes.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "data_quality_scorer": {
+    "domain": "core",
+    "tags": [
+      "scoring",
+      "summary",
+      "meta"
+    ],
+    "stage": "report",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Aggregates EDA profiling results into five data-health dimensions: Completeness, Validity, Usability, Redundancy, and Leakage. Each dimension reports affected column counts and a proportional traffic-light level (green / amber / red) for the header bar.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "decompose_time_series": {
+    "domain": "core",
+    "tags": [
+      "time_series",
+      "decomposition",
+      "stl",
+      "trend",
+      "seasonal"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "standard",
+    "summary": "Decomposes each value column into trend, seasonal, and residual components using STL (Seasonal-Trend decomposition using LOESS). Requires time_series.datetime_index_column to be set in config.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_bimodal_distribution": {
+    "domain": "core",
+    "tags": [
+      "distribution",
+      "outliers"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Identifies columns with likely bimodal distributions.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_class_imbalance": {
+    "domain": "core",
+    "tags": [
+      "target",
+      "imbalance",
+      "ml_readiness"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Detects severe class imbalance in the configured target column and recommends mitigation strategies.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_collinear_features": {
+    "domain": "core",
+    "tags": [
+      "multicollinearity",
+      "numeric"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "slow",
+    "profiling_depth": "full",
+    "summary": "Detects highly collinear features that may cause multicollinearity.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_constant_columns": {
+    "domain": "core",
+    "tags": [
+      "redundancy",
+      "null-equivalent"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Flags columns with a single unique value.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_data_leakage": {
+    "domain": "core",
+    "tags": [
+      "leakage",
+      "target"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Heuristically detects columns that may leak target information.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_duplicate_columns": {
+    "domain": "core",
+    "tags": [
+      "redundancy",
+      "duplicates"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Finds columns that contain identical values.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_duplicates": {
+    "domain": "core",
+    "tags": [
+      "duplicates",
+      "rows"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Detects duplicated rows in the dataset.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_encoded_columns": {
+    "domain": "core",
+    "tags": [
+      "format",
+      "encoded",
+      "anomaly"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Detects columns containing base64, hex, UUID, or other suspiciously encoded data.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_feature_drift": {
+    "domain": "core",
+    "tags": [
+      "drift",
+      "comparison"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "slow",
+    "profiling_depth": "full",
+    "summary": "Detects distributional drift between current and reference datasets for shared columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_high_cardinality": {
+    "domain": "core",
+    "tags": [
+      "categorical",
+      "cardinality"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Detects categorical columns with too many unique values.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_id_columns": {
+    "domain": "core",
+    "tags": [
+      "metadata",
+      "id",
+      "index"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Flags likely ID-like columns with high uniqueness and low reuse.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_mixed_type_columns": {
+    "domain": "core",
+    "tags": [
+      "type",
+      "format",
+      "anomaly"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Flags columns that contain multiple Python data types (e.g., str + float).",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_near_zero_variance": {
+    "domain": "core",
+    "tags": [
+      "numeric",
+      "variance",
+      "ml_readiness"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Flags numeric columns with extremely low variance.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_out_of_bounds": {
+    "domain": "core",
+    "tags": [
+      "bounds",
+      "validation"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Detects numeric values outside expected or logical ranges.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_outliers": {
+    "domain": "core",
+    "tags": [
+      "outliers",
+      "numeric",
+      "robust",
+      "mad",
+      "isolation_forest"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "full",
+    "summary": "Unified outlier detection: IQR fences, standard Z-score, Modified Z-score (MAD), and Isolation Forest (multivariate). Runs all univariate methods by default and synthesises a consensus flag per column. Supersedes outlier_detection_mad.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_regex_format_violations": {
+    "domain": "core",
+    "tags": [
+      "format",
+      "regex",
+      "validation",
+      "anomaly"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "full",
+    "summary": "Detects string columns whose values do not conform to user-specified regex patterns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_single_dominant_value": {
+    "domain": "core",
+    "tags": [
+      "redundancy",
+      "skew"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Detects columns dominated by a single value.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_skewness": {
+    "domain": "core",
+    "tags": [
+      "distribution",
+      "skew"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes skewness of numeric columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_stationarity": {
+    "domain": "core",
+    "tags": [
+      "time_series",
+      "stationarity",
+      "adf",
+      "kpss",
+      "unit_root"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Tests for stationarity using ADF (unit root test) and KPSS. The two tests have opposite null hypotheses \u2014 their agreement and disagreement are both informative. Never produces a single verdict without surfacing the full test evidence.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_string_anomalies": {
+    "domain": "core",
+    "tags": [
+      "string",
+      "anomaly",
+      "categorical",
+      "quality"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Detects inconsistencies within categorical string columns: mixed case, leading/trailing whitespace, invisible Unicode characters, and length outliers.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_target_drift": {
+    "domain": "core",
+    "tags": [
+      "drift",
+      "comparison"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "slow",
+    "profiling_depth": "full",
+    "summary": "Detects distributional drift in the target column between current and reference datasets.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "detect_zeros": {
+    "domain": "core",
+    "tags": [
+      "zeros",
+      "sparsity"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Flags columns with high zero concentration.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "extract_datetime_features": {
+    "domain": "core",
+    "tags": [
+      "datetime",
+      "feature_engineering",
+      "ml_readiness"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Analyses datetime columns and recommends derived features: year, month, day-of-week, hour, is_weekend, quarter, cyclic sin/cos encodings, and days-since-epoch.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "fuzzy_duplicate_detection": {
+    "domain": "core",
+    "tags": [
+      "duplicates",
+      "rows",
+      "fuzzy",
+      "quality",
+      "string"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "standard",
+    "summary": "Detects near-duplicate rows using token-based blocking and character-level similarity scoring. Catches rows that differ by case, whitespace, typos, or minor formatting variations that exact duplicate detection misses.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "generate_dataset_summary_plots": {
+    "domain": "core",
+    "tags": [
+      "visualization",
+      "plotting",
+      "dataset"
+    ],
+    "stage": "any",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Generates summary plots describing the dataset as a whole.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "generate_univariate_plots": {
+    "domain": "core",
+    "tags": [
+      "visualization",
+      "plotting",
+      "univariate"
+    ],
+    "stage": "any",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "standard",
+    "summary": "Generates univariate plots based on inferred semantic types.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "identify_bottleneck_tasks": {
+    "domain": "core",
+    "tags": [
+      "diagnostic",
+      "runtime",
+      "performance"
+    ],
+    "stage": "any",
+    "runtime_estimate": "fast",
+    "profiling_depth": "full",
+    "summary": "Ranks the top-N slowest tasks by runtime duration.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "imputation_strategy_suggestions": {
+    "domain": "core",
+    "tags": [
+      "missingness",
+      "imputation",
+      "ml_readiness"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Recommends a per-column imputation strategy based on missingness percentage, semantic type, and distribution shape. Reads from summarize_nulls and infer_types.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "infer_types": {
+    "domain": "core",
+    "tags": [
+      "typing",
+      "metadata"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Infers both raw and analysis-intent dtypes for each column.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "one_way_anova": {
+    "domain": "core",
+    "tags": [
+      "anova",
+      "statistics",
+      "relationships",
+      "numeric",
+      "categorical"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Tests whether group means differ significantly across levels of a categorical column for each continuous column. Supports Bonferroni and Benjamini-Hochberg FDR multiple testing correction.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "kruskal_wallis": {
+    "domain": "core",
+    "tags": [
+      "kruskal_wallis",
+      "statistics",
+      "relationships",
+      "non_parametric"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Non-parametric alternative to one-way ANOVA. Tests whether distributions differ across categorical groups without assuming normality or equal variances. Supports Bonferroni and Benjamini-Hochberg FDR correction.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "log_resource_usage": {
+    "domain": "core",
+    "tags": [
+      "diagnostic",
+      "runtime",
+      "logging"
+    ],
+    "stage": "any",
+    "runtime_estimate": "fast",
+    "profiling_depth": "full",
+    "summary": "Summarizes overall runtime and per-task execution totals.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "mann_whitney_u": {
+    "domain": "core",
+    "tags": [
+      "mann_whitney",
+      "statistics",
+      "relationships",
+      "non_parametric"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Non-parametric pairwise comparison of a continuous column across exactly two category levels. Supports Bonferroni and Benjamini-Hochberg FDR multiple testing correction across all level pairs tested.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "missingness_heatmap": {
+    "domain": "core",
+    "tags": [
+      "missing",
+      "summary"
+    ],
+    "stage": "report",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Summarizes dataset missingness for downstream centralized visualization.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "missingness_mechanism_analysis": {
+    "domain": "core",
+    "tags": [
+      "missingness",
+      "mcar",
+      "mar",
+      "mnar",
+      "quality"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "moderate",
+    "profiling_depth": "standard",
+    "summary": "Analyses the likely mechanism behind missing values (MCAR/MAR/MNAR). Produces evidence-based assessments with explicit epistemic caveats. Never claims to confirm MNAR (unverifiable) or MAR (not directly testable).",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "ml_readiness_scorer": {
+    "domain": "core",
+    "tags": [
+      "ml_readiness",
+      "scoring",
+      "summary",
+      "meta"
+    ],
+    "stage": "report",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Aggregates ML-phase guidance blurbs from all EDA tasks into five preparation-focused dimensions: Transformations, Encoding, Missingness, Leakage Risk, and Unusable Features. Each dimension gets a proportional traffic-light level. An overall gate (ready / needs_work / not_ready) is derived from the dimension levels.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "normality_qq_plots": {
+    "domain": "core",
+    "tags": [
+      "distribution",
+      "normality",
+      "visualization",
+      "numeric"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes theoretical vs empirical quantile pairs for normal QQ plots. Prioritises columns that rejected normality in normality_tests. Output feeds the frontend QQ plot renderer.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "normality_tests": {
+    "domain": "core",
+    "tags": [
+      "distribution",
+      "normality",
+      "statistics",
+      "numeric"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Tests each continuous column for normality using Shapiro-Wilk (n \u2264 5000), Kolmogorov-Smirnov (n > 5000), and Jarque-Bera (all n). Emits guidance for columns that reject normality.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "sample_head": {
+    "domain": "core",
+    "tags": [
+      "preview"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Returns the first N rows of the dataset.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "sample_size_adequacy": {
+    "domain": "core",
+    "tags": [
+      "sample_size",
+      "ml_readiness",
+      "overview"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Evaluates whether the dataset has enough rows for the number of features and common modeling approaches. Applies rule-of-thumb thresholds for linear models, tree-based models, and general ML train/val/test splits.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "sample_tail": {
+    "domain": "core",
+    "tags": [
+      "preview"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Returns the last N rows of the dataset.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "schema_validation": {
+    "domain": "core",
+    "tags": [
+      "validation",
+      "schema",
+      "contract",
+      "power_user"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "full",
+    "summary": "Validates dataset against a declared schema: required columns, types, ranges, and categories.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "suggest_categorical_encoding": {
+    "domain": "core",
+    "tags": [
+      "categorical",
+      "encoding",
+      "ml_readiness"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Recommends encoding strategies (e.g., one-hot, frequency, target) based on column cardinality and optional target correlation.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "suggest_dtype_optimizations": {
+    "domain": "core",
+    "tags": [
+      "memory",
+      "dtype",
+      "optimization",
+      "overview"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Recommends dtype downcasts that reduce memory usage without losing information: int64\u2192int8/16/32, float64\u2192float32, object\u2192category, int\u2192bool. Reads infer_types and summarize_dataset_shape outputs.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "suggest_numerical_binning": {
+    "domain": "core",
+    "tags": [
+      "numeric",
+      "transformation",
+      "ml_readiness"
+    ],
+    "stage": "modeling",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Suggests binning or log-transform strategies for numeric features with skewed or nonlinear distributions.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_boolean_fields": {
+    "domain": "core",
+    "tags": [
+      "boolean",
+      "summary"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Summarizes frequency and distribution of boolean columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_dataset_shape": {
+    "domain": "core",
+    "tags": [
+      "overview",
+      "summary"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Summarizes dataset dimensions, memory usage, and per-column memory breakdown.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_modes": {
+    "domain": "core",
+    "tags": [
+      "modes",
+      "summary"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Finds most frequent values per column.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_nulls": {
+    "domain": "core",
+    "tags": [
+      "nulls",
+      "missing"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Reports null value counts per column.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_numeric": {
+    "domain": "core",
+    "tags": [
+      "numeric",
+      "summary"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Computes basic stats (mean, std, min, max, etc.) for numeric columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_text_fields": {
+    "domain": "core",
+    "tags": [
+      "text",
+      "summary"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Summarizes content of text columns (length, frequency, symbols, etc.).",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_unique": {
+    "domain": "core",
+    "tags": [
+      "uniqueness",
+      "summary"
+    ],
+    "stage": "raw",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Reports unique value counts per column.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "summarize_value_counts": {
+    "domain": "core",
+    "tags": [
+      "categorical",
+      "summary"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Lists value frequencies for selected columns.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "temporal_gap_detection": {
+    "domain": "core",
+    "tags": [
+      "datetime",
+      "gaps",
+      "time_series",
+      "quality"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Identifies missing time steps and irregular gaps in datetime columns. Flags periods where the interval between consecutive timestamps substantially exceeds the dominant (most common) gap.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "transformation_preview": {
+    "domain": "core",
+    "tags": [
+      "transformation",
+      "distribution",
+      "numeric",
+      "preview"
+    ],
+    "stage": "cleaned",
+    "runtime_estimate": "fast",
+    "profiling_depth": "standard",
+    "summary": "Computes before/after distribution statistics for recommended numeric transforms (log1p, sqrt, square, Yeo-Johnson). Lets the user evaluate transform effectiveness without applying them manually.",
+    "ml_impact_score": null,
+    "experimental": false
+  },
+  "validate_plugin_coverage": {
+    "domain": "core",
+    "tags": [
+      "plugin",
+      "diagnostic",
+      "core"
+    ],
+    "stage": "any",
+    "runtime_estimate": "fast",
+    "profiling_depth": "basic",
+    "summary": "Checks that all loaded plugin files registered at least one task.",
+    "ml_impact_score": null,
+    "experimental": false
+  }
+}
