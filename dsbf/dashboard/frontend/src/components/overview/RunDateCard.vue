@@ -53,7 +53,7 @@ const items = computed(() => {
 }
 
 .es-not-run {
-  color: #475569;
+  color: #64748b;
   font-size: 13px;
   padding: 20px 0;
   text-align: center;

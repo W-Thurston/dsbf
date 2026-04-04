@@ -263,11 +263,11 @@ const filteredGroups = computed(() => {
 .intent-boolean     { background: #2d1b4e; color: #c084fc; border-color: #c084fc; }
 .intent-datetime    { background: #3d2510; color: #fb923c; border-color: #fb923c; }
 .intent-text        { background: #3d0f29; color: #f472b6; border-color: #f472b6; }
-.intent-unknown     { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.intent-unknown     { background: #1e293b; color: #94a3b8; border-color: #64748b; }
 
 .group-count {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
 }
 
 .col-row {
@@ -351,6 +351,7 @@ const filteredGroups = computed(() => {
   flex-shrink: 0;
 }
 .null-bar {
+  display: block;
   height: 100%;
   background: #f87171;
   border-radius: 2px;
@@ -358,7 +359,7 @@ const filteredGroups = computed(() => {
 }
 
 .no-cols {
-  color: #475569;
+  color: #64748b;
   font-size: 12px;
   padding: 16px 8px;
   text-align: center;

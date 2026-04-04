@@ -199,7 +199,7 @@ const tabRelevance = {
 
 .dh-na {
   font-size: 13px;
-  color: #475569;
+  color: #64748b;
 }
 
 /* ── Individual indicator ──────────────────────────────────────────────────── */

@@ -44,7 +44,7 @@
 }
 
 .breadcrumb a { color: #60a5fa; }
-.breadcrumb .sep { color: #475569; }
+.breadcrumb .sep { color: #64748b; }
 
 main {
   padding: 24px;
@@ -89,7 +89,7 @@ main {
 .badge-green  { background: #14291f; color: #4ade80; border: 1px solid #4ade80; }
 .badge-orange { background: #3d2510; color: #fb923c; border: 1px solid #fb923c; }
 .badge-red    { background: #3d0f0f; color: #f87171; border: 1px solid #f87171; }
-.badge-gray   { background: #1e293b; color: #94a3b8; border: 1px solid #475569; }
+.badge-gray   { background: #1e293b; color: #94a3b8; border: 1px solid #64748b; }
 
 .loading {
   color: #94a3b8;
@@ -211,16 +211,16 @@ body.theme-light .stat-label                  { color: #94a3b8; }
 body.theme-light .stat-value                  { color: #1e293b; }
 body.theme-light .stat-warn-high .stat-value  { color: #dc2626; }
 body.theme-light .stat-warn-mid  .stat-value  { color: #ea580c; }
-body.theme-light .insight-body                { color: #475569; }
+body.theme-light .insight-body                { color: #64748b; }
 body.theme-light .action-chip                 { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
 body.theme-light .pct-table th                { color: #94a3b8; border-bottom-color: #e2e8f0; }
-body.theme-light .pct-table td                { color: #475569; }
+body.theme-light .pct-table td                { color: #64748b; }
 body.theme-light .pct-median                  { color: #2563eb !important; }
 body.theme-light .vc-table th                 { color: #94a3b8; border-bottom-color: #e2e8f0; }
 body.theme-light .vc-table td                 { border-bottom-color: #f1f5f9; }
 body.theme-light .vc-table tr:hover td        { background: #f1f5f9; }
 body.theme-light .val-cell                    { color: #1e293b !important; }
-body.theme-light .num-cell                    { color: #475569; }
+body.theme-light .num-cell                    { color: #64748b; }
 body.theme-light .bar-track                   { background: #e2e8f0; }
 body.theme-light .truncated-note              { color: #94a3b8; }
 body.theme-light .empty-state                 { color: #94a3b8; }

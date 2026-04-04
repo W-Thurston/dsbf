@@ -31,7 +31,7 @@ const directionClass = computed(() => `tip-${props.direction}`)
 
 .tip-icon {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   cursor: default;
   line-height: 1;
   transition: color 0.15s;

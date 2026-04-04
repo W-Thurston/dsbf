@@ -174,7 +174,7 @@ function propClass(prop) { return prop == null ? '' : prop >= 0.9 ? 'warn-high' 
   padding: 32px 0;
   text-align: center;
 }
-.es-not-run { color: #475569; }
+.es-not-run { color: #64748b; }
 .es-empty   { color: #4ade80; }
 
 .card-header {
@@ -269,7 +269,7 @@ td.col-frozen { background: #1e293b; border-right: 1px solid #334155; }
 .intent-boolean     { background: #2d1b4e; color: #c084fc; border-color: #c084fc; }
 .intent-datetime    { background: #3d2510; color: #fb923c; border-color: #fb923c; }
 .intent-text        { background: #3d0f29; color: #f472b6; border-color: #f472b6; }
-.intent-unknown     { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.intent-unknown     { background: #1e293b; color: #94a3b8; border-color: #64748b; }
 
 .warn-high { color: #f87171; font-weight: 600; }
 .warn-mid  { color: #fb923c; }

@@ -131,7 +131,7 @@ const lineageItems = computed(() => {
 .lineage-card { height: 100%; }
 
 .es-not-run {
-  color: #475569;
+  color: #64748b;
   font-size: 13px;
   padding: 20px 0;
   text-align: center;
@@ -139,7 +139,7 @@ const lineageItems = computed(() => {
 
 .lineage-note {
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
   background: #0f172a;
   border: 1px solid #1e293b;
   border-radius: 6px;

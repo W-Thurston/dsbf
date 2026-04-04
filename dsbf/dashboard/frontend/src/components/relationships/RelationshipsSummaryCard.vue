@@ -308,7 +308,7 @@ const hasAnyData = computed(() => hasPairwise.value || hasWarnings.value)
 /* ── Skipped note ─────────────────────────────────────────────────────────── */
 .skipped-note {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   padding-top: 4px;
   border-top: 1px solid #1e293b;
   line-height: 1.5;

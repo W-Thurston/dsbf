@@ -229,7 +229,7 @@ watch(primaryColumn, col => { if (col) loadAssociations(col) })
 .intent-boolean      { background: #2d1b4e; color: #c084fc; border-color: #c084fc; }
 .intent-datetime     { background: #3d2510; color: #fb923c; border-color: #fb923c; }
 .intent-text         { background: #3d0f29; color: #f472b6; border-color: #f472b6; }
-.intent-unknown      { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.intent-unknown      { background: #1e293b; color: #94a3b8; border-color: #64748b; }
 
 /* ── Associations card ───────────────────────────────────────────────────── */
 .assoc-panel { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -239,7 +239,7 @@ watch(primaryColumn, col => { if (col) loadAssociations(col) })
   align-items: center;
   justify-content: space-between;
 }
-.pair-count { font-size: 12px; color: #475569; }
+.pair-count { font-size: 12px; color: #64748b; }
 
 .assoc-scroll {
   max-height: 340px;
@@ -266,7 +266,7 @@ watch(primaryColumn, col => { if (col) loadAssociations(col) })
   border-top: 1px solid #334155;
 }
 .pair-label { font-size: 16px; font-weight: 700; color: #93c5fd; font-family: monospace; }
-.pair-sep   { font-size: 16px; color: #475569; }
+.pair-sep   { font-size: 16px; color: #64748b; }
 
 /* ── Misc ────────────────────────────────────────────────────────────────── */
 .select-prompt {

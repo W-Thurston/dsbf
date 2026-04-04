@@ -155,7 +155,7 @@ function highlight(text, q) {
 }
 
 .search-input:focus { border-color: #60a5fa; }
-.search-input::placeholder { color: #475569; }
+.search-input::placeholder { color: #64748b; }
 
 .search-clear {
   position: absolute;
@@ -217,7 +217,7 @@ function highlight(text, q) {
 .result-count {
   margin-top: 12px;
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
   text-align: right;
 }
 

@@ -59,7 +59,7 @@
           </div>
           <div class="ml-stat">
             <div class="ml-stat-value ml-text--error">{{ errorDimCount }}</div>
-            <div class="ml-stat-label">Dimensions to review</div>
+            <div class="ml-stat-label">Dimensions blocking</div>
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@
             <span>{{ dim.label }}</span>
             <span class="ml-section-count" :class="`ml-text--${dim.level}`">
               {{ dim.affectedCount === 0
-                ? 'Nothing to prepare'
+                ? 'No issues'
                 : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` +
                   (dim.findings.length !== dim.affectedCount
                     ? ` · ${dim.findings.length} finding${dim.findings.length === 1 ? '' : 's'}`
@@ -326,15 +326,15 @@ const GATE_COLOR = { ready: 'good', needs_work: 'warn', not_ready: 'error' }
 const gateColor = computed(() => GATE_COLOR[data.value.readiness_gate] ?? 'warn')
 
 const gateLabel = computed(() => ({
-  ready:      '✓  Looking Good for Modeling',
+  ready:      '✓  Ready for Modeling',
   needs_work: '⚠  Needs Work Before Modeling',
-  not_ready:  '⚠  Some Preparation Recommended',
+  not_ready:  '✕  Not Ready for Modeling',
 }[data.value.readiness_gate] ?? '-'))
 
 const gateDescription = computed(() => ({
-  ready:      'No preparation steps identified across any dimension. Good to proceed.',
-  needs_work: 'A few things to consider across one or more dimensions. Addressing these may improve model reliability.',
-  not_ready:  'Several columns may need attention before modeling. Review the findings below and decide what applies to your use case.',
+  ready:      'No blocking ML issues detected across any preparation dimension.',
+  needs_work: 'Warnings present in one or more dimensions. Addressing highlighted columns may improve model performance.',
+  not_ready:  'Error-level issues present. These must be resolved before reliable modeling is possible.',
 }[data.value.readiness_gate] ?? ''))
 
 const errorDimCount = computed(() =>
@@ -572,7 +572,7 @@ function scrollTo(key) {
 }
 
 /* ── Section ───────────────────────────────────────────────────────────────── */
-.ml-section { padding: 0; overflow: hidden; }
+.ml-section { padding: 0; overflow: visible; }
 
 .ml-section-header {
   display: flex;
@@ -596,7 +596,7 @@ function scrollTo(key) {
 .ml-section-count { font-size: 12px; font-weight: 500; }
 
 .ml-section-controls { display: flex; align-items: center; gap: 6px; }
-.ml-sort-label { font-size: 11px; color: #475569; }
+.ml-sort-label { font-size: 11px; color: #64748b; }
 .ml-sort-btn {
   padding: 3px 10px;
   font-size: 11px;
@@ -620,7 +620,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.12s;
   margin-left: 4px;
@@ -645,7 +645,7 @@ function scrollTo(key) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #475569;
+  color: #64748b;
   border-bottom: 1px solid #334155;
   position: sticky;
   top: 0;
@@ -740,7 +740,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.12s;
 }
@@ -749,7 +749,7 @@ function scrollTo(key) {
 
 .ml-expand-hint {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   text-align: center;
   transition: color 0.1s;
   align-self: center;
@@ -766,7 +766,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.12s;

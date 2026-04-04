@@ -31,6 +31,11 @@
       <div v-if="truncated" class="truncated-note">
         Showing top {{ maxRows }} of {{ totalUnique?.toLocaleString() }} values.
       </div>
+
+      <div v-if="dominanceNote" class="dominant-note">
+        <span class="dominant-icon">ℹ</span>
+        {{ dominanceNote }}
+      </div>
     </div>
   </div>
 </template>
@@ -47,13 +52,28 @@ const props = defineProps({
 
 const totalUnique = computed(() => props.tasks.summarize_unique?.data?.[props.column] ?? null)
 
+const dominanceNote = computed(() => {
+  const dom = props.tasks.detect_single_dominant_value?.data?.[props.column]
+  if (!dom) return null
+  const level = dom.dominance_level
+  const pct   = dom.mode_proportion != null ? (dom.mode_proportion * 100).toFixed(1) : null
+  const mode  = dom.mode != null ? String(dom.mode) : null
+  if (level === 'high' && pct && mode) {
+    return `"${mode}" accounts for ${pct}% of all values. This column is near-constant and may provide limited signal for analysis or modelling.`
+  }
+  if (level === 'medium' && pct && mode) {
+    return `"${mode}" is the dominant value at ${pct}% of rows. Consider whether this reflects genuine data or a data collection artefact.`
+  }
+  return null
+})
+
 const rows = computed(() => {
   const vc = props.tasks.summarize_value_counts?.data?.[props.column]
   if (!vc || typeof vc !== 'object') return []
 
   const entries = Object.entries(vc)
     .filter(([, v]) => typeof v === 'number')
-    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    .sort((a, b) => b[1] - a[1])  // count descending - most common first
 
   const total   = entries.reduce((s, [, n]) => s + n, 0)
   const topN    = entries.slice(0, props.maxRows)
@@ -74,7 +94,7 @@ const truncated = computed(() =>
 
 <style scoped>
 .context-card { overflow: hidden; }
-.no-data { color: #475569; font-size: 13px; padding: 12px 0; }
+.no-data { color: #64748b; font-size: 13px; padding: 12px 0; }
 
 .vc-wrap { overflow-x: auto; }
 
@@ -88,7 +108,7 @@ const truncated = computed(() =>
 .vc-table th {
   padding: 6px 10px;
   font-size: 10px;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   border-bottom: 1px solid #1e293b;
@@ -132,7 +152,22 @@ const truncated = computed(() =>
 .truncated-note {
   margin-top: 8px;
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   text-align: right;
 }
+
+.dominant-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+.dominant-icon { flex-shrink: 0; color: #60a5fa; font-size: 13px; }
 </style>

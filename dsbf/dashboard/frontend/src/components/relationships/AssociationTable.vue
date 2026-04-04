@@ -194,7 +194,7 @@ function metricClass(val, type) {
   color: #e2e8f0; font-size: 13px; outline: none;
 }
 .search-input:focus { border-color: #60a5fa; }
-.search-input::placeholder { color: #475569; }
+.search-input::placeholder { color: #64748b; }
 .search-clear {
   position: absolute; right: 7px; background: none; border: none;
   color: #64748b; cursor: pointer; font-size: 11px; padding: 2px;
@@ -239,7 +239,7 @@ function metricClass(val, type) {
 
 /* Metric cell */
 .metric-cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.metric-type-label { font-size: 10px; color: #475569; min-width: 80px; }
+.metric-type-label { font-size: 10px; color: #64748b; min-width: 80px; }
 .metric-val { font-size: 13px; font-weight: 700; color: #94a3b8; font-family: monospace; }
 .metric-strong   { color: #4ade80; }
 .metric-moderate { color: #fb923c; }
@@ -253,8 +253,8 @@ function metricClass(val, type) {
 .str-strong    { background: #14291a; color: #4ade80; }
 .str-moderate  { background: #2e1f0a; color: #fb923c; }
 .str-weak      { background: #1e2a3a; color: #60a5fa; }
-.str-negligible{ background: #1e293b; color: #475569; }
+.str-negligible{ background: #1e293b; color: #64748b; }
 
-.empty { color: #475569; font-size: 13px; padding: 24px 0; text-align: center; }
-.result-count { font-size: 11px; color: #475569; text-align: right; }
+.empty { color: #64748b; font-size: 13px; padding: 24px 0; text-align: center; }
+.result-count { font-size: 11px; color: #64748b; text-align: right; }
 </style>

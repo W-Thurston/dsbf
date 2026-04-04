@@ -255,7 +255,7 @@ function confidenceClass(confidence) {
 </script>
 
 <style scoped>
-.mm-card { padding: 0; overflow: hidden; }
+.mm-card { padding: 0; overflow: visible; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .mm-header {
@@ -299,7 +299,7 @@ function confidenceClass(confidence) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.12s;
@@ -316,9 +316,9 @@ function confidenceClass(confidence) {
 }
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
-.es-not-run { color: #475569; font-size: 13px; padding: 16px 0; text-align: center; }
+.es-not-run { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
-.mm-empty-note { font-size: 11px; color: #475569; }
+.mm-empty-note { font-size: 11px; color: #64748b; }
 .es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
 
 /* ── Epistemic banner ────────────────────────────────────────────────────── */
@@ -382,13 +382,13 @@ function confidenceClass(confidence) {
 }
 .mm-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
 .mm-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
-.mm-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.mm-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #64748b; }
 
 .mm-confidence { font-size: 11px; }
 .mm-conf--amber { color: #fbbf24; }
-.mm-conf--gray  { color: #475569; }
+.mm-conf--gray  { color: #64748b; }
 
-.mm-col-toggle { font-size: 11px; color: #475569; margin-left: auto; }
+.mm-col-toggle { font-size: 11px; color: #64748b; margin-left: auto; }
 
 /* ── Column detail ───────────────────────────────────────────────────────── */
 .mm-col-detail {
@@ -406,7 +406,7 @@ function confidenceClass(confidence) {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #475569;
+  color: #64748b;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -461,7 +461,7 @@ function confidenceClass(confidence) {
 .mm-corr-val  { font-size: 11px; font-weight: 600; }
 .val-pos { color: #60a5fa; }
 .val-neg { color: #f472b6; }
-.mm-corr-p        { font-size: 11px; color: #475569; }
+.mm-corr-p        { font-size: 11px; color: #64748b; }
 .mm-corr-strength { font-size: 10px; color: #334155; text-transform: capitalize; }
 
 /* ── Caveats ─────────────────────────────────────────────────────────────── */
@@ -497,7 +497,7 @@ function confidenceClass(confidence) {
 :global(.theme-light) .mm-col-header:hover { background: rgba(0,0,0,0.02); }
 :global(.theme-light) .mm-col-detail     { border-top-color: #e2e8f0; }
 :global(.theme-light) .mm-col-name       { color: #2563eb; }
-:global(.theme-light) .mm-evidence-item  { color: #475569; }
+:global(.theme-light) .mm-evidence-item  { color: #64748b; }
 :global(.theme-light) .mm-caveat-item    { color: #64748b; }
 :global(.theme-light) .mm-caveats        { background: #fefce8; border: 1px solid #fde68a; }
 :global(.theme-light) .mm-caveats-label  { color: #d97706; }

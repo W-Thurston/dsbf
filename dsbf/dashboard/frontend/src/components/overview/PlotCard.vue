@@ -227,7 +227,7 @@ onBeforeUnmount(() => {
 }
 
 .no-figure-icon { font-size: 24px; opacity: 0.4; }
-.no-figure-hint { font-size: 11px; color: #475569; }
+.no-figure-hint { font-size: 11px; color: #64748b; }
 
 .plot-error {
   color: #f87171;

@@ -16,12 +16,13 @@
       <span>{{ unavailableReason }}</span>
     </div>
 
-    <div v-else-if="!rows.length" class="corr-empty">
-      No correlations above threshold for this column.
+    <!-- No data at all for this column -->
+    <div v-else-if="!allCorrelations.length" class="corr-empty">
+      No correlations above the minimum threshold for this column.
     </div>
 
+    <!-- Data exists - always show filters, handle filtered-empty inside -->
     <div v-else class="corr-body">
-      <!-- Strength filter -->
       <div class="corr-filters">
         <button
           v-for="f in filters"
@@ -32,7 +33,12 @@
         >{{ f.label }}</button>
       </div>
 
-      <div class="corr-list">
+      <div v-if="!rows.length" class="corr-empty corr-empty--filtered">
+        No correlations at this strength for {{ column }}.
+        <button class="reset-filter-btn" @click="activeFilter = 'all'">Show all</button>
+      </div>
+
+      <div v-else class="corr-list">
         <div
           v-for="row in visibleRows"
           :key="row.column"
@@ -74,6 +80,17 @@
           {{ showAll ? 'Show fewer' : 'Show all' }}
         </button>
       </div>
+
+      <!-- Leakage threshold note -->
+      <div v-if="leakagePairs.length" class="corr-leakage-note">
+        <span class="corr-leakage-icon">⚠</span>
+        <span>
+          <strong>{{ leakagePairs.map(p => p.other).join(', ') }}</strong>
+          {{ leakagePairs.length === 1 ? 'exceeds' : 'exceed' }} the leakage
+          threshold (r ≥ {{ leakageThreshold }}) - these columns may encode
+          the same information. Reviewed on the Quality tab under Leakage.
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -86,6 +103,7 @@ import { getColumnCorrelations } from '../../api.js'
 const props = defineProps({
   runKey: { type: String, required: true },
   column: { type: String, required: true },
+  tasks:  { type: Object, default: () => ({}) },
 })
 
 defineEmits(['selectColumn'])
@@ -142,6 +160,16 @@ const visibleRows  = computed(() =>
   truncated.value ? rows.value.slice(0, DEFAULT_MAX) : rows.value
 )
 
+const leakageThreshold = computed(() =>
+  props.tasks?.detect_data_leakage?.metadata?.correlation_threshold ?? 0.99
+)
+
+const leakagePairs = computed(() =>
+  allCorrelations.value
+    .filter(r => Math.abs(r.correlation) >= leakageThreshold.value)
+    .map(r => ({ other: r.column, correlation: r.correlation }))
+)
+
 function strengthClass(val) {
   const abs = Math.abs(val)
   if (abs >= 0.9) return 'strength-critical'
@@ -167,17 +195,36 @@ function valueClass(val) {
 .corr-loading,
 .corr-empty {
   font-size: 13px;
-  color: #475569;
+  color: #64748b;
   padding: 20px 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
+
+.corr-empty--filtered {
+  padding: 16px 0;
+}
+
+.reset-filter-btn {
+  font-size: 11px;
+  color: #60a5fa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.reset-filter-btn:hover { color: #93c5fd; }
 
 .corr-unavailable {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
   padding: 12px 0;
   line-height: 1.5;
 }
@@ -278,9 +325,23 @@ function valueClass(val) {
   transition: width 0.3s;
 }
 
-/* Strength row tinting */
-.strength-critical { background: rgba(248, 113, 113, 0.05); }
-.strength-critical:hover { background: rgba(248, 113, 113, 0.12) !important; }
+/* Strength colours apply to value text only, not row backgrounds */
+
+.corr-leakage-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #3d2a00;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fde68a;
+  line-height: 1.5;
+}
+.corr-leakage-icon { flex-shrink: 0; font-size: 13px; }
+.corr-leakage-note strong { color: #fff; }
 
 .corr-value {
   font-size: 11px;
@@ -299,7 +360,7 @@ function valueClass(val) {
 .corr-truncated {
   margin-top: 10px;
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: space-between;

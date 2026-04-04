@@ -52,7 +52,7 @@ const plotTypeLabel = computed(() => {
 // ── Theme colours ─────────────────────────────────────────────────────────────
 const colours = computed(() => props.theme === 'dark'
   ? { bg: '#0f172a', paper: '#1e293b', text: '#e2e8f0', grid: '#334155',
-      scatter: '#60a5fa', line: '#f97316', zero: '#475569' }
+      scatter: '#60a5fa', line: '#f97316', zero: '#64748b' }
   : { bg: '#f8fafc', paper: '#ffffff', text: '#1e293b', grid: '#e2e8f0',
       scatter: '#2563eb', line: '#ea580c', zero: '#94a3b8' }
 )
@@ -226,8 +226,8 @@ watch(() => [props.colA, props.colB, props.runKey, props.theme], render)
 .plot-area { width: 100%; height: 360px; }
 .plot-loading, .plot-empty, .plot-error {
   height: 360px; display: flex; align-items: center; justify-content: center;
-  color: #475569; font-size: 13px;
+  color: #64748b; font-size: 13px;
 }
 .plot-error { color: #f87171; }
-.sample-note { font-size: 11px; color: #475569; text-align: right; margin-top: 6px; }
+.sample-note { font-size: 11px; color: #64748b; text-align: right; margin-top: 6px; }
 </style>

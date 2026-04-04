@@ -194,18 +194,18 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   user-select: none;
 }
 
-.null-cell { color: #475569 !important; font-style: italic; }
+.null-cell { color: #64748b !important; font-style: italic; }
 
 .loading { color: #94a3b8; font-size: 13px; padding: 24px 0; text-align: center; }
 .sample-error { color: #f87171; font-size: 13px; padding: 16px 0; }
 
-.muted { color: #475569; }
+.muted { color: #64748b; }
 
 .sample-unavailable {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #475569;
+  color: #64748b;
   font-size: 13px;
   padding: 24px 0;
   text-align: center;

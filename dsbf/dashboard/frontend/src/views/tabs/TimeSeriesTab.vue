@@ -506,7 +506,7 @@ function strengthClass(v) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #475569;
+  color: #64748b;
 }
 .ts-inst-optional { margin-top: 8px; }
 
@@ -527,7 +527,7 @@ function strengthClass(v) {
 
 .ts-disabled-note {
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
   line-height: 1.5;
 }
 .ts-disabled-note strong { color: #94a3b8; }
@@ -566,7 +566,7 @@ function strengthClass(v) {
 }
 
 /* ── Section cards ───────────────────────────────────────────────────────── */
-.ts-section { padding: 0; overflow: hidden; }
+.ts-section { padding: 0; overflow: visible; }
 
 .ts-section-header {
   display: flex;
@@ -590,7 +590,7 @@ function strengthClass(v) {
 .ts-section-subtitle {
   font-size: 11px;
   font-weight: 400;
-  color: #475569;
+  color: #64748b;
 }
 
 .ts-collapse-btn {
@@ -599,7 +599,7 @@ function strengthClass(v) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.12s;
 }
@@ -615,9 +615,9 @@ function strengthClass(v) {
 }
 
 /* ── Empty / error states ────────────────────────────────────────────────── */
-.es-not-run { color: #475569; font-size: 13px; padding: 16px 0; text-align: center; }
+.es-not-run { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
-.ts-empty-hint { font-size: 11px; color: #475569; }
+.ts-empty-hint { font-size: 11px; color: #64748b; }
 .ts-empty-hint code { color: #93c5fd; font-size: 11px; }
 .es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
 
@@ -653,7 +653,7 @@ function strengthClass(v) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #475569;
+  color: #64748b;
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
 }
@@ -689,7 +689,7 @@ function strengthClass(v) {
 .ts-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
 .ts-badge--red   { background: #3d0f0f; color: #f87171; border-color: #f87171; }
 .ts-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
-.ts-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.ts-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #64748b; }
 
 /* ── Epistemic note ──────────────────────────────────────────────────────── */
 .ts-epistemic-note {
@@ -708,7 +708,7 @@ function strengthClass(v) {
 /* ── Caveats ─────────────────────────────────────────────────────────────── */
 .ts-caveats-toggle {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   user-select: none;
   padding: 4px 0;

@@ -139,5 +139,5 @@ watch(() => props.runKey, (key) => { if (key) loadRun(key) })
 .theme-btn.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
 
 .tab-content { min-height: 200px; }
-.placeholder { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
+.placeholder { color: #64748b; font-size: 14px; padding: 40px 0; text-align: center; }
 </style>

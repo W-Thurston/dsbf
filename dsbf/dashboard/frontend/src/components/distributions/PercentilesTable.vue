@@ -81,7 +81,7 @@ const outlierNote = computed(() => {
   padding: 6px 10px;
   text-align: center;
   font-size: 10px;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   border-bottom: 1px solid #1e293b;
@@ -101,11 +101,11 @@ const outlierNote = computed(() => {
 .outlier-note {
   margin-top: 10px;
   padding: 8px 10px;
-  background: #3d2510;
-  border: 1px solid #fb923c;
+  background: #3d2a00;
+  border: 1px solid #fbbf24;
   border-radius: 6px;
   font-size: 12px;
-  color: #fed7aa;
+  color: #fde68a;
   display: flex;
   gap: 6px;
   align-items: flex-start;

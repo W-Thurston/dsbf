@@ -742,7 +742,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   font-size: 12px;
   padding: 0;
@@ -755,7 +755,7 @@ function scrollTo(key) {
 /* ── Expand hint ───────────────────────────────────────────────────────────── */
 .qt-expand-hint {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   text-align: center;
   transition: color 0.1s;
 }
@@ -831,7 +831,7 @@ function scrollTo(key) {
 
 .qt-blurb-fallback {
   font-size: 12px;
-  color: #475569;
+  color: #64748b;
   font-style: italic;
 }
 
@@ -926,7 +926,7 @@ function scrollTo(key) {
 }
 .qt-sc-pct {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
 }
 .qt-sc-preview {
   display: flex;
@@ -947,7 +947,7 @@ function scrollTo(key) {
   max-width: 120px;
 }
 .qt-sc-chip--more {
-  color: #475569;
+  color: #64748b;
   border-style: dashed;
 }
 
@@ -969,7 +969,7 @@ function scrollTo(key) {
 .qt-text--red   { color: #f87171; }
 
 /* ── Section card ──────────────────────────────────────────────────────────── */
-.qt-section { padding: 0; overflow: hidden; }
+.qt-section { padding: 0; overflow: visible; }
 
 .qt-section-header {
   display: flex;
@@ -1002,7 +1002,7 @@ function scrollTo(key) {
 }
 .qt-sort-label {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
 }
 .qt-sort-btn {
   padding: 3px 10px;
@@ -1027,7 +1027,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.12s;
   margin-left: 4px;
@@ -1069,7 +1069,7 @@ function scrollTo(key) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #475569;
+  color: #64748b;
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
   position: sticky;

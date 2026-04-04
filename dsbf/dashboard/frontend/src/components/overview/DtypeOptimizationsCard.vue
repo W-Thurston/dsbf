@@ -168,7 +168,7 @@ function formatSaving(bytes) {
 </script>
 
 <style scoped>
-.dtype-card { padding: 0; overflow: hidden; }
+.dtype-card { padding: 0; overflow: visible; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .dtype-header {
@@ -218,7 +218,7 @@ function formatSaving(bytes) {
 
 .dtype-note {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   font-style: italic;
 }
 
@@ -228,7 +228,7 @@ function formatSaving(bytes) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.12s;
 }
@@ -285,7 +285,7 @@ function formatSaving(bytes) {
   color: #93c5fd;
 }
 .dtype-current   { color: #94a3b8; font-family: monospace; font-size: 12px; }
-.dtype-arrow     { color: #475569; text-align: center; flex-shrink: 0; }
+.dtype-arrow     { color: #64748b; text-align: center; flex-shrink: 0; }
 .dtype-suggested { color: #4ade80; font-family: monospace; font-size: 12px; font-weight: 600; }
 .dtype-reason    { color: #64748b; font-size: 12px; }
 .dtype-saving    { color: #fbbf24; font-size: 12px; font-weight: 600; text-align: right; }

@@ -83,7 +83,7 @@ const items = computed(() => {
 
 .tl-label {
   font-size: 10px;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   white-space: nowrap;

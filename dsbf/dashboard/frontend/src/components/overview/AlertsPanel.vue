@@ -178,7 +178,7 @@ const filteredAlerts = computed(() => {
 
 .filter-label {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   min-width: 52px;
@@ -195,7 +195,7 @@ const filteredAlerts = computed(() => {
   cursor: pointer;
   border: 1px solid transparent;
   background: #0f172a;
-  color: #475569;
+  color: #64748b;
   transition: all 0.15s;
 }
 
@@ -207,7 +207,7 @@ const filteredAlerts = computed(() => {
 
 /* ── Alerts list ─────────────────────────────────────────────────────────── */
 .no-alerts   { color: #4ade80; font-size: 13px; padding: 8px 0; }
-.es-not-run  { color: #475569; font-size: 13px; padding: 24px 0; text-align: center; }
+.es-not-run  { color: #64748b; font-size: 13px; padding: 24px 0; text-align: center; }
 .alerts-list {
   display: flex;
   flex-direction: column;

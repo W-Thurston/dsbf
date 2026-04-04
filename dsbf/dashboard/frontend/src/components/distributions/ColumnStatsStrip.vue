@@ -46,6 +46,8 @@ const stats = computed(() => {
   const unique  = props.tasks.summarize_unique?.data?.[col]               ?? null
   const dom     = props.tasks.detect_single_dominant_value?.data?.[col]   ?? {}
   const rowCount = props.tasks.summarize_dataset_shape?.data?.num_rows    ?? null
+  const outlierData = props.tasks.detect_outliers?.data?.[col]            ?? null
+  const kurtData    = props.tasks.compute_kurtosis?.data?.[col]           ?? null
 
   if (intent === 'continuous') {
     const p25 = nm['25%'] ?? null
@@ -53,17 +55,52 @@ const stats = computed(() => {
     const iqr = (p25 != null && p75 != null) ? p75 - p25 : null
     const skewCls = skew == null ? '' : Math.abs(skew) > 2 ? 'stat-warn-high' : Math.abs(skew) > 1 ? 'stat-warn-mid' : ''
     const nullCls = nullPct == null ? '' : nullPct >= 0.2 ? 'stat-warn-high' : nullPct >= 0.05 ? 'stat-warn-mid' : ''
-    return [
+
+    // Outlier consensus badge
+    const consensus     = outlierData?.consensus ?? false
+    const methodsCount  = outlierData?.methods_flagging?.length ?? 0
+    const iqrCount      = outlierData?.iqr?.outlier_count ?? null
+    const outlierLabel  = consensus
+      ? `${methodsCount} method${methodsCount === 1 ? '' : 's'}`
+      : methodsCount > 0 ? `${methodsCount} method${methodsCount === 1 ? '' : 's'}` : null
+    const outlierCls    = consensus ? 'stat-outlier-consensus' : methodsCount > 0 ? 'stat-outlier-weak' : ''
+
+    const items = [
       { label: 'Count',   value: fmtCount(nm.count),  tooltip: 'Number of non-null values.',                                              cls: '' },
-      { label: 'Mean',    value: fmt(nm.mean),         tooltip: 'Arithmetic mean. Sensitive to outliers - compare with median.',           cls: '' },
-      { label: 'Median',  value: fmt(nm['50%']),       tooltip: 'The middle value (50th percentile). More robust to outliers than mean.',  cls: '' },
-      { label: 'Std Dev', value: fmt(nm.std),          tooltip: 'Standard deviation. Measures spread around the mean.',                   cls: '' },
-      { label: 'Min',     value: fmt(nm.min),          tooltip: 'Smallest observed value.',                                               cls: '' },
-      { label: 'Max',     value: fmt(nm.max),          tooltip: 'Largest observed value.',                                                cls: '' },
+      { label: 'Mean',    value: fmt(nm.mean),         tooltip: 'Arithmetic mean. Sensitive to outliers - compare with median.',          cls: '' },
+      { label: 'Median',  value: fmt(nm['50%']),       tooltip: 'The middle value (50th percentile). More robust to outliers than mean.', cls: '' },
+      { label: 'Std Dev', value: fmt(nm.std),          tooltip: 'Standard deviation. Measures spread around the mean.',                  cls: '' },
+      { label: 'Min',     value: fmt(nm.min),          tooltip: 'Smallest observed value.',                                              cls: '' },
+      { label: 'Max',     value: fmt(nm.max),          tooltip: 'Largest observed value.',                                               cls: '' },
       { label: 'Skew',    value: fmt(skew),            tooltip: 'Skewness: 0 = symmetric, >1 = right tail, <-1 = left tail. Values beyond ±2 indicate heavy skew that can affect linear models.', cls: skewCls },
-      { label: 'IQR',     value: fmt(iqr),             tooltip: 'Interquartile range (p75 − p25). A robust measure of spread that ignores outliers.',  cls: '' },
-      { label: 'Null %',  value: fmtPct(nullPct),      tooltip: 'Percentage of rows with a missing value.',                               cls: nullCls },
+      { label: 'IQR',     value: fmt(iqr),             tooltip: 'Interquartile range (p75 − p25). A robust measure of spread that ignores outliers.', cls: '' },
+      { label: 'Null %',  value: fmtPct(nullPct),      tooltip: 'Percentage of rows with a missing value.',                              cls: nullCls },
     ]
+
+    if (outlierLabel) {
+      items.push({
+        label:   'Outliers',
+        value:   outlierLabel,
+        tooltip: consensus
+          ? `Flagged by ${methodsCount} independent methods (consensus). See Outlier Analysis below for the full breakdown.`
+          : `Flagged by ${methodsCount} method${methodsCount === 1 ? '' : 's'} - no cross-method consensus. May be a mild distributional tail rather than true outliers.`,
+        cls: outlierCls,
+      })
+    }
+
+    if (kurtData && kurtData.classification) {
+      const cls =
+        kurtData.classification === 'strongly_leptokurtic' ? 'stat-warn-high' :
+        kurtData.classification === 'mildly_leptokurtic'   ? 'stat-warn-mid'  : ''
+      items.push({
+        label:   'Kurtosis',
+        value:   kurtData.kurtosis != null ? fmt(kurtData.kurtosis) : '-',
+        tooltip: `Tail heaviness: "${kurtData.classification}". Leptokurtic (positive) = heavier tails than normal, more extreme values likely. Platykurtic (negative) = lighter tails, fewer extremes. Mesokurtic ≈ normal.`,
+        cls,
+      })
+    }
+
+    return items
   }
 
   if (intent === 'categorical' || intent === 'text') {
@@ -116,7 +153,7 @@ const stats = computed(() => {
   background: #0f172a;
   border: 1px solid #1e293b;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 16px;
 }
 
@@ -134,7 +171,7 @@ const stats = computed(() => {
 
 .stat-label {
   font-size: 10px;
-  color: #475569;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.4px;
   display: flex;
@@ -152,4 +189,6 @@ const stats = computed(() => {
 
 .stat-warn-high .stat-value { color: #f87171; }
 .stat-warn-mid  .stat-value { color: #fb923c; }
+.stat-outlier-consensus .stat-value { color: #fbbf24; font-weight: 700; }
+.stat-outlier-weak      .stat-value { color: #94a3b8; }
 </style>

@@ -170,7 +170,7 @@ const statusDotClass = computed(() => {
 </script>
 
 <style scoped>
-.fd-card { padding: 0; overflow: hidden; }
+.fd-card { padding: 0; overflow: visible; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .fd-header {
@@ -215,7 +215,7 @@ const statusDotClass = computed(() => {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #475569;
+  color: #64748b;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.12s;
@@ -232,7 +232,7 @@ const statusDotClass = computed(() => {
 }
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
-.es-not-run { color: #475569; font-size: 13px; padding: 16px 0; text-align: center; }
+.es-not-run { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
 
@@ -280,7 +280,7 @@ const statusDotClass = computed(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #475569;
+  color: #64748b;
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
 }
@@ -332,7 +332,7 @@ const statusDotClass = computed(() => {
 
 .fd-truncated {
   font-size: 11px;
-  color: #475569;
+  color: #64748b;
   padding: 10px 0 2px;
   text-align: center;
 }

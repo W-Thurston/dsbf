@@ -61,6 +61,8 @@ function toggle(i) {
  * Collect guidance blurbs for the selected column and phase from ALL tasks.
  * Each upgraded task stores blurbs under task.guidance[column][phase].
  */
+const LEVEL_RANK = { error: 0, warn: 1, info: 2, good: 3 }
+
 const blurbs = computed(() => {
   const col   = props.column
   const phase = props.phase
@@ -71,7 +73,11 @@ const blurbs = computed(() => {
     const phaseBlurbs = colGuidance[phase]
     if (Array.isArray(phaseBlurbs)) out.push(...phaseBlurbs)
   }
-  return out
+  return out.sort((a, b) => {
+    const levelDiff = (LEVEL_RANK[a.level] ?? 99) - (LEVEL_RANK[b.level] ?? 99)
+    if (levelDiff !== 0) return levelDiff
+    return (a.title ?? '').localeCompare(b.title ?? '')
+  })
 })
 
 function levelIcon(level) {
@@ -94,7 +100,7 @@ function formatAction(action) {
 }
 
 .no-guidance {
-  color: #475569;
+  color: #64748b;
   font-size: 13px;
   padding: 4px 0;
 }
@@ -154,7 +160,7 @@ function formatAction(action) {
 .insight-chevron {
   font-size: 16px;
   line-height: 1;
-  color: #475569;
+  color: #64748b;
   display: inline-block;
   transform: rotate(0deg);
   transition: transform 0.18s ease;
