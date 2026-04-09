@@ -23,12 +23,26 @@
 
       <!-- Tab content -->
       <div class="tab-content">
-        <OverviewTab       v-if="activeTab === 'overview'"            :run-key="runKey" :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
-        <DistributionsTab  v-else-if="activeTab === 'distributions'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
-        <RelationshipsTab  v-else-if="activeTab === 'relationships'"  :run="run" :tasks="tasks" :figures="figures" :theme="theme" />
-        <QualityTab        v-else-if="activeTab === 'quality'"        :run-key="runKey" :tasks="tasks" />
-        <TimeSeriesTab     v-else-if="activeTab === 'time_series'"    :tasks="tasks" :theme="theme" />
-        <MlReadinessTab    v-else-if="activeTab === 'ml_readiness'"   :run-key="runKey" />
+        <OverviewTab
+          v-if="activeTab === 'overview'"
+          :run-key="runKey" :run="run" :tasks="tasks" :figures="figures" :theme="theme"
+        />
+        <QualityTab
+          v-else-if="activeTab === 'quality'"
+          :run-key="runKey" :tasks="tasks"
+        />
+        <DistributionsTab
+          v-else-if="activeTab === 'distributions'"
+          :run="run" :tasks="tasks" :figures="figures" :theme="theme"
+        />
+        <RelationshipsTab
+          v-else-if="activeTab === 'relationships'"
+          :run="run" :tasks="tasks" :figures="figures" :theme="theme"
+        />
+        <MlReadinessTab
+          v-else-if="activeTab === 'ml_readiness'"
+          :run-key="runKey" :tasks="tasks"
+        />
         <div v-else class="placeholder">
           {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab - coming soon.
         </div>
@@ -41,11 +55,10 @@
 import { ref, watch, onMounted } from 'vue'
 import { getRun, getRunTasks, getRunFigures } from '../api.js'
 import OverviewTab        from './tabs/OverviewTab.vue'
+import QualityTab         from './tabs/QualityTab.vue'
 import DistributionsTab   from './tabs/DistributionsTab.vue'
 import RelationshipsTab   from './tabs/RelationshipsTab.vue'
-import QualityTab         from './tabs/QualityTab.vue'
-import MlReadinessTab    from './tabs/MlReadinessTab.vue'
-import TimeSeriesTab      from './tabs/TimeSeriesTab.vue'
+import MlReadinessTab     from './tabs/MlReadinessTab.vue'
 import DataHealthBar      from '../components/DataHealthBar.vue'
 
 const props = defineProps({ name: String, runKey: String })
@@ -67,11 +80,10 @@ const tabs = [
   { key: 'quality',       label: 'Quality'       },
   { key: 'distributions', label: 'Distributions' },
   { key: 'relationships', label: 'Relationships' },
-  { key: 'time_series',   label: 'Time Series'   },
   { key: 'ml_readiness',  label: 'ML Readiness'  },
-  { key: 'column_detail', label: 'Column Detail' },
 ]
 const activeTab = ref('overview')
+
 
 async function loadRun(runKey) {
   loading.value = true
@@ -97,7 +109,6 @@ async function loadRun(runKey) {
 
 onMounted(() => loadRun(props.runKey))
 watch(() => props.runKey, (key) => { if (key) loadRun(key) })
-
 </script>
 
 <style scoped>
@@ -139,5 +150,5 @@ watch(() => props.runKey, (key) => { if (key) loadRun(key) })
 .theme-btn.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
 
 .tab-content { min-height: 200px; }
-.placeholder { color: #64748b; font-size: 14px; padding: 40px 0; text-align: center; }
+.placeholder { color: #475569; font-size: 14px; padding: 40px 0; text-align: center; }
 </style>

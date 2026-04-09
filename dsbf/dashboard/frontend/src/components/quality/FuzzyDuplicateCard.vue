@@ -20,6 +20,11 @@
         <span class="fd-title-wrap">
           <span class="fd-status-dot" :class="statusDotClass" />
           <span class="card-title">Fuzzy Duplicate Detection</span>
+          <TooltipIcon
+            text="Identifies row pairs that are nearly identical - sharing most values but differing in a small number of columns. Finds records that may represent the same real-world entity recorded more than once with slight variation, such as typos or formatting differences."
+            direction="down"
+            align="left"
+          />
         </span>
         <span v-if="state === 'ready' || state === 'sampled'" class="fd-subtitle">
           {{ pairCount }} near-duplicate pair{{ pairCount === 1 ? '' : 's' }} found
@@ -112,6 +117,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import TooltipIcon from '../TooltipIcon.vue'
 
 const props = defineProps({
   tasks: { type: Object, default: () => ({}) },
@@ -215,7 +221,7 @@ const statusDotClass = computed(() => {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #64748b;
+  color: #475569;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.12s;
@@ -232,7 +238,7 @@ const statusDotClass = computed(() => {
 }
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
-.es-not-run { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
+.es-not-run { color: #475569; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; }
 .es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
 
@@ -280,7 +286,7 @@ const statusDotClass = computed(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: #475569;
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
 }
@@ -332,7 +338,7 @@ const statusDotClass = computed(() => {
 
 .fd-truncated {
   font-size: 11px;
-  color: #64748b;
+  color: #475569;
   padding: 10px 0 2px;
   text-align: center;
 }

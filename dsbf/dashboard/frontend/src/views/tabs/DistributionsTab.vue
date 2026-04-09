@@ -222,15 +222,16 @@ import PlotCard                   from '../../components/overview/PlotCard.vue'
 import { figureForColumn }        from '../../utils.js'
 
 const props = defineProps({
-  run:     { type: Object, default: null },
-  tasks:   { type: Object, default: () => ({}) },
-  figures: { type: Array,  default: () => [] },
-  theme:   { type: String, default: 'dark' },
+  run:           { type: Object, default: null },
+  tasks:         { type: Object, default: () => ({}) },
+  figures:       { type: Array,  default: () => [] },
+  theme:         { type: String, default: 'dark' },
 })
 
 const selectedColumn = ref(null)
 const activePlotType = ref('histogram')
 const openSections   = ref(new Set())
+
 
 const plotOptions = [
   { key: 'histogram', label: 'Histogram' },

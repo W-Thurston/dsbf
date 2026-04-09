@@ -27,7 +27,7 @@ class DetectNearZeroVariance(BaseTask):
     """
     Flags numeric columns with variance at or below a configurable threshold.
 
-    Near-zero variance features provide almost no discriminative power to any
+    Near-zero variance features provide almost no predictive signal to any
     model. They slow training, inflate feature counts, and can cause numerical
     instability in gradient-based algorithms. This is the continuous analogue of
     ``detect_constant_columns`` - where constant columns have exactly zero
@@ -163,7 +163,7 @@ class DetectNearZeroVariance(BaseTask):
 
         ml_body: str = (
             f"'{col}' has variance {var_str} - effectively constant. Features with "
-            f"near-zero variance provide negligible discriminative signal to any "
+            f"near-zero variance provide negligible predictive signal to any "
             f"model. In gradient-based models they can cause numerical instability. "
             f"In tree-based models they waste a split candidate slot at every node. "
             f"Drop this column before training."

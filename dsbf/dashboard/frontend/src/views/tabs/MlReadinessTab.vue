@@ -112,9 +112,15 @@
           <div class="ml-section-title">
             <span class="ml-dot" :class="`ml-dot--${dim.level}`" />
             <span>{{ dim.label }}</span>
+            <TooltipIcon
+              v-if="DIM_TOOLTIPS[dim.key]"
+              :text="DIM_TOOLTIPS[dim.key]"
+              direction="down"
+              align="left"
+            />
             <span class="ml-section-count" :class="`ml-text--${dim.level}`">
               {{ dim.affectedCount === 0
-                ? 'No issues'
+                ? 'All clear'
                 : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` +
                   (dim.findings.length !== dim.affectedCount
                     ? ` · ${dim.findings.length} finding${dim.findings.length === 1 ? '' : 's'}`
@@ -197,25 +203,102 @@
                         @click.stop
                       >
                         <p class="ml-finding-body">{{ finding.body }}</p>
-                        <div v-if="finding.actions?.length" class="ml-finding-actions">
+
+                        <!-- Metric stat strip (elevated from pills) -->
+                        <div
+                          v-if="finding.metric && Object.keys(finding.metric).length"
+                          class="ml-metric-strip"
+                        >
+                          <div
+                            v-for="(val, key) in finding.metric"
+                            :key="key"
+                            class="ml-metric-stat"
+                          >
+                            <div class="ml-metric-stat-label">{{ METRIC_LABELS[key] ?? key.replace(/_/g, ' ') }}</div>
+                            <div class="ml-metric-stat-value">{{ formatMetricValue(key, val) }}</div>
+                          </div>
+                        </div>
+
+                        <!-- Action list — full metadata from ACTION_META -->
+                        <div
+                          v-if="!hasTransformPreview(finding) && finding.actions?.length"
+                          class="ml-action-list"
+                        >
+                          <div class="ml-action-list-label">Suggested actions</div>
                           <div
                             v-for="(act, j) in finding.actions"
                             :key="j"
-                            class="ml-action-chip"
+                            class="ml-action-row"
                           >
-                            <span class="ml-action-method">{{ act.method || act.action }}</span>
-                            <span v-if="act.condition || act.detail" class="ml-action-cond">
-                              - {{ act.condition || act.detail }}
-                            </span>
+                            <div class="ml-action-row-header">
+                              <span class="ml-action-method">{{ act.method || act.action }}</span>
+                              <span v-if="act.condition" class="ml-action-condition">{{ act.condition }}</span>
+                            </div>
+                            <template v-if="actionMeta(act)">
+                              <p class="ml-action-what">{{ actionMeta(act).what }}</p>
+                              <div class="ml-action-tradeoffs">
+                                <span class="ml-tradeoff-label">Trade-off</span>
+                                <span class="ml-tradeoff-text">{{ actionMeta(act).tradeoff }}</span>
+                              </div>
+                              <div class="ml-action-after">
+                                <span class="ml-after-label">After this</span>
+                                <span class="ml-after-text">{{ actionMeta(act).after }}</span>
+                              </div>
+                              <a
+                                v-if="actionMeta(act).ref"
+                                :href="actionMeta(act).ref.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="ml-action-ref"
+                              >↗ {{ actionMeta(act).ref.label }}</a>
+                            </template>
+                            <p v-else-if="act.detail" class="ml-action-what">{{ act.detail }}</p>
                           </div>
                         </div>
-                        <div v-if="finding.metric && Object.keys(finding.metric).length"
-                             class="ml-finding-metrics">
-                          <span
-                            v-for="(val, key) in finding.metric"
-                            :key="key"
-                            class="ml-metric-pill"
-                          >{{ key }}: {{ typeof val === 'number' ? val.toFixed(3) : val }}</span>
+
+                        <!-- Transformation preview for skewness findings -->
+                        <TransformationPreviewCard
+                          v-if="dim.key === 'transformations' && hasTransformPreview(finding)"
+                          :column="finding.column"
+                          :tasks="tasks"
+                          :embedded="true"
+                        />
+
+                        <!-- Additional suggestions not covered by the preview card -->
+                        <div
+                          v-if="hasTransformPreview(finding) && nonOverlappingActions(finding).length"
+                          class="ml-action-list ml-action-list--additional"
+                        >
+                          <div class="ml-action-list-label">Additional suggestions to consider</div>
+                          <div
+                            v-for="(act, j) in nonOverlappingActions(finding)"
+                            :key="j"
+                            class="ml-action-row"
+                          >
+                            <div class="ml-action-row-header">
+                              <span class="ml-action-method">{{ act.method || act.action }}</span>
+                              <span v-if="act.condition" class="ml-action-condition">{{ act.condition }}</span>
+                            </div>
+                            <template v-if="actionMeta(act)">
+                              <p class="ml-action-what">{{ actionMeta(act).what }}</p>
+                              <div class="ml-action-tradeoffs">
+                                <span class="ml-tradeoff-label">Trade-off</span>
+                                <span class="ml-tradeoff-text">{{ actionMeta(act).tradeoff }}</span>
+                              </div>
+                              <div class="ml-action-after">
+                                <span class="ml-after-label">After this</span>
+                                <span class="ml-after-text">{{ actionMeta(act).after }}</span>
+                              </div>
+                              <a
+                                v-if="actionMeta(act).ref"
+                                :href="actionMeta(act).ref.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="ml-action-ref"
+                              >↗ {{ actionMeta(act).ref.label }}</a>
+                            </template>
+                            <p v-else-if="act.detail" class="ml-action-what">{{ act.detail }}</p>
+                          </div>
                         </div>
 
                       </div>
@@ -270,9 +353,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { getMlReadiness } from '../../api.js'
+import TooltipIcon from '../../components/TooltipIcon.vue'
+import TransformationPreviewCard from '../../components/distributions/TransformationPreviewCard.vue'
+import { ACTION_META, actionMeta, normalizeMethod } from '../../utils/actionMeta.js'
 
 const props = defineProps({
   runKey: { type: String, required: true },
+  tasks:  { type: Object, default: () => ({}) },
 })
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -282,9 +369,7 @@ const error     = ref(null)
 const available = ref(false)
 const data      = ref({})
 
-const openSections = ref(new Set([
-  'transformations', 'encoding', 'missingness', 'leakage', 'unusable', '__clean__'
-]))
+const openSections = ref(new Set())
 const sortState = ref({
   transformations: { by: 'level', dir: 'desc' },
   encoding:        { by: 'level', dir: 'desc' },
@@ -319,6 +404,18 @@ async function fetchData(runKey) {
 onMounted(() => fetchData(props.runKey))
 watch(() => props.runKey, key => { if (key) fetchData(key) })
 
+// Auto-open sections with error findings; collapse all-clear ones
+watch(data, (d) => {
+  const cats = d.categories ?? {}
+  const s = new Set()
+  for (const [key, cat] of Object.entries(cats)) {
+    const hasError = (cat.findings ?? []).some(f => f.level === 'error')
+    const hasWarn  = (cat.findings ?? []).some(f => f.level === 'warn')
+    if (hasError || hasWarn) s.add(key)
+  }
+  openSections.value = s
+}, { immediate: false })
+
 // ── Gate ──────────────────────────────────────────────────────────────────────
 
 const GATE_COLOR = { ready: 'good', needs_work: 'warn', not_ready: 'error' }
@@ -332,9 +429,9 @@ const gateLabel = computed(() => ({
 }[data.value.readiness_gate] ?? '-'))
 
 const gateDescription = computed(() => ({
-  ready:      'No blocking ML issues detected across any preparation dimension.',
-  needs_work: 'Warnings present in one or more dimensions. Addressing highlighted columns may improve model performance.',
-  not_ready:  'Error-level issues present. These must be resolved before reliable modeling is possible.',
+  ready:      'No preparation issues detected across any dimension. This dataset appears ready for most modeling workflows.',
+  needs_work: 'Warnings present in one or more dimensions. Addressing the highlighted columns is likely to improve model reliability.',
+  not_ready:  'Error-level issues present that are likely to cause problems for most modeling approaches. These are worth addressing before proceeding.',
 }[data.value.readiness_gate] ?? ''))
 
 const errorDimCount = computed(() =>
@@ -411,6 +508,15 @@ const sortedCleanColumns = computed(() =>
   [...(data.value.clean_columns ?? [])].sort()
 )
 
+// Dimension tooltips — describe source tasks, not general definitions
+const DIM_TOOLTIPS = {
+  transformations: 'Findings from skewness detection, outlier analysis, and bimodal distribution checks. Flags columns whose distribution shape may affect model performance.',
+  encoding:        'Findings from categorical encoding suggestions and high-cardinality detection. Flags columns that need to be converted from strings to numeric representations before modeling.',
+  missingness:     'Findings from null analysis. Flags columns where missing values are likely to cause errors or biased estimates in most modeling frameworks.',
+  leakage:         'Findings from near-perfect correlation detection and duplicate column analysis. Flags columns that appear to encode the same information or may cause data leakage.',
+  unusable:        'Findings from constant column, ID column, and dominant value detection. Flags columns that carry no signal and should be excluded from any model.',
+}
+
 // ── Task label helper ─────────────────────────────────────────────────────────
 
 const TASK_SHORT = {
@@ -432,6 +538,57 @@ const TASK_SHORT = {
 
 function taskLabel(taskName) {
   return TASK_SHORT[taskName] ?? taskName.replace('detect_', '').replace(/_/g, ' ')
+}
+
+// ── Metric stat strip helpers ─────────────────────────────────────────────────
+
+const METRIC_LABELS = {
+  skewness:          'Skewness',
+  mean:              'Mean',
+  median:            'Median',
+  std:               'Std Dev',
+  null_pct:          'Null %',
+  null_count:        'Null count',
+  n_rows:            'Total rows',
+  correlation:       'Correlation',
+  correlated_with:   'Correlated with',
+  threshold:         'Threshold',
+  cardinality:       'Unique values',
+  suggested_encoding:'Suggested encoding',
+  n_unique:          'Unique values',
+  vif_score:         'VIF score',
+}
+
+function formatMetricValue(key, val) {
+  if (val == null) return '—'
+  if (typeof val === 'number') {
+    if (key === 'null_pct') return `${(val * 100).toFixed(1)}%`
+    if (key === 'correlation') return val.toFixed(4)
+    if (Number.isInteger(val)) return val.toLocaleString()
+    return val.toPrecision(4).replace(/\.?0+$/, '')
+  }
+  return String(val)
+}
+
+// ── Transform preview helpers ─────────────────────────────────────────────────
+
+function hasTransformPreview(finding) {
+  return finding.task === 'detect_skewness' &&
+    !!(props.tasks?.transformation_preview?.data?.[finding.column])
+}
+
+function nonOverlappingActions(finding) {
+  const all = finding.actions ?? []
+  if (!hasTransformPreview(finding)) return all
+  const previewKeys = new Set(
+    Object.keys(
+      props.tasks?.transformation_preview?.data?.[finding.column]?.transforms ?? {}
+    ).map(normalizeMethod)
+  )
+  return all.filter(act => {
+    const method = normalizeMethod(act.method ?? act.action)
+    return !previewKeys.has(method)
+  })
 }
 
 // ── Interactions ──────────────────────────────────────────────────────────────
@@ -710,29 +867,131 @@ function scrollTo(key) {
   line-height: 1.6;
   margin: 0;
 }
-.ml-finding-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.ml-action-chip {
+/* ── Metric stat strip ─────────────────────────────────────────────────────── */
+.ml-metric-strip {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  font-size: 11px;
-}
-.ml-action-method { color: #60a5fa; font-family: ui-monospace, monospace; font-weight: 600; }
-.ml-action-cond   { color: #64748b; }
-.ml-finding-metrics { display: flex; flex-wrap: wrap; gap: 5px; }
-.ml-metric-pill {
-  padding: 2px 8px;
+  flex-wrap: wrap;
+  gap: 0;
   background: #0f172a;
   border: 1px solid #1e293b;
-  border-radius: 4px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ml-metric-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 14px;
+  border-right: 1px solid #1e293b;
+  flex: 1;
+  min-width: 80px;
+}
+.ml-metric-stat:last-child { border-right: none; }
+.ml-metric-stat-label {
+  display: block;
   font-size: 10px;
   color: #64748b;
-  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
+.ml-metric-stat-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  color: #e2e8f0;
+}
+
+/* ── Action list ───────────────────────────────────────────────────────────── */
+.ml-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.ml-action-list--additional {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #1e293b;
+}
+.ml-action-list-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+.ml-action-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  transition: border-color 0.12s;
+}
+.ml-action-row:hover { border-color: #60a5fa; }
+.ml-action-row-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ml-action-method {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #60a5fa;
+}
+.ml-action-condition {
+  font-size: 11px;
+  color: #64748b;
+  padding: 1px 7px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+}
+.ml-action-what {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
+.ml-action-tradeoffs,
+.ml-action-after {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ml-tradeoff-label,
+.ml-after-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  white-space: nowrap;
+  padding-top: 1px;
+  flex-shrink: 0;
+  width: 64px;
+}
+.ml-tradeoff-text,
+.ml-after-text {
+  color: #94a3b8;
+}
+.ml-action-ref {
+  font-size: 11px;
+  color: #60a5fa;
+  text-decoration: none;
+  align-self: flex-start;
+}
+.ml-action-ref:hover { text-decoration: underline; }
+.ml-action-cond { color: #64748b; }
+
 .ml-highlight-btn {
   align-self: flex-start;
   padding: 3px 10px;
@@ -775,6 +1034,16 @@ function scrollTo(key) {
 }
 .ml-mark-btn:hover { border-color: #60a5fa; color: #fbbf24; }
 .ml-mark-btn.active { border-color: #fbbf24; color: #fbbf24; background: #451a03; }
+
+/* Strip card shell from embedded TransformationPreviewCard */
+.ml-finding-detail :deep(.tx-card) {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+.ml-finding-detail :deep(.card-title) { display: none; }
 
 /* ── Severity badge ────────────────────────────────────────────────────────── */
 .ml-sev-badge {

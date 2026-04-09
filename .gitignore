@@ -1,19 +1,64 @@
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 *.pyc
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
 .env
 .venv
-.poetry
+venv/
+env/
+.poetry/
+
+# ── Type checkers / linters ───────────────────────────────────────────────────
 .mypy_cache/
+.ruff_cache/
+.dmypy.json
+
+# ── Test / coverage ───────────────────────────────────────────────────────────
 .pytest_cache/
-.DS_Store
-*.egg-info/
+.coverage
+htmlcov/
+coverage.xml
 
-project_log.md
-
+# ── DSBF runtime outputs ──────────────────────────────────────────────────────
+# Generated CSVs, profiler runs, and SQLite stores — large, ephemeral, local-only
 dsbf/outputs/
-
-*dsbf_run.json
-
-node_modules/
-
+dsbf/runs/
 dsbf/dsbf.db
+*dsbf_run.json
+*.sqlite
+*.db
+
+# ── Test datasets ─────────────────────────────────────────────────────────────
+# Generated locally by tests/generators/ — never committed
+tests/datasets/
+*.csv
+*.parquet
+
+# ── Frontend build artefacts ──────────────────────────────────────────────────
+node_modules/
+dsbf/dashboard/frontend/dist/
+dsbf/dashboard/frontend/.vite/
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# ── Notebooks (outputs only — keep .ipynb files) ─────────────────────────────
+.ipynb_checkpoints/
+
+# ── Local dev notes (not project documentation) ──────────────────────────────
+project_log.md

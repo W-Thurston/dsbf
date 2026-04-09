@@ -118,6 +118,12 @@
           <div class="qt-section-title">
             <span class="qt-sc-dot" :class="`qt-dot--${dim.level}`" />
             <span>{{ dim.label }}</span>
+            <TooltipIcon
+              v-if="DIM_TOOLTIPS[dim.key]"
+              :text="DIM_TOOLTIPS[dim.key]"
+              direction="down"
+              align="left"
+            />
             <span class="qt-section-count" :class="`qt-text--${dim.level}`">
               {{ dim.affectedCount === 0
                 ? 'Nothing flagged'
@@ -218,7 +224,42 @@
                         class="qt-finding-detail-body"
                         @click.stop
                       >
-                        <!-- Guidance blurbs from tasks -->
+                        <!-- Inline detail: structured metrics + observational note (shown first) -->
+                        <div
+                          v-if="findingInlineDetail(finding)"
+                          class="qt-inline-detail qt-inline-detail--top"
+                        >
+                          <div
+                            v-if="findingInlineDetail(finding).note"
+                            class="qt-inline-note"
+                          >{{ findingInlineDetail(finding).note }}</div>
+                          <div
+                            v-if="findingInlineDetail(finding).metrics?.length"
+                            class="qt-inline-metrics"
+                          >
+                            <div
+                              v-for="m in findingInlineDetail(finding).metrics"
+                              :key="m.label"
+                              class="qt-inline-metric"
+                            >
+                              <span class="qt-inline-metric-label">{{ m.label }}</span>
+                              <span class="qt-inline-metric-value">{{ m.value }}</span>
+                            </div>
+                          </div>
+                          <div
+                            v-if="findingInlineDetail(finding).samples?.length"
+                            class="qt-inline-samples"
+                          >
+                            <span class="qt-inline-samples-label">Sample values</span>
+                            <span
+                              v-for="(s, si) in findingInlineDetail(finding).samples"
+                              :key="si"
+                              class="qt-inline-sample-chip"
+                            >{{ s }}</span>
+                          </div>
+                        </div>
+
+                        <!-- Guidance blurbs from tasks (issue-scoped) -->
                         <template v-if="findingGuidance(finding).length">
                           <div
                             v-for="(blurb, bi) in findingGuidance(finding)"
@@ -266,6 +307,11 @@
           <div class="qt-section-title">
             <span class="qt-sc-dot qt-dot--green" />
             <span>Clean Columns</span>
+            <TooltipIcon
+              text="Columns with no findings across all five dimensions - no significant missingness, no validity issues, not flagged as IDs or near-constant, not collinear, not part of a leakage pair."
+              direction="down"
+              align="left"
+            />
             <span class="qt-section-count qt-text--green">
               {{ cleanColumns.length }} columns
             </span>
@@ -307,6 +353,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { getDqStatus, getTask } from '../../api.js'
+import TooltipIcon              from '../../components/TooltipIcon.vue'
 import MissingnessMechanismCard from '../../components/quality/MissingnessMechanismCard.vue'
 import FuzzyDuplicateCard       from '../../components/quality/FuzzyDuplicateCard.vue'
 
@@ -506,15 +553,48 @@ const trustDescription = computed(() => ({
 // ── Guidance helpers ──────────────────────────────────────────────────────────
 
 /** Collect all EDA-phase guidance blurbs for the column in a finding */
+// Dimension tooltips - describe data sources, not the general concept (the
+// health bar already covers the general definition).
+const DIM_TOOLTIPS = {
+  completeness: 'Findings from null analysis. Flags columns where a significant proportion of values are missing.',
+  validity:     'Findings from constant column detection, out-of-bounds value checks, and structural zero analysis.',
+  usability:    'Findings from ID column detection, dominant value analysis, and high cardinality checks - columns that may not behave as grouping variables.',
+  redundancy:   'Findings from collinearity detection (VIF). Flags columns whose variance is largely explained by other columns in the dataset.',
+  leakage:      'Findings from near-perfect correlation detection and exact duplicate column checks. Flags column pairs that appear to encode the same information.',
+}
+
+// Maps each finding issue type to the task(s) whose guidance is relevant to it.
+// This prevents blurbs from unrelated tasks (bimodal, kurtosis, dtype, etc.)
+// from appearing in expanded rows where they would be confusing and off-topic.
+const ISSUE_TO_TASKS = {
+  missing_values:   ['summarize_nulls', 'missingness_mechanism_analysis'],
+  out_of_bounds:    ['detect_out_of_bounds'],
+  constant_column:  ['detect_constant_columns'],
+  structural_zeros: ['detect_zeros'],
+  likely_id:        ['detect_id_columns'],
+  dominant_value:   ['detect_single_dominant_value'],
+  high_cardinality: ['detect_high_cardinality'],
+  high_vif:         ['detect_collinear_features'],
+  leakage_pair:     ['detect_data_leakage', 'detect_duplicate_columns'],
+}
+
+const BLURB_LEVEL_RANK = { error: 0, warn: 1, info: 2, good: 3 }
+
 function findingGuidance(finding) {
-  const col = finding.column ?? finding.col_a ?? null
+  const col        = finding.column ?? finding.col_a ?? null
   if (!col) return []
+  const allowedTasks = new Set(ISSUE_TO_TASKS[finding.issue] ?? [])
   const out = []
-  for (const task of Object.values(props.tasks)) {
+  for (const [taskName, task] of Object.entries(props.tasks)) {
+    if (allowedTasks.size && !allowedTasks.has(taskName)) continue
     const blurbs = task?.guidance?.[col]?.eda
     if (Array.isArray(blurbs)) out.push(...blurbs)
   }
-  return out
+  return out.sort((a, b) => {
+    const levelDiff = (BLURB_LEVEL_RANK[a.level] ?? 99) - (BLURB_LEVEL_RANK[b.level] ?? 99)
+    if (levelDiff !== 0) return levelDiff
+    return (a.title ?? '').localeCompare(b.title ?? '')
+  })
 }
 
 function blurbIcon(level) {
@@ -564,6 +644,153 @@ function findingDetail(finding) {
   if (finding.vif_score    != null) return `VIF ${finding.vif_score.toFixed(1)}`
   if (finding.correlation  != null) return `r = ${finding.correlation.toFixed(3)}`
   return '-'
+}
+
+/**
+ * Returns structured extra detail for the expanded finding body.
+ * Completes the "where and what" for each issue type without making
+ * preparation recommendations - purely observational.
+ */
+function findingInlineDetail(finding) {
+  const numRows = props.tasks?.summarize_dataset_shape?.data?.num_rows ?? null
+
+  // ── Completeness: missing values ─────────────────────────────────────────
+  if (finding.issue === 'missing_values' && finding.pct_null != null) {
+    const absCount = numRows != null
+      ? Math.round(finding.pct_null * numRows).toLocaleString()
+      : null
+    return {
+      note: absCount
+        ? `${absCount} of ${numRows.toLocaleString()} rows are missing this value (${(finding.pct_null * 100).toFixed(1)}%).`
+        : null,
+      metrics: null,
+    }
+  }
+
+  // ── Validity: constant column ─────────────────────────────────────────────
+  if (finding.issue === 'constant_column') {
+    const col = finding.column
+    // Try to get constant value from value_counts (first key) or numeric stats
+    const vc  = props.tasks?.summarize_value_counts?.data?.[col]
+    const nm  = props.tasks?.summarize_numeric?.data?.[col]
+    const val = vc ? Object.keys(vc)[0]
+              : nm?.min != null ? String(nm.min)
+              : null
+    return {
+      note: val != null
+        ? `Every row contains the same value: "${val}". This column carries no information and cannot distinguish between observations.`
+        : 'Every row contains the same value. This column carries no information and cannot distinguish between observations.',
+      metrics: null,
+    }
+  }
+
+  // ── Validity: structural zeros ────────────────────────────────────────────
+  if (finding.issue === 'structural_zeros' && finding.pct_zero != null) {
+    const col = finding.column
+    const absCount = numRows != null
+      ? Math.round(finding.pct_zero * numRows).toLocaleString()
+      : null
+    return {
+      note: absCount
+        ? `${absCount} of ${numRows.toLocaleString()} rows (${(finding.pct_zero * 100).toFixed(1)}%) are zero. A very high proportion of zeros often indicates a structural empty rather than a measured value.`
+        : `${(finding.pct_zero * 100).toFixed(1)}% of rows are zero.`,
+      metrics: null,
+    }
+  }
+
+  // ── Validity: out of bounds ───────────────────────────────────────────────
+  if (finding.issue === 'out_of_bounds') {
+    const col = finding.column
+    const oob = props.tasks?.detect_out_of_bounds?.data?.[col]
+    const metrics = []
+    if (oob?.violation_count != null)
+      metrics.push({ label: 'Violations', value: oob.violation_count.toLocaleString() })
+    if (oob?.min_violation != null)
+      metrics.push({ label: 'Min violation', value: String(oob.min_violation) })
+    if (oob?.max_violation != null)
+      metrics.push({ label: 'Max violation', value: String(oob.max_violation) })
+    return {
+      note: 'Values were found outside the expected domain for this column.',
+      metrics: metrics.length ? metrics : null,
+    }
+  }
+
+  // ── Usability: likely ID ──────────────────────────────────────────────────
+  if (finding.issue === 'likely_id') {
+    const col = finding.column
+    const vc  = props.tasks?.summarize_value_counts?.data?.[col] ?? {}
+    const samples = Object.keys(vc).slice(0, 3)
+    const unique  = props.tasks?.summarize_unique?.data?.[col]
+    return {
+      note: `This column has ${unique != null ? unique.toLocaleString() + ' unique values - ' : ''}nearly every row is distinct, which is characteristic of an identifier rather than a grouping variable.`,
+      samples: samples.length ? samples : null,
+      metrics: null,
+    }
+  }
+
+  // ── Usability: dominant value ─────────────────────────────────────────────
+  if (finding.issue === 'dominant_value') {
+    const col  = finding.column
+    const dom  = props.tasks?.detect_single_dominant_value?.data?.[col]
+    const mode = dom?.mode != null ? String(dom.mode) : null
+    const pct  = finding.mode_proportion != null
+      ? (finding.mode_proportion * 100).toFixed(1) + '%'
+      : null
+    return {
+      note: mode && pct
+        ? `"${mode}" appears in ${pct} of rows. Columns dominated by a single value provide limited ability to distinguish between observations.`
+        : pct
+          ? `A single value appears in ${pct} of rows.`
+          : null,
+      metrics: null,
+    }
+  }
+
+  // ── Usability: high cardinality ───────────────────────────────────────────
+  if (finding.issue === 'high_cardinality') {
+    const col   = finding.column
+    const n     = finding.n_unique
+    const ratio = numRows && n ? ((n / numRows) * 100).toFixed(1) + '%' : null
+    return {
+      note: ratio
+        ? `${n?.toLocaleString()} unique values - ${ratio} of all rows are distinct. When almost every value is unique, this column behaves more like an identifier than a grouping variable.`
+        : `${n?.toLocaleString()} unique values.`,
+      metrics: null,
+    }
+  }
+
+  // ── Redundancy: high VIF ──────────────────────────────────────────────────
+  if (finding.issue === 'high_vif' && finding.vif_score != null) {
+    const col = finding.column
+    const vif = finding.vif_score
+    const bracket = vif > 100 ? 'extremely high'
+                  : vif > 30  ? 'very high'
+                  : vif > 10  ? 'high'
+                  : 'elevated'
+    return {
+      note: `VIF of ${vif.toFixed(1)} indicates ${bracket} collinearity - this column's variance is largely explained by other columns in the dataset. It is not independent information.`,
+      metrics: null,
+    }
+  }
+
+  // ── Leakage: leakage pair ────────────────────────────────────────────────
+  if (finding.issue === 'leakage_pair' && finding.correlation != null) {
+    const r    = Math.abs(finding.correlation)
+    const desc = r >= 1.0
+      ? 'These two columns are perfectly correlated - knowing one tells you exactly what the other is.'
+      : `These two columns move together almost perfectly (r = ${r.toFixed(3)}). They appear to encode the same or nearly the same information.`
+    return {
+      note: desc,
+      metrics: [
+        { label: 'Column A',     value: finding.col_a },
+        { label: 'Column B',     value: finding.col_b },
+        { label: 'Correlation',  value: `r = ${finding.correlation.toFixed(4)}` },
+      ],
+      samples: null,
+    }
+  }
+
+  return null
 }
 
 // ── Sort options per dimension ─────────────────────────────────────────────────
@@ -742,7 +969,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #64748b;
+  color: #475569;
   cursor: pointer;
   font-size: 12px;
   padding: 0;
@@ -755,7 +982,7 @@ function scrollTo(key) {
 /* ── Expand hint ───────────────────────────────────────────────────────────── */
 .qt-expand-hint {
   font-size: 11px;
-  color: #64748b;
+  color: #475569;
   text-align: center;
   transition: color 0.1s;
 }
@@ -835,6 +1062,79 @@ function scrollTo(key) {
   font-style: italic;
 }
 
+/* ── Inline finding detail ───────────────────────────────────────────────── */
+.qt-inline-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* When at the top, add bottom border to separate from blurbs below */
+.qt-inline-detail--top {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #1e293b;
+}
+.qt-inline-note {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+.qt-inline-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.qt-inline-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.qt-inline-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  font-weight: 600;
+}
+.qt-inline-metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  color: #e2e8f0;
+}
+.qt-inline-samples {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.qt-inline-samples-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.qt-inline-sample-chip {
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: #94a3b8;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.qt-inline-link {
+  font-size: 12px;
+  color: #60a5fa;
+  text-decoration: none;
+  align-self: flex-start;
+  cursor: pointer;
+}
+.qt-inline-link:hover { text-decoration: underline; }
+
 /* ── Detail expand transition ──────────────────────────────────────────────── */
 .qt-detail-expand-enter-active,
 .qt-detail-expand-leave-active {
@@ -856,6 +1156,10 @@ function scrollTo(key) {
 :global(.theme-light) .qt-blurb-body         { color: #64748b; }
 :global(.theme-light) .qt-blurb-fallback     { color: #94a3b8; }
 :global(.theme-light) .qt-action-chip        { background: #f1f5f9; border-color: #e2e8f0; }
+:global(.theme-light) .qt-inline-detail      { border-bottom-color: #e2e8f0; }
+:global(.theme-light) .qt-inline-note        { color: #64748b; }
+:global(.theme-light) .qt-inline-metric-value { color: #1e293b; }
+:global(.theme-light) .qt-inline-sample-chip { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
 
 
 .qt-loading {
@@ -926,7 +1230,7 @@ function scrollTo(key) {
 }
 .qt-sc-pct {
   font-size: 11px;
-  color: #64748b;
+  color: #475569;
 }
 .qt-sc-preview {
   display: flex;
@@ -947,7 +1251,7 @@ function scrollTo(key) {
   max-width: 120px;
 }
 .qt-sc-chip--more {
-  color: #64748b;
+  color: #475569;
   border-style: dashed;
 }
 
@@ -1002,7 +1306,7 @@ function scrollTo(key) {
 }
 .qt-sort-label {
   font-size: 11px;
-  color: #64748b;
+  color: #475569;
 }
 .qt-sort-btn {
   padding: 3px 10px;
@@ -1027,7 +1331,7 @@ function scrollTo(key) {
   background: none;
   border: 1px solid #334155;
   border-radius: 4px;
-  color: #64748b;
+  color: #475569;
   cursor: pointer;
   transition: all 0.12s;
   margin-left: 4px;
@@ -1069,7 +1373,7 @@ function scrollTo(key) {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: #475569;
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
   position: sticky;

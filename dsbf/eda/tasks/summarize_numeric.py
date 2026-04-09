@@ -185,7 +185,7 @@ class SummarizeNumeric(BaseTask):
                 title="Near-Zero Variance - Minimal Signal",
                 body=(
                     f"'{col}' has near-zero variance (std: {std:.4g}). Features with "
-                    f"essentially no spread provide no discriminative power to any "
+                    f"essentially no spread carry no predictive signal for any "
                     f"model and can cause numerical instability in algorithms that "
                     f"scale by variance (PCA, SVM, regularised regression). Drop "
                     f"before modelling unless the column is the target variable."

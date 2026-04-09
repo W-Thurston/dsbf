@@ -1,15 +1,18 @@
 <!-- dsbf/dashboard/frontend/src/components/distributions/TransformationPreviewCard.vue
 
-  Shows transformation options for skewed continuous columns from
-  transformation_preview. Each transform shows before/after skewness
-  and key stats so users can decide whether to apply it.
+  Shows transformation options for skewed continuous columns.
+  Layout matches the action-row format: what / trade-off / after this / link,
+  plus the unique computed outcome (before → after skewness) where available.
 
-  Only rendered for columns that appear in transformation_preview data.
+  Used in:
+    - DistributionsTab (EDA context, full card)
+    - MlReadinessTab   (ML prep context, embedded, no before-strip)
 
   Props
   ─────
-  column : String  - selected column name
-  tasks  : Object  - pre-loaded task results
+  column : String
+  tasks  : Object
+  embedded : Boolean — when true, strips the card shell (via CSS :deep in parent)
 -->
 
 <template>
@@ -17,49 +20,18 @@
     <div class="card-title">
       Transformation Preview
       <TooltipIcon
-        text="Shows how common transformations would change the skewness of this column. Lower absolute skewness after transformation indicates a more symmetric distribution. Purely informational - no data is modified."
+        text="For skewed columns, shows how common transformations would affect the distribution's skewness. The before → after comparison uses the actual computed statistics. Purely informational — no data is modified."
         align="left"
         direction="down"
       />
     </div>
 
-    <!-- Not run -->
-    <div v-if="state === 'not_run'" class="es-not-run">
-      Transformation preview did not run for this column.
+    <div v-if="state === 'not_run'" class="tx-not-run">
+      Transformation preview did not run for this column. This analysis only runs
+      for columns that exceed the skewness threshold.
     </div>
 
-    <!-- Ready -->
     <template v-else>
-
-      <!-- Before stats strip -->
-      <div class="tx-before-strip">
-        <div class="tx-before-label">Original</div>
-        <div class="tx-before-stats">
-          <span class="tx-stat">
-            <span class="tx-stat-label">Skewness</span>
-            <span class="tx-stat-value" :class="skewClass(colData.original_skewness)">
-              {{ fmtN(colData.original_skewness) }}
-            </span>
-          </span>
-          <span class="tx-stat">
-            <span class="tx-stat-label">Mean</span>
-            <span class="tx-stat-value">{{ fmtN(colData.before_stats?.mean) }}</span>
-          </span>
-          <span class="tx-stat">
-            <span class="tx-stat-label">Std Dev</span>
-            <span class="tx-stat-value">{{ fmtN(colData.before_stats?.std) }}</span>
-          </span>
-          <span class="tx-stat">
-            <span class="tx-stat-label">p5</span>
-            <span class="tx-stat-value">{{ fmtN(colData.before_stats?.p5) }}</span>
-          </span>
-          <span class="tx-stat">
-            <span class="tx-stat-label">p95</span>
-            <span class="tx-stat-value">{{ fmtN(colData.before_stats?.p95) }}</span>
-          </span>
-        </div>
-      </div>
-
       <!-- Transform options -->
       <div class="tx-list">
         <div
@@ -71,45 +43,75 @@
             'tx-item--skipped':     tx.skipped,
           }"
         >
+          <!-- Header row: name + badge -->
           <div class="tx-item-header">
             <span class="tx-name">{{ tx.display }}</span>
             <span v-if="tx.recommended"  class="tx-badge-recommended">recommended</span>
             <span v-else-if="tx.skipped" class="tx-badge-skipped">not applicable</span>
           </div>
 
-          <div class="tx-suitable-for">{{ tx.suitable_for }}</div>
+          <!-- Skipped: enriched explanation -->
+          <p v-if="tx.skipped" class="tx-skip-body">{{ enrichSkipReason(tx.skip_reason) }}</p>
 
-          <div v-if="tx.skipped" class="tx-skip-reason">{{ tx.skip_reason }}</div>
-
+          <!-- Has computed results: rich metadata + outcome -->
           <template v-else-if="tx.after_stats">
-            <div class="tx-skew-row">
-              <div class="tx-skew-stat">
-                <span class="tx-skew-stat-label">Unmodified skewness</span>
-                <span class="tx-skew-stat-val tx-skew-val--before">{{ fmtN(colData.original_skewness) }}</span>
-              </div>
-              <span class="tx-arrow">→</span>
-              <div class="tx-skew-stat">
-                <span class="tx-skew-stat-label">After transformation</span>
-                <span
-                  class="tx-skew-stat-val"
-                  :class="Math.abs(tx.after_stats.skewness ?? 0) < Math.abs(colData.original_skewness)
-                    ? 'tx-skew-val--better' : 'tx-skew-val--worse'"
-                >{{ fmtN(tx.after_stats.skewness) }}</span>
-              </div>
-              <span
-                v-if="tx.skew_reduction_pct != null"
-                class="tx-reduction"
-                :class="tx.skew_reduction_pct > 0 ? 'tx-reduction--good' : 'tx-reduction--bad'"
-              >
-                {{ tx.skew_reduction_pct > 0 ? '↓' : '↑' }}{{ Math.abs(tx.skew_reduction_pct).toFixed(0) }}%
-              </span>
+            <p v-if="meta(tx.key)?.what" class="tx-what">{{ meta(tx.key).what }}</p>
+
+            <div v-if="meta(tx.key)?.tradeoff" class="tx-meta-row">
+              <span class="tx-meta-label">Trade-off</span>
+              <span class="tx-meta-text">{{ meta(tx.key).tradeoff }}</span>
             </div>
+
+            <div v-if="meta(tx.key)?.after" class="tx-meta-row">
+              <span class="tx-meta-label">After this</span>
+              <span class="tx-meta-text">{{ meta(tx.key).after }}</span>
+            </div>
+
+            <a
+              v-if="meta(tx.key)?.ref"
+              :href="meta(tx.key).ref.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="tx-ref"
+            >↗ {{ meta(tx.key).ref.label }}</a>
+
+            <!-- Computed outcome: before → after for key stats -->
+            <div class="tx-outcome">
+              <div class="tx-outcome-header">
+                <span class="tx-outcome-col-label"></span>
+                <span class="tx-outcome-col-label">Before</span>
+                <span class="tx-outcome-col-label">After</span>
+                <span class="tx-outcome-col-label"></span>
+              </div>
+              <div
+                v-for="stat in outcomeStats(tx)"
+                :key="stat.key"
+                class="tx-outcome-row"
+              >
+                <span class="tx-outcome-stat-label">{{ stat.label }}</span>
+                <span class="tx-outcome-stat-before">{{ stat.before }}</span>
+                <span
+                  class="tx-outcome-stat-after"
+                  :class="stat.cls"
+                >{{ stat.after }}</span>
+                <span
+                  v-if="stat.pct != null"
+                  class="tx-reduction"
+                  :class="stat.pct > 0 ? 'tx-reduction--good' : 'tx-reduction--bad'"
+                >{{ stat.pct > 0 ? '↓' : '↑' }}{{ Math.abs(stat.pct).toFixed(0) }}%</span>
+                <span v-else class="tx-reduction" />
+              </div>
+            </div>
+          </template>
+
+          <!-- Has metadata but no computed results -->
+          <template v-else-if="meta(tx.key)">
+            <p class="tx-what">{{ meta(tx.key).what }}</p>
           </template>
         </div>
       </div>
 
-      <div class="tx-footer">Purely informational - no data is modified by DSBF.</div>
-
+      <div class="tx-footer">Purely informational — no data has been modified by DSBF.</div>
     </template>
   </div>
 </template>
@@ -117,24 +119,59 @@
 <script setup>
 import { computed } from 'vue'
 import TooltipIcon from '../TooltipIcon.vue'
+import { TRANSFORM_META, enrichSkipReason } from '../../utils/actionMeta.js'
 
 const props = defineProps({
-  column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  column:   { type: String, required: true },
+  tasks:    { type: Object, default: () => ({}) },
+  embedded: { type: Boolean, default: false },
 })
 
 function fmtN(v) {
-  if (v == null) return '-'
+  if (v == null) return '—'
   const n = Number(v)
-  if (!isFinite(n)) return '-'
+  if (!isFinite(n)) return '—'
   if (Math.abs(n) >= 10000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
   if (Math.abs(n) >= 10)    return n.toFixed(2)
   return n.toPrecision(4).replace(/\.?0+$/, '')
 }
 
-function skewClass(v) {
-  if (v == null) return ''
-  return Math.abs(v) > 2 ? 'tx-skew--high' : Math.abs(v) > 1 ? 'tx-skew--mid' : 'tx-skew--low'
+function meta(key) {
+  return TRANSFORM_META[key] ?? null
+}
+
+function isImproved(tx) {
+  return tx.after_stats?.skewness != null &&
+    Math.abs(tx.after_stats.skewness) < Math.abs(colData.value?.original_skewness ?? 0)
+}
+
+// Build the before/after stat rows shown in the outcome grid
+const OUTCOME_STATS = [
+  { key: 'skewness', label: 'Skewness', isPrimary: true },
+  { key: 'mean',     label: 'Mean',     isPrimary: false },
+  { key: 'std',      label: 'Std Dev',  isPrimary: false },
+  { key: 'p5',       label: 'p5',       isPrimary: false },
+  { key: 'p95',      label: 'p95',      isPrimary: false },
+]
+
+function outcomeStats(tx) {
+  if (!tx.after_stats || !colData.value) return []
+  const before = colData.value.before_stats ?? {}
+  return OUTCOME_STATS.map(s => {
+    const bVal = s.key === 'skewness' ? colData.value.original_skewness : before[s.key]
+    const aVal = tx.after_stats[s.key]
+    const improved = s.isPrimary && aVal != null && Math.abs(aVal) < Math.abs(bVal ?? 0)
+    const worse    = s.isPrimary && aVal != null && Math.abs(aVal) >= Math.abs(bVal ?? 0)
+    const pct = s.isPrimary && tx.skew_reduction_pct != null ? tx.skew_reduction_pct : null
+    return {
+      key:    s.key,
+      label:  s.label,
+      before: fmtN(bVal),
+      after:  fmtN(aVal),
+      cls:    improved ? 'tx-improved' : worse ? 'tx-worse' : '',
+      pct,
+    }
+  }).filter(s => s.before !== '—' || s.after !== '—')
 }
 
 const colData = computed(() =>
@@ -148,17 +185,16 @@ const transforms = computed(() => {
   const origSkew = Math.abs(colData.value?.original_skewness ?? 0)
   return Object.entries(colData.value.transforms).map(([key, tx]) => {
     const afterSkew = tx.after_stats?.skewness != null ? Math.abs(tx.after_stats.skewness) : null
-    // Only recommend if the transform actually reduces absolute skewness
     const actuallyBetter = afterSkew != null && afterSkew < origSkew
     return {
       key,
-      display:             tx.display      ?? key,
-      suitable_for:        tx.suitable_for ?? '',
-      skipped:             tx.skipped      ?? false,
-      skip_reason:         tx.skip_reason  ?? '',
-      after_stats:         tx.after_stats  ?? null,
-      skew_reduction_pct:  tx.skew_reduction_pct ?? null,
-      recommended:         (tx.recommended ?? false) && actuallyBetter,
+      display:            tx.display      ?? key,
+      suitable_for:       tx.suitable_for ?? '',
+      skipped:            tx.skipped      ?? false,
+      skip_reason:        tx.skip_reason  ?? '',
+      after_stats:        tx.after_stats  ?? null,
+      skew_reduction_pct: tx.skew_reduction_pct ?? null,
+      recommended:        (tx.recommended ?? false) && actuallyBetter,
     }
   })
 })
@@ -166,42 +202,25 @@ const transforms = computed(() => {
 
 <style scoped>
 .tx-card { display: flex; flex-direction: column; gap: 14px; }
-.es-not-run { color: #64748b; font-size: 13px; padding: 8px 0; text-align: center; }
+.tx-not-run { font-size: 13px; color: #64748b; line-height: 1.6; }
 
-.tx-before-strip {
-  display: flex; align-items: center; gap: 16px;
-  background: #0f172a; border: 1px solid #1e293b;
-  border-radius: 6px; padding: 10px 14px; flex-wrap: wrap;
-}
-.tx-before-label {
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.5px; color: #64748b; flex-shrink: 0;
-}
-.tx-before-stats { display: flex; gap: 20px; flex-wrap: wrap; flex: 1; }
-.tx-stat { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-.tx-stat-label {
-  font-size: 10px; color: #64748b; text-transform: uppercase;
-  letter-spacing: 0.4px; white-space: nowrap;
-}
-.tx-stat-value {
-  font-size: 13px; font-weight: 600;
-  font-family: ui-monospace, monospace; color: #e2e8f0;
-}
-.tx-skew--high { color: #f87171 !important; }
-.tx-skew--mid  { color: #fb923c !important; }
-.tx-skew--low  { color: #4ade80 !important; }
-
+/* ── Transform list ────────────────────────────────────────────────────────── */
 .tx-list { display: flex; flex-direction: column; gap: 8px; }
 
 .tx-item {
-  border: 1px solid #1e293b; border-radius: 6px;
-  padding: 10px 14px; display: flex; flex-direction: column;
-  gap: 6px; transition: border-color 0.15s;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s;
 }
 .tx-item--recommended { border-color: #4ade80; background: rgba(74,222,128,0.03); }
-.tx-item--skipped     { opacity: 0.5; }
+.tx-item--skipped     { opacity: 0.55; }
 
 .tx-item-header { display: flex; align-items: center; gap: 8px; }
+
 .tx-name {
   font-size: 13px; font-weight: 600; color: #e2e8f0;
   font-family: ui-monospace, monospace;
@@ -216,40 +235,112 @@ const transforms = computed(() => {
   background: #1e293b; color: #64748b; border: 1px solid #334155;
 }
 
-.tx-suitable-for { font-size: 11px; color: #64748b; }
-.tx-skip-reason  { font-size: 11px; color: #64748b; font-style: italic; }
+.tx-skip-body {
+  font-size: 12px; color: #64748b; line-height: 1.55; margin: 0;
+}
 
-.tx-skew-row {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+.tx-what {
+  font-size: 12px; color: #94a3b8; line-height: 1.55; margin: 0;
 }
-.tx-skew-stat {
-  display: flex; flex-direction: column; gap: 2px; align-items: center;
+
+/* ── Meta rows (trade-off, after this) ───────────────────────────────────── */
+.tx-meta-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
 }
-.tx-skew-stat-label {
-  font-size: 10px; color: #64748b; text-transform: uppercase;
-  letter-spacing: 0.4px; white-space: nowrap;
+.tx-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748b;
+  white-space: nowrap;
+  padding-top: 1px;
+  flex-shrink: 0;
+  width: 64px;
 }
-.tx-skew-stat-val {
-  font-size: 14px; font-weight: 700;
+.tx-meta-text { color: #94a3b8; }
+
+.tx-ref {
+  font-size: 11px; color: #60a5fa; text-decoration: none; align-self: flex-start;
+}
+.tx-ref:hover { text-decoration: underline; }
+
+/* ── Computed outcome grid ───────────────────────────────────────────────── */
+.tx-outcome {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tx-outcome-header,
+.tx-outcome-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr 52px;
+  gap: 0;
+  padding: 5px 12px;
+  align-items: center;
+}
+
+.tx-outcome-header {
+  border-bottom: 1px solid #1e293b;
+}
+
+.tx-outcome-row {
+  border-bottom: 1px solid #0f172a;
+}
+.tx-outcome-row:last-child { border-bottom: none; }
+
+.tx-outcome-col-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+.tx-outcome-col-label:nth-child(2),
+.tx-outcome-col-label:nth-child(3) { text-align: right; }
+
+.tx-outcome-stat-label {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.tx-outcome-stat-before {
+  font-size: 12px;
   font-family: ui-monospace, monospace;
+  color: #64748b;
+  text-align: right;
 }
-.tx-skew-val--before { color: #94a3b8; }
-.tx-skew-val--better { color: #4ade80; }
-.tx-skew-val--worse  { color: #f87171; }
+.tx-outcome-stat-after {
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  text-align: right;
+}
+.tx-improved { color: #4ade80; }
+.tx-worse    { color: #f87171; }
 
-.tx-arrow { font-size: 12px; color: #64748b; }
-
-.tx-reduction { font-size: 11px; font-weight: 700; margin-left: 4px; }
+.tx-reduction {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  display: block;
+}
 .tx-reduction--good { color: #4ade80; }
 .tx-reduction--bad  { color: #f87171; }
 
+/* ── Footer ────────────────────────────────────────────────────────────────── */
 .tx-footer { font-size: 11px; color: #334155; font-style: italic; text-align: right; }
 
-:global(.theme-light) .tx-before-strip   { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .tx-before-label   { color: #94a3b8; }
-:global(.theme-light) .tx-stat-value     { color: #1e293b; }
+/* ── Light theme ─────────────────────────────────────────────────────────── */
 :global(.theme-light) .tx-item           { border-color: #e2e8f0; }
 :global(.theme-light) .tx-item--recommended { background: #f0fdf4; border-color: #86efac; }
 :global(.theme-light) .tx-name           { color: #1e293b; }
+:global(.theme-light) .tx-outcome        { background: #f8fafc; border-color: #e2e8f0; }
 :global(.theme-light) .tx-footer         { color: #94a3b8; }
 </style>

@@ -200,7 +200,7 @@ class DetectSingleDominantValue(BaseTask):
             )
             ml_body: str = (
                 f"\"{mode}\" appears in {pct_str} of rows in '{col}'. Near-constant "
-                f"features provide minimal discriminative power to any model and may "
+                f"features carry minimal predictive signal for any model and may "
                 f"cause numerical instability in some algorithms. If used as a target "
                 f"variable, the severe imbalance will bias predictions toward the "
                 f"dominant class. Consider dropping, or apply class weighting and "
