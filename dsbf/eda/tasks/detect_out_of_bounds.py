@@ -38,9 +38,12 @@ class DetectOutOfBounds(BaseTask):
     the violation and recommended remediation.
 
     Configurable parameters (via config["tasks"]["detect_out_of_bounds"]):
-        custom_bounds (dict): Mapping of column name → (lower, upper) tuple.
-            Default: {"age": (0, 120), "temperature": (-100, 150),
-                      "percent": (0, 100), "score": (0, 1)}
+        custom_bounds (dict): Mapping of column name → [lower, upper] list.
+            Default: {"age": [0, 120], "temperature": [-100, 150],
+                      "percent": [0, 100], "score": [0, 1]}
+
+    Note: Bounds must be specified as YAML lists [min, max] in config, not Python
+    tuples (min, max). YAML does not support tuple syntax and will misparse them.
     """
 
     def run(self) -> None:
@@ -79,7 +82,12 @@ class DetectOutOfBounds(BaseTask):
             for col in df.select_dtypes(include=np.number).columns:
                 if col not in bounds:
                     continue
-                lower, upper = bounds[col]
+                # Cast to float defensively - bounds loaded from YAML config
+                # are parsed as lists of ints/floats with the correct syntax
+                # (e.g. [0, 120]), but cast here as belt-and-suspenders against
+                # any future config variations.
+                lower = float(bounds[col][0])
+                upper = float(bounds[col][1])
                 series = df[col].dropna()
                 violations = series[(series < lower) | (series > upper)]
 

@@ -29,7 +29,7 @@ htmlcov/
 coverage.xml
 
 # ── DSBF runtime outputs ──────────────────────────────────────────────────────
-# Generated CSVs, profiler runs, and SQLite stores — large, ephemeral, local-only
+# Generated CSVs, profiler runs, and SQLite stores - large, ephemeral, local-only
 dsbf/outputs/
 dsbf/runs/
 dsbf/dsbf.db
@@ -38,7 +38,7 @@ dsbf/dsbf.db
 *.db
 
 # ── Test datasets ─────────────────────────────────────────────────────────────
-# Generated locally by tests/generators/ — never committed
+# Generated locally by tests/generators/ - never committed
 tests/datasets/
 *.csv
 *.parquet
@@ -57,7 +57,7 @@ Thumbs.db
 .vscode/
 *.code-workspace
 
-# ── Notebooks (outputs only — keep .ipynb files) ─────────────────────────────
+# ── Notebooks (outputs only - keep .ipynb files) ─────────────────────────────
 .ipynb_checkpoints/
 
 # ── Local dev notes (not project documentation) ──────────────────────────────

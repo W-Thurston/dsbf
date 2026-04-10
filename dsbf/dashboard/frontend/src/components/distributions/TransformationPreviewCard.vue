@@ -12,7 +12,7 @@
   ─────
   column : String
   tasks  : Object
-  embedded : Boolean — when true, strips the card shell (via CSS :deep in parent)
+  embedded : Boolean - when true, strips the card shell (via CSS :deep in parent)
 -->
 
 <template>
@@ -20,7 +20,7 @@
     <div class="card-title">
       Transformation Preview
       <TooltipIcon
-        text="For skewed columns, shows how common transformations would affect the distribution's skewness. The before → after comparison uses the actual computed statistics. Purely informational — no data is modified."
+        text="For skewed columns, shows how common transformations would affect the distribution's skewness. The before → after comparison uses the actual computed statistics. Purely informational - no data is modified."
         align="left"
         direction="down"
       />
@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <div class="tx-footer">Purely informational — no data has been modified by DSBF.</div>
+      <div class="tx-footer">Purely informational - no data has been modified by DSBF.</div>
     </template>
   </div>
 </template>
@@ -128,9 +128,9 @@ const props = defineProps({
 })
 
 function fmtN(v) {
-  if (v == null) return '—'
+  if (v == null) return '-'
   const n = Number(v)
-  if (!isFinite(n)) return '—'
+  if (!isFinite(n)) return '-'
   if (Math.abs(n) >= 10000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
   if (Math.abs(n) >= 10)    return n.toFixed(2)
   return n.toPrecision(4).replace(/\.?0+$/, '')
@@ -171,7 +171,7 @@ function outcomeStats(tx) {
       cls:    improved ? 'tx-improved' : worse ? 'tx-worse' : '',
       pct,
     }
-  }).filter(s => s.before !== '—' || s.after !== '—')
+  }).filter(s => s.before !== '-' || s.after !== '-')
 }
 
 const colData = computed(() =>

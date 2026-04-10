@@ -377,4 +377,18 @@ class DetectSkewness(BaseTask):
             body=ml_body.strip(),
             actions=ml_actions,
             metric=metric,
+            # Skewness impacts model families differently.
+            # Linear, regularised, and distance-based models assume or are
+            # sensitive to approximate normality and feature scale.
+            # Tree-based models split on thresholds — monotonic transforms
+            # do not change the split structure, so they are unaffected.
+            model_sensitivity={
+                "affected": [
+                    "Linear models",
+                    "Regularised (Ridge, Lasso, ElasticNet)",
+                    "KNN / Distance-based",
+                    "SVM (RBF kernel)",
+                ],
+                "unaffected": ["Tree-based (RF, XGBoost, LightGBM)"],
+            },
         )

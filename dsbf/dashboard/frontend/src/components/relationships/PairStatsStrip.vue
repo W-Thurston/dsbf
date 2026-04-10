@@ -103,30 +103,30 @@ const interpretationText = computed(() => {
 
   if (props.metricType === 'pearson_r') {
     if (props.strength === 'negligible') return `No meaningful linear relationship between ${a} and ${b}.`
-    if (props.strength === 'weak')       return `A weak ${dir} linear relationship — ${a} and ${b} move together slightly but with considerable scatter.`
-    if (props.strength === 'moderate')   return `A moderate ${dir} linear relationship — as ${a} ${v >= 0 ? 'increases' : 'decreases'}, ${b} tends to follow, though with notable variation.`
-    if (props.strength === 'strong')     return `A strong ${dir} linear relationship — ${a} and ${b} move closely together. Values of one are substantially predictive of the other.`
+    if (props.strength === 'weak')       return `A weak ${dir} linear relationship - ${a} and ${b} move together slightly but with considerable scatter.`
+    if (props.strength === 'moderate')   return `A moderate ${dir} linear relationship - as ${a} ${v >= 0 ? 'increases' : 'decreases'}, ${b} tends to follow, though with notable variation.`
+    if (props.strength === 'strong')     return `A strong ${dir} linear relationship - ${a} and ${b} move closely together. Values of one are substantially predictive of the other.`
   }
 
   if (props.metricType === 'eta_squared') {
     if (props.strength === 'negligible') return `The groupings in ${b} explain very little of the variance in ${a}.`
-    if (props.strength === 'weak')       return `The groupings in ${b} explain ${abs}% of the variance in ${a} — a small but present effect.`
-    if (props.strength === 'moderate')   return `The groupings in ${b} explain ${abs}% of the variance in ${a} — a meaningful association.`
+    if (props.strength === 'weak')       return `The groupings in ${b} explain ${abs}% of the variance in ${a} - a small but present effect.`
+    if (props.strength === 'moderate')   return `The groupings in ${b} explain ${abs}% of the variance in ${a} - a meaningful association.`
     if (props.strength === 'strong')     return `The groupings in ${b} explain ${abs}% of the variance in ${a}. The distribution of ${a} differs considerably across categories.`
   }
 
   if (props.metricType === 'cramers_v') {
     if (props.strength === 'negligible') return `No meaningful association between the categories of ${a} and ${b}.`
-    if (props.strength === 'weak')       return `A weak association between the categories of ${a} and ${b} — knowing one tells you little about the other.`
-    if (props.strength === 'moderate')   return `A moderate association between the categories of ${a} and ${b} — the distribution of one shifts meaningfully across values of the other.`
-    if (props.strength === 'strong')     return `A strong association between the categories of ${a} and ${b} — the two are closely linked.`
+    if (props.strength === 'weak')       return `A weak association between the categories of ${a} and ${b} - knowing one tells you little about the other.`
+    if (props.strength === 'moderate')   return `A moderate association between the categories of ${a} and ${b} - the distribution of one shifts meaningfully across values of the other.`
+    if (props.strength === 'strong')     return `A strong association between the categories of ${a} and ${b} - the two are closely linked.`
   }
 
   if (props.metricType === 'point_biserial_r') {
     if (props.strength === 'negligible') return `The binary grouping in ${b} shows no meaningful difference in ${a} values between groups.`
     if (props.strength === 'weak')       return `A slight difference in ${a} between the two groups defined by ${b}.`
-    if (props.strength === 'moderate')   return `A moderate difference in ${a} between the two groups defined by ${b} — the groups are meaningfully distinguishable.`
-    if (props.strength === 'strong')     return `A strong difference in ${a} between the two groups defined by ${b} — the groups are clearly separated.`
+    if (props.strength === 'moderate')   return `A moderate difference in ${a} between the two groups defined by ${b} - the groups are meaningfully distinguishable.`
+    if (props.strength === 'strong')     return `A strong difference in ${a} between the two groups defined by ${b} - the groups are clearly separated.`
   }
 
   return null

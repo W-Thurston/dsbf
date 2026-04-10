@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <!-- Pair detail — shown once secondary column is selected -->
+        <!-- Pair detail - shown once secondary column is selected -->
         <template v-if="secondaryColumn">
 
           <div class="pair-divider">

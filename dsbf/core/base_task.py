@@ -136,54 +136,79 @@ class BaseTask(ABC):
         body: str,
         actions: List[Dict[str, Any]],
         metric: Dict[str, Any],
+        model_sensitivity: Dict[str, List[str]] | None = None,
     ) -> None:
         """
         Attach a guidance blurb for a specific column and phase to a TaskResult.
 
         Guidance blurbs are the authoritative, phase-scoped narrative for each
         signal detected by a task. They are stored in report.json and rendered
-        by the dashboard - tasks are the single source of truth.
+        by the dashboard — tasks are the single source of truth.
 
-        EDA blurbs (phase="eda") describe data as-is: what was observed and what
-        it means about the distribution. No modeling language, no action chips.
+        EDA blurbs (phase="eda") describe data as-is: what was observed and
+        what it means about the distribution. No modeling language, no actions.
 
-        ML blurbs (phase="ml") prescribe what to do before modeling: which models
-        are affected, what transforms are recommended, as structured actions an
-        agent or user can act on directly.
+        ML blurbs (phase="ml") prescribe what to do before modeling: which
+        models are affected, what transforms are recommended, as structured
+        actions a user or agent can act on directly.
 
         Args:
-            result (TaskResult): The task result to attach guidance to.
-            column (str): The column this guidance applies to.
-            phase (str): "eda" or "ml".
-            level (str): Severity - "info", "warn", "error", or "good".
-            title (str): Short descriptive title for the finding.
-            body (str): Full self-contained narrative. Must include the observed
+            result: The task result to attach guidance to.
+            column: The column this guidance applies to.
+            phase: ``"eda"`` or ``"ml"``.
+            level: Severity — ``"info"``, ``"warn"``, ``"error"``, or
+                ``"good"``.
+            title: Short descriptive title for the finding.
+            body: Full self-contained narrative. Must include the observed
                 metric value, the direction/nature of the issue, and the
                 implication. Should make sense without surrounding context
                 (for LLM/agent consumption).
-            actions (list[dict]): Structured actions. Empty list for EDA blurbs.
-                Each action dict should have at minimum an "action" key.
-                Example: {"action": "transform", "method": "log1p", "column": col}
-            metric (dict): The observed metric values that triggered this blurb.
+            actions: Structured actions. Empty list for EDA blurbs.
+                Each action dict should have at minimum an ``"action"`` key.
+                Example: ``{"action": "transform", "method": "log1p",
+                "column": col}``
+            metric: The observed metric values that triggered this blurb.
                 Always include the raw numeric values, not just labels.
-                Example: {"skewness": 2.84, "mean": 312.4, "median": 287.0}
+                Example: ``{"skewness": 2.84, "mean": 312.4, "median": 287.0}``
+            model_sensitivity: Optional structured model-family impact summary
+                for ML-phase blurbs.  Rendered as a tag strip in the dashboard
+                so users can see at a glance which model families are affected
+                without reading the full body.  Two keys are expected:
+
+                - ``"affected"``   — list of model family names that are
+                  materially impacted by this finding.
+                - ``"unaffected"`` — list of model family names that are
+                  immune or largely insensitive to this finding.
+
+                Example::
+
+                    {
+                        "affected":   ["Linear", "KNN / Distance-based", "SVM"],
+                        "unaffected": ["Tree-based"],
+                    }
+
+                Omit for EDA blurbs or when sensitivity is the same across all
+                model families (e.g. encoding a raw string column blocks every
+                model equally — the body text is sufficient).
         """
         if result.guidance is None:
             result.guidance = {}
         if column not in result.guidance:
             result.guidance[column] = {"eda": [], "ml": []}
 
-        result.guidance[column][phase].append(
-            {
-                "phase": phase,
-                "column": column,
-                "level": level,
-                "title": title,
-                "body": body,
-                "actions": actions,
-                "metric": metric,
-            }
-        )
+        blurb: Dict[str, Any] = {
+            "phase": phase,
+            "column": column,
+            "level": level,
+            "title": title,
+            "body": body,
+            "actions": actions,
+            "metric": metric,
+        }
+        if model_sensitivity is not None:
+            blurb["model_sensitivity"] = model_sensitivity
+
+        result.guidance[column][phase].append(blurb)
 
     def set_ml_signals(
         self,

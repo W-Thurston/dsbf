@@ -1,10 +1,10 @@
 <!-- dsbf/dashboard/frontend/src/components/relationships/PairWarningsCard.vue
 
   Shows collinearity (VIF) and leakage warnings for a selected column pair.
-  Language is observational — describes what the data shows, not what to do about it.
+  Language is observational - describes what the data shows, not what to do about it.
   Preparation recommendations belong in the ML Readiness tab.
 
-  Always renders — shows an empty state when no warnings exist so the
+  Always renders - shows an empty state when no warnings exist so the
   panel structure is consistent regardless of pair selection.
 
   Props
@@ -75,8 +75,8 @@ const items = computed(() => {
           code:  `vif_${col}`,
           level: score > 30 ? 'critical' : 'warning',
           icon:  '🔗',
-          title: `High Collinearity — ${col}`,
-          body:  `VIF = ${score.toFixed(1)}. This column's variance is largely explained by other columns in the dataset — it does not carry fully independent information. The threshold is ${vifThreshold}.`,
+          title: `High Collinearity - ${col}`,
+          body:  `VIF = ${score.toFixed(1)}. This column's variance is largely explained by other columns in the dataset - it does not carry fully independent information. The threshold is ${vifThreshold}.`,
         })
       }
     }
@@ -96,7 +96,7 @@ const items = computed(() => {
       level: 'critical',
       icon:  '⚠',
       title: 'Near-Perfect Correlation',
-      body:  `These two columns are correlated at r ≥ ${threshold}${rStr}. They appear to encode the same or nearly the same information — one may be derived from the other, or both may share a common source.`,
+      body:  `These two columns are correlated at r ≥ ${threshold}${rStr}. They appear to encode the same or nearly the same information - one may be derived from the other, or both may share a common source.`,
     })
   }
 

@@ -115,7 +115,13 @@ def _category_block(
         "infer_types",
         "summarize_dataset_shape",
         "summarize_nulls",
-        "detect_out_of_bounds",
+        # detect_out_of_bounds is intentionally excluded from hard dependencies:
+        # it can fail when config bounds are defined for column names that don't
+        # exist in the dataset, or when dtype casting issues occur. The scorer
+        # handles a missing or failed result gracefully via the null-safe guard in
+        # the validity block - validity simply shows no out-of-bounds findings.
+        # Including it as a hard dependency causes the entire scorer (and
+        # ml_readiness_scorer) to be skipped when one bounds check fails.
         "detect_constant_columns",
         "detect_zeros",
         "detect_id_columns",

@@ -1,7 +1,7 @@
 # dsbf/config/default_config.yaml
 
 metadata:
-  dataset_name: "NFL_wk_by_wk"
+  dataset_name: "default_dataset_name"
   dataset_source: "seaborn"
   message_verbosity: debug      # quiet | info | debug
   profiling_depth: full         # basic | standard | full
@@ -134,12 +134,13 @@ tasks:
     threshold: 1e-4               # Flag numeric columns with variance below this value
 
   detect_out_of_bounds:
-    custom_bounds: {
-        "age": (0, 120),
-        "temperature": (-100, 150),
-        "percent": (0, 100),
-        "score": (0, 1),
-    }
+    # Bounds must be specified as YAML lists [min, max], not Python tuples (min, max).
+    # Python tuple syntax is not valid YAML and will be misparsed as strings.
+    custom_bounds:
+      age:         [0, 120]
+      temperature: [-100, 150]
+      percent:     [0, 100]
+      score:       [0, 1]
 
   detect_outliers:
     method: "all"              # "all" | "iqr" | "zscore" | "mad" | "isolation_forest"
@@ -154,12 +155,13 @@ tasks:
   detect_regex_format_violations:
     match_threshold: 0.6           # % of values that must match pattern to treat as a structured field
     max_violations: 5              # Max number of invalid examples to display
-    custom_patterns: {
-      zip: "^\\d{5}(-\\d{4})?$",
-      phone: "^\\+?\\d{1,3}?[-.\\s]?\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$",
-      email: "^[\\w\\.-]+@[\\w\\.-]+\\.\\w{2,}$",
-      url: "^https?://[^\\s]+$"
-    }
+    # Single-quoted strings in YAML treat backslashes literally - no escape processing.
+    # Double-quoted strings require \\ for a literal backslash, which breaks regex readability.
+    custom_patterns:
+      zip:   '^\d{5}(-\d{4})?$'
+      phone: '^\+?\d{1,3}?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$'
+      email: '^[\w\.-]+@[\w\.-]+\.\w{2,}$'
+      url:   '^https?://[^\s]+$'
 
   detect_single_dominant_value:
     dominance_threshold: 0.95

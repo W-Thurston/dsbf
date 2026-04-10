@@ -21,8 +21,8 @@ DTYPE_COLOR_MAP: dict[str, str] = {
     "bool": "#2ca02c",
     "datetime": "#ff7f0e",
     "category": "#8c564b",
-    "unknown": "#475569",
-    "mixed": "#475569",
+    "unknown": "#64748b",
+    "mixed": "#64748b",
     "object_": "#c084fc",
 }
 

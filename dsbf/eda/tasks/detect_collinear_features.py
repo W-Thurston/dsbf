@@ -1,7 +1,7 @@
 # dsbf/eda/tasks/detect_collinear_features.py
 
-import numpy as np
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools import add_constant
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -79,8 +79,13 @@ class DetectCollinearFeatures(BaseTask):
                 "debug",
             )
 
+            # Restrict VIF to semantically-typed continuous columns only.
+            # select_dtypes(np.number) would include bool columns stored as int,
+            # and any encoded categoricals - those don't belong in a collinearity check.
+            available_continuous = [c for c in matched_cols if c in df.columns]
+
             # Drop rows with any null before VIF to avoid statsmodels errors.
-            numeric_df = df.select_dtypes(include=np.number).dropna()
+            numeric_df = df[available_continuous].dropna()
 
             if numeric_df.shape[1] < 2:
                 self.output = TaskResult(
@@ -92,10 +97,20 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 return
 
+            # add_constant is required: variance_inflation_factor regresses each
+            # feature against all others. Without a constant column, the regression
+            # has no intercept, which forces the plane through the origin and inflates
+            # VIF for any features with nonzero means - producing spurious values of
+            # 10–35 even when pairwise correlations are essentially zero.
+            # The constant column is index 0; feature columns start at index 1.
+            numeric_df_with_const = add_constant(numeric_df, has_constant="add")
+
             vif_scores: dict[str, float] = {}
-            for i in range(numeric_df.shape[1]):
-                col = numeric_df.columns[i]
-                vif_scores[col] = float(variance_inflation_factor(numeric_df.values, i))
+            for i, col in enumerate(numeric_df.columns):
+                # +1 to skip the constant column that add_constant prepended
+                vif_scores[col] = float(
+                    variance_inflation_factor(numeric_df_with_const.values, i + 1)
+                )
 
             collinear_columns: list[str] = [
                 col for col, vif in vif_scores.items() if vif > vif_threshold

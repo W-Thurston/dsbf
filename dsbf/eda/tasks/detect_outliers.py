@@ -645,6 +645,20 @@ class DetectOutliers(BaseTask):
             body=ml_body.strip(),
             actions=actions,
             metric=metric,
+            # Outlier sensitivity is highly model-family-dependent.
+            # Tree-based models split on feature thresholds and are largely
+            # immune to outliers in the features (though not in the target).
+            # Linear, distance-based, and PCA-based methods are directly
+            # destabilised by extreme values.
+            model_sensitivity={
+                "affected": [
+                    "Linear models",
+                    "KNN / Distance-based",
+                    "SVM (RBF kernel)",
+                    "PCA",
+                ],
+                "unaffected": ["Tree-based (RF, XGBoost, LightGBM)"],
+            },
         )
 
     def _attach_if_guidance(self, if_result: dict[str, Any]) -> None:

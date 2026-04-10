@@ -34,7 +34,7 @@
           A {{ numericColCount }}×{{ numericColCount }} Pearson r matrix has been computed and is ready to render.
         </span>
         <span v-else>
-          Correlation matrix not available — re-run at standard depth or higher.
+          Correlation matrix not available - re-run at standard depth or higher.
         </span>
       </div>
     </div>

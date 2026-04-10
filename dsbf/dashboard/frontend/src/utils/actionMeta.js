@@ -4,11 +4,11 @@
  * Central knowledge base for ML Readiness action metadata.
  * Imported by MlReadinessTab and TransformationPreviewCard.
  *
- * TRANSFORM_META  — per-transform metadata for TransformationPreviewCard
- * SKIP_CONTEXT    — enriched skip-reason explanations
- * ACTION_META     — per-action metadata for suggested action rows
- * actionMeta()    — lookup helper
- * normalizeMethod() — string normalisation for lookup keys
+ * TRANSFORM_META  - per-transform metadata for TransformationPreviewCard
+ * SKIP_CONTEXT    - enriched skip-reason explanations
+ * ACTION_META     - per-action metadata for suggested action rows
+ * actionMeta()    - lookup helper
+ * normalizeMethod() - string normalisation for lookup keys
  */
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -25,12 +25,12 @@ export function normalizeMethod(s) {
 export const TRANSFORM_META = {
   log1p: {
     what:     'Takes the natural log of (1 + x). Adding 1 before the log preserves zero values and compresses right-skewed tails without distorting the distribution shape.',
-    tradeoff: 'Very effective at reducing right skew. Requires all values to be ≥ 0 — negative values cannot be transformed. If the column has negatives, use Yeo-Johnson instead.',
+    tradeoff: 'Very effective at reducing right skew. Requires all values to be ≥ 0 - negative values cannot be transformed. If the column has negatives, use Yeo-Johnson instead.',
     after:    'Values are on a log scale. A one-unit difference represents a multiplicative change in the original. The column range will be much narrower.',
     ref:      { label: 'numpy.log1p', url: 'https://numpy.org/doc/stable/reference/generated/numpy.log1p.html' },
   },
   sqrt: {
-    what:     'Takes the square root of each value. A milder compression than log — useful when log1p over-corrects or when the column has many zeros.',
+    what:     'Takes the square root of each value. A milder compression than log - useful when log1p over-corrects or when the column has many zeros.',
     tradeoff: 'Less aggressive skew reduction than log1p. Also requires all values to be ≥ 0. A good middle ground for count data or lightly right-skewed columns.',
     after:    'Values are on a square root scale. Units become the square root of the originals, which are less intuitive to interpret directly.',
     ref:      { label: 'numpy.sqrt', url: 'https://numpy.org/doc/stable/reference/generated/numpy.sqrt.html' },
@@ -43,13 +43,13 @@ export const TRANSFORM_META = {
   },
   yeo_johnson: {
     what:     'A generalised power transformation that works on any distribution, including those with negative values. The λ parameter is estimated automatically from the data using maximum likelihood.',
-    tradeoff: 'The most flexible option — handles positive, zero, and negative values. The transformation is data-specific and the output is harder to interpret directly without knowing the estimated λ.',
-    after:    'Values are on a power-transformed scale. The specific transformation depends on the fitted λ — save it in your preprocessing pipeline to invert the transform later.',
+    tradeoff: 'The most flexible option - handles positive, zero, and negative values. The transformation is data-specific and the output is harder to interpret directly without knowing the estimated λ.',
+    after:    'Values are on a power-transformed scale. The specific transformation depends on the fitted λ - save it in your preprocessing pipeline to invert the transform later.',
     ref:      { label: 'sklearn PowerTransformer', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html' },
   },
   box_cox: {
     what:     'A power transformation similar to Yeo-Johnson but requiring all values to be strictly positive (> 0). The λ parameter is estimated automatically to maximise normality.',
-    tradeoff: 'Often achieves better normality than Yeo-Johnson when applicable, since it has one fewer constraint. Fails on zero or negative values — use Yeo-Johnson for those cases.',
+    tradeoff: 'Often achieves better normality than Yeo-Johnson when applicable, since it has one fewer constraint. Fails on zero or negative values - use Yeo-Johnson for those cases.',
     after:    'Values are on a power-transformed scale determined by the estimated λ. The transformation is reversible if you save the fitted λ value.',
     ref:      { label: 'scipy.stats.boxcox', url: 'https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.boxcox.html' },
   },
@@ -99,7 +99,7 @@ export const ACTION_META = {
   yeo_johnson: {
     what:     'A generalised power transformation that handles negative values. The λ parameter is estimated automatically from the data.',
     tradeoff: 'Works on any distribution including those with negative values. The transformation is data-specific, making the output harder to interpret directly.',
-    after:    'Values are on a power-transformed scale. The specific transformation depends on the estimated λ — check the fitted value.',
+    after:    'Values are on a power-transformed scale. The specific transformation depends on the estimated λ - check the fitted value.',
     ref:      { label: 'sklearn PowerTransformer', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PowerTransformer.html' },
   },
   box_cox: {
@@ -110,36 +110,36 @@ export const ACTION_META = {
   },
   winsorize: {
     what:     'Clips extreme values at specified percentile bounds (e.g., 1st/99th). Extreme values are replaced with the boundary value, not removed.',
-    tradeoff: 'Reduces outlier influence while keeping all rows. Does not reshape the distribution — only truncates the tails. Column retains its original scale.',
+    tradeoff: 'Reduces outlier influence while keeping all rows. Does not reshape the distribution - only truncates the tails. Column retains its original scale.',
     after:    'The distribution shape is mostly preserved but extreme values are capped. The column range becomes bounded by the chosen percentiles.',
     ref:      { label: 'scipy.stats.mstats.winsorize', url: 'https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.mstats.winsorize.html' },
   },
   robustscaler: {
     what:     'Scales each value by subtracting the median and dividing by the interquartile range (IQR), rather than using mean and standard deviation.',
-    tradeoff: 'More robust to outliers than standard scaling (StandardScaler) because it uses median and IQR instead of mean and std. Does not bound the output range — extreme outliers still produce extreme scaled values.',
+    tradeoff: 'More robust to outliers than standard scaling (StandardScaler) because it uses median and IQR instead of mean and std. Does not bound the output range - extreme outliers still produce extreme scaled values.',
     after:    'Values are centred around 0 (median becomes 0) with the IQR spanning roughly -0.5 to +0.5. Outliers remain but are less dominant.',
     ref:      { label: 'sklearn RobustScaler', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html' },
   },
   reflect_then_log: {
     what:     'Reflects a left-skewed distribution by subtracting each value from the maximum, then applies log1p to the reflected values.',
     tradeoff: 'Allows log transformation on left-skewed data where direct log would worsen skew. The reflection reverses the direction of the variable, which changes interpretation.',
-    after:    'Values represent the log of the distance from the original maximum. The direction of the variable is reversed — higher original values become lower transformed values.',
+    after:    'Values represent the log of the distance from the original maximum. The direction of the variable is reversed - higher original values become lower transformed values.',
     ref:      null,
   },
   pd_qcut: {
     what:     'Divides the column into equal-frequency (quantile) bins, assigning each row to a rank-based bucket rather than a value range.',
-    tradeoff: 'Eliminates outlier influence entirely by converting to ranks. Loses the original numeric information — the model sees bins, not values. Bin labels are arbitrary.',
+    tradeoff: 'Eliminates outlier influence entirely by converting to ranks. Loses the original numeric information - the model sees bins, not values. Bin labels are arbitrary.',
     after:    'Column becomes categorical with a fixed number of buckets. Apply an encoding step afterward.',
     ref:      { label: 'pandas.qcut', url: 'https://pandas.pydata.org/docs/reference/api/pandas.qcut.html' },
   },
   gmm_cluster_indicator: {
-    what:     'Fits a Gaussian Mixture Model to the column and adds binary indicators for each detected component — essentially flagging which sub-population each row belongs to.',
+    what:     'Fits a Gaussian Mixture Model to the column and adds binary indicators for each detected component - essentially flagging which sub-population each row belongs to.',
     tradeoff: 'Useful for bimodal or multimodal columns where the mixture structure carries signal. Adds multiple columns to the dataset. The number of components requires tuning.',
     after:    'Adds N binary columns (one per component). The original column may be retained or dropped depending on context.',
     ref:      { label: 'sklearn GaussianMixture', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html' },
   },
   monitor: {
-    what:     'Keep the column but flag it for active monitoring — track its distribution over time and set up drift alerts rather than transforming it now.',
+    what:     'Keep the column but flag it for active monitoring - track its distribution over time and set up drift alerts rather than transforming it now.',
     tradeoff: 'Preserves all information while acknowledging the issue. Requires infrastructure to monitor distributions in production. Does not address the underlying skew or variance issue.',
     after:    'No immediate change to the column. Set up distribution tracking using a monitoring tool and define alert thresholds.',
     ref:      null,
@@ -152,7 +152,7 @@ export const ACTION_META = {
   },
   use_tree_model: {
     what:     'Use a tree-based model (e.g. Random Forest, XGBoost, LightGBM) that is invariant to monotonic transformations of features.',
-    tradeoff: 'Eliminates the need to transform the column entirely — tree splits are order-based, not magnitude-based. Trades model flexibility for skew robustness. Linear models, SVMs, and neural nets still benefit from transformation.',
+    tradeoff: 'Eliminates the need to transform the column entirely - tree splits are order-based, not magnitude-based. Trades model flexibility for skew robustness. Linear models, SVMs, and neural nets still benefit from transformation.',
     after:    'No column change required. The model handles skew natively through its split-finding mechanism.',
     ref:      { label: 'sklearn RandomForest', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html' },
   },
@@ -167,13 +167,13 @@ export const ACTION_META = {
   },
   target_encoding: {
     what:     'Replaces each category with the mean of the target variable for rows in that category.',
-    tradeoff: 'Very effective for high-cardinality columns. Must be applied within cross-validation folds to prevent target leakage — applying it to the full dataset before splitting inflates model performance.',
+    tradeoff: 'Very effective for high-cardinality columns. Must be applied within cross-validation folds to prevent target leakage - applying it to the full dataset before splitting inflates model performance.',
     after:    'Column becomes numeric. Similar categories by target rate will have similar encoded values. Rare categories may have noisy estimates.',
     ref:      { label: 'sklearn TargetEncoder', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.TargetEncoder.html' },
   },
   frequency_encoding: {
     what:     'Replaces each category with the proportion of rows it appears in across the dataset.',
-    tradeoff: 'No target variable needed. Captures relative frequency as a signal. Does not encode the relationship to the target — common and rare categories are distinguishable, but ordering by frequency may not reflect predictive importance.',
+    tradeoff: 'No target variable needed. Captures relative frequency as a signal. Does not encode the relationship to the target - common and rare categories are distinguishable, but ordering by frequency may not reflect predictive importance.',
     after:    'Column becomes numeric (0–1 scale). Frequent categories get large values; rare ones get small values. Categories with equal frequency become indistinguishable.',
     ref:      null,
   },
@@ -196,26 +196,26 @@ export const ACTION_META = {
     ref:      null,
   },
   group_rare: {
-    what:     'Similar to bucket_rare_values — merges low-frequency categories into a single group to reduce cardinality.',
+    what:     'Similar to bucket_rare_values - merges low-frequency categories into a single group to reduce cardinality.',
     tradeoff: 'Reduces noise from rare categories at the cost of losing their individual identity. The threshold for "rare" needs to be defined.',
     after:    'Apply encoding after grouping. The "rare" bucket becomes a single category.',
     ref:      null,
   },
   class_weight: {
     what:     'Pass class weights to the model so minority classes are penalised more heavily during training, compensating for imbalance.',
-    tradeoff: 'Simple to implement (most sklearn estimators support class_weight="balanced"). Does not change the data — only changes the loss function. May not fully correct severe imbalance.',
+    tradeoff: 'Simple to implement (most sklearn estimators support class_weight="balanced"). Does not change the data - only changes the loss function. May not fully correct severe imbalance.',
     after:    'No change to the column. The model applies higher penalty for misclassifying the minority class.',
     ref:      { label: 'sklearn class_weight', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_class_weight.html' },
   },
   smote: {
     what:     'Synthetic Minority Over-sampling Technique. Generates synthetic samples for the minority class by interpolating between existing minority samples.',
-    tradeoff: 'More effective than random oversampling at avoiding exact duplicates. Must be applied only to the training fold — never to validation or test data. Can introduce noisy samples near class boundaries.',
+    tradeoff: 'More effective than random oversampling at avoiding exact duplicates. Must be applied only to the training fold - never to validation or test data. Can introduce noisy samples near class boundaries.',
     after:    'Training set gains synthetic minority class rows. Class distribution becomes more balanced. Apply within cross-validation folds.',
     ref:      { label: 'imbalanced-learn SMOTE', url: 'https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html' },
   },
   stratified_split: {
     what:     'Use stratified train/test splitting to ensure class proportions are preserved in both the training and test sets.',
-    tradeoff: 'Simple and always recommended for imbalanced targets. Does not change the data or the model — only the splitting strategy. Essential to avoid train/test distribution mismatch.',
+    tradeoff: 'Simple and always recommended for imbalanced targets. Does not change the data or the model - only the splitting strategy. Essential to avoid train/test distribution mismatch.',
     after:    'Both train and test sets reflect the original class distribution. Use stratify=y in sklearn train_test_split.',
     ref:      { label: 'sklearn train_test_split stratify', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html' },
   },
@@ -236,7 +236,7 @@ export const ACTION_META = {
   },
   mean_or_median: {
     what:     'Replaces missing values with either the mean (symmetric distributions) or median (skewed distributions) of the non-missing values.',
-    tradeoff: 'Fast and simple. Mean is sensitive to outliers; median is more robust. Neither preserves variance — imputed rows all receive the same value.',
+    tradeoff: 'Fast and simple. Mean is sensitive to outliers; median is more robust. Neither preserves variance - imputed rows all receive the same value.',
     after:    'Missing rows all receive the same central value. The distribution becomes slightly more concentrated around the centre.',
     ref:      { label: 'sklearn SimpleImputer', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html' },
   },
@@ -259,8 +259,8 @@ export const ACTION_META = {
     ref:      { label: 'sklearn IterativeImputer', url: 'https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html' },
   },
   see_task: {
-    what:     'The specific imputation strategy depends on the column type and context — refer to the task details for the recommended approach.',
-    tradeoff: 'N/A — see the specific recommendation.',
+    what:     'The specific imputation strategy depends on the column type and context - refer to the task details for the recommended approach.',
+    tradeoff: 'N/A - see the specific recommendation.',
     after:    'Depends on the approach selected.',
     ref:      null,
   },
@@ -269,13 +269,13 @@ export const ACTION_META = {
 
   investigate: {
     what:     'Manually examine the column origin, data pipeline, and semantics before taking action.',
-    tradeoff: 'Required before dropping or retaining a flagged column — automated detection cannot determine intent. Takes time but prevents incorrect decisions.',
+    tradeoff: 'Required before dropping or retaining a flagged column - automated detection cannot determine intent. Takes time but prevents incorrect decisions.',
     after:    'Understanding the data provenance determines whether the column is safe to use, should be dropped, or needs re-engineering.',
     ref:      null,
   },
   replace_with_nan: {
     what:     'Replaces sentinel or placeholder values (e.g., -999, 0, "N/A") with actual null values so they are treated as missing rather than as a data point.',
-    tradeoff: 'Essential when placeholder values are present — leaving them in treats them as real data. Increases the apparent missingness rate, which may require follow-up imputation.',
+    tradeoff: 'Essential when placeholder values are present - leaving them in treats them as real data. Increases the apparent missingness rate, which may require follow-up imputation.',
     after:    'Placeholder values are now null. Apply a missingness strategy afterward.',
     ref:      null,
   },

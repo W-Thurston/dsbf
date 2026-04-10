@@ -58,26 +58,39 @@ _SEVERITY_RANK: dict[str, int] = {
 }
 
 
-def _traffic_light(
-    pct_affected: float, has_error: bool, has_warn: bool
-) -> str:  # noqa: FBT001
+def _traffic_light(has_error: bool, has_warn: bool) -> str:  # noqa: FBT001
     """
-    Map dimension metrics to a proportional traffic-light level.
+    Map dimension finding severity to a traffic-light level.
+
+    The traffic light communicates *urgency*, not column count.  Proportion of
+    columns affected is stored separately for display context but must not
+    influence the color — a dataset with 20 ``info``-level notes is not in
+    worse shape than one with 2; both are green.
+
+    Severity hierarchy:
+
+    - ``"error"`` — modeling will fail or produce meaningless results without
+      addressing this (e.g. raw string column passed to sklearn).
+    - ``"warn"``  — modeling will run but may have reliability, performance, or
+      interpretability issues (e.g. high skew, significant missingness).
+    - ``"info"``  — worth considering before finalising the pipeline, but
+      optional; no correctness impact (e.g. single-method outlier note).
+    - ``"good"``  — a clean column with a positive recommendation (e.g.
+      one-hot encoding for a well-behaved 4-value categorical).
 
     Args:
-        pct_affected: Proportion of total columns with findings in this dimension.
         has_error: True if any finding in the dimension has level ``"error"``.
         has_warn: True if any finding in the dimension has level ``"warn"``.
 
     Returns:
-        ``"red"`` if error-level findings exist or > 15% of columns are affected;
-        ``"amber"`` if warn-level findings exist or 5-15% affected;
-        ``"green"`` otherwise.
+        ``"red"``   if any error-level finding exists in this dimension;
+        ``"amber"`` if any warn-level finding exists and no errors;
+        ``"green"`` if all findings are info/good, or there are no findings.
 
     """
-    if has_error or pct_affected > 0.15:  # noqa: PLR2004
+    if has_error:
         return "red"
-    if has_warn or pct_affected > 0.05:  # noqa: PLR2004
+    if has_warn:
         return "amber"
     return "green"
 
@@ -144,30 +157,39 @@ class MlReadinessScorer(BaseTask):
 
     Routes ML guidance blurbs emitted by EDA tasks into five preparation-focused
     dimensions. Unlike a numeric score, the output is organized around what a
-    data scientist needs to *do* before modeling - not how "bad" the data is.
+    data scientist needs to *do* before modeling — not how "bad" the data is.
 
-    The gate (not_ready / needs_work / ready) is the primary signal; dimension-level
-    traffic lights show where the work is.
+    The gate (not_ready / needs_work / ready) is the primary signal; dimension
+    traffic lights show where the work is.  Traffic lights are severity-based
+    (not proportion-based): only error/warn findings move a dimension away from
+    green.  Info and good findings are advisory — they appear in the UI but do
+    not inflate the color or affected-column counts.
 
     Output shape (``data`` field)::
 
         {
-            "readiness_gate":  "ready" | "needs_work" | "not_ready",
-            "total_columns":   int,
-            "all_columns":     [str, ...],
-            "clean_columns":   [str, ...],
+            "readiness_gate":   "ready" | "needs_work" | "not_ready",
+            "total_columns":    int,
+            "all_columns":      [str, ...],
+            "action_columns":   [str, ...],   # ≥1 error/warn finding
+            "advisory_columns": [str, ...],   # only info/good findings
+            "clean_columns":    [str, ...],   # zero findings of any kind
             "categories": {
                 "<dimension>": {
-                    "label":            str,
-                    "affected_columns": [str, ...],
-                    "affected_count":   int,
-                    "total_columns":    int,
-                    "pct_affected":     float,
-                    "level":            "green" | "amber" | "red",
+                    "label":             str,
+                    # Action bucket — columns requiring attention
+                    "affected_columns":  [str, ...],
+                    "affected_count":    int,
+                    "pct_affected":      float,
+                    # Advisory bucket — informational only, no action needed
+                    "advisory_columns":  [str, ...],
+                    "advisory_count":    int,
+                    "total_columns":     int,
+                    "level":             "green" | "amber" | "red",
                     "findings": [
                         {
                             "column":  str,
-                            "level":   str,
+                            "level":   "error" | "warn" | "info" | "good",
                             "title":   str,
                             "body":    str,
                             "actions": [...],
@@ -260,31 +282,70 @@ class MlReadinessScorer(BaseTask):
 
         for dim in _DIMENSIONS:
             findings: list[dict[str, Any]] = dim_findings[dim]
-            cols: list[str] = sorted(dim_cols[dim])
-            count: int = len(cols)
-            pct: float = count / total_columns if total_columns else 0.0
             has_error: bool = any(f["level"] == "error" for f in findings)
             has_warn: bool = any(f["level"] == "warn" for f in findings)
 
+            # Three-bucket column accounting:
+            #
+            # action_columns   — columns with at least one error or warn finding.
+            #                    These need attention before modeling.
+            # advisory_columns — columns whose findings are all info or good.
+            #                    Worth reading; no remediation required.
+            #
+            # ``affected_count`` and ``pct_affected`` reflect only action columns
+            # so that traffic-light colors and the header summary ("N cols") are
+            # not inflated by advisory notes.  Advisory column counts are exposed
+            # separately so the UI can render them in a muted style.
+            action_cols: list[str] = sorted(
+                col
+                for col in dim_cols[dim]
+                if any(
+                    f["column"] == col and f["level"] in {"error", "warn"}
+                    for f in findings
+                )
+            )
+            advisory_cols: list[str] = sorted(
+                col for col in dim_cols[dim] if col not in action_cols
+            )
+
+            action_count: int = len(action_cols)
+            advisory_count: int = len(advisory_cols)
+            pct: float = action_count / total_columns if total_columns else 0.0
+
             categories[dim] = {
                 "label": _DIMENSION_LABELS[dim],
-                "affected_columns": cols,
-                "affected_count": count,
-                "total_columns": total_columns,
+                # Action columns — require remediation
+                "affected_columns": action_cols,
+                "affected_count": action_count,
                 "pct_affected": round(pct, 4),
-                "level": _traffic_light(pct, has_error, has_warn),
+                # Advisory columns — informational only
+                "advisory_columns": advisory_cols,
+                "advisory_count": advisory_count,
+                "total_columns": total_columns,
+                "level": _traffic_light(has_error, has_warn),
                 "findings": findings,
             }
 
         gate: str = _gate(categories)
 
-        # Columns with zero ML findings across all dimensions.
-        all_affected: set[str] = set()
-        for cols in dim_cols.values():
-            all_affected.update(cols)
+        # Three global column buckets used by the "Ready Features" section:
+        #
+        # action_columns   — have at least one error/warn finding in any dimension
+        # advisory_columns — have only info/good findings across all dimensions
+        # clean_columns    — have zero findings of any kind
+        all_action: set[str] = set()
+        all_advisory: set[str] = set()
+        for cat in categories.values():
+            all_action.update(cat["affected_columns"])
+            all_advisory.update(cat["advisory_columns"])
+        # A column in both action and advisory sets (flagged in one dimension,
+        # advisory in another) is an action column — use the stricter bucket.
+        all_advisory -= all_action
         clean_columns: list[str] = sorted(
-            c for c in all_columns if c not in all_affected
+            c for c in all_columns if c not in all_action and c not in all_advisory
         )
+        action_columns: list[str] = sorted(all_action)
+        advisory_columns: list[str] = sorted(all_advisory)
 
         self.output = TaskResult(
             name=self.name,
@@ -294,6 +355,12 @@ class MlReadinessScorer(BaseTask):
                 "readiness_gate": gate,
                 "total_columns": total_columns,
                 "all_columns": all_columns,
+                # Three global column buckets for the "Ready Features" UI section.
+                # action_columns   → have at least one error/warn finding
+                # advisory_columns → have only info/good findings (no action needed)
+                # clean_columns    → zero findings of any kind
+                "action_columns": action_columns,
+                "advisory_columns": advisory_columns,
                 "clean_columns": clean_columns,
                 "categories": categories,
             },
@@ -301,14 +368,19 @@ class MlReadinessScorer(BaseTask):
                 "dimensions": _DIMENSIONS,
                 "dimension_labels": _DIMENSION_LABELS,
                 "gate_logic": {
-                    "not_ready": "any dimension is red",
-                    "needs_work": "any dimension is amber, none red",
-                    "ready": "all dimensions green",
+                    "not_ready": "any finding has level='error'",
+                    "needs_work": "no errors; at least one finding has level='warn'",
+                    "ready": "all findings are info/good or none exist",
                 },
-                "traffic_light_thresholds": {
-                    "red": "error-level findings present OR >15% cols affected",
-                    "amber": "warn-level findings present OR 5-15% cols affected",
-                    "green": "info/good only AND ≤5% cols affected",
+                "traffic_light_logic": {
+                    "red": "any error-level finding in this dimension",
+                    "amber": "any warn-level finding, no errors",
+                    "green": "all findings are info/good, or no findings",
+                },
+                "column_bucket_logic": {
+                    "action": "at least one error or warn finding in any dimension",
+                    "advisory": "only info/good findings across all dimensions",
+                    "clean": "zero findings of any kind",
                 },
                 "suggested_viz_type": "dimension_grid",
                 "recommended_section": "ML Readiness",
