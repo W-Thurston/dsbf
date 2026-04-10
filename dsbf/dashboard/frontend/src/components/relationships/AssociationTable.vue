@@ -36,12 +36,13 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <div v-if="filtered.length === 0" class="empty">
-      No associations match the current filters.
-    </div>
+    <!-- Scroll container: controls row above stays frozen; thead sticks within -->
+    <div class="assoc-table-scroll">
+      <div v-if="filtered.length === 0" class="empty">
+        No associations match the current filters.
+      </div>
 
-    <table v-else class="assoc-table">
+      <table v-else class="assoc-table">
       <thead>
         <tr>
           <th>Column</th>
@@ -79,7 +80,8 @@
           </td>
         </tr>
       </tbody>
-    </table>
+      </table>
+    </div><!-- /.assoc-table-scroll -->
 
     <div class="result-count" v-if="search || intentFilter !== 'all' || strengthFilter !== 'all'">
       {{ filtered.length }} of {{ rows.length }} columns
@@ -113,8 +115,8 @@ const strengthOptions = [
   { value: 'weak',      label: 'Weak+'    },
 ]
 const sortOptions = [
+  { value: 'name',   label: 'Column'   },
   { value: 'metric', label: 'Strength' },
-  { value: 'name',   label: 'Name'     },
 ]
 
 const STRENGTH_RANK = { strong: 3, moderate: 2, weak: 1, negligible: 0 }
@@ -178,6 +180,9 @@ function metricClass(val, type) {
 <style scoped>
 .assoc-table-wrap { display: flex; flex-direction: column; gap: 12px; }
 
+/* The parent assoc-scroll div in RelationshipsTab previously handled scrolling
+   for the whole component. We now handle it here on tbody only, so controls
+   and the header row stay frozen. Remove max-height from the parent. */
 .controls-row {
   display: flex;
   align-items: center;
@@ -212,9 +217,29 @@ function metricClass(val, type) {
 .chip:hover  { border-color: #60a5fa; color: #e2e8f0; }
 .chip.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
 
-/* Table */
-.assoc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* Table — normal table layout preserved so column widths stay consistent.
+   The controls row sits above the scroll container so it stays frozen.
+   The thead uses position:sticky so it pins at the top of the scroll area. */
+.assoc-table-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  border-radius: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+.assoc-table-scroll::-webkit-scrollbar { width: 5px; }
+.assoc-table-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+.assoc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
 .assoc-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #1e293b;
   text-align: left; padding: 8px 12px;
   color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
   border-bottom: 1px solid #334155;

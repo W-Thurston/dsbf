@@ -54,7 +54,7 @@
             <div class="ml-stat-label">Total columns</div>
           </div>
           <div class="ml-stat">
-            <div class="ml-stat-value ml-text--good">{{ readyToUseCount }}</div>
+            <div class="ml-stat-value ml-text--good">{{ data.clean_columns?.length ?? 0 }}</div>
             <div class="ml-stat-label">Ready to use</div>
           </div>
           <div class="ml-stat">
@@ -77,37 +77,25 @@
             <span class="ml-dot" :class="`ml-dot--${dim.level}`" />
             <span class="ml-sc-label">{{ dim.label }}</span>
           </div>
-          <!-- Primary count: action columns only, colored by severity.
-               Advisory-only → muted "N notes" line. Zero findings → "All clear". -->
           <div
             class="ml-sc-count"
-            :class="dim.affectedCount > 0
-              ? `ml-text--${dim.level}`
-              : dim.advisoryCount > 0 ? 'ml-text--advisory' : 'ml-text--good'"
+            :class="dim.affectedCount === 0 ? 'ml-text--good' : `ml-text--${dim.level}`"
           >
-            {{ dim.affectedCount > 0
-              ? `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}`
-              : dim.advisoryCount > 0
-                ? `${dim.advisoryCount} note${dim.advisoryCount === 1 ? '' : 's'}`
-                : 'All clear' }}
+            {{ dim.affectedCount === 0
+              ? 'All clear'
+              : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` }}
           </div>
-          <div
-            class="ml-sc-pct"
-            :class="dim.advisoryCount > 0 && dim.affectedCount === 0 ? 'ml-sc-pct--advisory' : ''"
-          >
-            {{ dim.affectedCount > 0
-              ? `${(dim.pctAffected * 100).toFixed(1)}% of dataset`
-              : dim.advisoryCount > 0
-                ? 'No action needed'
-                : 'No action needed' }}
+          <div class="ml-sc-pct">
+            {{ dim.affectedCount === 0
+              ? 'No action needed'
+              : `${(dim.pctAffected * 100).toFixed(1)}% of dataset` }}
           </div>
-          <!-- Issue chips: error/warn prominent, info/good muted -->
+          <!-- Issue type counts -->
           <div v-if="dim.issueCounts.length" class="ml-sc-preview">
             <span
               v-for="ic in dim.issueCounts"
               :key="ic.label"
               class="ml-sc-chip"
-              :class="ic.muted ? 'ml-sc-chip--muted' : ''"
             >{{ ic.label }}: {{ ic.count }}</span>
           </div>
         </button>
@@ -130,27 +118,18 @@
               direction="down"
               align="left"
             />
-            <!-- Section header count: action columns when present,
-                 else advisory note count, else "All clear" -->
-            <span
-              class="ml-section-count"
-              :class="dim.affectedCount > 0
-                ? `ml-text--${dim.level}`
-                : dim.advisoryCount > 0 ? 'ml-text--advisory' : 'ml-text--good'"
-            >
-              {{ dim.affectedCount > 0
-                ? `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` +
-                  (dim.actionFindings.length !== dim.affectedCount
-                    ? ` · ${dim.actionFindings.length} finding${dim.actionFindings.length === 1 ? '' : 's'}`
-                    : '')
-                : dim.advisoryCount > 0
-                  ? `${dim.advisoryCount} note${dim.advisoryCount === 1 ? '' : 's'}`
-                  : 'All clear' }}
+            <span class="ml-section-count" :class="`ml-text--${dim.level}`">
+              {{ dim.affectedCount === 0
+                ? 'All clear'
+                : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` +
+                  (dim.findings.length !== dim.affectedCount
+                    ? ` · ${dim.findings.length} finding${dim.findings.length === 1 ? '' : 's'}`
+                    : '') }}
             </span>
           </div>
           <div class="ml-section-controls" @click.stop>
-            <!-- Show sort controls when any findings exist (action or advisory) -->
-            <template v-if="dim.findings.length > 0">
+            <!-- Sort controls: only visible when section is open AND has findings -->
+            <template v-if="dim.affectedCount > 0 && openSections.has(dim.key)">
               <span class="ml-sort-label">Sort:</span>
               <button
                 v-for="opt in sortOptions"
@@ -174,23 +153,11 @@
         <Transition name="ml-expand">
           <div v-if="openSections.has(dim.key)" class="ml-section-body">
 
-            <!-- Three states:
-                 1. Truly clear — no findings of any kind
-                 2. Advisory only — info/good notes; table still shown but banner is softer
-                 3. Action required — error/warn findings -->
-            <div v-if="dim.findings.length === 0" class="ml-all-clear">
+            <div v-if="dim.affectedCount === 0" class="ml-all-clear">
               ✅ No preparation needed for this dimension.
             </div>
 
-            <div
-              v-else-if="dim.affectedCount === 0 && dim.advisoryCount > 0"
-              class="ml-advisory-note"
-            >
-              ℹ️ No action required — the notes below are informational suggestions
-              you may want to review before finalising your pipeline.
-            </div>
-
-            <template v-if="dim.findings.length > 0">
+            <template v-else>
               <div class="ml-findings-table">
                 <div class="ml-findings-header">
                   <span></span>
@@ -237,33 +204,6 @@
                         @click.stop
                       >
                         <p class="ml-finding-body">{{ finding.body }}</p>
-
-                        <!-- Model sensitivity tag strip — shown when the finding
-                             carries structured model-family impact data.
-                             Affected families in red/amber; unaffected in muted green.
-                             Lets users filter mentally by their target model type
-                             without reading the full body prose. -->
-                        <div
-                          v-if="finding.model_sensitivity"
-                          class="ml-sensitivity-strip"
-                        >
-                          <span class="ml-sensitivity-label">Model sensitivity</span>
-                          <div class="ml-sensitivity-tags">
-                            <span
-                              v-for="tag in finding.model_sensitivity.affected"
-                              :key="tag"
-                              class="ml-sensitivity-tag ml-sensitivity-tag--affected"
-                              :title="`${tag}: affected by this finding`"
-                            >{{ tag }}</span>
-                            <span class="ml-sensitivity-divider" v-if="finding.model_sensitivity.unaffected?.length">·</span>
-                            <span
-                              v-for="tag in finding.model_sensitivity.unaffected"
-                              :key="tag"
-                              class="ml-sensitivity-tag ml-sensitivity-tag--unaffected"
-                              :title="`${tag}: largely unaffected by this finding`"
-                            >{{ tag }}</span>
-                          </div>
-                        </div>
 
                         <!-- Metric stat strip (elevated from pills) -->
                         <div
@@ -373,20 +313,14 @@
         </Transition>
       </div>
 
-      <!-- ── 4. Column status overview ────────────────────────────────────── -->
-      <!--
-        Three buckets, matching the scorer's three-way classification:
-          action   — ≥1 error/warn finding; needs attention before modeling
-          advisory — only info/good findings; no action required, notes available
-          clean    — zero findings of any kind; ready as-is
-      -->
+      <!-- ── 4. Clean features ───────────────────────────────────────────── -->
       <div class="ml-section card">
         <div class="ml-section-header" @click="toggleSection('__clean__')">
           <div class="ml-section-title">
             <span class="ml-dot ml-dot--good" />
-            <span>Column Status</span>
+            <span>Ready Features</span>
             <span class="ml-section-count ml-text--good">
-              {{ readyToUseCount }} of {{ data.total_columns }} ready to use
+              {{ data.clean_columns?.length ?? 0 }} columns
             </span>
           </div>
           <button class="ml-collapse-btn">
@@ -394,54 +328,14 @@
           </button>
         </div>
         <Transition name="ml-expand">
-          <div v-if="openSections.has('__clean__')" class="ml-section-body ml-col-status-body">
-
-            <!-- Action columns -->
-            <div v-if="data.action_columns?.length" class="ml-col-bucket">
-              <div class="ml-col-bucket-header ml-col-bucket-header--action">
-                <span class="ml-dot ml-dot--error" />
-                Needs attention
-                <span class="ml-col-bucket-count">{{ data.action_columns.length }} col{{ data.action_columns.length === 1 ? '' : 's' }}</span>
-              </div>
-              <div class="ml-clean-grid">
-                <span
-                  v-for="col in data.action_columns"
-                  :key="col"
-                  class="ml-clean-chip ml-clean-chip--action"
-                  :class="{ 'ml-clean-chip--highlighted': highlighted.has(`__clean__:${col}`) }"
-                  @click="toggleHighlight('__clean__', col)"
-                >{{ col }}</span>
-              </div>
+          <div v-if="openSections.has('__clean__')" class="ml-section-body">
+            <div v-if="!data.clean_columns?.length" class="ml-all-clear">
+              All columns have at least one ML finding.
             </div>
-
-            <!-- Advisory columns -->
-            <div v-if="data.advisory_columns?.length" class="ml-col-bucket">
-              <div class="ml-col-bucket-header ml-col-bucket-header--advisory">
-                <span class="ml-dot ml-dot--info" />
-                Notes available
-                <span class="ml-col-bucket-count">{{ data.advisory_columns.length }} col{{ data.advisory_columns.length === 1 ? '' : 's' }}</span>
-              </div>
+            <div v-else class="ml-clean-scroll">
               <div class="ml-clean-grid">
                 <span
-                  v-for="col in data.advisory_columns"
-                  :key="col"
-                  class="ml-clean-chip ml-clean-chip--advisory"
-                  :class="{ 'ml-clean-chip--highlighted': highlighted.has(`__clean__:${col}`) }"
-                  @click="toggleHighlight('__clean__', col)"
-                >{{ col }}</span>
-              </div>
-            </div>
-
-            <!-- Clean columns -->
-            <div v-if="data.clean_columns?.length" class="ml-col-bucket">
-              <div class="ml-col-bucket-header ml-col-bucket-header--clean">
-                <span class="ml-dot ml-dot--good" />
-                Ready as-is
-                <span class="ml-col-bucket-count">{{ data.clean_columns.length }} col{{ data.clean_columns.length === 1 ? '' : 's' }}</span>
-              </div>
-              <div class="ml-clean-grid">
-                <span
-                  v-for="col in data.clean_columns"
+                  v-for="col in sortedCleanColumns"
                   :key="col"
                   class="ml-clean-chip"
                   :class="{ 'ml-clean-chip--highlighted': highlighted.has(`__clean__:${col}`) }"
@@ -449,14 +343,6 @@
                 >{{ col }}</span>
               </div>
             </div>
-
-            <div
-              v-if="!data.action_columns?.length && !data.advisory_columns?.length && !data.clean_columns?.length"
-              class="ml-all-clear"
-            >
-              No column status data available.
-            </div>
-
           </div>
         </Transition>
       </div>
@@ -543,44 +429,15 @@ const gateLabel = computed(() => ({
   not_ready:  '✕  Not Ready for Modeling',
 }[data.value.readiness_gate] ?? '-'))
 
-const gateDescription = computed(() => {
-  const gate = data.value.readiness_gate
-  const cats  = data.value.categories ?? {}
-
-  if (gate === 'ready') {
-    return 'No preparation issues detected across any dimension. This dataset appears ready for most modeling workflows.'
-  }
-
-  // Collect the dimension labels that are at the relevant severity level
-  const redDims  = Object.values(cats).filter(c => c.level === 'red').map(c => c.label)
-  const amberDims = Object.values(cats).filter(c => c.level === 'amber').map(c => c.label)
-
-  if (gate === 'not_ready') {
-    const blocking = redDims.join(', ') || 'one or more dimensions'
-    return `Error-level issues detected in: ${blocking}. ` +
-      'These are likely to cause failures or meaningless results in most modeling pipelines and should be addressed before proceeding.'
-  }
-
-  if (gate === 'needs_work') {
-    const reviewing = amberDims.join(', ') || 'one or more dimensions'
-    return `Warnings present in: ${reviewing}. ` +
-      'Modeling will run, but addressing these findings is likely to improve reliability, performance, or interpretability.'
-  }
-
-  return ''
-})
+const gateDescription = computed(() => ({
+  ready:      'No preparation issues detected across any dimension. This dataset appears ready for most modeling workflows.',
+  needs_work: 'Warnings present in one or more dimensions. Addressing the highlighted columns is likely to improve model reliability.',
+  not_ready:  'Error-level issues present that are likely to cause problems for most modeling approaches. These are worth addressing before proceeding.',
+}[data.value.readiness_gate] ?? ''))
 
 const errorDimCount = computed(() =>
   Object.values(data.value.categories ?? {}).filter(c => c.level === 'red').length
 )
-
-// Columns that require no action before modeling: advisory (info/good notes only)
-// plus completely clean columns. Action columns with error/warn findings are excluded.
-const readyToUseCount = computed(() => {
-  const advisory = data.value.advisory_columns?.length ?? 0
-  const clean    = data.value.clean_columns?.length    ?? 0
-  return advisory + clean
-})
 
 // ── Dimensions ────────────────────────────────────────────────────────────────
 
@@ -594,46 +451,24 @@ const ISSUE_LABELS = {
 const dimensions = computed(() => {
   const cats = data.value.categories ?? {}
   return Object.entries(cats).map(([key, cat]) => {
-    const findings = cat.findings ?? []
-
-    // Separate action findings (error/warn) from advisory (info/good).
-    // Traffic light and summary counts are driven by action findings only;
-    // advisory findings get a softer visual treatment.
-    const actionFindings   = findings.filter(f => f.level === 'error' || f.level === 'warn')
-    const advisoryFindings = findings.filter(f => f.level === 'info'  || f.level === 'good')
-
-    // Level chips: error/warn are prominent; info/good are visually muted
-    const actionLevelMap = {}
-    for (const f of actionFindings) {
-      actionLevelMap[f.level] = (actionLevelMap[f.level] ?? 0) + 1
+    // Count by level for issue chips
+    const levelMap = {}
+    for (const f of cat.findings ?? []) {
+      const lbl = f.level
+      levelMap[lbl] = (levelMap[lbl] ?? 0) + 1
     }
-    const actionChips = Object.entries(actionLevelMap)
+    const issueCounts = Object.entries(levelMap)
       .sort((a, b) => (SEVERITY_RANK[b[0]] ?? 0) - (SEVERITY_RANK[a[0]] ?? 0))
-      .map(([label, count]) => ({ label, count, muted: false }))
-
-    const advisoryLevelMap = {}
-    for (const f of advisoryFindings) {
-      advisoryLevelMap[f.level] = (advisoryLevelMap[f.level] ?? 0) + 1
-    }
-    const advisoryChips = Object.entries(advisoryLevelMap)
-      .sort((a, b) => (SEVERITY_RANK[b[0]] ?? 0) - (SEVERITY_RANK[a[0]] ?? 0))
-      .map(([label, count]) => ({ label, count, muted: true }))
+      .map(([label, count]) => ({ label, count }))
 
     return {
       key,
-      label:           cat.label,
-      level:           cat.level,
-      // Action bucket — drives traffic light color and summary count
-      affectedCount:   cat.affected_count,
-      pctAffected:     cat.pct_affected,
-      // Advisory bucket — informational only, no action required
-      advisoryCount:   cat.advisory_count ?? 0,
-      advisoryColumns: cat.advisory_columns ?? [],
-      // All findings for the detail table; action/advisory split for display
-      findings,
-      actionFindings,
-      advisoryFindings,
-      issueCounts: [...actionChips, ...advisoryChips],
+      label:         cat.label,
+      level:         cat.level,
+      affectedCount: cat.affected_count,
+      pctAffected:   cat.pct_affected,
+      findings:      cat.findings ?? [],
+      issueCounts,
     }
   })
 })
@@ -1251,146 +1086,6 @@ function scrollTo(key) {
 .ml-clean-chip:hover { background: #14532d; }
 .ml-clean-chip--highlighted { background: #1e3a5f; border-color: #60a5fa; color: #93c5fd; }
 
-/* ── Model sensitivity strip ──────────────────────────────────────────────── */
-
-/* Container row: label + tag clusters */
-.ml-sensitivity-strip {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0 4px;
-  border-top: 1px solid #1e293b;
-  margin-top: 8px;
-}
-
-.ml-sensitivity-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #475569;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.ml-sensitivity-tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.ml-sensitivity-divider {
-  color: #334155;
-  font-size: 12px;
-  padding: 0 2px;
-}
-
-/* Affected tag — colored by the finding's severity level */
-.ml-sensitivity-tag {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.ml-sensitivity-tag--affected {
-  background: #2d1515;
-  border: 1px solid #7f1d1d;
-  color: #fca5a5;
-}
-.ml-sensitivity-tag--unaffected {
-  background: #0a1f10;
-  border: 1px solid #14532d;
-  color: #6ee7b7;
-  opacity: 0.8;
-}
-
-:global(.theme-light) .ml-sensitivity-strip { border-top-color: #e2e8f0; }
-:global(.theme-light) .ml-sensitivity-label  { color: #94a3b8; }
-:global(.theme-light) .ml-sensitivity-tag--affected   { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
-:global(.theme-light) .ml-sensitivity-tag--unaffected { background: #f0fdf4; border-color: #86efac; color: #16a34a; }
-
-/* ── Advisory / muted states ──────────────────────────────────────────────── */
-
-/* Muted blue used for advisory (info/good) counts in summary cards and headers */
-.ml-text--advisory { color: #60a5fa; opacity: 0.75; }
-
-/* Subtitle line when a dimension has advisory notes but no action findings */
-.ml-sc-pct--advisory { color: #60a5fa; opacity: 0.6; font-style: italic; }
-
-/* Issue chip for info/good level counts — visually softer than action chips */
-.ml-sc-chip--muted {
-  opacity: 0.55;
-  border-style: dashed;
-}
-
-/* Advisory-only section banner — shown above the findings table when there are
-   only info/good findings; replaces the "No preparation needed" clear state */
-.ml-advisory-note {
-  padding: 12px 16px;
-  background: #0c1a2e;
-  border: 1px solid #1e3a5f;
-  border-radius: 6px;
-  color: #60a5fa;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-/* ── Column status section ─────────────────────────────────────────────────── */
-
-.ml-col-status-body { display: flex; flex-direction: column; gap: 16px; padding-top: 4px; }
-
-.ml-col-bucket { display: flex; flex-direction: column; gap: 8px; }
-
-.ml-col-bucket-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #1e293b;
-}
-.ml-col-bucket-header--action  { color: #f87171; }
-.ml-col-bucket-header--advisory { color: #60a5fa; }
-.ml-col-bucket-header--clean   { color: #4ade80; }
-
-.ml-col-bucket-count {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  opacity: 0.7;
-}
-
-/* Action chip — red tint, replaces the default green chip for columns needing work */
-.ml-clean-chip--action {
-  background: #2d0a0a;
-  border-color: #7f1d1d;
-  color: #f87171;
-}
-.ml-clean-chip--action:hover { background: #450a0a; }
-
-/* Advisory chip — blue tint for columns with informational notes */
-.ml-clean-chip--advisory {
-  background: #0c1a2e;
-  border-color: #1e3a5f;
-  color: #60a5fa;
-}
-.ml-clean-chip--advisory:hover { background: #1e3a5f; }
-
-/* Info-level dot (used for advisory bucket header) */
-.ml-dot--info { background: #60a5fa; box-shadow: 0 0 5px #60a5fa55; }
-
-:global(.theme-light) .ml-advisory-note   { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
-:global(.theme-light) .ml-clean-chip--action   { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
-:global(.theme-light) .ml-clean-chip--advisory { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
-
 /* ── Shared colour tokens ──────────────────────────────────────────────────── */
 .ml-dot {
   width: 8px;
@@ -1399,13 +1094,17 @@ function scrollTo(key) {
   flex-shrink: 0;
   display: inline-block;
 }
-.ml-dot--good  { background: #4ade80; box-shadow: 0 0 5px #4ade8055; }
+/* The scorer emits level="green" for passing dimensions; "good" is the
+   finding-level badge colour. Both need dot and text colour rules. */
+.ml-dot--good,
+.ml-dot--green { background: #4ade80; box-shadow: 0 0 5px #4ade8055; }
 .ml-dot--warn,
 .ml-dot--amber { background: #fbbf24; box-shadow: 0 0 5px #fbbf2455; }
 .ml-dot--error,
 .ml-dot--red   { background: #f87171; box-shadow: 0 0 5px #f8717155; }
 
-.ml-text--good  { color: #4ade80; }
+.ml-text--good,
+.ml-text--green { color: #4ade80; }
 .ml-text--warn,
 .ml-text--amber { color: #fbbf24; }
 .ml-text--error,

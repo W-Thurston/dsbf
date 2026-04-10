@@ -7,8 +7,8 @@ Usage:
     python tests/validation/run_validation.py --datasets clean tiny
 
     # Validate against an already-generated report JSON:
-    python tests/validation/run_validation.py --report path/to/report.json /
-    --dataset clean
+    python tests/validation/run_validation.py \
+        --report path/to/report.json --dataset clean
 
     # Run all available validations:
     python tests/validation/run_validation.py
@@ -32,7 +32,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -84,38 +84,42 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
         "ML Readiness: gate banner shows '⚠ Needs Work Before Modeling' (amber)",
         (
-            "ML Readiness: gate description names 'Encoding' as the dimension "
-            "needing attention"
+            "ML Readiness: gate description names 'Encoding' as the "
+            "dimension needing attention"
         ),
         "ML Readiness: Encoding dimension card shows amber dot, 3 cols, warn chips",
         (
             "ML Readiness: Transformations dimension card shows green dot, "
             "advisory note count"
         ),
-        "ML Readiness: Missingness, Leakage, Unusable dimension cards show 'All clear'",
+        (
+            "ML Readiness: Missingness, Leakage, Unusable dimension cards "
+            "show 'All clear'"
+        ),
         (
             "ML Readiness: Column Status — region/plan_type/department in "
-            "'Needs attention' bucket",
-        )(
-            "ML Readiness: Column Status — continuous cols in 'Notes available' or "
-            "'Ready as-is'",
+            "'Needs attention' bucket"
         ),
         (
-            "ML Readiness: expanding an Encoding finding shows model sensitivity strip"
-            " is absent (all models equally affected)"
+            "ML Readiness: Column Status — continuous cols in "
+            "'Notes available' or 'Ready as-is'"
         ),
         (
-            "ML Readiness: expanding a Transformations advisory finding shows model "
-            "sensitivity strip (Linear/KNN affected, Tree-based unaffected)"
+            "ML Readiness: expanding an Encoding finding shows no model "
+            "sensitivity strip (all models equally affected)"
+        ),
+        (
+            "ML Readiness: expanding a Transformations advisory finding shows "
+            "model sensitivity strip (Linear/KNN affected, Tree-based unaffected)"
         ),
     ],
     "tiny": [
         "Overview: sample size adequacy metric shows a warning (25 rows is too small)",
         "Overview: DataHealthBar renders without errors",
-        "Quality: all sections render (including with potentially sparse findings)",
+        ("Quality: all sections render (including with potentially sparse findings)"),
         (
-            "Distributions: percentile table renders with 25-row "
-            "data (some percentiles may duplicate)"
+            "Distributions: percentile table renders with 25-row data "
+            "(some percentiles may duplicate)"
         ),
         "Distributions: selecting a column doesn't crash the detail panel",
         (
@@ -123,8 +127,8 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
             "or an appropriate 'no data' state"
         ),
         (
-            "ML Readiness: no dimension shows an error-level "
-            "finding triggered by tiny n alone"
+            "ML Readiness: no dimension shows an error-level finding "
+            "triggered by tiny n alone"
         ),
         "No tab shows a blank white panel or uncaught error in the browser console",
     ],
@@ -137,7 +141,7 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
 def generate_dataset(name: str) -> Path:
     """Generate a single dataset CSV via the generator script."""
     print(f"  Generating {name} dataset…")
-    result: CompletedProcess[str] = subprocess.run(
+    result: CompletedProcess[str] = subprocess.run(  # noqa: S603
         [sys.executable, str(GENERATOR_SCRIPT), "--only", name],
         check=False,
         capture_output=True,
@@ -212,7 +216,7 @@ def run_assertions(name: str, report_path: Path) -> bool:
 
     try:
         module.validate(report)
-        return True  # noqa: TRY300
+        return True
     except AssertionError as e:
         print(f"\n✗  ASSERTION FAILED — {name} dataset\n  {e}")
         return False
@@ -290,7 +294,7 @@ def main() -> None:
         else:
             report_path: Path | None = find_report(name, override_dir=args.report_dir)
             if not report_path:
-                outputs_dir: Path | Any = args.report_dir or (ROOT / "dsbf" / "outputs")
+                outputs_dir: Path = args.report_dir or (ROOT / "dsbf" / "outputs")
                 print(f"\n  ⚠  No report found for '{name}'.")
                 print(f"     Searched: {outputs_dir} (and timestamped subdirectories)")
                 print("     Profile the dataset first:")

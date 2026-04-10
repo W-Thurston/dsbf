@@ -113,8 +113,12 @@ const rows = computed(() => {
     const vc              = valCounts[col]      ?? {}
     const unique_raw      = typeof unique[col] === 'number' ? unique[col] : null
     const mode_prop_raw   = domInfo.mode_proportion ?? null
-    const cardinality_raw = typeof vc === 'object' && !Array.isArray(vc)
-      ? Object.keys(vc).length : unique_raw
+    // Cardinality = number of distinct values, sourced from summarize_unique.
+    // Previously used Object.keys(valCounts[col]).length but value_counts only
+    // stores top-N values, so that undercounts high-cardinality columns and
+    // disagrees with the Unique column for low-cardinality ones. unique_raw is
+    // the authoritative distinct-value count for this column.
+    const cardinality_raw = unique_raw
 
     const minV = numStats.min
     const maxV = numStats.max

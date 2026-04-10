@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <!-- Pair detail - shown once secondary column is selected -->
+        <!-- Pair detail — shown once secondary column is selected -->
         <template v-if="secondaryColumn">
 
           <div class="pair-divider">
@@ -285,10 +285,12 @@ watch(primaryColumn, col => { if (col) loadAssociations(col) })
 }
 .pair-count { font-size: 12px; color: #64748b; }
 
+/* Scroll is now handled inside AssociationTable on tbody only,
+   so the header row and controls stay frozen. The shadow still applies
+   to the outer container to visually indicate overflow below. */
 .assoc-scroll {
-  max-height: 340px;
-  overflow-y: auto;
-  box-shadow: inset 0 -12px 12px -12px rgba(0,0,0,0.4);
+  overflow: visible;
+  box-shadow: none;
   border-radius: 4px;
 }
 

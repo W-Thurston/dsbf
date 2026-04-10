@@ -459,6 +459,28 @@ const normalityProse = computed(() => {
   overflow: hidden;
 }
 
+/* Stack guidance below plot when the pane is too narrow for side-by-side */
+@media (max-width: 900px) {
+  .plot-guidance-row {
+    flex-direction: column;
+    height: auto;
+  }
+  .plot-pane {
+    height: 400px;
+    flex: none;
+  }
+  .guidance-pane {
+    flex: none;
+    height: auto;
+    min-width: 0;
+    width: 100%;
+  }
+  .guidance-pane :deep(.guidance-card) {
+    height: auto;
+    overflow-y: visible;
+  }
+}
+
 .plot-pane .card-title-row {
   display: flex;
   align-items: center;

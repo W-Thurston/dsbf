@@ -239,6 +239,30 @@ const runMetrics = computed(() => {
 .row-equal { display: flex; gap: 16px; align-items: stretch; height: 420px; }
 .row-equal > * { flex: 1 1 0; min-width: 0; }
 
+/* Mid-breakpoint: stack row-sample before the sidebar hits min-width 200px
+   and squeezes the sample table into an awkward intermediate state */
+@media (max-width: 1100px) {
+  .row-sample {
+    flex-direction: column;
+  }
+  .row-sample > :first-child,
+  .sample-sidebar {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+  }
+  /* Sidebar cards lay out horizontally when there's full width available */
+  .sample-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .sample-sidebar > * {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 900px) {
   /* Stack all multi-column rows vertically */
   .row-split,

@@ -61,7 +61,9 @@
             <div class="qt-trust-stat-label">Columns checked</div>
           </div>
           <div class="qt-trust-stat">
-            <div class="qt-trust-stat-value qt-text--green">{{ cleanColumns.length }}</div>
+            <div class="qt-trust-stat-value qt-text--green">
+              {{ cleanColumns.length }} / {{ totalColumns }}
+            </div>
             <div class="qt-trust-stat-label">Fully clean</div>
           </div>
           <div class="qt-trust-stat">
