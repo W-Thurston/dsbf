@@ -28,16 +28,9 @@ KNOWN_BACKEND_BUGS: dict[str, str] = {
 # Quality dimensions known to produce false-positive findings on the clean dataset.
 # The task succeeds but its findings are incorrect — tracked separately from
 # KNOWN_BACKEND_BUGS because the failure is in scoring logic, not task execution.
-KNOWN_FALSE_POSITIVE_DIMENSIONS: dict[str, str] = {
-    "redundancy": (
-        "detect_collinear_features produces inflated VIF scores (11-34) on "
-        "uncorrelated columns (all pairwise r < 0.02). Likely cause: regression "
-        "matrix includes categorical/boolean columns; balanced categoricals "
-        "create a near-linear dependency with the intercept term, inflating VIF "
-        "for all continuous columns. Fix: restrict regression to continuous "
-        "columns only in detect_collinear_features.py."
-    ),
-}
+# Empty: the VIF inflation false-positive (redundancy dimension) was resolved by
+# adding add_constant to the VIF design matrix in detect_collinear_features.py.
+KNOWN_FALSE_POSITIVE_DIMENSIONS: dict[str, str] = {}
 
 # Tasks that are skipped (status='skipped') when optional data sources are not
 # configured. This is correct behaviour, not a bug.
@@ -49,11 +42,13 @@ EXPECTED_SKIPS: set[str] = {
     "schema_validation",  # enable_schema_validation: false in config
 }
 
-# Tasks whose None status in results is caused by a known upstream dependency
-# failure cascading down. Not bugs in these tasks themselves.
+# Tasks whose None status in results can be caused by upstream cascade failures.
+# detect_out_of_bounds was previously a hard dependency of data_quality_scorer;
+# it was softened, so these scorers should now succeed on the clean dataset.
+# Kept for safety — remove if confirmed passing cleanly after all bugs resolved.
 DEPENDENCY_CASCADE_SKIPS: set[str] = {
-    "data_quality_scorer",  # hard-depends on detect_out_of_bounds
-    "ml_readiness_scorer",  # hard-depends on data_quality_scorer
+    "data_quality_scorer",
+    "ml_readiness_scorer",
 }
 
 
@@ -82,7 +77,7 @@ def validate(report: dict[str, Any]) -> None:
 
 def _report_known_bugs(report: dict) -> None:
     """Print a clear notice for each known bug that was triggered."""
-    triggered = [
+    triggered: list[tuple[str, str]] = [
         (name, desc)
         for name, desc in KNOWN_BACKEND_BUGS.items()
         if isinstance(report["results"].get(name), dict)
@@ -109,8 +104,8 @@ def _no_unexpected_failures(report: dict) -> None:
         if task is None:
             assert task_name in DEPENDENCY_CASCADE_SKIPS, (
                 f"Task '{task_name}' is None in results (dependency-cascade skip) "
-                "but is not in DEPENDENCY_CASCADE_SKIPS.\n"
-                "  If caused by a known upstream bug, add it to "
+                f"but is not in DEPENDENCY_CASCADE_SKIPS.\n"
+                f"  If caused by a known upstream bug, add it to "
                 "DEPENDENCY_CASCADE_SKIPS."
             )
             continue
@@ -252,16 +247,17 @@ def _ml_readiness_no_errors_if_available(report: dict) -> None:
     If ml_readiness_scorer ran, assert expected finding levels for the clean dataset.
 
     Expected state after all severity calibration fixes:
-      - Zero ``error``-level findings: the clean dataset has no modeling blockers.
-      - Gate is ``"needs_work"``: the three raw-string categorical columns
-        (region, plan_type, department) are object dtype and must be encoded
-        before sklearn can ingest them — this is a genuine warn-level finding,
-        not a false positive.  A clean dataset with categorical columns is
-        accurately described as "needs work" before modeling.
-      - Gate is NOT ``"not_ready"``: no error-level blockers exist.
 
-    If the gate is ``"ready"`` that would indicate the encoding warn findings
-    are no longer being emitted correctly — fail with a clear message.
+    - Zero ``error``-level findings: the clean dataset has no modeling blockers.
+    - Gate is ``"needs_work"``: the three raw-string categorical columns
+      (region, plan_type, department) are object dtype and must be encoded
+      before sklearn can ingest them — this is a genuine warn-level finding,
+      not a false positive. A clean dataset with categorical columns is
+      accurately described as "needs work" before modeling.
+    - Gate is NOT ``"not_ready"``: no error-level blockers exist.
+
+    A ``"ready"`` gate with no encoding warns would indicate the warn-level
+    encoding findings stopped being emitted — that would be a regression.
     """
     scorer = report["results"].get("ml_readiness_scorer")
     if scorer is None:
@@ -303,19 +299,19 @@ def _ml_readiness_no_errors_if_available(report: dict) -> None:
     )
 
     # Encoding warn findings for raw-string categoricals are expected and correct.
-    # The gate should be 'needs_work', not 'ready' — 'ready' would mean encoding
-    # warn findings are not being emitted, which would be a regression.
+    # 'needs_work' is the right gate. 'ready' with no encoding warns would mean
+    # the warn-level findings stopped being emitted — a regression.
     encoding_warns: list = [
         f
         for f in cats.get("encoding", {}).get("findings", [])
         if f.get("level") == "warn"
     ]
+
     if gate == "ready" and not encoding_warns:
         print(
-            "  ⚠  ML gate is 'ready' with no encoding warn findings — "
-            "expected warn-level encoding findings for raw-string categorical "
-            "columns (region, plan_type, department). Check suggest_categorical_"
-            "encoding.py.",
+            "  ⚠  ML gate is 'ready' with no encoding warn findings — expected "
+            "warn-level findings for raw-string categoricals (region, plan_type, "
+            "department). Check suggest_categorical_encoding.py.",
         )
     elif gate == "needs_work":
         print(

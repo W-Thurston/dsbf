@@ -31,12 +31,12 @@ import importlib
 import json
 import subprocess
 import sys
-from argparse import Namespace
 from pathlib import Path
-from subprocess import CompletedProcess
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
+    from argparse import Namespace
+    from subprocess import CompletedProcess
     from types import ModuleType
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
@@ -63,40 +63,64 @@ ASSERTION_MODULES: dict[str, str] = {
 DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
     "clean": [
         "Overview: trust banner shows 'Looking Good' (green)",
-        "Overview: DataHealthBar - all five traffic-light dots are green",
+        "Overview: DataHealthBar — all five traffic-light dots are green",
         "Overview: sample size adequacy metric is green (2,000 rows is adequate)",
         "Quality: trust banner shows 'Looking Good'",
         "Quality: all five dimension section headers show green dots",
         (
-            "Quality: clicking each dimension header "
-            "opens an 'All clear' body (no findings)"
+            "Quality: clicking each dimension header opens an 'All clear' "
+            "body (no findings)"
         ),
         "Quality: Clean Columns section contains all 10 columns",
         (
-            "Distributions: selecting each column shows "
-            "no warning badges in section headers"
+            "Distributions: selecting each column shows no warning badges "
+            "in section headers"
         ),
         "Distributions: Outlier Analysis shows 'Nothing flagged' for all columns",
         (
-            "Distributions: Normality section badge shows"
-            " 'Consistent with normal' for numeric cols"
+            "Distributions: Normality section badge shows 'Consistent with "
+            "normal' for numeric cols"
         ),
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
-        "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
-        "ML Readiness: all five dimension summary cards show 'All clear'",
+        "ML Readiness: gate banner shows '⚠ Needs Work Before Modeling' (amber)",
+        (
+            "ML Readiness: gate description names 'Encoding' as the dimension "
+            "needing attention"
+        ),
+        "ML Readiness: Encoding dimension card shows amber dot, 3 cols, warn chips",
+        (
+            "ML Readiness: Transformations dimension card shows green dot, "
+            "advisory note count"
+        ),
+        "ML Readiness: Missingness, Leakage, Unusable dimension cards show 'All clear'",
+        (
+            "ML Readiness: Column Status — region/plan_type/department in "
+            "'Needs attention' bucket",
+        )(
+            "ML Readiness: Column Status — continuous cols in 'Notes available' or "
+            "'Ready as-is'",
+        ),
+        (
+            "ML Readiness: expanding an Encoding finding shows model sensitivity strip"
+            " is absent (all models equally affected)"
+        ),
+        (
+            "ML Readiness: expanding a Transformations advisory finding shows model "
+            "sensitivity strip (Linear/KNN affected, Tree-based unaffected)"
+        ),
     ],
     "tiny": [
         "Overview: sample size adequacy metric shows a warning (25 rows is too small)",
         "Overview: DataHealthBar renders without errors",
         "Quality: all sections render (including with potentially sparse findings)",
         (
-            "Distributions: percentile table renders "
-            "with 25-row data (some percentiles may duplicate)"
+            "Distributions: percentile table renders with 25-row "
+            "data (some percentiles may duplicate)"
         ),
         "Distributions: selecting a column doesn't crash the detail panel",
         (
-            "Relationships: association table either "
-            "shows pairs or an appropriate 'no data' state"
+            "Relationships: association table either shows pairs "
+            "or an appropriate 'no data' state"
         ),
         (
             "ML Readiness: no dimension shows an error-level "
@@ -137,7 +161,7 @@ def find_report(name: str, override_dir: Path | None = None) -> Path | None:
     modified report.json.
 
     Args:
-        name:         Dataset name - used to prefer name-matching runs when
+        name:         Dataset name — used to prefer name-matching runs when
                       multiple timestamped runs exist.
         override_dir: If provided, search this directory instead of the
                       default dsbf/outputs/ location.
@@ -188,9 +212,9 @@ def run_assertions(name: str, report_path: Path) -> bool:
 
     try:
         module.validate(report)
-        return True
+        return True  # noqa: TRY300
     except AssertionError as e:
-        print(f"\n✗  ASSERTION FAILED - {name} dataset\n  {e}")
+        print(f"\n✗  ASSERTION FAILED — {name} dataset\n  {e}")
         return False
 
 
@@ -199,7 +223,7 @@ def print_dashboard_checklist(name: str) -> None:
     if not checklist:
         return
     print(f"\n{'─' * 60}")
-    print(f"  Manual dashboard checklist - {name} dataset")
+    print(f"  Manual dashboard checklist — {name} dataset")
     print(f"{'─' * 60}")
     for item in checklist:
         print(f"  □  {item}")
@@ -256,7 +280,7 @@ def main() -> None:
         else:
             csv_path = DATASETS_DIR / f"{name}.csv"
             if not csv_path.exists():
-                print(f"✗  {csv_path} not found - run without --skip-generate first")
+                print(f"✗  {csv_path} not found — run without --skip-generate first")
                 results[name] = False
                 continue
 
@@ -289,7 +313,7 @@ def main() -> None:
     print("  Summary")
     print(f"{'═' * 60}")
     for name, passed in results.items():
-        icon: str = "✓" if passed else "✗"
+        icon: Literal["✓", "✗"] = "✓" if passed else "✗"
         print(f"  {icon}  {name}")
     print()
 
