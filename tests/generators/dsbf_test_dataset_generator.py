@@ -566,6 +566,104 @@ def generate_near_clean_dataset(n_rows: int = 3000, seed: int = 42) -> pd.DataFr
     )
 
 
+# ── 5. All-categorical dataset ─────────────────────────────────────────────────
+
+
+def generate_all_categorical_dataset(
+    n_rows: int = 2000, seed: int = 42
+) -> pd.DataFrame:
+    """
+    A dataset with zero continuous columns — only categorical, boolean, and
+    one high-cardinality string column.
+
+    Primary purpose: verify that every continuous-only task degrades cleanly
+    (status='success' with empty output) rather than erroring when it finds
+    no columns to process.
+
+    Deliberate column design:
+    - ``color``       4 balanced values — clean low-cardinality categorical
+    - ``size``        3 balanced values — clean low-cardinality categorical
+    - ``material``    5 balanced values — clean low-cardinality categorical
+    - ``region``      4 balanced values — clean low-cardinality categorical
+    - ``category``    6 balanced values — borderline for one-hot (still ≤ 10)
+    - ``tag``         ~500 unique free-text tags — triggers detect_high_cardinality
+                      (warn) and frequency encoding suggestion
+    - ``dominant``    "Standard" = 96% of rows — triggers detect_single_dominant_value
+                      at error level (≥ 95% threshold)
+    - ``is_active``   boolean — exercises summarize_boolean_fields path
+    - ``is_premium``  boolean — second boolean for association table coverage
+
+    Expected findings:
+    - Usability ``error``: dominant column (96% single value)
+    - Encoding ``warn``:   tag high-cardinality + raw string encoding required
+    - All continuous-only tasks: status='success', empty/skipped output
+    - Outlier, normality, skewness, VIF, bimodal sections: nothing to show
+    - Association table: Cramér's V only — no Pearson r, no eta squared
+
+    Intentionally absent:
+    - No numeric columns of any kind (no int, float, continuous)
+    - No datetime columns
+    - No nulls (tests that empty-state rendering is not caused by missingness)
+    """
+    rng = np.random.default_rng(seed)
+    n = n_rows
+
+    # Balanced low-cardinality categoricals — clean baseline
+    color = rng.choice(
+        ["Red", "Blue", "Green", "Yellow"],
+        n,
+        p=[0.25, 0.25, 0.25, 0.25],
+    ).tolist()
+    size = rng.choice(
+        ["Small", "Medium", "Large"],
+        n,
+        p=[0.33, 0.34, 0.33],
+    ).tolist()
+    material = rng.choice(
+        ["Wood", "Metal", "Plastic", "Glass", "Fabric"],
+        n,
+        p=[0.20, 0.20, 0.20, 0.20, 0.20],
+    ).tolist()
+    region = rng.choice(
+        ["North", "South", "East", "West"],
+        n,
+        p=[0.25, 0.25, 0.25, 0.25],
+    ).tolist()
+    category = rng.choice(
+        ["A", "B", "C", "D", "E", "F"],
+        n,
+        p=[0.17, 0.17, 0.17, 0.17, 0.16, 0.16],
+    ).tolist()
+
+    # High-cardinality string column — ~500 unique tags from a pool of 600.
+    # cardinality > default high_cardinality_threshold (50) triggers warn-level
+    # encoding finding and a frequency encoding suggestion.
+    tag_pool = [f"tag_{i:03d}" for i in range(600)]
+    tag = rng.choice(tag_pool, n).tolist()
+
+    # Dominant column — 96% "Standard", well above the 95% error threshold.
+    # This is the only column expected to produce an error-level finding.
+    dominant = rng.choice(["Standard", "Other"], n, p=[0.96, 0.04]).tolist()
+
+    # Boolean columns — exercises the boolean encoding and stats paths
+    is_active = rng.choice([True, False], n, p=[0.60, 0.40]).tolist()
+    is_premium = rng.choice([True, False], n, p=[0.25, 0.75]).tolist()
+
+    return pd.DataFrame(
+        {
+            "color": color,
+            "size": size,
+            "material": material,
+            "region": region,
+            "category": category,
+            "tag": tag,
+            "dominant": dominant,
+            "is_active": is_active,
+            "is_premium": is_premium,
+        }
+    )
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -573,6 +671,7 @@ GENERATORS = {
     "clean": generate_clean_dataset,
     "tiny": generate_tiny_dataset,
     "near_clean": generate_near_clean_dataset,
+    "all_categorical": generate_all_categorical_dataset,
 }
 
 

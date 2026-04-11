@@ -46,6 +46,7 @@ ASSERTION_MODULES = {
     "clean": "assertions.clean_dataset",
     "tiny": "assertions.tiny_dataset",
     "near_clean": "assertions.near_clean_dataset",
+    "all_categorical": "assertions.all_categorical_dataset",
     # Add new datasets here as assertions are written:
     # "near_clean":       "assertions.near_clean_dataset",
     # "all_continuous":   "assertions.all_continuous_dataset",
@@ -79,6 +80,32 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
         "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
         "ML Readiness: all five dimension summary cards show 'All clear'",
+    ],
+    "all_categorical": [
+        "Overview: DataHealthBar — Usability dot amber/red (dominant column)",
+        "Overview: no numeric columns in Column Types visualization",
+        (
+            "Quality: Usability section open (dominant column flagged); "
+            "all other sections collapsed"
+        ),
+        (
+            "Distributions: selecting any column shows no Outlier Analysis, "
+            "no Normality section"
+        ),
+        (
+            "Distributions: selecting any column shows no Skewness findings "
+            "in guidance panel"
+        ),
+        (
+            "Relationships: association table shows only Cramér's V — "
+            "no Pearson r, no eta squared"
+        ),
+        (
+            "ML Readiness: Transformations dimension shows All clear "
+            "(no continuous columns to transform)"
+        ),
+        "ML Readiness: Encoding dimension shows warn for tag (high-cardinality)",
+        "No tab shows a blank white panel or uncaught JS error",
     ],
     "near_clean": [
         "Overview: trust banner shows amber ('A Few Things to Note')",
