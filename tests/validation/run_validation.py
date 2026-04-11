@@ -32,25 +32,20 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
-
-if TYPE_CHECKING:
-    from argparse import Namespace
-    from subprocess import CompletedProcess
-    from types import ModuleType
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-ROOT: Path = Path(__file__).parent.parent.parent  # project root
-DATASETS_DIR: Path = Path(__file__).parent.parent / "datasets"
-GENERATOR_SCRIPT: Path = (
+ROOT = Path(__file__).parent.parent.parent  # project root
+DATASETS_DIR = Path(__file__).parent.parent / "datasets"
+GENERATOR_SCRIPT = (
     Path(__file__).parent.parent / "generators" / "dsbf_test_dataset_generator.py"
 )
 
 # Maps dataset name → assertion module (relative to tests/validation/assertions/)
-ASSERTION_MODULES: dict[str, str] = {
+ASSERTION_MODULES = {
     "clean": "assertions.clean_dataset",
     "tiny": "assertions.tiny_dataset",
+    "near_clean": "assertions.near_clean_dataset",
     # Add new datasets here as assertions are written:
     # "near_clean":       "assertions.near_clean_dataset",
     # "all_continuous":   "assertions.all_continuous_dataset",
@@ -82,41 +77,30 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
             "normal' for numeric cols"
         ),
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
+        "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
+        "ML Readiness: all five dimension summary cards show 'All clear'",
+    ],
+    "near_clean": [
+        "Overview: trust banner shows amber ('A Few Things to Note')",
+        "Overview: DataHealthBar — Completeness dot amber, all others green",
+        "Quality: Completeness section auto-opens (income ~6% null)",
+        (
+            "Quality: Usability, Validity, Redundancy, Leakage sections "
+            "stay collapsed (All clear — plan_type 71% is below 95% flag threshold)"
+        ),
         "ML Readiness: gate banner shows '⚠ Needs Work Before Modeling' (amber)",
+        "ML Readiness: Transformations amber (purchase_amount log-transform warn)",
+        "ML Readiness: Encoding amber (region/plan_type/segment encoding warn)",
         (
-            "ML Readiness: gate description names 'Encoding' as the "
-            "dimension needing attention"
+            "ML Readiness: no dimension is red — all findings are warn-level, "
+            "gate should be needs_work not not_ready"
         ),
-        "ML Readiness: Encoding dimension card shows amber dot, 3 cols, warn chips",
-        (
-            "ML Readiness: Transformations dimension card shows green dot, "
-            "advisory note count"
-        ),
-        (
-            "ML Readiness: Missingness, Leakage, Unusable dimension cards "
-            "show 'All clear'"
-        ),
-        (
-            "ML Readiness: Column Status — region/plan_type/department in "
-            "'Needs attention' bucket"
-        ),
-        (
-            "ML Readiness: Column Status — continuous cols in "
-            "'Notes available' or 'Ready as-is'"
-        ),
-        (
-            "ML Readiness: expanding an Encoding finding shows no model "
-            "sensitivity strip (all models equally affected)"
-        ),
-        (
-            "ML Readiness: expanding a Transformations advisory finding shows "
-            "model sensitivity strip (Linear/KNN affected, Tree-based unaffected)"
-        ),
+        "ML Readiness: Column Status — no columns in Needs attention bucket",
     ],
     "tiny": [
         "Overview: sample size adequacy metric shows a warning (25 rows is too small)",
         "Overview: DataHealthBar renders without errors",
-        ("Quality: all sections render (including with potentially sparse findings)"),
+        "Quality: all sections render (including with potentially sparse findings)",
         (
             "Distributions: percentile table renders with 25-row data "
             "(some percentiles may duplicate)"
@@ -141,17 +125,15 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
 def generate_dataset(name: str) -> Path:
     """Generate a single dataset CSV via the generator script."""
     print(f"  Generating {name} dataset…")
-    result: CompletedProcess[str] = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, str(GENERATOR_SCRIPT), "--only", name],
-        check=False,
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
         print(result.stderr)
-        msg: str = f"Dataset generation failed for '{name}'"
-        raise RuntimeError(msg)
-    csv_path: Path = DATASETS_DIR / f"{name}.csv"
+        raise RuntimeError(f"Dataset generation failed for '{name}'")
+    csv_path = DATASETS_DIR / f"{name}.csv"
     assert csv_path.exists(), f"Expected {csv_path} to exist after generation"
     return csv_path
 
@@ -169,9 +151,8 @@ def find_report(name: str, override_dir: Path | None = None) -> Path | None:
                       multiple timestamped runs exist.
         override_dir: If provided, search this directory instead of the
                       default dsbf/outputs/ location.
-
     """
-    outputs_dir: Path = override_dir or (ROOT / "dsbf" / "outputs")
+    outputs_dir = override_dir or (ROOT / "dsbf" / "outputs")
 
     if not outputs_dir.exists():
         return None
@@ -192,7 +173,7 @@ def find_report(name: str, override_dir: Path | None = None) -> Path | None:
         return candidates[0]
 
     # Prefer a run whose parent directory name contains the dataset name
-    name_matches: list[Path] = [p for p in candidates if name in p.parent.name]
+    name_matches = [p for p in candidates if name in p.parent.name]
     if name_matches:
         return name_matches[0]
 
@@ -203,12 +184,12 @@ def find_report(name: str, override_dir: Path | None = None) -> Path | None:
 def run_assertions(name: str, report_path: Path) -> bool:
     """Load report JSON and run the assertion module. Returns True on pass."""
     print(f"  Loading report from {report_path}…")
-    with Path.open(report_path) as f:
+    with open(report_path) as f:
         report = json.load(f)
 
-    module_path: str = f"tests.validation.{ASSERTION_MODULES[name]}"
+    module_path = f"tests.validation.{ASSERTION_MODULES[name]}"
     try:
-        module: ModuleType = importlib.import_module(module_path)
+        module = importlib.import_module(module_path)
     except ImportError:
         # Try relative import if running from project root
         sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -223,7 +204,7 @@ def run_assertions(name: str, report_path: Path) -> bool:
 
 
 def print_dashboard_checklist(name: str) -> None:
-    checklist: list[str] = DASHBOARD_CHECKLISTS.get(name, [])
+    checklist = DASHBOARD_CHECKLISTS.get(name, [])
     if not checklist:
         return
     print(f"\n{'─' * 60}")
@@ -263,7 +244,7 @@ def main() -> None:
         action="store_true",
         help="Skip dataset generation (use existing CSVs in tests/datasets/)",
     )
-    args: Namespace = parser.parse_args()
+    args = parser.parse_args()
 
     results: dict[str, bool] = {}
 
@@ -275,7 +256,7 @@ def main() -> None:
         # Step 1: generate dataset
         if not args.skip_generate:
             try:
-                csv_path: Path = generate_dataset(name)
+                csv_path = generate_dataset(name)
                 print(f"  CSV: {csv_path}")
             except RuntimeError as e:
                 print(f"✗  {e}")
@@ -292,9 +273,9 @@ def main() -> None:
         if args.report:
             report_path = args.report
         else:
-            report_path: Path | None = find_report(name, override_dir=args.report_dir)
+            report_path = find_report(name, override_dir=args.report_dir)
             if not report_path:
-                outputs_dir: Path = args.report_dir or (ROOT / "dsbf" / "outputs")
+                outputs_dir = args.report_dir or (ROOT / "dsbf" / "outputs")
                 print(f"\n  ⚠  No report found for '{name}'.")
                 print(f"     Searched: {outputs_dir} (and timestamped subdirectories)")
                 print("     Profile the dataset first:")
@@ -305,7 +286,7 @@ def main() -> None:
             print(f"  Report:  {report_path}")
 
         # Step 3: run assertions
-        passed: bool = run_assertions(name, report_path)
+        passed = run_assertions(name, report_path)
         results[name] = passed
 
         # Step 4: print dashboard checklist
@@ -317,7 +298,7 @@ def main() -> None:
     print("  Summary")
     print(f"{'═' * 60}")
     for name, passed in results.items():
-        icon: Literal["✓", "✗"] = "✓" if passed else "✗"
+        icon = "✓" if passed else "✗"
         print(f"  {icon}  {name}")
     print()
 

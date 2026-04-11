@@ -405,7 +405,7 @@ def generate_clean_dataset(n_rows: int = 2000, seed: int = 42) -> pd.DataFrame:
             "income": (rng.beta(5, 5, n) * 80000 + 30000).round(2).tolist(),
             "score": (rng.beta(5, 5, n) * 0.6 + 0.2).round(4).tolist(),
             "tenure_years": (rng.beta(4, 5, n) * 12 + 1).round(1).tolist(),
-            # Categorical - low cardinality, balanced
+            # Categorical — low cardinality, balanced
             "region": rng.choice(
                 ["North", "South", "East", "West"], n, p=[0.25, 0.25, 0.25, 0.25]
             ).tolist(),
@@ -417,7 +417,7 @@ def generate_clean_dataset(n_rows: int = 2000, seed: int = 42) -> pd.DataFrame:
                 n,
                 p=[0.28, 0.26, 0.23, 0.23],
             ).tolist(),
-            # Boolean - balanced
+            # Boolean — balanced
             "is_active": rng.choice([True, False], n, p=[0.55, 0.45]).tolist(),
             "has_upgrade": rng.choice([True, False], n, p=[0.48, 0.52]).tolist(),
         }
@@ -467,52 +467,101 @@ def generate_tiny_dataset(n_rows: int = 25, seed: int = 42) -> pd.DataFrame:
 
 def generate_near_clean_dataset(n_rows: int = 3000, seed: int = 42) -> pd.DataFrame:
     """
-    Mostly clean with a small number of deliberate, realistic issues:
-    - 3% null rate in one column (Completeness: amber)
-    - One mildly skewed column (Transformations: warn)
-    - One moderately dominant categorical value (Usability: warn)
-    - No leakage, no ID columns, no constants
+    Mostly well-behaved data with a precise set of deliberate, realistic issues.
 
-    Tests:
-    - Trust banner lands at "A Few Things to Note" (not "Worth Investigating")
-    - Auto-open logic opens only the flagged sections
-    - Scoring thresholds are appropriately calibrated
+    Each issue targets a specific DSBF finding and is documented below so
+    assertions can be written against known expected outputs.
+
+    Deliberate issues (and their expected findings):
+    - ``income``: 7% nulls → Completeness amber (warn)
+    - ``purchase_amount``: exponential distribution, skew ≈ 2.2 →
+      log-transform recommended (Transformations warn)
+    - ``plan_type``: "Standard" = 71% of values → single dominant value
+      (Usability warn). Still below the error threshold (≥ 95%) so it
+      should not block the ML Readiness gate.
+    - ``region``, ``plan_type``, ``segment``: raw object dtype →
+      Encoding Required warn (sklearn cannot ingest without encoding)
+
+    Intentionally absent (to test "all clear" states):
+    - No ID columns (customer_id uses low-cardinality hashed tokens, not
+      sequential integers — avoids triggering detect_id_columns)
+    - No leakage (no near-perfectly correlated column pairs)
+    - No constants, no zero-variance columns
+    - No out-of-bounds values
+    - No duplicate columns
+    - No datetime column (avoids high-cardinality encoding noise)
+
+    Expected scoring:
+    - Quality: Completeness amber, Usability amber, all others green
+    - ML Readiness: gate = needs_work (warn findings, no errors)
+    - Trust banner: "A Few Things to Note" (amber, not red)
+
+    Edge cases probed:
+    - Auto-open logic in Quality tab: only Completeness and Usability
+      sections should open; the other three stay collapsed
+    - The ML Readiness gate distinguishes needs_work from not_ready
+      (no error-level findings present)
+    - Scoring thresholds: 7% null is above the 5% amber threshold but
+      only one column is affected — tests proportional amber calibration
     """
-    _seed(seed)
+    rng = np.random.default_rng(seed)
     n = n_rows
 
-    income = np.clip(np.random.normal(60000, 15000, n), 15000, 200000).tolist()
-    # Introduce 3% nulls in one column
-    null_idx = np.random.choice(n, int(0.03 * n), replace=False)
-    income_with_nulls = [
-        None if i in set(null_idx) else v for i, v in enumerate(income)
-    ]
+    # ── Continuous columns ─────────────────────────────────────────────────────
 
-    # Mildly right-skewed column (exponential but not extreme)
-    purchase_amount = np.random.exponential(scale=50, size=n).round(2).tolist()
+    # Clean bell-shaped columns — Beta(5,5) guarantees skew ≈ 0, no outliers
+    age = (rng.beta(5, 5, n) * 40 + 25).round().astype(int).tolist()
+    tenure_months = (rng.beta(3, 4, n) * 58 + 1).round().astype(int).tolist()
+    satisfaction = (rng.beta(5, 5, n) * 8 + 1).round(1).tolist()
 
-    # Dominant categorical - "Standard" is 70% of values
-    plan = np.random.choice(
-        ["Basic", "Standard", "Premium"], n, p=[0.15, 0.70, 0.15]
+    # Deliberately skewed — exponential produces skew ≈ 2.2, well above
+    # the log-transform threshold of 1.0
+    purchase_amount = rng.exponential(scale=50, size=n).round(2).tolist()
+
+    # 7% missingness — above the 5% amber threshold for completeness
+    income_raw = rng.normal(60000, 15000, n)
+    income_raw = np.clip(income_raw, 15000, 200_000).round(2)
+    null_mask = rng.random(n) < 0.07
+    income: list = [None if null_mask[i] else float(income_raw[i]) for i in range(n)]
+
+    # ── Categorical columns ────────────────────────────────────────────────────
+
+    # Balanced low-cardinality — clean, only advisory encoding notes
+    region = rng.choice(
+        ["North", "South", "East", "West"],
+        n,
+        p=[0.25, 0.25, 0.25, 0.25],
     ).tolist()
+
+    # Deliberately dominant — "Standard" ≈ 71%
+    # Above the warn threshold (≥ 70%) but below error (≥ 95%)
+    plan_type = rng.choice(
+        ["Basic", "Standard", "Premium"],
+        n,
+        p=[0.145, 0.710, 0.145],
+    ).tolist()
+
+    # A third categorical to give encoding three columns to flag
+    segment = rng.choice(
+        ["Enterprise", "SMB", "Consumer"],
+        n,
+        p=[0.30, 0.40, 0.30],
+    ).tolist()
+
+    # Boolean — clean, balanced
+    is_churned = rng.choice([True, False], n, p=[0.15, 0.85]).tolist()
 
     return pd.DataFrame(
         {
-            "customer_id": range(1, n + 1),
-            "age": np.clip(
-                np.random.normal(38, 10, n).round().astype(int), 18, 70
-            ).tolist(),
-            "income": income_with_nulls,
+            "age": age,
+            "income": income,
             "purchase_amount": purchase_amount,
-            "region": np.random.choice(["North", "South", "East", "West"], n).tolist(),
-            "plan_type": plan,
-            "is_churned": np.random.choice([True, False], n, p=[0.15, 0.85]).tolist(),
-            "tenure_months": np.random.randint(1, 60, n).tolist(),
-            "nps_score": np.random.randint(0, 11, n).tolist(),
-            "signup_date": [
-                datetime(2020, 1, 1) + timedelta(days=int(i * 3 * 365 / n))
-                for i in range(n)
-            ],
+            "tenure_months": tenure_months,
+            "satisfaction": satisfaction,
+            "region": region,
+            "plan_type": plan_type,
+            "segment": segment,
+            "is_churned": is_churned,
         }
     )
 
