@@ -913,6 +913,53 @@ def generate_severe_multicollinearity_dataset(
     )
 
 
+# ── 8. Single-column dataset ──────────────────────────────────────────────────
+
+
+def generate_single_column_dataset(n_rows: int = 500, seed: int = 42) -> pd.DataFrame:
+    """
+    A dataset with exactly one column — a continuous numeric feature.
+
+    Primary purpose: verify that every task which requires two or more
+    columns degrades cleanly (empty output, status='success') rather than
+    raising an unhandled exception.
+
+    500 rows is chosen deliberately:
+    - Large enough for per-column tasks (outliers, skewness, normality)
+      to run meaningfully and produce real findings
+    - Small enough to keep profiling fast
+    - Well above the tiny-dataset low-row-count threshold (N < 30)
+
+    The single column (``value``) is a mildly right-skewed log-normal
+    distribution.  This ensures:
+    - detect_skewness fires with a real finding (skew > 1.0)
+    - detect_outliers has extreme values to flag
+    - normality_tests can run (not just empty)
+    - summarize_numeric produces real stats (mean, std, percentiles)
+
+    Tasks expected to produce empty/minimal output (correct behavior):
+    - detect_collinear_features: "Not enough numeric features" (< 2 cols)
+    - compute_pairwise_associations: 0 pairs computed
+    - detect_duplicate_columns: 0 pairs to compare
+    - generate_dataset_summary_plots: correlation matrix skipped (< 2 cols)
+    - compute_mutual_information: needs categorical column, skips
+    - one_way_anova / kruskal_wallis: needs categorical grouping column
+    - detect_data_leakage: no pairs to check
+
+    None of these should error — they should all return status='success'
+    with empty data structures.
+    """
+    rng = np.random.default_rng(seed)
+    n = n_rows
+
+    # Log-normal: naturally right-skewed (skew > 1.0 triggers log-transform warn)
+    # Using exp(normal) gives skew ≈ 6 for sigma=1, but we want skew ≈ 1.5-2.5
+    # so use sigma=0.6 which gives skew ≈ 2.0
+    value = rng.lognormal(mean=3.5, sigma=0.6, size=n).round(2)
+
+    return pd.DataFrame({"value": value.tolist()})
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -923,6 +970,7 @@ GENERATORS = {
     "all_categorical": generate_all_categorical_dataset,
     "high_missingness": generate_high_missingness_dataset,
     "severe_multicollinearity": generate_severe_multicollinearity_dataset,
+    "single_column": generate_single_column_dataset,
 }
 
 

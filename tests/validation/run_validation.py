@@ -49,6 +49,7 @@ ASSERTION_MODULES = {
     "all_categorical": "assertions.all_categorical_dataset",
     "high_missingness": "assertions.high_missingness_dataset",
     "severe_multicollinearity": "assertions.severe_multicollinearity_dataset",
+    "single_column": "assertions.single_column_dataset",
     # Add new datasets here as assertions are written:
     # "near_clean":       "assertions.near_clean_dataset",
     # "all_continuous":   "assertions.all_continuous_dataset",
@@ -82,6 +83,27 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
         "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
         "ML Readiness: all five dimension summary cards show 'All clear'",
+    ],
+    "single_column": [
+        "Overview: DataHealthBar renders without errors (1 column)",
+        (
+            "Overview: Column Types visualization shows a single continuous "
+            "bar — no crash on 1-column dataset"
+        ),
+        (
+            "Distributions: column browser shows only 'value'; selecting it "
+            "shows skewness finding and outlier analysis"
+        ),
+        (
+            "Relationships: association table shows 'No associations' or "
+            "empty state — 0 pairs with 1 column"
+        ),
+        (
+            "Relationships: correlation heatmap shows empty state or "
+            "single-cell 1x1 matrix — no crash"
+        ),
+        "ML Readiness: Transformations shows log-transform warn for 'value'",
+        "No tab shows a blank white panel or uncaught JS error",
     ],
     "severe_multicollinearity": [
         "Overview: DataHealthBar — Redundancy red, Leakage red, Completeness amber",
