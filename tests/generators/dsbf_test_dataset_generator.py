@@ -804,6 +804,115 @@ def generate_high_missingness_dataset(
     )
 
 
+# ── 7. Severe multicollinearity dataset ────────────────────────────────────────
+
+
+def generate_severe_multicollinearity_dataset(
+    n_rows: int = 2000, seed: int = 42
+) -> pd.DataFrame:
+    """
+    All-continuous dataset targeting four distinct VIF failure modes.
+
+    Each column block exercises a different way VIF computation can go
+    wrong or produce misleading results in practice.
+
+    ── Block A: Classic severe collinearity ─────────────────────────────────
+    Four columns that form an obvious linear cluster.  These test the
+    happy path — VIF should correctly flag all four.
+
+      base        N(0,1) anchor
+      copy_a      r≈0.99 with base  → VIF ~84 (correctly flagged)
+      copy_b      r≈0.96 with base  → VIF ~16 (correctly flagged)
+      combo       0.7*copy_a + 0.3*copy_b + noise → VIF ~45 (flagged)
+
+    ── Block B: Scale-mismatch (exposes the add_constant bug) ───────────────
+    Two genuinely independent columns at extreme different scales.
+    Under the broken code (no add_constant), their large nonzero means
+    inflate VIF to 6–8, producing spurious warn-level findings.
+    Under the fixed code, both score VIF ≈ 1.0.
+
+      revenue     N(500_000, 200_000) — mean 500k, independent
+      click_rate  N(0.035, 0.012)     — mean 0.035, independent
+
+    ── Block C: All-collinear trio (no independent column) ──────────────────
+    Three columns all derived from the same latent factor.  VIF is high
+    for all three — tests that the task correctly handles the case where
+    there is no "clean" reference column in the subgroup.
+
+      factor_x    latent + noise
+      factor_y    0.95*latent + noise
+      factor_z    1.05*latent + noise
+
+    ── Block D: Sparse continuous column (dropna reduces sample size) ────────
+    One column with 65% NaN.  After dropna(), VIF is computed on only
+    ~35% of rows (≈700 rows).  Among those observed rows, signal and
+    sparse_c are correlated — VIF correctly reflects this.  The task
+    should emit a low_row_count reliability warning.
+
+      signal      N(50, 10) — fully observed
+      sparse_c    1.1*signal + noise, 65% NaN
+
+    Expected findings (with the add_constant fix applied):
+    - Block A: base, copy_a, copy_b, combo all flagged (VIF > 10)
+    - Block B: revenue and click_rate NOT flagged (VIF ≈ 1.0)
+    - Block C: factor_x, factor_y, factor_z all flagged (VIF > 10)
+    - Block D: signal and sparse_c flagged among observed rows (VIF ~36);
+               reliability warning emitted for reduced sample size
+    - Redundancy dimension: red
+
+    Under the broken code (no add_constant, select_dtypes):
+    - Block B: revenue VIF ≈ 6, click_rate VIF ≈ 8 (spurious warn findings)
+    - This is the live bug this dataset is designed to detect
+    """
+    rng = np.random.default_rng(seed)
+    n = n_rows
+
+    # ── Block A: Classic severe collinearity ──────────────────────────────────
+    base = rng.normal(0, 1, n)
+    copy_a = 0.99 * base + rng.normal(0, 0.14, n)
+    copy_b = 0.96 * base + rng.normal(0, 0.28, n)
+    combo = 0.7 * copy_a + 0.3 * copy_b + rng.normal(0, 0.15, n)
+
+    # ── Block B: Scale-mismatch — tests add_constant fix ─────────────────────
+    # Independent columns at very different scales and nonzero means.
+    # Without add_constant the intercept-less VIF regression treats their
+    # large means as shared variance → spurious VIF inflation.
+    revenue = rng.normal(500_000, 200_000, n)
+    click_rate = rng.normal(0.035, 0.012, n)
+
+    # ── Block C: All-collinear trio ───────────────────────────────────────────
+    latent = rng.normal(0, 1, n)
+    factor_x = latent + rng.normal(0, 0.12, n)
+    factor_y = 0.95 * latent + rng.normal(0, 0.20, n)
+    factor_z = 1.05 * latent + rng.normal(0, 0.15, n)
+
+    # ── Block D: Sparse continuous — dropna reduces to ~35% of rows ──────────
+    signal = rng.normal(50, 10, n)
+    sparse_c = 1.1 * signal + rng.normal(0, 2, n)
+    nan_mask = rng.random(n) < 0.65
+    sparse_c = np.where(nan_mask, np.nan, sparse_c)
+
+    return pd.DataFrame(
+        {
+            # Block A
+            "base": np.round(base, 6).tolist(),
+            "copy_a": np.round(copy_a, 6).tolist(),
+            "copy_b": np.round(copy_b, 6).tolist(),
+            "combo": np.round(combo, 6).tolist(),
+            # Block B
+            "revenue": np.round(revenue, 2).tolist(),
+            "click_rate": np.round(click_rate, 6).tolist(),
+            # Block C
+            "factor_x": np.round(factor_x, 6).tolist(),
+            "factor_y": np.round(factor_y, 6).tolist(),
+            "factor_z": np.round(factor_z, 6).tolist(),
+            # Block D
+            "signal": np.round(signal, 4).tolist(),
+            "sparse_c": [None if np.isnan(v) else round(float(v), 4) for v in sparse_c],
+        }
+    )
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -813,6 +922,7 @@ GENERATORS = {
     "near_clean": generate_near_clean_dataset,
     "all_categorical": generate_all_categorical_dataset,
     "high_missingness": generate_high_missingness_dataset,
+    "severe_multicollinearity": generate_severe_multicollinearity_dataset,
 }
 
 

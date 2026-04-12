@@ -48,6 +48,7 @@ ASSERTION_MODULES = {
     "near_clean": "assertions.near_clean_dataset",
     "all_categorical": "assertions.all_categorical_dataset",
     "high_missingness": "assertions.high_missingness_dataset",
+    "severe_multicollinearity": "assertions.severe_multicollinearity_dataset",
     # Add new datasets here as assertions are written:
     # "near_clean":       "assertions.near_clean_dataset",
     # "all_continuous":   "assertions.all_continuous_dataset",
@@ -81,6 +82,31 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
         "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
         "ML Readiness: all five dimension summary cards show 'All clear'",
+    ],
+    "severe_multicollinearity": [
+        "Overview: DataHealthBar — Redundancy red, Leakage red, Completeness amber",
+        (
+            "Quality: Redundancy section auto-opens (9 cols flagged VIF > 10); "
+            "Leakage section auto-opens (base/copy_a r≈0.99 flagged)"
+        ),
+        (
+            "Quality: revenue and click_rate appear in Clean Columns section "
+            "(VIF ~1.0 — genuinely independent despite extreme scale difference)"
+        ),
+        (
+            "Relationships: correlation heatmap shows obvious block structure "
+            "in {base, copy_a, copy_b, combo} cluster and separate "
+            "{factor_x, factor_y, factor_z} cluster"
+        ),
+        (
+            "ML Readiness: gate shows Not Ready "
+            "(error-level leakage from near-perfect copies)"
+        ),
+        (
+            "ML Readiness: Leakage dimension red; no Redundancy dimension "
+            "(collinearity is a Quality concern, not ML Readiness)"
+        ),
+        "No tab shows a blank white panel or uncaught JS error",
     ],
     "high_missingness": [
         "Overview: DataHealthBar — Completeness dot red",
