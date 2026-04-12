@@ -47,6 +47,7 @@ ASSERTION_MODULES = {
     "tiny": "assertions.tiny_dataset",
     "near_clean": "assertions.near_clean_dataset",
     "all_categorical": "assertions.all_categorical_dataset",
+    "high_missingness": "assertions.high_missingness_dataset",
     # Add new datasets here as assertions are written:
     # "near_clean":       "assertions.near_clean_dataset",
     # "all_continuous":   "assertions.all_continuous_dataset",
@@ -80,6 +81,30 @@ DASHBOARD_CHECKLISTS: dict[str, list[str]] = {
         "Relationships: Summary card shows 0 collinearity and 0 leakage warnings",
         "ML Readiness: gate banner shows '✓ Ready for Modeling' (green)",
         "ML Readiness: all five dimension summary cards show 'All clear'",
+    ],
+    "high_missingness": [
+        "Overview: DataHealthBar — Completeness dot red",
+        (
+            "Quality: Completeness section auto-opens; findings for "
+            "device_type, premium_score, notes"
+        ),
+        (
+            "Distributions: selecting income or age shows Outlier Analysis and "
+            "Normality with reliability warning (sparse data)"
+        ),
+        (
+            "Distributions: selecting device_type or notes shows Value Counts "
+            "with high null proportion visible"
+        ),
+        (
+            "ML Readiness: Missingness dimension is red, gate is '⚠ Not Ready' "
+            "(notes 75% null is an error-level blocker)"
+        ),
+        (
+            "ML Readiness: expanding a Missingness finding shows imputation "
+            "action suggestions"
+        ),
+        "No tab shows a blank white panel or uncaught JS error",
     ],
     "all_categorical": [
         "Overview: DataHealthBar — Usability dot amber/red (dominant column)",

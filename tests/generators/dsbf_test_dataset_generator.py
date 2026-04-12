@@ -664,6 +664,146 @@ def generate_all_categorical_dataset(
     )
 
 
+# ── 6. High-missingness dataset ────────────────────────────────────────────────
+
+
+def generate_high_missingness_dataset(
+    n_rows: int = 2000, seed: int = 42
+) -> pd.DataFrame:
+    """
+    A dataset with extreme and structured missing data across multiple columns.
+
+    Each missing-data pattern is deliberately different so that the
+    missingness mechanism analysis can detect structural patterns, and
+    so that imputation suggestions are exercised across a range of null rates.
+
+    Null pattern inventory:
+    ┌─────────────────┬──────────┬──────────────────────────────────────────┐
+    │ Column          │ Null %   │ Pattern / reason                         │
+    ├─────────────────┼──────────┼──────────────────────────────────────────┤
+    │ age             │ ~8%      │ MCAR — random dropout, above amber (5%)  │
+    │ income          │ ~25%     │ MCAR — moderate random dropout           │
+    │ device_type     │ ~60%     │ MAR — null when channel == "web"         │
+    │ notes           │ ~75%     │ High sparse — tests drop-vs-impute logic │
+    │ premium_score   │ ~50%     │ MAR — null when plan_type == "Basic"     │
+    │ region          │ 0%       │ Clean baseline categorical               │
+    │ channel         │ 0%       │ Clean — drives device_type missingness   │
+    │ plan_type       │ 0%       │ Clean — drives premium_score missingness │
+    │ is_churned      │ 0%       │ Clean boolean baseline                   │
+    └─────────────────┴──────────┴──────────────────────────────────────────┘
+
+    The MAR patterns (device_type, premium_score) are deliberately structured
+    so that missingness mechanism analysis can detect the correlation:
+    - P(device_type = null | channel = "web") ≈ 0.95
+    - P(premium_score = null | plan_type = "Basic") ≈ 0.90
+
+    Expected findings:
+    - Completeness: red (device_type 60%, notes 75%, income 25% all above
+      the amber/red thresholds)
+    - ML Readiness Missingness: red or amber (high null rates affect model
+      training directly — rows with nulls are dropped by most sklearn estimators)
+    - Imputation suggestions: "drop or use indicator" for notes (75%);
+      "impute with median/mean" for income (25%)
+    - Missingness mechanism: MAR signals for device_type and premium_score
+    - Reliability warnings on summarize_numeric for high-null columns
+      (statistics computed on 20–40% of data)
+    """
+    rng = np.random.default_rng(seed)
+    n = n_rows
+
+    # ── Clean baseline columns (0% null) ──────────────────────────────────────
+
+    channel = rng.choice(
+        ["web", "mobile", "email", "direct"],
+        n,
+        p=[0.40, 0.30, 0.20, 0.10],
+    ).tolist()
+
+    plan_type = rng.choice(
+        ["Basic", "Standard", "Premium"],
+        n,
+        p=[0.40, 0.35, 0.25],
+    ).tolist()
+
+    region = rng.choice(
+        ["North", "South", "East", "West"],
+        n,
+        p=[0.25, 0.25, 0.25, 0.25],
+    ).tolist()
+
+    is_churned = rng.choice([True, False], n, p=[0.20, 0.80]).tolist()
+
+    # ── MCAR columns ──────────────────────────────────────────────────────────
+
+    # age: Beta(5,5) distribution, ~8% MCAR null — just above amber threshold
+    age_raw = (rng.beta(5, 5, n) * 40 + 25).round().astype(int)
+    age_mask = rng.random(n) < 0.08
+    age: list = [None if age_mask[i] else int(age_raw[i]) for i in range(n)]
+
+    # income: ~25% MCAR null — moderate dropout
+    income_raw = rng.normal(60000, 20000, n)
+    income_raw = np.clip(income_raw, 15000, 200_000).round(2)
+    income_mask = rng.random(n) < 0.25
+    income: list = [None if income_mask[i] else float(income_raw[i]) for i in range(n)]
+
+    # ── MAR columns — missingness correlated with other columns ───────────────
+
+    # device_type: null with P≈0.95 when channel=="web", P≈0.05 otherwise.
+    # Web sessions don't always report device; other channels always do.
+    device_pool = ["Desktop", "Mobile", "Tablet"]
+    device_type: list = []
+    for i in range(n):
+        if channel[i] == "web":
+            device_type.append(None if rng.random() < 0.95 else rng.choice(device_pool))
+        else:
+            device_type.append(None if rng.random() < 0.05 else rng.choice(device_pool))
+
+    # premium_score: null with P≈0.90 when plan_type=="Basic".
+    # Basic plan users don't have a premium score computed.
+    premium_score_raw = rng.beta(3, 2, n) * 100
+    premium_score: list = []
+    for i in range(n):
+        if plan_type[i] == "Basic":
+            premium_score.append(
+                None if rng.random() < 0.90 else round(float(premium_score_raw[i]), 2)
+            )
+        else:
+            premium_score.append(
+                None if rng.random() < 0.05 else round(float(premium_score_raw[i]), 2)
+            )
+
+    # ── Highly sparse column ──────────────────────────────────────────────────
+
+    # notes: ~75% null — tests imputation logic at extreme sparsity.
+    # The 25% present values are short free-text strings.
+    note_options = [
+        "Follow up needed",
+        "VIP customer",
+        "Billing issue",
+        "Product feedback",
+        "Support escalation",
+        "No issues",
+    ]
+    notes_mask = rng.random(n) < 0.75
+    notes: list = [
+        None if notes_mask[i] else str(rng.choice(note_options)) for i in range(n)
+    ]
+
+    return pd.DataFrame(
+        {
+            "age": age,
+            "income": income,
+            "device_type": device_type,
+            "premium_score": premium_score,
+            "notes": notes,
+            "region": region,
+            "channel": channel,
+            "plan_type": plan_type,
+            "is_churned": is_churned,
+        }
+    )
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -672,6 +812,7 @@ GENERATORS = {
     "tiny": generate_tiny_dataset,
     "near_clean": generate_near_clean_dataset,
     "all_categorical": generate_all_categorical_dataset,
+    "high_missingness": generate_high_missingness_dataset,
 }
 
 
