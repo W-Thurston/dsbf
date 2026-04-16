@@ -19,7 +19,7 @@
     <!-- Legend -->
     <div class="browser-legend">
       <span class="legend-item">
-        <span class="legend-warn">●</span> {{ alertLabel }}
+        <span class="legend-warn" /> {{ alertLabel }}
       </span>
       <span v-if="showNullBar" class="legend-item">
         <span class="legend-bar-wrap"><span class="legend-bar-fill" /></span> Null %
@@ -41,7 +41,7 @@
         >
           <span class="col-name" :title="col.name">{{ col.name }}</span>
           <span class="col-indicators">
-            <span v-if="col.hasWarning" class="warn-dot" title="Has data quality alerts">●</span>
+            <span v-if="col.hasWarning" class="warn-dot" title="Has data quality alerts" />
             <span
               v-if="showNullBar"
               class="null-bar-wrap"
@@ -317,17 +317,24 @@ const filteredGroups = computed(() => {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   color: #94a3b8;
   white-space: nowrap;
 }
 
-.legend-warn { color: #fb923c; font-size: 9px; }
+.legend-warn {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fb923c;
+  flex-shrink: 0;
+}
 
 .legend-bar-wrap {
   width: 24px;
   height: 4px;
-  background: #1e293b;
+  background: #334155;
   border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;
@@ -340,7 +347,14 @@ const filteredGroups = computed(() => {
   border-radius: 2px;
 }
 
-.warn-dot { color: #fb923c; font-size: 8px; }
+.warn-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fb923c;
+  flex-shrink: 0;
+}
 
 .null-bar-wrap {
   width: 30px;

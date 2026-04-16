@@ -239,6 +239,7 @@ const tabRelevance = {
 }
 
 .dh-dot--green   { background: #4ade80; box-shadow: 0 0 6px #4ade8066; }
+.dh-dot--blue    { background: #60a5fa; box-shadow: 0 0 6px #60a5fa66; }
 .dh-dot--amber   { background: #fbbf24; box-shadow: 0 0 6px #fbbf2466; }
 .dh-dot--red     { background: #f87171; box-shadow: 0 0 6px #f8717166; }
 .dh-dot--skeleton { background: #334155; }
@@ -261,6 +262,7 @@ const tabRelevance = {
 }
 
 .dh-count--green { color: #4ade80; }
+.dh-count--blue  { color: #60a5fa; }
 .dh-count--amber { color: #fbbf24; }
 .dh-count--red   { color: #f87171; }
 

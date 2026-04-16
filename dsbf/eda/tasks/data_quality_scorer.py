@@ -9,48 +9,61 @@ from dsbf.eda.task_result import TaskResult
 
 def _level(pct_affected: float, any_affected: bool, max_severity: str = "info") -> str:
     """
-    Map a proportion of affected columns to a traffic-light level.
+    Map affected-column proportion and finding severity to a traffic-light level.
 
-    With a severity floor so that error-level findings never produce a green result.
+    Four-state system: ``"green"``, ``"blue"``, ``"amber"``, ``"red"``.
 
-    Thresholds are proportional to dataset size so that e.g. 3 affected
-    columns means something very different in a 10-column dataset vs a
-    1000-column one.
+    Design intent
+    -------------
+    Green means nothing to see here — no findings of any kind.  Any dimension
+    with at least one finding must show a non-green indicator so users know
+    to expand the section.
 
-    Severity floor rules:
-        - ``"error"`` findings → minimum level is ``"amber"`` (green → amber;
-          amber and red unchanged). A dimension cannot be green if any finding
-          is error-severity.
-        - ``"warn"`` / ``"info"`` → no floor; proportion alone determines level.
+    Blue (informational) means observations worth knowing but not requiring
+    action.  These are ``"info"``-severity findings affecting a small proportion
+    of columns (below the 10 % pattern threshold).  Blue sections auto-open so
+    the observations are visible, but the colour signals low urgency.
+
+    Amber means something notable that warrants attention before drawing
+    conclusions or building models.  Triggered by any ``"warn"``-severity
+    finding (regardless of proportion), or ``"info"``-only findings affecting
+    >= 10 % of columns (a pattern rather than coincidence).
+
+    Red means a blocking or high-severity issue.  Triggered by any
+    ``"error"``-severity finding, or findings affecting > 15 % of columns.
+
+    Severity floor rules
+    --------------------
+    - ``"error"`` → minimum ``"amber"``; proportion can lift to ``"red"``.
+    - ``"warn"``  → minimum ``"amber"``; proportion can lift to ``"red"``.
+    - ``"info"``  → ``"blue"`` when proportion < 10 %; ``"amber"`` at >= 10 %.
 
     Args:
-        pct_affected: Fraction of total columns affected (0.0 - 1.0).
-        any_affected: True if at least one column is affected. Used to
-            return ``"green"`` cleanly when the count is zero, avoiding
-            edge cases when total_columns is very small.
-        max_severity: The highest severity among all findings in the dimension.
-            Defaults to ``"info"`` (no floor).
+        pct_affected: Fraction of total columns affected (0.0 – 1.0).
+        any_affected: True when at least one column has a finding.
+        max_severity: Highest severity among all findings in the dimension.
+            Defaults to ``"info"``.
 
     Returns:
-        One of ``"green"``, ``"amber"``, or ``"red"``.
+        One of ``"green"``, ``"blue"``, ``"amber"``, or ``"red"``.
 
     """
     if not any_affected:
         return "green"
 
-    # Proportion-based level
-    if pct_affected <= 0.05:
-        prop_level = "green"
-    elif pct_affected <= 0.15:
-        prop_level = "amber"
-    else:
-        prop_level = "red"
+    _rank: dict[str, int] = {"green": 0, "blue": 1, "amber": 2, "red": 3}
 
-    # Severity floor: error findings can never be green
-    _rank: dict[str, int] = {"green": 0, "amber": 1, "red": 2}
-    floor_level: str = "amber" if max_severity == "error" else "green"
+    if max_severity in ("error", "warn"):
+        # Warn/error findings: minimum amber; proportion can lift to red.
+        prop_level = "red" if pct_affected > 0.15 else "amber"
+        return max("amber", prop_level, key=lambda lv: _rank[lv])
 
-    return max(prop_level, floor_level, key=lambda lv: _rank[lv])
+    # Info-only findings: blue below 10 % proportion, amber at or above.
+    if pct_affected < 0.10:
+        return "blue"
+    if pct_affected <= 0.30:
+        return "amber"
+    return "red"
 
 
 def _category_block(
@@ -119,7 +132,7 @@ def _category_block(
         # it can fail when config bounds are defined for column names that don't
         # exist in the dataset, or when dtype casting issues occur. The scorer
         # handles a missing or failed result gracefully via the null-safe guard in
-        # the validity block - validity simply shows no out-of-bounds findings.
+        # the validity block — validity simply shows no out-of-bounds findings.
         # Including it as a hard dependency causes the entire scorer (and
         # ml_readiness_scorer) to be skipped when one bounds check fails.
         "detect_constant_columns",

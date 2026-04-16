@@ -128,8 +128,8 @@
             </span>
           </div>
           <div class="ml-section-controls" @click.stop>
-            <!-- Sort controls: only visible when section is open AND has findings -->
-            <template v-if="dim.affectedCount > 0 && openSections.has(dim.key)">
+            <!-- Sort controls: only shown when section is open and has findings -->
+            <template v-if="openSections.has(dim.key) && dim.affectedCount > 0">
               <span class="ml-sort-label">Sort:</span>
               <button
                 v-for="opt in sortOptions"
@@ -154,7 +154,7 @@
           <div v-if="openSections.has(dim.key)" class="ml-section-body">
 
             <div v-if="dim.affectedCount === 0" class="ml-all-clear">
-              ✅ No preparation needed for this dimension.
+              ✓ All clear — no preparation needed for this dimension.
             </div>
 
             <template v-else>
@@ -713,6 +713,7 @@ function scrollTo(key) {
 .ml-summary-card:hover { background: rgba(255,255,255,0.04); }
 .ml-summary-card--red   { border-left: 3px solid #f87171; }
 .ml-summary-card--amber { border-left: 3px solid #fbbf24; }
+.ml-summary-card--blue  { border-left: 3px solid #60a5fa; }
 .ml-summary-card--green { border-left: 3px solid #4ade80; }
 
 .ml-sc-header { display: flex; align-items: center; gap: 7px; }
@@ -824,7 +825,7 @@ function scrollTo(key) {
   display: grid;
   grid-template-columns: 36px 2fr 1fr 3fr 90px 24px;
   gap: 12px;
-  align-items: start;
+  align-items: center;
   padding: 9px 0;
   border-bottom: 1px solid #1e293b;
   font-size: 13px;
@@ -1008,7 +1009,7 @@ function scrollTo(key) {
 .ml-highlight-btn.active { border-color: #60a5fa; color: #60a5fa; background: #1e3a5f; }
 
 .ml-expand-hint {
-  font-size: 11px;
+  font-size: 13px;
   color: #64748b;
   text-align: center;
   transition: color 0.1s;
@@ -1094,10 +1095,9 @@ function scrollTo(key) {
   flex-shrink: 0;
   display: inline-block;
 }
-/* The scorer emits level="green" for passing dimensions; "good" is the
-   finding-level badge colour. Both need dot and text colour rules. */
 .ml-dot--good,
 .ml-dot--green { background: #4ade80; box-shadow: 0 0 5px #4ade8055; }
+.ml-dot--blue  { background: #60a5fa; box-shadow: 0 0 5px #60a5fa55; }
 .ml-dot--warn,
 .ml-dot--amber { background: #fbbf24; box-shadow: 0 0 5px #fbbf2455; }
 .ml-dot--error,
@@ -1105,6 +1105,7 @@ function scrollTo(key) {
 
 .ml-text--good,
 .ml-text--green { color: #4ade80; }
+.ml-text--blue  { color: #60a5fa; }
 .ml-text--warn,
 .ml-text--amber { color: #fbbf24; }
 .ml-text--error,

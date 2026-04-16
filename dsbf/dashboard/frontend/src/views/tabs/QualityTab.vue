@@ -61,9 +61,7 @@
             <div class="qt-trust-stat-label">Columns checked</div>
           </div>
           <div class="qt-trust-stat">
-            <div class="qt-trust-stat-value qt-text--green">
-              {{ cleanColumns.length }} / {{ totalColumns }}
-            </div>
+            <div class="qt-trust-stat-value qt-text--green">{{ cleanColumns.length }}</div>
             <div class="qt-trust-stat-label">Fully clean</div>
           </div>
           <div class="qt-trust-stat">
@@ -128,7 +126,7 @@
             />
             <span class="qt-section-count" :class="`qt-text--${dim.level}`">
               {{ dim.affectedCount === 0
-                ? 'Nothing flagged'
+                ? 'All clear'
                 : dim.key === 'leakage'
                   ? `${dim.findings.length} pair${dim.findings.length === 1 ? '' : 's'} · ${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}`
                   : dim.findings.length !== dim.affectedCount
@@ -165,7 +163,7 @@
 
             <!-- All clear state -->
             <div v-if="dim.affectedCount === 0" class="qt-all-clear">
-              ✓ Nothing flagged in this dimension.
+              ✓ All clear — nothing flagged in this dimension.
             </div>
 
             <!-- Findings table -->
@@ -527,12 +525,13 @@ const cleanColumns = computed(() => {
 
 // ── Trust banner ──────────────────────────────────────────────────────────────
 
-const LEVEL_RANK = { green: 0, amber: 1, red: 2 }
+const LEVEL_RANK = { green: 0, blue: 1, amber: 2, red: 3 }
 
 const overallLevel = computed(() => {
   const levels = dimensions.value.map(d => d.level)
   if (levels.includes('red'))   return 'red'
   if (levels.includes('amber')) return 'amber'
+  if (levels.includes('blue'))  return 'blue'
   return 'green'
 })
 
@@ -542,12 +541,14 @@ const dimensionsWithIssues = computed(() =>
 
 const trustLabel = computed(() => ({
   green: '✓  Looking Good',
+  blue:  'ℹ  A Few Notes',
   amber: '⚠  A Few Things to Note',
   red:   '⚠  Worth Investigating',
 }[overallLevel.value]))
 
 const trustDescription = computed(() => ({
   green: 'No notable data quality issues found across all five dimensions. Good to explore.',
+  blue:  'A small number of informational observations. Nothing requires action — expand any blue section to read the notes.',
   amber: 'Some columns flagged across one or more dimensions. Worth reviewing before drawing conclusions.',
   red:   'Several quality signals detected. Keep these in mind as you explore - they may affect how you interpret results.',
 }[overallLevel.value]))
@@ -885,6 +886,7 @@ function scrollTo(key) {
   flex-wrap: wrap;
 }
 .qt-trust-banner--green { border-left-color: #4ade80; }
+.qt-trust-banner--blue  { border-left-color: #60a5fa; }
 .qt-trust-banner--amber { border-left-color: #fbbf24; }
 .qt-trust-banner--red   { border-left-color: #f87171; }
 
@@ -905,6 +907,7 @@ function scrollTo(key) {
   white-space: nowrap;
 }
 .qt-trust-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
+.qt-trust-badge--blue  { background: #0c1a2e; color: #60a5fa; border-color: #60a5fa; }
 .qt-trust-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
 .qt-trust-badge--red   { background: #3d0f0f; color: #f87171; border-color: #f87171; }
 
@@ -983,7 +986,7 @@ function scrollTo(key) {
 
 /* ── Expand hint ───────────────────────────────────────────────────────────── */
 .qt-expand-hint {
-  font-size: 11px;
+  font-size: 13px;
   color: #475569;
   text-align: center;
   transition: color 0.1s;
@@ -1149,6 +1152,7 @@ function scrollTo(key) {
 
 /* ── Light theme additions ─────────────────────────────────────────────────── */
 :global(.theme-light) .qt-trust-badge--green { background: #f0fdf4; }
+:global(.theme-light) .qt-trust-badge--blue  { background: #eff6ff; }
 :global(.theme-light) .qt-trust-badge--amber { background: #fffbeb; }
 :global(.theme-light) .qt-trust-badge--red   { background: #fef2f2; }
 :global(.theme-light) .qt-trust-desc         { color: #64748b; }
@@ -1212,6 +1216,7 @@ function scrollTo(key) {
 .qt-summary-card:hover { background: var(--hover-bg, rgba(255,255,255,0.04)); }
 .qt-summary-card--red   { border-left: 3px solid #f87171; }
 .qt-summary-card--amber { border-left: 3px solid #fbbf24; }
+.qt-summary-card--blue  { border-left: 3px solid #60a5fa; }
 .qt-summary-card--green { border-left: 3px solid #4ade80; }
 
 .qt-sc-header {
@@ -1266,11 +1271,13 @@ function scrollTo(key) {
   display: inline-block;
 }
 .qt-dot--green { background: #4ade80; box-shadow: 0 0 5px #4ade8055; }
+.qt-dot--blue  { background: #60a5fa; box-shadow: 0 0 5px #60a5fa55; }
 .qt-dot--amber { background: #fbbf24; box-shadow: 0 0 5px #fbbf2455; }
 .qt-dot--red   { background: #f87171; box-shadow: 0 0 5px #f8717155; }
 
 /* ── Colour text variants ──────────────────────────────────────────────────── */
 .qt-text--green { color: #4ade80; }
+.qt-text--blue  { color: #60a5fa; }
 .qt-text--amber { color: #fbbf24; }
 .qt-text--red   { color: #f87171; }
 

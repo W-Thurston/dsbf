@@ -85,7 +85,7 @@
                   {{ colData.mechanism_assessment?.confidence ?? 'unknown' }} confidence
                 </span>
               </div>
-              <span class="mm-col-toggle">{{ openCols.has(col) ? '▲' : '▼' }}</span>
+              <span class="mm-col-toggle">{{ openCols.has(col) ? '▴' : '▾' }}</span>
             </div>
 
             <!-- Column detail - expanded -->
@@ -394,7 +394,7 @@ function confidenceClass(confidence) {
 .mm-conf--amber { color: #fbbf24; }
 .mm-conf--gray  { color: #475569; }
 
-.mm-col-toggle { font-size: 11px; color: #475569; margin-left: auto; }
+.mm-col-toggle { font-size: 13px; color: #475569; margin-left: auto; }
 
 /* ── Column detail ───────────────────────────────────────────────────────── */
 .mm-col-detail {

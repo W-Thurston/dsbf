@@ -960,6 +960,100 @@ def generate_single_column_dataset(n_rows: int = 500, seed: int = 42) -> pd.Data
     return pd.DataFrame({"value": value.tolist()})
 
 
+# ── 9. Wide dataset (100 columns) ─────────────────────────────────────────────
+
+
+def generate_wide_dataset(n_rows: int = 1000, seed: int = 42) -> pd.DataFrame:
+    """
+    A wide dataset with 100 columns (1,000 rows) covering all intent types.
+
+    Primary purpose: stress-test every component that scales with column
+    count — the column browser, Quality dimension sections with many
+    findings, the correlation heatmap, and pairwise association computation.
+
+    Column inventory (100 total):
+    ┌──────────────────────────────────┬───────┬──────────────────────────────┐
+    │ Group                            │ Count │ Expected findings            │
+    ├──────────────────────────────────┼───────┼──────────────────────────────┤
+    │ cont_clean_*  Beta(5,5)          │  40   │ advisory only (info/good)    │
+    │ cont_skew_*   Gamma(2,1)         │  20   │ log-transform warn           │
+    │ cat_bal_*     4-value balanced   │  26   │ encoding warn (raw string)   │
+    │ cat_hc        ~200 unique values │   1   │ high-cardinality warn        │
+    │ bool_*        balanced booleans  │   5   │ encoding advisory            │
+    │ null_*        8-12% MCAR nulls   │   8   │ completeness amber           │
+    └──────────────────────────────────┴───────┴──────────────────────────────┘
+
+    Key things being stressed:
+    - Column browser: 100 items, must scroll without layout break
+    - Quality tab: Completeness amber (5 cols), Encoding warn (30 cols),
+      Transformations warn (20 cols) — many findings per dimension
+    - Correlation heatmap: 40+20=60 continuous columns → 60x60 matrix
+      (1,770 pairs computed by pairwise associations)
+    - VIF computation: 60 continuous columns, all independent → all VIF ~1.0
+    - detect_skewness: 20 flagged columns, 40 clean — tests sorting/ranking
+    - No inter-column correlation so leakage and redundancy stay clean
+
+    Intentionally absent:
+    - No ID columns, no constants, no duplicate columns
+    - No leakage (no correlated continuous pairs)
+    - No out-of-bounds values
+    """
+    rng = np.random.default_rng(seed)
+    n = n_rows
+    cols: dict = {}
+
+    # ── 40 clean continuous columns ───────────────────────────────────────────
+    # Beta(5,5): skew≈0, no outliers, clearly unimodal
+    for i in range(40):
+        scale = rng.uniform(1, 1000)  # varying scales (tests add_constant)
+        shift = rng.uniform(-500, 500)  # varying means (tests add_constant)
+        cols[f"cont_clean_{i:02d}"] = (
+            (rng.beta(5, 5, n) * scale + shift).round(4).tolist()
+        )
+
+    # ── 20 skewed continuous columns ──────────────────────────────────────────
+    # Gamma(2,1): right-skewed, skew≈√2 ≈ 1.41 > 1.0 threshold
+    for i in range(20):
+        scale = rng.uniform(1, 100)
+        cols[f"cont_skew_{i:02d}"] = (rng.gamma(2, scale, n)).round(4).tolist()
+
+    # ── 29 balanced categorical columns ──────────────────────────────────────
+    # 4 values, balanced — produces encoding warn (raw string)
+    categories = [
+        ["Alpha", "Beta", "Gamma", "Delta"],
+        ["North", "South", "East", "West"],
+        ["Low", "Medium", "High", "Critical"],
+        ["Red", "Blue", "Green", "Yellow"],
+        ["Q1", "Q2", "Q3", "Q4"],
+    ]
+    for i in range(26):
+        cats = categories[i % len(categories)]
+        cols[f"cat_bal_{i:02d}"] = rng.choice(
+            cats, n, p=[0.25, 0.25, 0.25, 0.25]
+        ).tolist()
+
+    # ── 1 high-cardinality categorical ────────────────────────────────────────
+    # ~200 unique values → detect_high_cardinality warn
+    tag_pool = [f"tag_{j:03d}" for j in range(250)]
+    cols["cat_hc"] = rng.choice(tag_pool, n).tolist()
+
+    # ── 5 boolean columns ─────────────────────────────────────────────────────
+    for i in range(5):
+        p_true = rng.uniform(0.3, 0.7)
+        cols[f"bool_{i:02d}"] = rng.choice(
+            [True, False], n, p=[p_true, 1 - p_true]
+        ).tolist()
+
+    # ── 5 continuous columns with MCAR nulls (8-12%) ─────────────────────────
+    for i in range(8):
+        null_rate = rng.uniform(0.08, 0.12)
+        raw = (rng.beta(5, 5, n) * 100).round(2)
+        mask = rng.random(n) < null_rate
+        cols[f"null_{i:02d}"] = [None if mask[j] else float(raw[j]) for j in range(n)]
+
+    return pd.DataFrame(cols)
+
+
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -971,6 +1065,7 @@ GENERATORS = {
     "high_missingness": generate_high_missingness_dataset,
     "severe_multicollinearity": generate_severe_multicollinearity_dataset,
     "single_column": generate_single_column_dataset,
+    "wide": generate_wide_dataset,
 }
 
 
