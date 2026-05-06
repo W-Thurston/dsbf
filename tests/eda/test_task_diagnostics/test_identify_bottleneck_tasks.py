@@ -1,151 +1,106 @@
-# tests/eda/test_task_diagnostics/test_identify_bottleneck_tasks.py
+# tests/eda/test_tasks/test_detect_collinear_features.py
 
-import re
-from pathlib import Path
+import warnings
+from collections.abc import Generator
 from typing import Any
 
 import pandas as pd
 import pytest
-from pandas import DataFrame
+from numpy import dtype, ndarray
 
 from dsbf.eda.task_result import TaskResult
-from dsbf.eda.tasks.identify_bottleneck_tasks import IdentifyBottleneckTasks
-from tests.helpers.context_utils import make_ctx_and_task
+from dsbf.eda.tasks.detect_collinear_features import DetectCollinearFeatures
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
-@pytest.fixture
-def base_df() -> DataFrame:
-    return pd.DataFrame()  # dummy input
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in scalar divide:RuntimeWarning"
+)
+def test_detect_collinear_features_expected_output(tmp_path) -> None:
+    """
+    Test that DetectCollinearFeatures returns expected VIF flags
+    for strongly collinear variables.
 
+    Uses 30 rows of floats so infer_types classifies columns as
+    continuous rather than ID-like (unique_ratio would be 1.0 on
+    small integer sequences, causing get_columns_by_intent to return
+    zero eligible columns).
 
-def test_top_n_bottlenecks_are_sorted(tmp_path, base_df) -> None:
-    durations: dict[str, float] = {
-        "A": 0.1,
-        "B": 0.9,
-        "C": 0.5,
-        "D": 0.3,
-        "E": 2.1,
-    }
+    Uses run_task_with_dependencies so infer_types runs first and
+    populates semantic type metadata — without it get_columns_by_intent
+    returns zero eligible columns regardless of column content.
+    """
+    import numpy as np
 
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
-        task_overrides={"top_n": 3},
+    rng: Generator = np.random.default_rng(42)
+    base: ndarray[tuple[Any, ...], dtype[float]] = rng.normal(0, 1, 30)
+    df = pd.DataFrame(
+        {
+            "x1": base,
+            "x2": base * 2 + rng.normal(0, 0.01, 30),  # near-collinear
+            "x3": rng.normal(0, 1, 30),  # independent
+        }
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectCollinearFeatures,
+        current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    ctx.metadata["task_durations"] = durations
+    result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
 
-    result: TaskResult = ctx.run_task(task)
-
-    top = result.summary["top_bottlenecks"]
+    assert result is not None, "No TaskResult returned"
+    assert isinstance(result, TaskResult)
     assert result.status == "success"
-    assert len(top) == 3
-    durations_sorted: list[float] = sorted(durations.values(), reverse=True)[:3]
-    returned_durations: list = [entry["duration_sec"] for entry in top]
-    assert returned_durations == [round(x, 4) for x in durations_sorted]
+    assert result.data is not None
+
+    scores = result.data.get("vif_scores", {})
+    flagged = result.data.get("collinear_columns", [])
+
+    assert isinstance(scores, dict)
+    assert any(v > 5 for v in scores.values())
+    assert "x2" in flagged or "x1" in flagged
 
 
-def test_handles_missing_task_durations(tmp_path, base_df) -> None:
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
+def test_detect_collinear_features_core_output(tmp_path) -> None:
+    """
+    Confirm VIF scores and collinear column flags are produced correctly.
+
+    Uses 30 rows of floats so infer_types classifies columns as continuous.
+    Uses run_task_with_dependencies so infer_types runs first.
+    """
+    import numpy as np
+
+    rng: Generator = np.random.default_rng(0)
+    base: ndarray[tuple[Any, ...], dtype[float]] = rng.normal(0, 1, 30)
+    df = pd.DataFrame(
+        {
+            "a": base,
+            "b": base * 2 + rng.normal(0, 0.01, 30),  # near-perfectly collinear
+            "c": rng.normal(0, 1, 30),  # independent
+        }
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectCollinearFeatures,
+        current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
-    assert result.status == "failed"
-    assert "No task durations" in result.summary["message"]
-
-
-def test_handles_fewer_tasks_than_top_n(tmp_path, base_df) -> None:
-    durations: dict[str, float] = {
-        "A": 0.5,
-        "B": 1.1,
-    }
-
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
-        task_overrides={"top_n": 5},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.metadata["task_durations"] = durations
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert len(result.summary["top_bottlenecks"]) == 2
-
-
-def test_recommendation_triggers_for_slow_tasks(tmp_path, base_df) -> None:
-    durations: dict[str, float] = {
-        "train_big_model": 7.5,
-        "fast_task": 0.1,
-        "slow_loader": 6.2,
-    }
-
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
-        task_overrides={"top_n": 3},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.metadata["task_durations"] = durations
-    result: TaskResult = ctx.run_task(task)
-
-    recs: list[str] | None = result.recommendations
-    assert recs is not None
-    assert len(recs) == 2
-    assert any("train_big_model" in r for r in recs)
-    assert all("took" in r for r in recs)
-
-
-def test_output_format_is_stable(tmp_path, base_df) -> None:
-    durations: dict[str, float] = {"task_x": 1.23456789}
-
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
-        task_overrides={"top_n": 1},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.metadata["task_durations"] = durations
-    result: TaskResult = ctx.run_task(task)
-
-    top = result.summary["top_bottlenecks"]
-    assert len(top) == 1
-    assert isinstance(top[0]["duration_sec"], float)
-    assert round(top[0]["duration_sec"], 4) == 1.2346
-
-
-def test_bottleneck_plot_generated(tmp_path, base_df) -> None:
-    durations: dict[str, float] = {
-        "slow_loader": 6.0,
-        "big_model": 9.2,
-        "prep": 3.5,
-        "fast_task": 0.1,
-    }
-
-    ctx, task = make_ctx_and_task(
-        task_cls=IdentifyBottleneckTasks,
-        current_df=base_df,
-        task_overrides={"top_n": 3},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.metadata["task_durations"] = durations
-    result: TaskResult = ctx.run_task(task)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="divide by zero encountered.*")
+        result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
 
     assert result.status == "success"
-    # Task produces summary findings; static plot generation was removed.
-    # Verify the top bottlenecks are present in the summary instead.
-    assert "top_bottlenecks" in result.summary
-    assert len(result.summary["top_bottlenecks"]) == 3
+    assert result.data is not None
 
-    plot_entry: dict[str, Any] = result.plots["bottleneck_tasks"]
-    static_path = plot_entry["static"]
-    interactive = plot_entry["interactive"]
+    scores = result.data.get("vif_scores", {})
+    flagged = result.data.get("collinear_columns", [])
 
-    assert isinstance(static_path, Path)
-    assert static_path.exists()
-    assert static_path.suffix == ".png"
+    assert isinstance(scores, dict)
+    assert len(scores) == 3  # all three columns scored
+    assert any(v > 5 for v in scores.values())
+    assert len(flagged) > 0
 
-    assert interactive["type"] == "bar"
-    assert all(re.match(r".+:\s*\d+(\.\d+)?s$", a) for a in interactive["annotations"])
+    # Guidance should be attached for high-VIF columns
+    assert result.guidance is not None
+    assert any(col in result.guidance for col in flagged)

@@ -10,7 +10,7 @@ from numpy import dtype, ndarray
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_collinear_features import DetectCollinearFeatures
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 @pytest.mark.filterwarnings(
@@ -25,6 +25,10 @@ def test_detect_collinear_features_expected_output(tmp_path) -> None:
     continuous rather than ID-like (unique_ratio would be 1.0 on
     small integer sequences, causing get_columns_by_intent to return
     zero eligible columns).
+
+    Uses run_task_with_dependencies so infer_types runs first and
+    populates semantic type metadata — without it get_columns_by_intent
+    returns zero eligible columns regardless of column content.
     """
     import numpy as np
 
@@ -38,13 +42,12 @@ def test_detect_collinear_features_expected_output(tmp_path) -> None:
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectCollinearFeatures,
         current_df=df,
-        task_overrides={"vif_threshold": 5},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
 
     assert result is not None, "No TaskResult returned"
     assert isinstance(result, TaskResult)
@@ -64,6 +67,7 @@ def test_detect_collinear_features_core_output(tmp_path) -> None:
     Confirm VIF scores and collinear column flags are produced correctly.
 
     Uses 30 rows of floats so infer_types classifies columns as continuous.
+    Uses run_task_with_dependencies so infer_types runs first.
     """
     import numpy as np
 
@@ -77,15 +81,14 @@ def test_detect_collinear_features_core_output(tmp_path) -> None:
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectCollinearFeatures,
         current_df=df,
-        task_overrides={"vif_threshold": 5},
         global_overrides={"output_dir": str(tmp_path)},
     )
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="divide by zero encountered.*")
-        result: TaskResult = ctx.run_task(task)
+        result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
 
     assert result.status == "success"
     assert result.data is not None

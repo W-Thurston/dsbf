@@ -16,7 +16,7 @@ def test_series() -> Series:
 
 
 @pytest.fixture
-def empty_series() -> Series[str]:
+def empty_series() -> Series:
     return pd.Series([], dtype=float, name="EmptySeries")
 
 
