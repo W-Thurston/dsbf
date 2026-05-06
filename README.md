@@ -272,6 +272,7 @@ Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for 
 poetry run pytest
 
 # Run validation suite
+poetry run python tests/generators/dsbf_test_dataset_generator.py
 poetry run python tests/validation/run_validation.py
 
 # Lint
