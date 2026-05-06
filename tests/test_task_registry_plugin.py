@@ -30,7 +30,6 @@ def test_load_real_plugin_print_shape_debug():
 
 
 def test_load_nonexistent_plugin_path_does_not_crash(capfd):
-
     bogus_path = f"dsbf/custom_plugins/_nonexistent_{uuid.uuid4().hex}"
     before = set(TASK_REGISTRY.keys())
 

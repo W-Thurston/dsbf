@@ -5,6 +5,7 @@ Data Loader utility.
 Provides flexible dataset loading for local files, sklearn built-ins,
 seaborn demos, and OpenML, with backend-agnostic support for pandas and polars.
 """
+
 import inspect
 from typing import Union
 

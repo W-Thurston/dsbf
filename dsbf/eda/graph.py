@@ -162,7 +162,6 @@ class ExecutionGraph:
                 task_outcomes["success"].append(task.name)
 
             except Exception as e:
-
                 # Collect and log task duration
                 duration = time.time() - start_time
                 context.metadata["task_durations"][task.name] = duration

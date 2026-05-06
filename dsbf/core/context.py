@@ -102,7 +102,6 @@ class AnalysisContext:
         )
 
     def run_task(self, task: "BaseTask") -> TaskResult:
-
         # import statement here to prevent cyclical imports warning
         from dsbf.utils.task_utils import validate_task_result
 

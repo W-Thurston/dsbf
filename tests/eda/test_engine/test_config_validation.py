@@ -26,7 +26,6 @@ def basic_task_spec():
 def test_valid_config_and_graph_passes(
     monkeypatch, basic_task_spec, minimal_valid_config
 ):
-
     monkeypatch.setitem(TASK_REGISTRY, "dummy_task", basic_task_spec)
     errors = validate_config_and_graph(minimal_valid_config)
     assert not errors, f"Expected no validation errors, got: {errors}"
@@ -52,7 +51,6 @@ def test_dependency_on_unknown_task(monkeypatch):
 
 
 def test_cycle_detection(monkeypatch, config_with_cycle):
-
     spec_a = TaskSpec(
         name="a",
         cls=DummyTask,
@@ -73,7 +71,6 @@ def test_cycle_detection(monkeypatch, config_with_cycle):
 
 
 def test_plugin_warnings_are_included(monkeypatch, config_with_strict_plugin_failure):
-
     monkeypatch.setattr(
         "dsbf.utils.config_validation.get_plugin_warnings",
         lambda: [{"message": "Plugin X failed to register any task."}],

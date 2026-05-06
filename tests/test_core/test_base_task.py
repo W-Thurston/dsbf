@@ -70,7 +70,6 @@ def test_get_expected_types_from_registry_gracefully_handles_missing():
 
 
 def test_log_fallback_no_context(caplog, capfd):
-
     # Temporarily override setup_logger to attach stream handler
     def test_logger(name, level="info"):
         logger = logging.getLogger(name)

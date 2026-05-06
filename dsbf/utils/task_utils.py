@@ -26,7 +26,6 @@ def instantiate_task(
     task_name: str,
     task_specific_cfg: Optional[Dict[str, Any]] = None,
 ) -> BaseTask:
-
     # Construct task instance using registry spec
     spec = TASK_REGISTRY[task_name]
     try:
