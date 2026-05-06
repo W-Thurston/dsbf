@@ -1,0 +1,38 @@
+name: Update Changelog
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # needed to commit the updated CHANGELOG.md
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # git-chglog needs full history to read all tags
+
+      - name: Install git-chglog
+        run: |
+          wget -q https://github.com/git-chglog/git-chglog/releases/download/v0.15.4/git-chglog_0.15.4_linux_amd64.tar.gz
+          tar -xzf git-chglog_0.15.4_linux_amd64.tar.gz
+          sudo mv git-chglog /usr/local/bin/
+          git-chglog --version
+
+      - name: Generate changelog
+        run: git-chglog -o CHANGELOG.md
+
+      - name: Commit updated changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet && echo "No changes to CHANGELOG.md" && exit 0
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for ${{ github.ref_name }} [skip ci]"
+          git push origin HEAD:main

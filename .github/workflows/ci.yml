@@ -7,46 +7,126 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install Poetry 1.8.2
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Ruff check
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Check Poetry version
-        run: poetry --version
 
       - name: Cache Poetry dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            poetry-${{ runner.os }}-
+            poetry-${{ runner.os }}-${{ matrix.python-version }}-
 
-      - name: Configure Poetry (no venv)
+      - name: Configure Poetry
         run: poetry config virtualenvs.create false
 
       - name: Install dependencies
         run: poetry install --no-interaction
 
-      - name: Run tests
-        run: pytest
+      - name: Run unit tests
+        run: poetry run pytest --tb=short -q
 
-      - name: Upload test results (optional)
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-results
+          name: pytest-results-${{ matrix.python-version }}
           path: .pytest_cache/
+
+  validation:
+    name: Validation Suite
+    runs-on: ubuntu-latest
+    needs: test
+    # Only run the full validation suite on pushes to main,
+    # not on every PR (it generates datasets and profiles them)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-3.12-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-3.12-
+
+      - name: Configure Poetry
+        run: poetry config virtualenvs.create false
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Generate validation datasets
+        run: poetry run python tests/generators/dsbf_test_dataset_generator.py
+
+      - name: Run DSBF profiler on each dataset
+        run: |
+          for dataset in tests/datasets/*.csv; do
+            name=$(basename "$dataset" .csv)
+            echo "Profiling: $name"
+            poetry run dsbf profile "$dataset" --name "$name" --depth full
+          done
+
+      - name: Run validation assertions
+        run: poetry run python tests/validation/run_validation.py --skip-generate
+
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-reports
+          path: dsbf/outputs/
+          retention-days: 7

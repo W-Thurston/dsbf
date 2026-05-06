@@ -9,9 +9,11 @@ __pycache__/
 dist/
 build/
 .eggs/
+*.whl
 
 # ── Virtual environments ──────────────────────────────────────────────────────
 .env
+.env.*
 .venv
 venv/
 env/
@@ -21,15 +23,17 @@ env/
 .mypy_cache/
 .ruff_cache/
 .dmypy.json
+.pyrefly_cache/
 
 # ── Test / coverage ───────────────────────────────────────────────────────────
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
 
 # ── DSBF runtime outputs ──────────────────────────────────────────────────────
-# Generated CSVs, profiler runs, and SQLite stores - large, ephemeral, local-only
+# Generated CSVs, profiler runs, and SQLite stores — large, ephemeral, local-only
 dsbf/outputs/
 dsbf/runs/
 dsbf/dsbf.db
@@ -38,18 +42,19 @@ dsbf/dsbf.db
 *.db
 
 # ── Test datasets ─────────────────────────────────────────────────────────────
-# Generated locally by tests/generators/ - never committed
+# Generated locally by tests/generators/ — never committed
 tests/datasets/
-*.csv
 *.parquet
 
 # ── Frontend build artefacts ──────────────────────────────────────────────────
 node_modules/
 dsbf/dashboard/frontend/dist/
 dsbf/dashboard/frontend/.vite/
+.npm/
 
 # ── OS / editor ───────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
 Thumbs.db
 *.swp
 *.swo
@@ -57,8 +62,25 @@ Thumbs.db
 .vscode/
 *.code-workspace
 
-# ── Notebooks (outputs only - keep .ipynb files) ─────────────────────────────
+# ── Notebooks ─────────────────────────────────────────────────────────────────
+# Keep .ipynb files but ignore checkpoint outputs
 .ipynb_checkpoints/
+*.ipynb_checkpoints
 
-# ── Local dev notes (not project documentation) ──────────────────────────────
+# ── Secrets / credentials ─────────────────────────────────────────────────────
+.secrets
+*.pem
+*.key
+*.cert
+*.p12
+.env.local
+.env.production
+
+# ── Docs build ────────────────────────────────────────────────────────────────
+docs/_build/
+docs/assets/screenshots/     # local screenshots — committed selectively
+site/
+
+# ── Local dev notes ───────────────────────────────────────────────────────────
 project_log.md
+scratch/
