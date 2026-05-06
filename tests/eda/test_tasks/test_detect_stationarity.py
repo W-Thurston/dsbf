@@ -91,9 +91,14 @@ def _ts_config(
 
 def _run(df, **kwargs) -> TaskResult:
     config: dict = _ts_config(**kwargs)
+    # tests and alpha must be passed via task_overrides so get_task_param()
+    # finds them under config["tasks"]["detect_stationarity"], not buried
+    # inside the nested time_series config structure.
+    task_overrides: dict = {k: v for k, v in kwargs.items() if k in ("tests", "alpha")}
     ctx, task = make_ctx_and_task(
         task_cls=DetectStationarity,
         current_df=df,
+        task_overrides=task_overrides,
         global_overrides={"output_dir": "/tmp/test_stationarity"},
     )
     ctx.config = config

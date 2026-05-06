@@ -87,10 +87,16 @@ def test_categorical_length_stats_no_text_columns(tmp_path) -> None:
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_categorical_length_stats_stat_values(tmp_path) -> None:
-    """Verify stat values are numerically correct for known input."""
+    """Verify stat values are numerically correct for known input.
+
+    Uses repeated values across enough rows so infer_types classifies
+    the column as categorical rather than ID-like (unique_ratio > 0.9
+    triggers ID detection, which removes the column from matched_cols).
+    """
     df = pd.DataFrame(
         {
-            "product": ["a", "bb", "ccc"],  # lengths 1, 2, 3
+            # 3 distinct values repeated 10 times each → unique_ratio = 3/30 = 0.1
+            "product": (["a", "bb", "ccc"] * 10),
         },
     )
 
@@ -111,10 +117,14 @@ def test_categorical_length_stats_stat_values(tmp_path) -> None:
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_categorical_length_stats_nulls_excluded_from_stats(tmp_path) -> None:
-    """Null values must be excluded before computing length statistics."""
+    """Null values must be excluded before computing length statistics.
+
+    Uses repeated values so unique_ratio stays below the 0.9 ID threshold.
+    """
     df = pd.DataFrame(
         {
-            "region": ["east", None, "west", None],
+            # "east"/"west" repeated, nulls interleaved → unique_ratio = 2/10 = 0.2
+            "region": (["east", None, "west", None] * 5),
         },
     )
 

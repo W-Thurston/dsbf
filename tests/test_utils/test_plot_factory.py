@@ -1,19 +1,17 @@
 # tests/test_utils/test_plot_factory.py
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pandas as pd
 import pytest
+from pandas import Series
 
 from dsbf.utils.plot_factory import PlotFactory
 
-if TYPE_CHECKING:
-    from pandas import Series, Timestamp
-
 
 @pytest.fixture
-def test_series() -> Series[Timestamp]:
+def test_series() -> Series:
     return pd.Series([1, 2, 3, 4, 5], name="TestSeries")
 
 

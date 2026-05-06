@@ -115,7 +115,7 @@ def test_mixed_case_anomaly_detected(tmp_path) -> None:
 
     assert result.status == "success"
     assert "city" in result.data
-    types = [f["type"] for f in result.data["city"]]
+    types: list = [f["type"] for f in result.data["city"]]
     assert "mixed_case" in types
 
 
@@ -256,8 +256,8 @@ def test_summary_counts_correct(tmp_path) -> None:
     """Summary counts must reflect the actual findings in data."""
     df = pd.DataFrame(
         {
-            "a": ["New York", "new york"] * 20,
-            "b": ["active", "inactive", "pending"] * 15,  # clean
+            "a": ["New York", "new york"] * 20,  # 40 rows
+            "b": ["active", "inactive", "pending", "active"] * 10,  # 40 rows
         },
     )
 

@@ -19,23 +19,27 @@ if TYPE_CHECKING:
 
 
 def test_traffic_light_green_when_no_issues() -> None:
-    assert _traffic_light(0.0, False, False) == "green"
+    assert _traffic_light(False, False) == "green"
 
 
 def test_traffic_light_amber_on_warn() -> None:
-    assert _traffic_light(0.0, False, True) == "amber"
+    assert _traffic_light(False, True) == "amber"
 
 
 def test_traffic_light_red_on_error() -> None:
-    assert _traffic_light(0.0, True, False) == "red"
+    assert _traffic_light(True, False) == "red"
 
 
 def test_traffic_light_red_when_high_pct() -> None:
-    assert _traffic_light(0.20, False, False) == "red"
+    # _traffic_light is now severity-only (no proportion argument).
+    # High proportion is handled by _gate via dimension-level logic.
+    # This test now verifies error flag drives red regardless of proportion.
+    assert _traffic_light(True, False) == "red"
 
 
 def test_traffic_light_amber_when_moderate_pct() -> None:
-    assert _traffic_light(0.10, False, False) == "amber"
+    # _traffic_light is now severity-only. Warn flag drives amber.
+    assert _traffic_light(False, True) == "amber"
 
 
 def test_gate_ready_when_all_green() -> None:

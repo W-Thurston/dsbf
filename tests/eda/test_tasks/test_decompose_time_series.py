@@ -98,9 +98,16 @@ def _ts_config(
 
 def _run(df, **kwargs) -> TaskResult:
     config: dict = _ts_config(**kwargs)
+    # robust and seasonal_period must be passed via task_overrides so
+    # get_task_param() finds them under config["tasks"]["decompose_time_series"],
+    # not buried inside the nested time_series config structure.
+    task_overrides: dict = {
+        k: v for k, v in kwargs.items() if k in ("robust", "seasonal_period")
+    }
     ctx, task = make_ctx_and_task(
         task_cls=DecomposeTimeSeries,
         current_df=df,
+        task_overrides=task_overrides,
         global_overrides={"output_dir": "/tmp/test_stl"},
     )
     ctx.config = config

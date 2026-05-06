@@ -1,7 +1,7 @@
 # tests/eda/test_tasks/test_compute_acf_pacf.py
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -66,10 +66,17 @@ def _make_white_noise_df(n: int = 100) -> pd.DataFrame:
 
 def _run(df, config_override=None, **kwargs) -> TaskResult:
     """Convenience: create ctx+task with TS config and run."""
-    config = config_override or _ts_config(**kwargs)
+    config: dict = config_override or _ts_config(**kwargs)
+    # max_lags must be passed via task_overrides so get_task_param() finds it
+    # under config["tasks"]["compute_acf_pacf"]["max_lags"], not buried inside
+    # the time_series nested config which get_task_param does not read.
+    task_overrides: dict[str, Any] = {
+        k: v for k, v in kwargs.items() if k in ("max_lags", "alpha")
+    }
     ctx, task = make_ctx_and_task(
         task_cls=ComputeACFPACF,
         current_df=df,
+        task_overrides=task_overrides,
         global_overrides={"output_dir": "/tmp/test_acf"},
     )
     ctx.config = config

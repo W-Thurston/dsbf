@@ -934,5 +934,17 @@
     "summary": "Checks that all loaded plugin files registered at least one task.",
     "ml_impact_score": null,
     "experimental": false
+  },
+  "test_task": {
+    "domain": "test",
+    "tags": [
+      "foo"
+    ],
+    "stage": null,
+    "runtime_estimate": null,
+    "profiling_depth": "full",
+    "summary": "TEST",
+    "ml_impact_score": null,
+    "experimental": false
   }
 }
