@@ -9,8 +9,8 @@ visualization.
 
 import os
 import time
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
 
 import networkx as nx
 import psutil
@@ -23,12 +23,12 @@ from dsbf.utils.dag_layout import assign_waterfall_positions, draw_dag, topo_sor
 
 class Task:
     def __init__(
-        self, name: str, task_instance: BaseTask, requires: Optional[List[str]] = None
+        self, name: str, task_instance: BaseTask, requires: list[str] | None = None
     ):
         self.name = name
         self.task_instance = task_instance
         self.requires = requires or []
-        self.result: Optional[TaskResult] = None
+        self.result: TaskResult | None = None
         self.status = "pending"  # "success" or "failed"
 
     def run(self, context: AnalysisContext) -> TaskResult:
@@ -48,7 +48,7 @@ class Task:
 
 
 class ExecutionGraph:
-    def __init__(self, tasks: List[Task]):
+    def __init__(self, tasks: list[Task]):
         self.task_map = {task.name: task for task in tasks}
         self.graph = nx.DiGraph()
 
@@ -69,8 +69,8 @@ class ExecutionGraph:
     def run(
         self,
         context: AnalysisContext,
-        log_fn: Optional[Callable[[str, str], None]] = None,
-    ) -> Dict[str, TaskResult]:
+        log_fn: Callable[[str, str], None] | None = None,
+    ) -> dict[str, TaskResult]:
         task_outcomes = {
             "success": [],
             "failed": [],
@@ -207,9 +207,9 @@ class ExecutionGraph:
 
     def visualize(
         self,
-        status: Optional[Dict[str, str]] = None,
-        title: Optional[str] = None,
-        save_path: Optional[str] = None,
+        status: dict[str, str] | None = None,
+        title: str | None = None,
+        save_path: str | None = None,
     ):
         """
         Visualize the execution DAG with optional node status and save to file.

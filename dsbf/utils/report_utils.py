@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
@@ -12,7 +12,7 @@ from dsbf.utils.task_utils import is_diagnostic_task
 logger = setup_logger("dsbf.report_utils", "info")
 
 
-def render_user_report(results: Dict[str, TaskResult], output_path: str) -> None:
+def render_user_report(results: dict[str, TaskResult], output_path: str) -> None:
     """
     Write user-facing EDA task results (excluding diagnostics) to a JSON report.
 
@@ -29,7 +29,7 @@ def render_user_report(results: Dict[str, TaskResult], output_path: str) -> None
     eda_only = {k: v.to_dict() for k, v in eda_only_raw.items()}
 
     # Top 10 risks
-    top_ml_risks: list[Dict[str, Any]] = sorted(
+    top_ml_risks: list[dict[str, Any]] = sorted(
         [
             {
                 "task": k,

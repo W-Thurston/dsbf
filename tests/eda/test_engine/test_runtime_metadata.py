@@ -9,9 +9,9 @@ import pytest
 def test_metadata_file_exists(clean_engine_run):
     report_path = clean_engine_run()
     metadata_path = report_path.parent / "metadata_report.json"
-    assert (
-        metadata_path.exists()
-    ), f"metadata_report.json was not created at {metadata_path}"
+    assert metadata_path.exists(), (
+        f"metadata_report.json was not created at {metadata_path}"
+    )
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")

@@ -1,7 +1,7 @@
 # dsbf/eda/profile_engine.py
 
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import networkx as nx
 import pandas as pd
@@ -34,12 +34,12 @@ class ProfileEngine(BaseEngine):
     Loads data, constructs task graph, runs analysis, and exports report.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         config = config or load_default_config()
         super().__init__(config)
-        self.context: Optional[AnalysisContext] = None
+        self.context: AnalysisContext | None = None
         self.results: dict = {}
-        self.inferred_stage: Optional[str] = None
+        self.inferred_stage: str | None = None
 
     def get_result(self, task_name: str):
         return self.results.get(task_name)
@@ -99,10 +99,8 @@ class ProfileEngine(BaseEngine):
                 self._log(f"[CONFIG VALIDATION] {err}", level="warn")
             if strict:
                 raise ValueError(
-                    (
-                        "Strict mode is enabled - halting due to "
-                        f"{len(errors)} config/DAG issue(s)."
-                    )
+                    "Strict mode is enabled - halting due to "
+                    f"{len(errors)} config/DAG issue(s)."
                 )
 
         # Infer stage
@@ -158,7 +156,7 @@ class ProfileEngine(BaseEngine):
         self.record_run()
         self._log(f"[DONE] Results saved to: {self.output_dir}", level="stage")
 
-    def _load_data(self) -> Union[pd.DataFrame, pl.DataFrame]:
+    def _load_data(self) -> pd.DataFrame | pl.DataFrame:
         dataset_path = self.config.get("metadata", {}).get("dataset_path")
         dataset_name = self.config.get("metadata", {}).get("dataset_name", "iris")
         dataset_source = self.config.get("metadata", {}).get(

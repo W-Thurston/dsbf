@@ -1,8 +1,9 @@
 # tests/eda/test_tasks/test_detect_feature_drift.py
 
+from _collections_abc import Generator
+
 import numpy as np
 import polars as pl
-from _collections_abc import Generator
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_feature_drift import DetectFeatureDrift

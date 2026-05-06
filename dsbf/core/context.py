@@ -1,6 +1,6 @@
 # dsbf/core/context.py
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 import polars as pl
@@ -34,10 +34,10 @@ class AnalysisContext:
     def __init__(
         self,
         data: Any,
-        config: Optional[Dict[str, Any]] = None,
-        output_dir: Optional[str] = None,
-        run_metadata: Optional[Dict[str, Any]] = None,
-        reference_data: Optional[Any] = None,
+        config: dict[str, Any] | None = None,
+        output_dir: str | None = None,
+        run_metadata: dict[str, Any] | None = None,
+        reference_data: Any | None = None,
     ):
         """
         Initialize shared context object for a single DSBF profiling run.
@@ -49,19 +49,17 @@ class AnalysisContext:
         self.run_metadata = run_metadata or {}
         self.reference_data = reference_data
 
-        self.results: Dict[str, TaskResult] = {}  # Stores outputs by task name
-        self.metadata: Dict[str, Any] = {}  # Shared metadata from tasks or engine
-        self.stage: Optional[str] = None  # Inferred data stage (raw, cleaned, etc.)
-        self.reliability_flags: Dict[str, Any] = {}  # Cached global reliability info
+        self.results: dict[str, TaskResult] = {}  # Stores outputs by task name
+        self.metadata: dict[str, Any] = {}  # Shared metadata from tasks or engine
+        self.stage: str | None = None  # Inferred data stage (raw, cleaned, etc.)
+        self.reliability_flags: dict[str, Any] = {}  # Cached global reliability info
 
         self.logger: DSBFLogger = setup_logger(
             "dsbf.context",
             self.config.get("metadata", {}).get("message_verbosity", "info"),
         )
 
-    def _log(
-        self, msg: str, level: str = "info", task_name: Optional[str] = None
-    ) -> None:
+    def _log(self, msg: str, level: str = "info", task_name: str | None = None) -> None:
         """
         Structured logging for context operations using DSBF verbosity levels.
         Optionally prefixes the message with a task name.
@@ -76,7 +74,7 @@ class AnalysisContext:
     def set_result(self, task_name: str, result: TaskResult):
         self.results[task_name] = result
 
-    def get_result(self, task_name: str) -> Optional[TaskResult]:
+    def get_result(self, task_name: str) -> TaskResult | None:
         return self.results.get(task_name)
 
     def has_result(self, task_name: str) -> bool:

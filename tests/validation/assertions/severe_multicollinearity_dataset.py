@@ -129,12 +129,12 @@ def _shape_correct(report: dict) -> None:
     if shape.get("status") != "success":
         return
     data = shape.get("data", {})
-    assert (
-        data.get("num_rows") == 2000
-    ), f"Expected 2000 rows, got {data.get('num_rows')}"
-    assert (
-        data.get("num_columns") == 11
-    ), f"Expected 11 columns, got {data.get('num_columns')}"
+    assert data.get("num_rows") == 2000, (
+        f"Expected 2000 rows, got {data.get('num_rows')}"
+    )
+    assert data.get("num_columns") == 11, (
+        f"Expected 11 columns, got {data.get('num_columns')}"
+    )
 
 
 def _all_columns_continuous(report: dict) -> None:
@@ -152,9 +152,9 @@ def _all_columns_continuous(report: dict) -> None:
         for col, info in types.get("data", {}).items()
         if info.get("analysis_intent_dtype") != "continuous"
     ]
-    assert (
-        len(non_continuous) == 0
-    ), f"All 11 columns should be continuous, but {non_continuous} were not."
+    assert len(non_continuous) == 0, (
+        f"All 11 columns should be continuous, but {non_continuous} were not."
+    )
 
 
 def _block_a_c_collinear_columns_flagged(report: dict) -> None:

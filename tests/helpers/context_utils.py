@@ -1,6 +1,5 @@
 # tests/helpers/context_utils.py
 
-from typing import Optional, Type
 
 from dsbf.config import load_default_config
 from dsbf.core.context import AnalysisContext
@@ -10,11 +9,11 @@ from dsbf.utils.task_utils import instantiate_task
 
 
 def make_ctx_and_task(
-    task_cls: Type,
+    task_cls: type,
     current_df,
     reference_df=None,
-    task_overrides: Optional[dict] = None,
-    global_overrides: Optional[dict] = None,
+    task_overrides: dict | None = None,
+    global_overrides: dict | None = None,
 ):
     """
     Create an AnalysisContext and task instance using values from default_config.yaml,
@@ -65,7 +64,7 @@ def make_ctx_and_task(
     return ctx, task
 
 
-def run_task_with_dependencies(ctx: AnalysisContext, task_cls: Type) -> TaskResult:
+def run_task_with_dependencies(ctx: AnalysisContext, task_cls: type) -> TaskResult:
     """
     Recursively run all declared dependencies (via TASK_REGISTRY) for the given task,
     then run the task itself. Returns the final TaskResult.

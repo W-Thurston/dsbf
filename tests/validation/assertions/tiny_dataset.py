@@ -79,9 +79,9 @@ def _row_count_correct(report: dict) -> None:
     if shape.get("status") != "success":
         return
     num_rows = shape.get("data", {}).get("num_rows")
-    assert (
-        num_rows == 25
-    ), f"Expected 25 rows in tiny dataset, but shape task reports {num_rows}"
+    assert num_rows == 25, (
+        f"Expected 25 rows in tiny dataset, but shape task reports {num_rows}"
+    )
 
 
 def _sample_size_context(report: dict) -> None:

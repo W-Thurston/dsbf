@@ -69,18 +69,18 @@ def test_ml_impact_scoring_fields(task_name, test_data, tmp_path):
     try:
         result = run_task_with_dependencies(ctx, task.__class__)
 
-        assert isinstance(
-            result, TaskResult
-        ), f"{task_name} did not return a TaskResult."
+        assert isinstance(result, TaskResult), (
+            f"{task_name} did not return a TaskResult."
+        )
 
         # If scoring is emitted, check its structure
         if result.ml_impact_score is not None:
-            assert (
-                0.0 <= result.ml_impact_score <= 1.0
-            ), f"{task_name} score out of range"
-            assert isinstance(
-                result.recommendation_tags, list
-            ), f"{task_name} tags missing or invalid"
+            assert 0.0 <= result.ml_impact_score <= 1.0, (
+                f"{task_name} score out of range"
+            )
+            assert isinstance(result.recommendation_tags, list), (
+                f"{task_name} tags missing or invalid"
+            )
             assert (
                 isinstance(result.recommendations, list) and result.recommendations
             ), f"{task_name} recommendations missing"

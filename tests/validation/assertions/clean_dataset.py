@@ -146,9 +146,9 @@ def _must_succeed_tasks_ran(report: dict) -> None:
     results = report.get("results", {})
     for task_name in must_succeed:
         task = results.get(task_name)
-        assert isinstance(
-            task, dict
-        ), f"'{task_name}' is missing or None — must always be present in results"
+        assert isinstance(task, dict), (
+            f"'{task_name}' is missing or None — must always be present in results"
+        )
         assert task.get("status") == "success", (
             f"'{task_name}' must succeed on the clean dataset, "
             f"got status='{task.get('status')}'.\n"
@@ -172,9 +172,9 @@ def _type_inference_correct(report: dict) -> None:
     }
     for col, expected_intent in expected.items():
         actual = types.get(col, {}).get("analysis_intent_dtype")
-        assert (
-            actual == expected_intent
-        ), f"Column '{col}': expected intent '{expected_intent}', got '{actual}'"
+        assert actual == expected_intent, (
+            f"Column '{col}': expected intent '{expected_intent}', got '{actual}'"
+        )
 
 
 def _no_nulls(report: dict) -> None:
@@ -184,9 +184,9 @@ def _no_nulls(report: dict) -> None:
     )
     assert null_pcts, "summarize_nulls produced no null_percentages"
     for col, pct in null_pcts.items():
-        assert (
-            pct == 0.0
-        ), f"Column '{col}' shows {pct * 100:.1f}% nulls on the clean dataset"
+        assert pct == 0.0, (
+            f"Column '{col}' shows {pct * 100:.1f}% nulls on the clean dataset"
+        )
 
 
 def _quality_all_green_if_available(report: dict) -> None:

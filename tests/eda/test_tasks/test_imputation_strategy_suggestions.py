@@ -75,9 +75,9 @@ def test_result_always_has_required_keys() -> None:
         for pct in (0.02, 0.10, 0.30, 0.60):
             result: dict = _select_strategy("col", pct, intent, is_skewed=False)
             for key in ("strategy", "method", "tier", "add_indicator", "rationale"):
-                assert (
-                    key in result
-                ), f"Missing key '{key}' for intent={intent}, pct={pct}"
+                assert key in result, (
+                    f"Missing key '{key}' for intent={intent}, pct={pct}"
+                )
 
 
 # ── Integration tests ─────────────────────────────────────────────────────────

@@ -7,7 +7,6 @@ seaborn demos, and OpenML, with backend-agnostic support for pandas and polars.
 """
 
 import inspect
-from typing import Union
 
 import pandas as pd
 import polars as pl
@@ -25,7 +24,7 @@ def load_dataset(
     source: str = "sklearn",
     as_frame: bool = True,
     backend: str = "pandas",
-) -> Union[pd.DataFrame, pl.DataFrame]:
+) -> pd.DataFrame | pl.DataFrame:
     """
     Load a standard dataset for testing or demonstration.
 

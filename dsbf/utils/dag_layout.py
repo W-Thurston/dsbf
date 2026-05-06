@@ -1,12 +1,11 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.patches import Patch
 
 
-def topo_sort_levels(G: nx.DiGraph) -> Tuple[Dict[int, List[str]], Dict[str, int]]:
+def topo_sort_levels(G: nx.DiGraph) -> tuple[dict[int, list[str]], dict[str, int]]:
     """
     Perform a topological sort of the DAG and group nodes into hierarchical levels.
 
@@ -19,8 +18,8 @@ def topo_sort_levels(G: nx.DiGraph) -> Tuple[Dict[int, List[str]], Dict[str, int
             - node_levels: A dictionary mapping each node to its level.
     """
     sorted_nodes = list(nx.topological_sort(G))
-    levels: Dict[int, List[str]] = defaultdict(list)
-    node_levels: Dict[str, int] = {}
+    levels: dict[int, list[str]] = defaultdict(list)
+    node_levels: dict[str, int] = {}
 
     for node in sorted_nodes:
         level = 0
@@ -33,8 +32,8 @@ def topo_sort_levels(G: nx.DiGraph) -> Tuple[Dict[int, List[str]], Dict[str, int
 
 
 def assign_waterfall_positions(
-    levels: Dict[int, List[str]],
-) -> Dict[str, Tuple[int, int]]:
+    levels: dict[int, list[str]],
+) -> dict[str, tuple[int, int]]:
     """
     Assign (x, y) positions for visualization:
     - x increases by level (left to right)
@@ -46,7 +45,7 @@ def assign_waterfall_positions(
     Returns:
         Dictionary of positions {node: (x, y)}
     """
-    pos: Dict[str, Tuple[int, int]] = {}
+    pos: dict[str, tuple[int, int]] = {}
     for level, nodes in levels.items():
         for i, node in enumerate(nodes):
             pos[node] = (level, -i)  # x = level, y = sibling order
@@ -55,11 +54,11 @@ def assign_waterfall_positions(
 
 def draw_dag(
     G: nx.DiGraph,
-    pos: Dict[str, Tuple[int, int]],
-    status: Optional[Dict[str, str]] = None,
-    figsize: Tuple[int, int] = (10, 6),
-    title: Optional[str] = None,
-    save_path: Optional[str] = None,
+    pos: dict[str, tuple[int, int]],
+    status: dict[str, str] | None = None,
+    figsize: tuple[int, int] = (10, 6),
+    title: str | None = None,
+    save_path: str | None = None,
 ) -> None:
     """
     Draw a DAG using assigned positions and optional task status coloring.

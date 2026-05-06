@@ -5,9 +5,9 @@
 This release represents the completion of the core EDA phase of DSBF — the full
 stack from task engine through interactive dashboard is functional, validated, and
 ready for real-world use.
- 
+
 ### Added
- 
+
 **Data health framework (Quality tab)**
 - Five independently-scored quality dimensions: Completeness, Validity, Usability,
   Redundancy, Leakage — replacing the original single numeric DQ score
@@ -38,10 +38,10 @@ ready for real-world use.
 Eight purpose-built dataset archetypes with full assertion coverage:
 `clean`, `tiny`, `near_clean`, `all_categorical`, `high_missingness`,
 `severe_multicollinearity`, `single_column`, `wide` (100 columns)
- 
+
 The `severe_multicollinearity` dataset specifically targets four VIF failure modes
 including the scale-mismatch regression test for the `add_constant` fix.
- 
+
 **Dashboard components**
 - `MissingnessMechanismCard` — dedicated expandable card per column
 - `MlReadinessTab` — full tab with gate banner, dimension cards, collapsible
@@ -49,7 +49,7 @@ including the scale-mismatch regression test for the `add_constant` fix.
 - `DataHealthBar`, `QualityTab` — five-dimension traffic light replacing the
   original single-score display
 ### Fixed
- 
+
 - **VIF spurious inflation (critical):** `detect_collinear_features` was calling
   `variance_inflation_factor` without an intercept term. Features with nonzero
   means produced VIF of 10–35 regardless of actual collinearity. Fixed by adding
@@ -67,7 +67,7 @@ including the scale-mismatch regression test for the `add_constant` fix.
   finding on a 100-column dataset would silently produce green (1% proportion,
   below the 5% amber threshold). Floor now covers `warn`-and-above.
 ### Changed
- 
+
 - `data_quality_scorer._level()` rewritten with four-state logic (see above)
 - Associations: `kendalls_tau` absorbed into `compute_pairwise_associations` with
   `method="auto"` routing (Kendall's τ for n<30, Pearson for n≥30)
@@ -200,4 +200,3 @@ including the scale-mismatch regression test for the `add_constant` fix.
 ### Feat
 
 * MVP profiling engine with full CI setup and metadata tracking
-

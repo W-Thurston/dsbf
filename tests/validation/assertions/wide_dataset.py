@@ -114,12 +114,12 @@ def _shape_correct(report: dict) -> None:
     if shape.get("status") != "success":
         return
     data = shape.get("data", {})
-    assert (
-        data.get("num_rows") == EXPECTED_ROW_COUNT
-    ), f"Expected {EXPECTED_ROW_COUNT} rows, got {data.get('num_rows')}"
-    assert (
-        data.get("num_columns") == EXPECTED_COL_COUNT
-    ), f"Expected {EXPECTED_COL_COUNT} columns, got {data.get('num_columns')}"
+    assert data.get("num_rows") == EXPECTED_ROW_COUNT, (
+        f"Expected {EXPECTED_ROW_COUNT} rows, got {data.get('num_rows')}"
+    )
+    assert data.get("num_columns") == EXPECTED_COL_COUNT, (
+        f"Expected {EXPECTED_COL_COUNT} columns, got {data.get('num_columns')}"
+    )
     print(
         f"  ✓  Shape: {EXPECTED_ROW_COUNT} rows × "
         f"{EXPECTED_COL_COUNT} columns confirmed",
@@ -149,12 +149,12 @@ def _all_100_columns_in_infer_types(report: dict) -> None:
     cat_bal: list[str] = [c for c in data if c.startswith(CAT_BAL_PREFIX)]
     null_cols: list[str] = [c for c in data if c.startswith(NULL_PREFIX)]
 
-    assert (
-        len(cont_clean) == 40
-    ), f"Expected 40 cont_clean_* columns, got {len(cont_clean)}"
-    assert (
-        len(cont_skew) == 20
-    ), f"Expected 20 cont_skew_* columns, got {len(cont_skew)}"
+    assert len(cont_clean) == 40, (
+        f"Expected 40 cont_clean_* columns, got {len(cont_clean)}"
+    )
+    assert len(cont_skew) == 20, (
+        f"Expected 20 cont_skew_* columns, got {len(cont_skew)}"
+    )
     assert len(cat_bal) == 26, f"Expected 26 cat_bal_* columns, got {len(cat_bal)}"
     assert len(null_cols) == 8, f"Expected 8 null_* columns, got {len(null_cols)}"
     print(f"  ✓  All {EXPECTED_COL_COUNT} columns present in infer_types")

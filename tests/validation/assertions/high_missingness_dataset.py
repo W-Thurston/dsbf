@@ -122,12 +122,12 @@ def _shape_correct(report: dict) -> None:
     if shape.get("status") != "success":
         return
     data = shape.get("data", {})
-    assert (
-        data.get("num_rows") == 2000
-    ), f"Expected 2000 rows, got {data.get('num_rows')}"
-    assert (
-        data.get("num_columns") == 9
-    ), f"Expected 9 columns, got {data.get('num_columns')}"
+    assert data.get("num_rows") == 2000, (
+        f"Expected 2000 rows, got {data.get('num_rows')}"
+    )
+    assert data.get("num_columns") == 9, (
+        f"Expected 9 columns, got {data.get('num_columns')}"
+    )
 
 
 def _null_rates_correct(report: dict) -> None:
@@ -144,9 +144,9 @@ def _null_rates_correct(report: dict) -> None:
 
     for col, (lo, hi) in EXPECTED_NULL_RANGES.items():
         pct = null_pcts.get(col)
-        assert (
-            pct is not None
-        ), f"summarize_nulls did not report a null percentage for '{col}'"
+        assert pct is not None, (
+            f"summarize_nulls did not report a null percentage for '{col}'"
+        )
         assert lo <= pct <= hi, (
             f"Column '{col}' null rate {pct:.1%} outside expected "
             f"range [{lo:.0%}, {hi:.0%}]"

@@ -1,6 +1,5 @@
 # dsbf/utils/validation.py
 
-from typing import List
 
 import networkx as nx
 
@@ -11,7 +10,7 @@ from dsbf.eda.task_registry import (
 )
 
 
-def validate_config_and_graph(config: dict) -> List[str]:
+def validate_config_and_graph(config: dict) -> list[str]:
     """
     Validate config integrity and DAG safety before profiling run.
 

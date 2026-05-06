@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "dsbf"
-version = "0.19.0"
-description = "Data Scientist's Best Friend - transparent AutoML pipeline"
+version = "0.20.0"
+description = "Data Scientist's Best Friend — a statistically grounded EDA and data quality engine"
 authors = ["Will Thurston <WilliamD.Thurston@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{ include = "dsbf" }]
 homepage = "https://github.com/W-Thurston/dsbf"
-keywords = ["data-profiling", "eda", "ml", "automl"]
+keywords = ["data-profiling", "eda", "data-quality", "pandas", "polars", "fastapi", "vue"]
 
 [tool.poetry.dependencies]
 python = ">=3.12"
@@ -36,10 +36,8 @@ uvicorn = "^0.41.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
-black = "^25.1.0"
-flake8 = "^7.3.0"
+ruff = "^0.11.10"
 pre-commit = "^4.2.0"
-isort = "^6.0.1"
 ipykernel = "^6.29.5"
 
 [tool.poetry.scripts]
@@ -53,27 +51,31 @@ include = ["dsbf"]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ["py312"]
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | \.venv
-  | build
-  | dist
-  | dsbf/outputs
-)/
-'''
+target-version = "py312"
+exclude = [
+    ".eggs", ".git", ".mypy_cache", ".pytest_cache",
+    ".ruff_cache", ".venv", "build", "dist", "dsbf/outputs",
+]
+
+[tool.ruff.lint]
+# E/W: pycodestyle  F: pyflakes  I: isort  UP: pyupgrade
+select = ["E", "W", "F", "I", "UP"]
+ignore = [
+    "COM812",  # trailing comma — conflicts with ruff formatter
+    "E203",    # whitespace before ":" — Black-compatible
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dsbf"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra -q"
 testpaths = ["tests"]
-
-[tool.isort]
-profile = "black"
-line_length = 88

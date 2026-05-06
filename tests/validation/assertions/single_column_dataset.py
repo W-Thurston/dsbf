@@ -110,9 +110,9 @@ def _shape_correct(report: dict) -> None:
         return
     data = shape.get("data", {})
     assert data.get("num_rows") == 500, f"Expected 500 rows, got {data.get('num_rows')}"
-    assert (
-        data.get("num_columns") == 1
-    ), f"Expected 1 column, got {data.get('num_columns')}"
+    assert data.get("num_columns") == 1, (
+        f"Expected 1 column, got {data.get('num_columns')}"
+    )
 
 
 def _single_column_is_continuous(report: dict) -> None:
@@ -127,9 +127,9 @@ def _single_column_is_continuous(report: dict) -> None:
         return
     data = types.get("data", {})
     intent = data.get("value", {}).get("analysis_intent_dtype")
-    assert (
-        intent == "continuous"
-    ), f"'value' should be classified as continuous, got '{intent}'"
+    assert intent == "continuous", (
+        f"'value' should be classified as continuous, got '{intent}'"
+    )
 
 
 def _pair_tasks_degrade_cleanly(report: dict) -> None:
@@ -223,9 +223,9 @@ def _skewness_flagged(report: dict) -> None:
         return
     data = skewness.get("data", {})
     skew_val = data.get("value")
-    assert (
-        skew_val is not None
-    ), "detect_skewness did not report a skewness value for 'value'"
+    assert skew_val is not None, (
+        "detect_skewness did not report a skewness value for 'value'"
+    )
     assert skew_val > 1.0, (
         f"'value' skewness should be > 1.0 (log-normal, seeded ~2.1), "
         f"got {skew_val:.3f}"

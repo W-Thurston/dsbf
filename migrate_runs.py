@@ -60,9 +60,7 @@ def _parse_ran_at(run_key: str, metadata: dict) -> str | None:
     if metadata.get("ran_at"):
         return metadata["ran_at"]
     try:
-        return datetime.strptime(run_key, "%Y%m%d_%H%M%S").isoformat(
-            sep=" "
-        )  # noqa: DTZ007
+        return datetime.strptime(run_key, "%Y%m%d_%H%M%S").isoformat(sep=" ")  # noqa: DTZ007
     except ValueError:
         return None
 

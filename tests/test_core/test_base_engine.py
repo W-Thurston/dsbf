@@ -34,7 +34,7 @@ def test_record_run_appends_new_entry(tmp_path):
         def record_run(self):
             history = []
             if record_path.exists():
-                with open(record_path, "r") as f:
+                with open(record_path) as f:
                     history = json.load(f)
             timestamps = {r.get("timestamp") for r in history}
             if self.run_metadata.get("timestamp") not in timestamps:
@@ -64,7 +64,7 @@ def test_record_run_skips_duplicate_timestamp(tmp_path):
         def record_run(self):
             history = []
             if record_path.exists():
-                with open(record_path, "r") as f:
+                with open(record_path) as f:
                     history = json.load(f)
             timestamps = {r.get("timestamp") for r in history}
             if self.run_metadata.get("timestamp") not in timestamps:

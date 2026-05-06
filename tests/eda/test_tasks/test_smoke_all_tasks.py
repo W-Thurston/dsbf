@@ -35,9 +35,9 @@ def test_all_tasks_smoke(tmp_path):
         assert isinstance(task_name, str), f"Registry key '{task_name}' is not a string"
         assert isinstance(spec, TaskSpec), f"{task_name} is not a TaskSpec"
         assert hasattr(spec.cls, "run"), f"{spec.cls.__name__} missing .run() method"
-        assert callable(
-            getattr(spec.cls(), "run", None)
-        ), f"{spec.cls.__name__}.run is not callable"
+        assert callable(getattr(spec.cls(), "run", None)), (
+            f"{spec.cls.__name__}.run is not callable"
+        )
 
         task = spec.cls()
 

@@ -1,7 +1,6 @@
 # dsbf/utils/reco_engine.py
 
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -17,7 +16,7 @@ def load_recommendation_library():
     return RECO_CACHE
 
 
-def get_recommendation_tip(task_name: str, context_vars: dict) -> Optional[str]:
+def get_recommendation_tip(task_name: str, context_vars: dict) -> str | None:
     """
     Given a task name and context vars,
     return the best matching advanced recommendation.

@@ -28,7 +28,7 @@ def _assert_static_artifact(value: Any) -> None:
 
 def _assert_interactive_artifact(value: Any) -> None:
     """Validate that an interactive artifact is a string path or dict."""
-    if isinstance(value, (str, dict)):
+    if isinstance(value, str | dict):
         return
     msg: str = f"Unexpected interactive artifact type: {type(value)}"
     raise AssertionError(msg)

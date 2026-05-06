@@ -111,12 +111,12 @@ def _shape_correct(report: dict) -> None:
     if shape.get("status") != "success":
         return
     data = shape.get("data", {})
-    assert (
-        data.get("num_rows") == 2000
-    ), f"Expected 2000 rows, got {data.get('num_rows')}"
-    assert (
-        data.get("num_columns") == 9
-    ), f"Expected 9 columns, got {data.get('num_columns')}"
+    assert data.get("num_rows") == 2000, (
+        f"Expected 2000 rows, got {data.get('num_rows')}"
+    )
+    assert data.get("num_columns") == 9, (
+        f"Expected 9 columns, got {data.get('num_columns')}"
+    )
 
 
 def _no_numeric_columns_inferred(report: dict) -> None:
@@ -196,13 +196,13 @@ def _dominant_column_flagged(report: dict) -> None:
 
     # Check the dominant column was measured at ≥ 95%
     col_data = data.get("dominant")
-    assert (
-        col_data is not None
-    ), "detect_single_dominant_value did not report data for 'dominant' column"
+    assert col_data is not None, (
+        "detect_single_dominant_value did not report data for 'dominant' column"
+    )
     mode_prop = col_data.get("mode_proportion", 0)
-    assert (
-        mode_prop >= 0.95
-    ), f"'dominant' column mode_proportion should be ≥ 0.95, got {mode_prop:.3f}"
+    assert mode_prop >= 0.95, (
+        f"'dominant' column mode_proportion should be ≥ 0.95, got {mode_prop:.3f}"
+    )
 
     # Verify the data quality scorer surfaced this as a Usability finding
     dq = report["results"].get("data_quality_scorer", {})

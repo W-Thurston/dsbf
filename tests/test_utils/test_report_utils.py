@@ -53,7 +53,7 @@ def test_render_user_report_filters_diagnostics(sample_context):
     report_path = os.path.join(sample_context.output_dir, "report.json")
     render_user_report(sample_context.results, output_path=report_path)
 
-    with open(report_path, "r") as f:
+    with open(report_path) as f:
         report = json.load(f)
 
     assert "results" in report
@@ -66,7 +66,7 @@ def test_write_metadata_report_includes_diagnostics(sample_context):
     meta_path = os.path.join(sample_context.output_dir, "metadata_report.json")
     write_metadata_report(sample_context, filename="metadata_report.json")
 
-    with open(meta_path, "r") as f:
+    with open(meta_path) as f:
         metadata = json.load(f)
 
     assert "run_stats" in metadata
@@ -94,7 +94,7 @@ def test_write_metadata_handles_missing_diagnostics(tmp_path):
     path = os.path.join(str(tmp_path), "metadata_report.json")
     write_metadata_report(context, filename="metadata_report.json")
 
-    with open(path, "r") as f:
+    with open(path) as f:
         metadata = json.load(f)
 
     assert "diagnostic_results" in metadata

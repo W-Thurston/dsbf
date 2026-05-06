@@ -10,7 +10,7 @@ consistent visual style, and dual rendering support (matplotlib + plotly).
 import os
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, TypedDict
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -128,7 +128,7 @@ class PlotFactory:
         sns.set_palette("deep")
 
     @staticmethod
-    def _is_empty(data: Union[pd.Series, pd.DataFrame]) -> bool:
+    def _is_empty(data: pd.Series | pd.DataFrame) -> bool:
         return data.empty if isinstance(data, pd.DataFrame) else data.size == 0
 
     # === Truncate column name logic ===
@@ -166,8 +166,8 @@ class PlotFactory:
     def plot_histogram_static(
         series: pd.Series,
         save_path: str,
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
+        title: str | None = None,
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -230,9 +230,9 @@ class PlotFactory:
     @staticmethod
     def plot_histogram_interactive(
         series: pd.Series,
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
+        title: str | None = None,
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -318,9 +318,9 @@ class PlotFactory:
     @staticmethod
     def plot_boxplot_static(
         series: pd.Series,
-        save_path: Union[str, Path],
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
+        save_path: str | Path,
+        title: str | None = None,
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -370,9 +370,9 @@ class PlotFactory:
     @staticmethod
     def plot_boxplot_interactive(
         series: pd.Series,
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
+        title: str | None = None,
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -460,10 +460,10 @@ class PlotFactory:
     @staticmethod
     def plot_barplot_static(
         series: pd.Series,
-        save_path: Union[str, Path],
-        top_k: Optional[int] = 100,
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
+        save_path: str | Path,
+        top_k: int | None = 100,
+        title: str | None = None,
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -533,10 +533,10 @@ class PlotFactory:
     @staticmethod
     def plot_barplot_interactive(
         series: pd.Series,
-        top_k: Optional[int] = 100,
-        title: Optional[str] = None,
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
+        top_k: int | None = 100,
+        title: str | None = None,
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(series):
             return {
@@ -608,8 +608,8 @@ class PlotFactory:
     def plot_null_matrix_static(
         df: pd.DataFrame,
         save_path: str,
-        title: Optional[str] = "Null Matrix",
-        annotations: Optional[list[str]] = None,
+        title: str | None = "Null Matrix",
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         PlotFactory._apply_seaborn_style()
 
@@ -646,9 +646,9 @@ class PlotFactory:
     @staticmethod
     def plot_null_matrix_interactive(
         df: pd.DataFrame,
-        title: Optional[str] = "Null Matrix",
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
+        title: str | None = "Null Matrix",
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
     ) -> dict[str, Any]:
         if PlotFactory._is_empty(df):
             return {
@@ -681,9 +681,9 @@ class PlotFactory:
     @staticmethod
     def plot_correlation_static(
         df: pd.DataFrame,
-        save_path: Union[str, Path],
-        title: Optional[str] = "Correlation Matrix",
-        annotations: Optional[list[str]] = None,
+        save_path: str | Path,
+        title: str | None = "Correlation Matrix",
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         if df.empty:
             return {
@@ -756,9 +756,9 @@ class PlotFactory:
     @staticmethod
     def plot_correlation_interactive(
         df: pd.DataFrame,
-        title: Optional[str] = "Correlation Matrix",
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
+        title: str | None = "Correlation Matrix",
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
     ) -> dict[str, Any]:
         corr = df.corr(numeric_only=True)
         if corr.empty:
@@ -870,8 +870,8 @@ class PlotFactory:
     def plot_missingness_matrix(
         df: pd.DataFrame,
         save_path: str,
-        title: Optional[str] = "Missingness Matrix",
-        annotations: Optional[list[str]] = None,
+        title: str | None = "Missingness Matrix",
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Uses missingno to generate a missingness matrix plot. Returns static path only.
@@ -914,9 +914,9 @@ class PlotFactory:
     def plot_stacked_bar_interactive(
         df: pd.DataFrame,
         title: str = "Dtype Mapping: Inferred vs Intent",
-        annotations: Optional[list[str]] = None,
-        json_path: Optional[Union[str, Path]] = None,
-        color_map: Optional[dict[str, str]] = {},
+        annotations: list[str] | None = None,
+        json_path: str | Path | None = None,
+        color_map: dict[str, str] | None = {},
     ) -> dict[str, Any]:
         if df.empty or not {"analysis_intent_dtype", "inferred_dtype"}.issubset(
             df.columns
@@ -1046,10 +1046,10 @@ class PlotFactory:
     @staticmethod
     def plot_boxplot_hist_composite_static(
         series: pd.Series,
-        save_path: Union[str, Path],
+        save_path: str | Path,
         kde: bool = True,
-        bins: Optional[int] = None,
-        annotations: Optional[list[str]] = None,
+        bins: int | None = None,
+        annotations: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         Create two composite static plots per theme:

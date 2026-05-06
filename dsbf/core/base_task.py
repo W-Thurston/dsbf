@@ -2,7 +2,7 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
@@ -15,21 +15,19 @@ class BaseTask(ABC):
     Enforces a standard interface and result format.
     """
 
-    context: Optional[AnalysisContext] = None
+    context: AnalysisContext | None = None
 
-    def __init__(
-        self, name: Optional[str] = None, config: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, name: str | None = None, config: dict[str, Any] | None = None):
         self.name = name or self.__class__.__name__
         self.config = config or {}
         self.input_data: Any = None
-        self.output: Optional[TaskResult] = None
+        self.output: TaskResult | None = None
 
     def set_input(self, input_data: Any) -> None:
         """Set the input data for the task (usually a DataFrame or dict)."""
         self.input_data = input_data
 
-    def get_output(self) -> Optional[TaskResult]:
+    def get_output(self) -> TaskResult | None:
         """Retrieve the output TaskResult after run()."""
         return self.output
 
@@ -111,7 +109,7 @@ class BaseTask(ABC):
             fallback = setup_logger("dsbf.task", "info")
             get_log_fn(fallback, level)(f"[{self.name}] {msg}")
 
-    def ensure_reliability_flags(self) -> Dict:
+    def ensure_reliability_flags(self) -> dict:
         """
         Ensure global reliability flags are computed and cached in context.
 
@@ -134,9 +132,9 @@ class BaseTask(ABC):
         level: str,
         title: str,
         body: str,
-        actions: List[Dict[str, Any]],
-        metric: Dict[str, Any],
-        model_sensitivity: Dict[str, List[str]] | None = None,
+        actions: list[dict[str, Any]],
+        metric: dict[str, Any],
+        model_sensitivity: dict[str, list[str]] | None = None,
     ) -> None:
         """
         Attach a guidance blurb for a specific column and phase to a TaskResult.
@@ -196,7 +194,7 @@ class BaseTask(ABC):
         if column not in result.guidance:
             result.guidance[column] = {"eda": [], "ml": []}
 
-        blurb: Dict[str, Any] = {
+        blurb: dict[str, Any] = {
             "phase": phase,
             "column": column,
             "level": level,
@@ -214,7 +212,7 @@ class BaseTask(ABC):
         self,
         result: TaskResult,
         score: float,
-        tags: List[str],
+        tags: list[str],
         recommendation: str,
     ) -> None:
         """
@@ -232,7 +230,7 @@ class BaseTask(ABC):
             result.recommendations = []
         result.recommendations.append(recommendation)
 
-    def get_expected_types(self) -> List[str]:
+    def get_expected_types(self) -> list[str]:
         """
         Retrieve the expected semantic types from the task's registry entry.
 
@@ -246,8 +244,8 @@ class BaseTask(ABC):
         return spec.expected_semantic_types or [] if spec else []
 
     def get_columns_by_intent(
-        self, expected_types: Optional[List[str]] = None
-    ) -> Tuple[List[str], Dict[str, str]]:
+        self, expected_types: list[str] | None = None
+    ) -> tuple[list[str], dict[str, str]]:
         """
         Retrieve a list of columns whose analysis_intent_dtype matches the
         expected types, and return a dict of excluded columns with their
@@ -283,7 +281,7 @@ class BaseTask(ABC):
 
         return matched, excluded
 
-    def get_column_type_info(self, columns: List[str]) -> Dict[str, Dict[str, str]]:
+    def get_column_type_info(self, columns: list[str]) -> dict[str, dict[str, str]]:
         """
         Returns a dictionary mapping each column name to its inferred and
          analysis-intent dtypes.

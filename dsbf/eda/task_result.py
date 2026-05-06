@@ -2,7 +2,7 @@
 
 import warnings
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, Protocol, TypedDict
+from typing import Any, Literal, Protocol, TypedDict
 
 import numpy as np
 
@@ -11,10 +11,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="seaborn.matrix")
 
 class WarningDetail(TypedDict):
     description: str
-    recommendation: Optional[str]
+    recommendation: str | None
 
 
-ReliabilityWarning = Dict[str, Dict[str, WarningDetail]]
+ReliabilityWarning = dict[str, dict[str, WarningDetail]]
 
 
 @dataclass
@@ -42,16 +42,16 @@ class TaskResult:
 
     name: str
     status: Literal["success", "failed", "skipped"] = "success"
-    summary: Dict[str, Any] = field(default_factory=dict)
-    data: Optional[Dict[str, Any]] = None
-    plots: Optional[Dict[str, Dict[str, Any]]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    ml_impact_score: Optional[float] = None  # range: 0.0 to 1.0
-    reliability_warnings: Optional[ReliabilityWarning] = None
-    recommendations: Optional[List[str]] = None
-    recommendation_tags: Optional[List[str]] = None  # e.g., ["drop", "transform"]
-    error_metadata: Optional[Dict[str, str]] = None
-    guidance: Optional[Dict[str, Dict[str, List[Dict[str, Any]]]]] = None
+    summary: dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] | None = None
+    plots: dict[str, dict[str, Any]] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    ml_impact_score: float | None = None  # range: 0.0 to 1.0
+    reliability_warnings: ReliabilityWarning | None = None
+    recommendations: list[str] | None = None
+    recommendation_tags: list[str] | None = None  # e.g., ["drop", "transform"]
+    error_metadata: dict[str, str] | None = None
+    guidance: dict[str, dict[str, list[dict[str, Any]]]] | None = None
     # guidance shape:
     # {
     # "COLUMN_NAME": {
@@ -71,7 +71,7 @@ class TaskResult:
             return [self._sanitize(v) for v in obj]
         return obj
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert the TaskResult to a dictionary representation,
         making it serializable and suitable for JSON export.
@@ -113,7 +113,7 @@ class TaskResult:
         )
 
 
-def error_to_metadata(error: Exception) -> Dict[str, str]:
+def error_to_metadata(error: Exception) -> dict[str, str]:
     """
     Format an exception into standardized error metadata for TaskResult.
 
@@ -156,7 +156,7 @@ def append_warning(
     level: str,
     code: str,
     description: str,
-    recommendation: Optional[str] = None,
+    recommendation: str | None = None,
 ) -> None:
     """
     Add a structured warning entry to a nested reliability dictionary.
@@ -180,7 +180,7 @@ def add_reliability_warning(
     level: str,
     code: str,
     description: str,
-    recommendation: Optional[str] = None,
+    recommendation: str | None = None,
 ) -> None:
     """
     Attach a structured warning to the TaskResult

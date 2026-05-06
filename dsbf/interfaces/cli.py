@@ -46,9 +46,9 @@ def run(
     if visualize_dag:
         cfg.setdefault("metadata", {})["visualize_dag"] = True
     if no_report:
-        cfg.setdefault("metadata", {})[
-            "disable_report"
-        ] = True  # you can handle this flag in report_utils
+        cfg.setdefault("metadata", {})["disable_report"] = (
+            True  # you can handle this flag in report_utils
+        )
 
     engine = ProfileEngine(cfg)
     engine.run()

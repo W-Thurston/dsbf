@@ -134,9 +134,9 @@ def _income_nulls_detected(report: dict) -> None:
         return
     null_pcts = nulls.get("data", {}).get("null_percentages", {})
     income_null = null_pcts.get("income")
-    assert (
-        income_null is not None
-    ), "summarize_nulls did not report a null percentage for 'income'"
+    assert income_null is not None, (
+        "summarize_nulls did not report a null percentage for 'income'"
+    )
     assert 0.05 < income_null < 0.10, (
         f"income null rate should be 5–10% (actual seeded ≈ 6.4%), "
         f"got {income_null:.1%}"
@@ -159,12 +159,12 @@ def _purchase_amount_skew_flagged(report: dict) -> None:
     if pa_skew is None:
         # Some task shapes nest under a 'skewness' key
         pa_skew = data.get("skewness", {}).get("purchase_amount")
-    assert (
-        pa_skew is not None
-    ), "detect_skewness did not report a skewness value for 'purchase_amount'"
-    assert (
-        pa_skew > 1.0
-    ), f"purchase_amount skew should be > 1.0 (actual ≈ 2.0), got {pa_skew:.3f}"
+    assert pa_skew is not None, (
+        "detect_skewness did not report a skewness value for 'purchase_amount'"
+    )
+    assert pa_skew > 1.0, (
+        f"purchase_amount skew should be > 1.0 (actual ≈ 2.0), got {pa_skew:.3f}"
+    )
 
 
 def _plan_type_dominant_calibration(report: dict) -> None:
@@ -187,9 +187,9 @@ def _plan_type_dominant_calibration(report: dict) -> None:
 
     # Task should have measured plan_type
     plan_data = data.get("plan_type")
-    assert (
-        plan_data is not None
-    ), "detect_single_dominant_value did not report data for 'plan_type'"
+    assert plan_data is not None, (
+        "detect_single_dominant_value did not report data for 'plan_type'"
+    )
 
     mode_prop = plan_data.get("mode_proportion", 0)
     assert 0.68 < mode_prop < 0.74, (

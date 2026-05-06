@@ -1,7 +1,8 @@
 # dsbf/interfaces/api.py
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union, cast
+from typing import Any, cast
 
 import pandas as pd
 import polars as pl
@@ -14,8 +15,8 @@ from dsbf.eda.profile_engine import ProfileEngine
 class EDA:
     def __init__(
         self,
-        dataset: Union[str, pd.DataFrame, pl.DataFrame],
-        config: Optional[Dict[str, Any]] = None,
+        dataset: str | pd.DataFrame | pl.DataFrame,
+        config: dict[str, Any] | None = None,
     ):
         """
         Args:
@@ -23,14 +24,14 @@ class EDA:
             config: Optional path to config YAML or pre-loaded dict.
         """
         if isinstance(config, str):
-            with open(config, "r") as f:
+            with open(config) as f:
                 self.config = yaml.safe_load(f)
         else:
             self.config = config or load_default_config()
 
-        self.config = cast(Dict[str, Any], self.config)
+        self.config = cast(dict[str, Any], self.config)
 
-        if isinstance(dataset, (pd.DataFrame, pl.DataFrame)):
+        if isinstance(dataset, pd.DataFrame | pl.DataFrame):
             self.df = dataset
             self.config["metadata"]["dataset_path"] = None
         elif isinstance(dataset, str) and Path(dataset).exists():
@@ -45,7 +46,7 @@ class EDA:
         if self.df is not None:
             self.engine._log("Using in-memory DataFrame input.", "stage")
             self.engine._load_data = cast(
-                Callable[[], Union[pd.DataFrame, pl.DataFrame]], lambda: self.df
+                Callable[[], pd.DataFrame | pl.DataFrame], lambda: self.df
             )
         self.engine.run()
         return self.engine.get_all_results()

@@ -7,9 +7,9 @@ from dsbf.utils.task_utils import write_task_metadata
 
 
 def test_all_task_names_are_unique():
-    assert len(TASK_REGISTRY) == len(
-        set(TASK_REGISTRY.keys())
-    ), "Duplicate task names found."
+    assert len(TASK_REGISTRY) == len(set(TASK_REGISTRY.keys())), (
+        "Duplicate task names found."
+    )
 
 
 def test_all_required_metadata_fields_present():
@@ -41,7 +41,7 @@ def test_metadata_json_is_consistent_with_registry(tmp_path):
     output_file = tmp_path / "task_metadata.json"
     write_task_metadata(str(output_file))
 
-    with open(output_file, "r") as f:
+    with open(output_file) as f:
         metadata = json.load(f)
 
     registry_task_names = set(TASK_REGISTRY.keys())
@@ -65,14 +65,14 @@ def test_metadata_json_is_consistent_with_registry(tmp_path):
     }
 
     for task_name, entry in metadata.items():
-        assert isinstance(
-            entry, dict
-        ), f"Metadata for task '{task_name}' must be a dict."
+        assert isinstance(entry, dict), (
+            f"Metadata for task '{task_name}' must be a dict."
+        )
 
         for field, expected_type in required_fields.items():
-            assert (
-                field in entry
-            ), f"Missing '{field}' in metadata for task '{task_name}'"
+            assert field in entry, (
+                f"Missing '{field}' in metadata for task '{task_name}'"
+            )
             assert isinstance(entry[field], expected_type) or entry[field] is None, (
                 f"Field '{field}' in task '{task_name}'"
                 f" must be {expected_type.__name__} or None"
@@ -80,6 +80,6 @@ def test_metadata_json_is_consistent_with_registry(tmp_path):
 
         # 3. Summary should not be empty or whitespace
         summary = entry.get("summary", "")
-        assert (
-            summary.strip() != ""
-        ), f"Summary for task '{task_name}' is empty or blank"
+        assert summary.strip() != "", (
+            f"Summary for task '{task_name}' is empty or blank"
+        )

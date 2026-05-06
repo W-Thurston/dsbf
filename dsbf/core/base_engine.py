@@ -14,7 +14,7 @@ import os
 import platform
 import subprocess
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
 from dsbf.utils.versioning import get_dsbf_version
@@ -28,7 +28,7 @@ class BaseEngine(abc.ABC):
         config (dict): Engine and metadata configuration dictionary.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.message_verbosity = config.get("metadata", {}).get(
             "message_verbosity", "info"
@@ -72,9 +72,7 @@ class BaseEngine(abc.ABC):
             }
         )
 
-    def _log(
-        self, msg: str, level: str = "info", task_name: Optional[str] = None
-    ) -> None:
+    def _log(self, msg: str, level: str = "info", task_name: str | None = None) -> None:
         """
         Verbosity-aware logger with indentation and Rich + file support.
 
@@ -104,7 +102,7 @@ class BaseEngine(abc.ABC):
         # Load existing history
         if os.path.exists(record_path):
             try:
-                with open(record_path, "r") as f:
+                with open(record_path) as f:
                     history = json.load(f)
             except (json.JSONDecodeError, FileNotFoundError):
                 history = []

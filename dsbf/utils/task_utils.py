@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_loader import load_all_tasks
@@ -24,7 +24,7 @@ __all__ = [
 
 def instantiate_task(
     task_name: str,
-    task_specific_cfg: Optional[Dict[str, Any]] = None,
+    task_specific_cfg: dict[str, Any] | None = None,
 ) -> BaseTask:
     # Construct task instance using registry spec
     spec = TASK_REGISTRY[task_name]
@@ -76,7 +76,7 @@ def validate_task_result(result: TaskResult, raise_on_error: bool = False) -> bo
     return valid
 
 
-def filter_tasks(criteria: Dict[str, Union[str, List[str]]]) -> List[str]:
+def filter_tasks(criteria: dict[str, str | list[str]]) -> list[str]:
     """
     Filters registered tasks based on AND-combined metadata criteria.
 

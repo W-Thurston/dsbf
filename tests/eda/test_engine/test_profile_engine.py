@@ -137,12 +137,12 @@ def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
     engine.run()
 
     # Load most recent run from dsbf_run.json
-    with open("dsbf_run.json", "r") as f:
+    with open("dsbf_run.json") as f:
         run_history = json.load(f)
     latest_run = run_history[-1]
     output_dir = os.path.join("dsbf", "outputs", latest_run["timestamp"])
 
-    with open(os.path.join(output_dir, "metadata_report.json"), "r") as f:
+    with open(os.path.join(output_dir, "metadata_report.json")) as f:
         metadata = json.load(f)
 
     assert metadata["engine"] == "ProfileEngine"
