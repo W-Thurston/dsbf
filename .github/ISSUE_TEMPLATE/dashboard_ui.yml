@@ -1,0 +1,82 @@
+name: Dashboard / UI Issue
+description: Something on the Vue dashboard rendered incorrectly, is missing, or behaved unexpectedly.
+title: "[UI]: "
+labels: ["dashboard", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for issues with the Vue 3 SPA dashboard —
+        blank panels, misaligned components, missing data, JS errors, etc.
+        For backend task failures that produce incorrect data, use the Bug Report template instead.
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: "e.g. Chrome 124, Firefox 125, Safari 17"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tab
+    attributes:
+      label: Which tab?
+      options:
+        - Overview
+        - Distributions
+        - Relationships
+        - Quality
+        - ML Readiness
+        - Time Series
+        - Multiple tabs
+        - Not tab-specific
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Which component or section? (if known)
+      placeholder: "e.g. Correlation heatmap, Column browser, DataHealthBar, Missingness dimension card"
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you saw. Screenshots are very helpful — paste them directly into this field.
+      placeholder: |
+        The Relationships tab shows a blank white panel when the dataset has only one continuous column.
+        No JS error in the console.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: "An empty-state message like 'No associations — fewer than 2 eligible columns.'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dataset-context
+    attributes:
+      label: Dataset context
+      description: >
+        Describe the dataset that triggered the issue — shape, column mix,
+        any notable characteristics. No actual data needed.
+      placeholder: "100 rows, 1 continuous column, no categorical columns."
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Browser console errors (if any)
+      render: shell
+      placeholder: "Paste any errors from the browser developer console here."
+
+  - type: input
+    id: dsbf-version
+    attributes:
+      label: DSBF version
+      placeholder: "e.g. v0.20.0"

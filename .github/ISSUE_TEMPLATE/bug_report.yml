@@ -1,0 +1,107 @@
+name: Bug Report
+description: Something produced an unexpected result, raised an error, or rendered incorrectly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more detail you provide,
+        the faster it can be diagnosed. You do not need to share your actual dataset —
+        a description of its shape and column types is enough.
+
+  - type: input
+    id: dsbf-version
+    attributes:
+      label: DSBF version
+      placeholder: "e.g. v0.20.0  (run: poetry run dsbf --version)"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.12.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: interface
+    attributes:
+      label: How were you running DSBF?
+      options:
+        - CLI (dsbf profile ...)
+        - Python API (profile_file / ProfileEngine)
+        - Quickstart (dsbf quickstart ...)
+        - Dashboard (Vue frontend)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: profiling-depth
+    attributes:
+      label: Profiling depth
+      options:
+        - basic
+        - standard
+        - full
+        - Not applicable / unknown
+
+  - type: textarea
+    id: dataset-description
+    attributes:
+      label: Dataset description
+      description: >
+        Do not share your actual data. Describe its shape, column types,
+        and any notable characteristics (e.g. "1,200 rows, 15 columns —
+        mix of continuous, categorical, and one datetime column, ~10% nulls
+        in two columns").
+      placeholder: "~1,200 rows, 15 columns — mix of continuous and categorical, one datetime index..."
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did DSBF do? Include any error messages or unexpected output.
+      placeholder: |
+        Task 'detect_collinear_features' raised a ValueError during the run.
+        The dashboard's Relationships tab shows a blank heatmap.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: "VIF scores should have been computed for all continuous columns."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: >
+        The smallest code snippet or CLI command that reliably triggers the bug.
+        Use synthetic data if possible.
+      render: python
+      placeholder: |
+        import pandas as pd
+        from dsbf.api import profile_file
+
+        df = pd.DataFrame({"a": [1, 2, 3], "b": [2, 4, 6]})
+        # ...
+
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Full error output / traceback
+      render: shell
+      placeholder: "Paste the full traceback or run.log excerpt here."
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Anything else that might be relevant — custom config, plugin tasks, OS, etc.

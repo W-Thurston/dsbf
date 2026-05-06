@@ -1,0 +1,118 @@
+name: New Task Proposal
+description: Propose a new EDA or ML Readiness task for the DSBF task engine.
+title: "[Task]: "
+labels: ["new task", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DSBF tasks are self-contained Python classes registered with `@register_task`.
+        Before writing any code, it helps to think through the questions below —
+        they map directly to the decisions you'll make when implementing the task.
+
+        See [`CONTRIBUTING.md`](../blob/main/CONTRIBUTING.md) for the full task
+        writing guide including the `@register_task` template.
+
+  - type: input
+    id: task-name
+    attributes:
+      label: Proposed task name
+      description: Snake-case, descriptive. This becomes the task's registry key.
+      placeholder: "e.g. detect_sparse_columns"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-it-detects
+    attributes:
+      label: What does this task detect or compute?
+      description: One or two sentences. What question does it answer about the data?
+      placeholder: |
+        Flags columns where more than a configurable threshold of values are
+        identical (but not null), indicating low information density that may
+        affect model training.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: semantic-types
+    attributes:
+      label: Which column types does it operate on?
+      multiple: true
+      options:
+        - continuous
+        - categorical
+        - text
+        - boolean
+        - datetime
+        - all columns
+    validations:
+      required: true
+
+  - type: dropdown
+    id: profiling-depth
+    attributes:
+      label: At what profiling depth should it run?
+      options:
+        - basic
+        - standard
+        - full
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Which pipeline stage?
+      options:
+        - eda
+        - modeling
+    validations:
+      required: true
+
+  - type: textarea
+    id: depends-on
+    attributes:
+      label: Dependencies (depends_on)
+      description: Which tasks must run before this one? At minimum, most tasks depend on `infer_types`.
+      placeholder: "infer_types, summarize_nulls"
+
+  - type: textarea
+    id: output-shape
+    attributes:
+      label: What does the output data structure look like?
+      description: >
+        Describe the shape of `TaskResult.data`. Most tasks use
+        `{col: value}` or `{col: {stat: value}}` patterns.
+      placeholder: |
+        data: {col_name: {"sparse_ratio": 0.42, "dominant_value": "N/A"}}
+        collinear_columns: ["col_a", "col_b"]
+
+  - type: textarea
+    id: quality-dimension
+    attributes:
+      label: Which Quality or ML Readiness dimension does this feed into?
+      description: >
+        Tasks route findings to one of the five Quality dimensions
+        (Completeness, Validity, Usability, Redundancy, Leakage) or one of
+        the five ML Readiness dimensions (Transformations, Encoding,
+        Missingness, Leakage, Unusable). Leave blank if diagnostic only.
+      placeholder: "Quality → Usability"
+
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Prior art / references
+      description: Is there a standard statistical method, paper, or existing tool this is based on?
+      placeholder: "Similar to ydata-profiling's constant columns check, but extended to near-constant."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting a PR for this task
+      options:
+        - label: I have read the task writing guide in CONTRIBUTING.md
+        - label: I plan to use `get_columns_by_intent()` rather than `df.columns` or `select_dtypes()`
+        - label: I have considered the zero-eligible-columns edge case
+        - label: I will add a unit test covering the happy path and the empty-input case
+        - label: I will update `task_metadata.yaml`
