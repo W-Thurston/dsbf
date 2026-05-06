@@ -2,30 +2,77 @@
 <a name="v0.20.0"></a>
 ## [v0.20.0](https://github.com/W-Thurston/dsbf/compare/v0.19.0...v0.20.0) (2026-05-06)
 
-### Chore
-
-* update repo documentation and CI workflows
-
-### Feat
-
-* wide dataset + four-state traffic light + dashboard polish
-* data health dashboard — quality scorer, header bar, Quality tab; fix task bugs
-* guidance blurb system — full pipeline + 21 task upgrades; fix correlation OOM
-
-### Fix
-
-* dashboard polish — layout, cardinality, frozen assoc header, green dot
-* sync clean_dataset.py and run_validation.py to deployed backend state
-* em-dash killer
-
-### Test
-
-* add single_column dataset — passes first try
-* add severe_multicollinearity dataset — passes with corrected assertions
-* add high_missingness dataset — passes first try
-* add all_categorical dataset — passes
-* add near_clean dataset (3,000 rows) — passes
-* tiny dataset passes; fix status check error→failed in tiny_dataset.py
+This release represents the completion of the core EDA phase of DSBF — the full
+stack from task engine through interactive dashboard is functional, validated, and
+ready for real-world use.
+ 
+### Added
+ 
+**Data health framework (Quality tab)**
+- Five independently-scored quality dimensions: Completeness, Validity, Usability,
+  Redundancy, Leakage — replacing the original single numeric DQ score
+- Four-state traffic-light system (green / blue / amber / red) where color maps to
+  both severity and proportion: `info`-only findings below 10% of columns produce
+  blue; any `warn`-or-above finding produces minimum amber regardless of proportion
+- `DataHealthBar` component showing all five dimension dots in the Overview tab
+- Trust banner with plain-English summary that updates with dataset state
+**ML Readiness tab**
+- Five preparation-action dimensions: Transformations Needed, Encoding Required,
+  Missingness Impact, Leakage Risk, Unusable Features
+- Severity-based gate banner (Ready / Needs Work / Not Ready) driven by
+  error/warn finding counts, not proportion
+- Column Status section (Needs Attention / Notes Available / Ready As-Is buckets)
+- `model_sensitivity` tag strip on expanded findings (affected vs unaffected model
+  families)
+**Task implementations (Waves 2–4)**
+- Unified outlier detection (`detect_outliers.py`) with Isolation Forest support
+  via `__dataset__` sentinel key
+- Missingness mechanism analysis with deliberate epistemic humility — confidence
+  capped at "moderate", `consistent_with` language, never claims to confirm MNAR
+- Time series suite: `compute_acf_pacf`, `detect_stationarity`,
+  `decompose_time_series`; shared `_time_series_utils.py`; defaults to disabled
+  with plain-English explanation
+- `get_shared_param()` on `BaseTask` for correct access to shared config blocks
+- `add_guidance()` gains optional `model_sensitivity` parameter
+**Validation suite**
+Eight purpose-built dataset archetypes with full assertion coverage:
+`clean`, `tiny`, `near_clean`, `all_categorical`, `high_missingness`,
+`severe_multicollinearity`, `single_column`, `wide` (100 columns)
+ 
+The `severe_multicollinearity` dataset specifically targets four VIF failure modes
+including the scale-mismatch regression test for the `add_constant` fix.
+ 
+**Dashboard components**
+- `MissingnessMechanismCard` — dedicated expandable card per column
+- `MlReadinessTab` — full tab with gate banner, dimension cards, collapsible
+  sortable findings, inline row expansion, column status section
+- `DataHealthBar`, `QualityTab` — five-dimension traffic light replacing the
+  original single-score display
+### Fixed
+ 
+- **VIF spurious inflation (critical):** `detect_collinear_features` was calling
+  `variance_inflation_factor` without an intercept term. Features with nonzero
+  means produced VIF of 10–35 regardless of actual collinearity. Fixed by adding
+  `add_constant(numeric_df, has_constant="add")` before computation.
+- **Data corruption bug:** `cli.py` quickstart was not nulling `dataset_path`,
+  causing Titanic dataset paths to persist into subsequent NFL dataset runs.
+  `writer.py` now determines `is_builtin` from `raw_path is None AND
+  dataset_source in (seaborn, sklearn, openml)`. `_upsert_dataset` only updates
+  `source_path` when the incoming value is non-null.
+- **Semantic type filtering:** `detect_high_cardinality` and `detect_id_columns`
+  were iterating `df.columns` instead of `matched_cols`, bypassing the semantic
+  type filter entirely. Both now operate on `matched_cols` exclusively.
+- **`_level()` severity floor:** The quality scorer's `_level()` function only
+  prevented `error` findings from producing a green result. A single `warn`-level
+  finding on a 100-column dataset would silently produce green (1% proportion,
+  below the 5% amber threshold). Floor now covers `warn`-and-above.
+### Changed
+ 
+- `data_quality_scorer._level()` rewritten with four-state logic (see above)
+- Associations: `kendalls_tau` absorbed into `compute_pairwise_associations` with
+  `method="auto"` routing (Kendall's τ for n<30, Pearson for n≥30)
+- Outlier detection consolidated — `outlier_detection_mad` deprecated in
+  `task_metadata.yaml`; unified task handles all methods including Isolation Forest
 
 
 <a name="v0.19.0"></a>
