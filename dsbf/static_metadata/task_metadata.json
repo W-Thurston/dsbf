@@ -413,7 +413,7 @@
     "stage": "cleaned",
     "runtime_estimate": "fast",
     "profiling_depth": "standard",
-    "summary": "Tests for stationarity using ADF (unit root test) and KPSS. The two tests have opposite null hypotheses \u2014 their agreement and disagreement are both informative. Never produces a single verdict without surfacing the full test evidence.",
+    "summary": "Tests for stationarity using ADF (unit root test) and KPSS. The two tests have opposite null hypotheses - their agreement and disagreement are both informative. Never produces a single verdict without surfacing the full test evidence.",
     "ml_impact_score": null,
     "experimental": false
   },
