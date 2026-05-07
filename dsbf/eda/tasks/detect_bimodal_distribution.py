@@ -1,6 +1,6 @@
 # dsbf/eda/tasks/detect_bimodal_distribution.py
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from sklearn.mixture import GaussianMixture
@@ -8,7 +8,9 @@ from sklearn.mixture import GaussianMixture
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
+
+if TYPE_CHECKING:
+    from pandas import DataFrame
 
 
 @register_task(
@@ -60,14 +62,7 @@ class DetectBimodalDistribution(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                # sklearn GaussianMixture requires numpy arrays.
-                self._log(
-                    "    Converting to pandas: sklearn GMM requires numpy arrays.",
-                    "debug",
-                )
-                df = df.to_pandas()
+            df: DataFrame = self.get_dataframe_pandas()
 
             bic_threshold = float(self.get_task_param("bic_threshold") or 10.0)
             # Relative threshold: BIC scales with N so an absolute threshold alone
@@ -87,7 +82,14 @@ class DetectBimodalDistribution(BaseTask):
                 "debug",
             )
 
-            numeric_df = df.select_dtypes(include=np.number)
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — bimodal detection skipped.",
+                    excluded,
+                )
+                return
+
+            numeric_df: DataFrame = df.select_dtypes(include=np.number)
 
             for col in numeric_df.columns:
                 col_data = numeric_df[col].dropna().values.reshape(-1, 1)

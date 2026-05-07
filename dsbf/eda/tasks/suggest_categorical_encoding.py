@@ -63,13 +63,14 @@ class SuggestCategoricalEncoding(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native("'categorical'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'categorical' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — encoding suggestions skipped.",
+                    excluded,
+                )
+                return
 
             low_threshold = int(self.get_task_param("low_cardinality_threshold") or 10)
             high_threshold = int(
@@ -169,19 +170,9 @@ class SuggestCategoricalEncoding(BaseTask):
                             "debug",
                         )
 
-                # Track whether this column is a raw string dtype.
-                # Raw strings (object / pl.String) will cause sklearn's
-                # fit() to raise a ValueError; category dtype is tolerated
-                # by some frameworks. This signal drives the ml_level below.
-                if is_polars(df):
-                    is_raw_string: bool = df[col].dtype in (pl.String, pl.Utf8)
-                else:
-                    is_raw_string = str(df[col].dtype) == "object"
-
                 suggestions[col] = {
                     "cardinality": n_unique,
                     "suggested_encoding": strategy,
-                    "is_raw_string": is_raw_string,
                 }
 
             self.output = TaskResult(
@@ -215,7 +206,6 @@ class SuggestCategoricalEncoding(BaseTask):
                     col,
                     col_data["cardinality"],
                     col_data["suggested_encoding"],
-                    col_data["is_raw_string"],
                 )
 
             # ML impact scoring
@@ -249,40 +239,20 @@ class SuggestCategoricalEncoding(BaseTask):
             )
             self.output = make_failure_result(self.name, e)
 
-    def _attach_guidance(
-        self,
-        col: str,
-        cardinality: int,
-        strategy: str,
-        is_raw_string: bool,  # noqa: FBT001
-    ) -> None:
+    def _attach_guidance(self, col: str, cardinality: int, strategy: str) -> None:
         """
         Generate EDA and ML guidance for a categorical column's encoding posture.
 
-        The ML-phase severity depends on both *cardinality* and *dtype*:
-
-        - Raw ``object``/``String`` columns will cause ``sklearn``'s ``fit()``
-          to raise a ``ValueError`` — these always emit at least ``"warn"`` for
-          the ML phase, regardless of cardinality, because they are not
-          model-ready as-is.
-        - ``category``-dtype columns are tolerated by some frameworks (e.g.
-          LightGBM, CatBoost) and can receive ``"good"`` or ``"info"`` levels
-          since the urgency depends on the downstream modeling stack.
-
         Strategy families:
-
-        - ``one-hot`` — cardinality ≤ low_threshold (default 10)
-        - ``frequency`` — low < cardinality ≤ high_threshold (default 50)
-        - ``frequency (high-cardinality)`` — cardinality > high_threshold
-        - any of the above ``+ target encoding`` — numeric target correlation found
+        - ``one-hot`` - cardinality ≤ low_threshold (default 10)
+        - ``frequency`` - low < cardinality ≤ high_threshold (default 50)
+        - ``frequency (high-cardinality)`` - cardinality > high_threshold
+        - any of the above ``+ target encoding`` - numeric target correlation found
 
         Args:
             col: Column name.
             cardinality: Number of unique non-null values.
             strategy: Encoding strategy string from the suggestion dict.
-            is_raw_string: True when the column dtype is ``object`` (pandas) or
-                ``String``/``Utf8`` (Polars) — i.e. a plain text column that
-                sklearn cannot ingest without encoding.
 
         """
         has_target_encoding: bool = "target encoding" in strategy
@@ -330,32 +300,17 @@ class SuggestCategoricalEncoding(BaseTask):
         )
 
         if base_strategy == "one-hot":
-            # Raw string columns must be encoded before sklearn can ingest them;
-            # this is a concrete pre-modeling requirement, not just a suggestion.
-            # category-dtype columns are framework-dependent — flagged as good.
-            ml_level = "warn" if is_raw_string else "good"
-            ml_title: str = (
-                f"Encoding Required — One-Hot ({cardinality} values)"
-                if is_raw_string
-                else f"One-Hot Encoding Recommended ({cardinality} values)"
-            )
+            ml_level = "good"
+            ml_title: str = f"One-Hot Encoding Recommended ({cardinality} values)"
             ml_body: str = (
-                f"'{col}' is a raw string column with {cardinality} unique values. "
-                f"sklearn (and most ML frameworks) cannot ingest string columns "
-                f"directly — this column must be encoded before calling fit(). "
-                f"One-hot encoding is the standard choice at this cardinality, "
-                f"adding {cardinality} binary features. Drop one category to avoid "
-                f"perfect multicollinearity in linear models "
-                f"(drop='first' or 'if_binary')."
-                if is_raw_string
-                else f"'{col}' has {cardinality} unique values — one-hot encoding is "
-                f"the standard choice. It adds {cardinality} binary features, compact"
-                f" at this cardinality. Drop one category to avoid perfect "
+                f"'{col}' has {cardinality} unique values - one-hot encoding is the "
+                f"standard choice. It adds {cardinality} binary features, compact at "
+                f"this cardinality. Drop one category to avoid perfect "
                 f"multicollinearity in linear models (drop='first' or 'if_binary')."
             )
             if has_target_encoding:
                 ml_body += (
-                    " Target correlation was detected — target encoding is also "
+                    " Target correlation was detected - target encoding is also "
                     f"viable if you want a single ordinal feature rather than "
                     f"{cardinality} binary columns."
                 )
@@ -374,21 +329,10 @@ class SuggestCategoricalEncoding(BaseTask):
             ]
 
         elif base_strategy == "frequency":
-            ml_level = "warn" if is_raw_string else "info"
-            ml_title = (
-                f"Encoding Required — Frequency ({cardinality} values)"
-                if is_raw_string
-                else f"Frequency Encoding Recommended ({cardinality} values)"
-            )
+            ml_level = "info"
+            ml_title = f"Frequency Encoding Recommended ({cardinality} values)"
             ml_body = (
-                f"'{col}' is a raw string column with {cardinality} unique values. "
-                f"This column must be encoded before calling fit(). One-hot would "
-                f"produce {cardinality} features — manageable but noisy for rare "
-                f"categories. Frequency encoding replaces each category with its "
-                f"count, reducing to a single numeric feature. Group rare categories "
-                f"into 'Other' before encoding."
-                if is_raw_string
-                else f"'{col}' has {cardinality} unique values — one-hot would produce "
+                f"'{col}' has {cardinality} unique values - one-hot would produce "
                 f"{cardinality} features, manageable but noisy for rare categories. "
                 f"Frequency encoding replaces each category with its count, "
                 f"preserving ordinality of popularity in a single feature. Group "

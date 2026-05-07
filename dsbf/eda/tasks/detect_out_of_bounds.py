@@ -1,11 +1,16 @@
 # dsbf/eda/tasks/detect_out_of_bounds.py
 
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
+
+if TYPE_CHECKING:
+    from pandas import DataFrame, Series
 
 
 @register_task(
@@ -55,13 +60,18 @@ class DetectOutOfBounds(BaseTask):
 
         """
         try:
-            df = self.input_data
-
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
                 f"    Processing {len(matched_cols)} 'continuous' column(s)",
                 "debug",
             )
+
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — out-of-bounds detection skipped.",
+                    excluded,
+                )
+                return
 
             bounds: dict[str, tuple[float, float]] = dict(
                 self.get_task_param("custom_bounds")
@@ -73,22 +83,20 @@ class DetectOutOfBounds(BaseTask):
                 },
             )
 
-            if is_polars(df):
-                # pandas boolean indexing is used for violation detection.
-                df = df.to_pandas()
+            df: DataFrame = self.get_dataframe_pandas()
 
             flagged: dict[str, dict] = {}
 
             for col in df.select_dtypes(include=np.number).columns:
                 if col not in bounds:
                     continue
-                # Cast to float defensively - bounds loaded from YAML config
+                # Cast to float defensively — bounds loaded from YAML config
                 # are parsed as lists of ints/floats with the correct syntax
                 # (e.g. [0, 120]), but cast here as belt-and-suspenders against
                 # any future config variations.
                 lower = float(bounds[col][0])
                 upper = float(bounds[col][1])
-                series = df[col].dropna()
+                series: Series = df[col].dropna()
                 violations = series[(series < lower) | (series > upper)]
 
                 if not violations.empty:
