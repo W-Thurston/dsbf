@@ -6,7 +6,7 @@ import pandas as pd
 import polars as pl
 
 from dsbf.eda.tasks.detect_constant_columns import DetectConstantColumns
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult
@@ -22,12 +22,12 @@ def test_constant_columns_detected(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectConstantColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
 
     assert result.status == "success"
     assert result.data is not None
@@ -39,12 +39,12 @@ def test_no_constant_columns(tmp_path) -> None:
     """A dataset with no constant columns must return an empty list."""
     df = pd.DataFrame({"x": [1, 2, 3], "y": ["a", "b", "c"]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectConstantColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
 
     assert result.status == "success"
     assert result.data["constant_columns"] == []
@@ -54,12 +54,12 @@ def test_guidance_attached_for_constant_columns(tmp_path) -> None:
     """EDA and ML guidance blurbs must be attached for every constant column."""
     df = pd.DataFrame({"const": [0, 0, 0, 0, 0], "vary": [1, 2, 3, 4, 5]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectConstantColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
 
     assert result.status == "success"
     assert result.data["constant_columns"] == ["const"]
@@ -81,12 +81,12 @@ def test_polars_dataframe_handled(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectConstantColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
 
     assert result.status == "success"
     assert "fixed" in result.data["constant_columns"]
@@ -104,7 +104,7 @@ def test_metadata_engine_field_set_correctly(tmp_path) -> None:
             current_df=df,
             global_overrides={"output_dir": str(tmp_path)},
         )
-        result: TaskResult = ctx.run_task(task)
+        result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
         assert result.metadata["engine"] == expected_engine
 
 
@@ -112,12 +112,12 @@ def test_no_plots_generated(tmp_path) -> None:
     """Constant column detection must not generate plots."""
     df = pd.DataFrame({"c": [1, 1, 1], "v": [1, 2, 3]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectConstantColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectConstantColumns)
 
     assert result.status == "success"
     assert result.plots is None

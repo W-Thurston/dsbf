@@ -1,10 +1,13 @@
 # dsbf/eda/tasks/detect_duplicate_columns.py
+from typing import TYPE_CHECKING
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
+
+if TYPE_CHECKING:
+    from pandas import DataFrame
 
 
 @register_task(
@@ -42,16 +45,7 @@ class DetectDuplicateColumns(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                # pandas Series.equals() is the most straightforward exact-match
-                # comparison that handles nulls correctly.
-                self._log(
-                    "    Converting to pandas: duplicate column detection "
-                    "requires Series.equals().",
-                    "debug",
-                )
-                df = df.to_pandas()
+            df: DataFrame = self.get_dataframe_pandas()
 
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
@@ -59,13 +53,20 @@ class DetectDuplicateColumns(BaseTask):
                 "debug",
             )
 
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No columns found — duplicate column detection skipped.",
+                    excluded,
+                )
+                return
+
             duplicate_pairs: list[tuple[str, str]] = []
-            columns = df.columns.tolist()
+            columns: list[str] = df.columns.tolist()
             seen: set[tuple[str, str]] = set()
 
             for i, col1 in enumerate(columns):
                 for j in range(i + 1, len(columns)):
-                    col2 = columns[j]
+                    col2: str = columns[j]
                     if (col1, col2) not in seen:
                         try:
                             if df[col1].equals(df[col2]):

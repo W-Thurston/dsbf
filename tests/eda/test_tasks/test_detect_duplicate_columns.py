@@ -5,25 +5,32 @@ import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_duplicate_columns import DetectDuplicateColumns
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_duplicate_pair_detected(tmp_path):
     """An exact duplicate column pair must appear in duplicate_column_pairs."""
+    # Use 30 rows so unique_ratio stays below the 0.9 ID-detection
+    # threshold — with only 3 rows, all-unique integer columns get
+    # classified as ID-like and excluded from get_columns_by_intent().
+    import numpy as np
+
+    rng = np.random.default_rng(42)
+    base = rng.integers(1, 10, size=30).tolist()
     df = pd.DataFrame(
         {
-            "a": [1, 2, 3],
-            "b": [1, 2, 3],  # exact duplicate of a
-            "c": [3, 2, 1],
+            "a": base,
+            "b": base,  # exact duplicate of a
+            "c": rng.integers(1, 10, size=30).tolist(),
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -37,14 +44,21 @@ def test_duplicate_pair_detected(tmp_path):
 
 def test_no_duplicate_columns(tmp_path):
     """A dataset with no duplicate columns must return an empty list."""
-    df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6], "z": [7, 8, 9]})
+    # Use repeated values to avoid ID-like classification
+    df = pd.DataFrame(
+        {
+            "x": list(range(5)) * 6,
+            "y": list(range(5, 10)) * 6,
+            "z": list(range(10, 15)) * 6,
+        }
+    )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert result.status == "success"
     assert result.data["duplicate_column_pairs"] == []
@@ -52,14 +66,16 @@ def test_no_duplicate_columns(tmp_path):
 
 def test_guidance_attached_for_duplicate_pair(tmp_path):
     """EDA and ML guidance blurbs must be attached for duplicate columns."""
-    df = pd.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
+    # Use repeated values to avoid ID-like classification
+    vals: list[int] = list(range(1, 6)) * 6
+    df = pd.DataFrame({"a": vals, "b": vals})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -77,14 +93,16 @@ def test_guidance_attached_for_duplicate_pair(tmp_path):
 
 def test_null_values_handled_correctly(tmp_path):
     """Columns with nulls in the same positions must still be detected as duplicates."""
-    df = pd.DataFrame({"a": [1, None, 3], "b": [1, None, 3]})
+    # Use repeated values to avoid ID-like classification
+    vals: list[int | None] = [1, None, 3] * 10
+    df = pd.DataFrame({"a": vals, "b": vals})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert result.status == "success"
     pairs = result.data["duplicate_column_pairs"]
@@ -93,14 +111,16 @@ def test_null_values_handled_correctly(tmp_path):
 
 def test_polars_dataframe_handled(tmp_path):
     """Task must handle Polars DataFrames by converting to pandas internally."""
-    df = pl.DataFrame({"x": [1, 2, 3], "y": [1, 2, 3], "z": [4, 5, 6]})
+    # Use repeated values to avoid ID-like classification
+    vals: list[int] = list(range(1, 6)) * 6
+    df = pl.DataFrame({"x": vals, "y": vals, "z": list(range(6, 11)) * 6})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert result.status == "success"
     pairs = result.data["duplicate_column_pairs"]
@@ -109,14 +129,15 @@ def test_polars_dataframe_handled(tmp_path):
 
 def test_no_plots_generated(tmp_path):
     """Duplicate column detection must not generate plots."""
-    df = pd.DataFrame({"a": [1, 2, 3], "b": [1, 2, 3]})
+    vals: list[int] = list(range(1, 6)) * 6
+    df = pd.DataFrame({"a": vals, "b": vals})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDuplicateColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDuplicateColumns)
 
     assert result.status == "success"
     assert result.plots is None

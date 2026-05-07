@@ -32,7 +32,13 @@ def test_extended_stats_computed(tmp_path) -> None:
 
 def test_near_zero_variance_flagged(tmp_path) -> None:
     """A near-constant column must be flagged with near_zero_variance=True."""
-    df = pd.DataFrame({"const": [5.0] * 100})
+    import numpy as np
+
+    rng = np.random.default_rng(42)
+    # Tiny Gaussian noise around 5.0 — many unique values so infer_types
+    # classifies as continuous, but std is near zero so near_zero_variance fires.
+    vals = (5.0 + rng.normal(0, 1e-8, 100)).tolist()
+    df = pd.DataFrame({"const": vals})
 
     ctx, _ = make_ctx_and_task(
         task_cls=SummarizeNumeric,
@@ -47,7 +53,11 @@ def test_near_zero_variance_flagged(tmp_path) -> None:
 
 def test_near_zero_variance_guidance_emitted(tmp_path) -> None:
     """EDA and ML guidance must be emitted for near-zero variance columns."""
-    df = pd.DataFrame({"const": [5.0] * 100})
+    import numpy as np
+
+    rng = np.random.default_rng(42)
+    vals = (5.0 + rng.normal(0, 1e-8, 100)).tolist()
+    df = pd.DataFrame({"const": vals})
 
     ctx, _ = make_ctx_and_task(
         task_cls=SummarizeNumeric,

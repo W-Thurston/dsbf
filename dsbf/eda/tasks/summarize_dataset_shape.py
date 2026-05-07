@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -54,17 +53,14 @@ class SummarizeDatasetShape(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
-
-            if is_polars(df):
-                self._log(
-                    "    Converting Polars to pandas for memory usage estimation",
-                    "debug",
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No columns found — dataset shape summary skipped.",
+                    excluded,
                 )
-                df = df.to_pandas()
+                return
 
             n_rows, n_cols = df.shape
             total_cells = n_rows * n_cols

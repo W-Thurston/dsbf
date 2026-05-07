@@ -16,13 +16,13 @@ def test_top_k_values_returned(tmp_path) -> None:
     """Result must contain no more than top_k entries per column."""
     df = pd.DataFrame({"a": list("abcde") * 4})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeValueCounts,
         current_df=df,
         task_overrides={"top_k": 3},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeValueCounts)
 
     assert result.status == "success"
     assert len(result.data["a"]) == 3
@@ -59,13 +59,13 @@ def test_polars_dataframe_handled(tmp_path) -> None:
 def test_metadata_top_k_stored(tmp_path) -> None:
     """The top_k value must be stored in result metadata."""
     df = pd.DataFrame({"a": [1, 2, 3]})
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SummarizeValueCounts,
         current_df=df,
         task_overrides={"top_k": 2},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeValueCounts)
     assert result.status == "success"
     assert result.metadata["top_k"] == 2
 

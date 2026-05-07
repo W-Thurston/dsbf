@@ -45,9 +45,15 @@ class SummarizeBooleanFields(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native()
 
-            matched_cols, excluded = self.get_columns_by_intent()
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No boolean columns found — boolean field summary skipped.",
+                    excluded,
+                )
+                return
+
             boolean_cols: list[str] = [
                 col
                 for col in matched_cols
