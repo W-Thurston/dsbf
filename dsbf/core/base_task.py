@@ -1,15 +1,18 @@
 # dsbf/core/base_task.py
 
+
 import os
 from abc import ABC, abstractmethod
-from typing import Any, dict, list, tuple
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
 from dsbf.core.context import AnalysisContext
-from dsbf.eda.task_registry import TaskSpec
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+
+if TYPE_CHECKING:
+    from dsbf.eda.task_registry import TaskSpec
 
 
 class BaseTask(ABC):
@@ -117,7 +120,7 @@ class BaseTask(ABC):
         Ensure global reliability flags are computed and cached in context.
 
         Returns:
-            dict: dictionary of reliability flags.
+            Dict: Dictionary of reliability flags.
         """
         if self.context is None:
             raise RuntimeError("AnalysisContext is not set in this task.")
@@ -213,7 +216,7 @@ class BaseTask(ABC):
         Retrieve the expected semantic types from the task's registry entry.
 
         Returns:
-            list[str]: list of expected analysis-intent dtypes (e.g., ['continuous'])
+            List[str]: List of expected analysis-intent dtypes (e.g., ['continuous'])
         """
         from dsbf.eda.task_registry import TASK_REGISTRY, _to_snake_case
 
@@ -230,20 +233,20 @@ class BaseTask(ABC):
         inferred types for reporting.
 
         Args:
-            expected_types (list[str] or None): list of allowed semantic types
+            expected_types (list[str] or None): List of allowed semantic types
                 for the task. If None, will fall back to the task's registered
                 expected_semantic_types.
 
         Returns:
-            tuple[list[str], dict[str, str]]:
-                - list of matching column names
-                - dict of excluded columns with their mismatched types
+            Tuple[list[str], Dict[str, str]]:
+                - List of matching column names
+                - Dict of excluded columns with their mismatched types
         """
         if not self.context:
             return [], {}
 
         semantic_types: dict = self.context.get_metadata("semantic_types", {}) or {}
-        _ = self.context.get_metadata("inferred_dtypes", {}) or {}
+        _: dict = self.context.get_metadata("inferred_dtypes", {}) or {}
 
         if expected_types is None:
             expected_types = self.get_expected_types()
@@ -261,7 +264,7 @@ class BaseTask(ABC):
 
     # ── DataFrame access helpers ──────────────────────────────────────────────
 
-    def get_dataframe_pandas(self) -> "pd.DataFrame":
+    def get_dataframe_pandas(self) -> pd.DataFrame:
         """
         Return the input DataFrame as a pandas DataFrame.
 
@@ -323,7 +326,7 @@ class BaseTask(ABC):
                 Defaults to ``"eligible"``.
 
         Returns:
-            tuple of (df_pandas, matched_cols, excluded).
+            Tuple of (df_pandas, matched_cols, excluded).
 
         Example::
 
@@ -364,7 +367,7 @@ class BaseTask(ABC):
                 Defaults to ``"eligible"``.
 
         Returns:
-            tuple of (df_native, matched_cols, excluded).
+            Tuple of (df_native, matched_cols, excluded).
 
         Example::
 
@@ -401,7 +404,7 @@ class BaseTask(ABC):
             message: Summary message describing why no computation
                 was performed, e.g.
                 ``"No continuous columns found — VIF not computed."``.
-            excluded: dict of excluded columns from
+            excluded: Dict of excluded columns from
                 ``get_columns_by_intent()``. Included in metadata when
                 provided.
 
@@ -434,10 +437,10 @@ class BaseTask(ABC):
          analysis-intent dtypes.
 
         Args:
-            columns (list[str]): list of column names to include
+            columns (List[str]): List of column names to include
 
         Returns:
-            dict[str, dict[str, str]]: {
+            Dict[str, Dict[str, str]]: {
                 column_name: {
                     "inferred_dtype": ...,
                     "analysis_intent_dtype": ...
