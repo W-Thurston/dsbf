@@ -2,11 +2,14 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, dict, list, tuple
+
+import pandas as pd
 
 from dsbf.core.context import AnalysisContext
+from dsbf.eda.task_registry import TaskSpec
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.logging_utils import get_log_fn, setup_logger
+from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
 
 
 class BaseTask(ABC):
@@ -48,7 +51,7 @@ class BaseTask(ABC):
         """
         if not self.context or not self.context.output_dir:
             raise RuntimeError("Context or output_dir is not set in this task.")
-        fig_dir = os.path.join(self.context.output_dir, "figs")
+        fig_dir: str = os.path.join(self.context.output_dir, "figs")
         os.makedirs(fig_dir, exist_ok=True)
         return os.path.join(fig_dir, filename)
 
@@ -75,7 +78,7 @@ class BaseTask(ABC):
             The config value, or default if not found.
 
         """
-        ctx = self.context
+        ctx: AnalysisContext | None = self.context
         if ctx and isinstance(ctx.config, dict):
             return ctx.config.get("tasks", {}).get(block_name, {}).get(key, default)
         return default
@@ -84,7 +87,7 @@ class BaseTask(ABC):
         """
         Get a value from the 'engine' section of the global config.
         """
-        ctx = self.context
+        ctx: AnalysisContext | None = self.context
         if ctx and isinstance(ctx.config, dict):
             return ctx.config.get("engine", {}).get(key, default)
         return default
@@ -93,7 +96,7 @@ class BaseTask(ABC):
         """
         Get a value from the 'metadata' section of the global config.
         """
-        ctx = self.context
+        ctx: AnalysisContext | None = self.context
         if ctx and isinstance(ctx.config, dict):
             return ctx.config.get("metadata", {}).get(key, default)
         return default
@@ -106,7 +109,7 @@ class BaseTask(ABC):
         if self.context and hasattr(self.context, "_log"):
             self.context._log(msg, level=level, task_name=self.name)
         else:
-            fallback = setup_logger("dsbf.task", "info")
+            fallback: DSBFLogger = setup_logger("dsbf.task", "info")
             get_log_fn(fallback, level)(f"[{self.name}] {msg}")
 
     def ensure_reliability_flags(self) -> dict:
@@ -114,7 +117,7 @@ class BaseTask(ABC):
         Ensure global reliability flags are computed and cached in context.
 
         Returns:
-            Dict: Dictionary of reliability flags.
+            dict: dictionary of reliability flags.
         """
         if self.context is None:
             raise RuntimeError("AnalysisContext is not set in this task.")
@@ -134,79 +137,54 @@ class BaseTask(ABC):
         body: str,
         actions: list[dict[str, Any]],
         metric: dict[str, Any],
-        model_sensitivity: dict[str, list[str]] | None = None,
     ) -> None:
         """
         Attach a guidance blurb for a specific column and phase to a TaskResult.
 
         Guidance blurbs are the authoritative, phase-scoped narrative for each
         signal detected by a task. They are stored in report.json and rendered
-        by the dashboard — tasks are the single source of truth.
+        by the dashboard - tasks are the single source of truth.
 
-        EDA blurbs (phase="eda") describe data as-is: what was observed and
-        what it means about the distribution. No modeling language, no actions.
+        EDA blurbs (phase="eda") describe data as-is: what was observed and what
+        it means about the distribution. No modeling language, no action chips.
 
-        ML blurbs (phase="ml") prescribe what to do before modeling: which
-        models are affected, what transforms are recommended, as structured
-        actions a user or agent can act on directly.
+        ML blurbs (phase="ml") prescribe what to do before modeling: which models
+        are affected, what transforms are recommended, as structured actions an
+        agent or user can act on directly.
 
         Args:
-            result: The task result to attach guidance to.
-            column: The column this guidance applies to.
-            phase: ``"eda"`` or ``"ml"``.
-            level: Severity — ``"info"``, ``"warn"``, ``"error"``, or
-                ``"good"``.
-            title: Short descriptive title for the finding.
-            body: Full self-contained narrative. Must include the observed
+            result (TaskResult): The task result to attach guidance to.
+            column (str): The column this guidance applies to.
+            phase (str): "eda" or "ml".
+            level (str): Severity - "info", "warn", "error", or "good".
+            title (str): Short descriptive title for the finding.
+            body (str): Full self-contained narrative. Must include the observed
                 metric value, the direction/nature of the issue, and the
                 implication. Should make sense without surrounding context
                 (for LLM/agent consumption).
-            actions: Structured actions. Empty list for EDA blurbs.
-                Each action dict should have at minimum an ``"action"`` key.
-                Example: ``{"action": "transform", "method": "log1p",
-                "column": col}``
-            metric: The observed metric values that triggered this blurb.
+            actions (list[dict]): Structured actions. Empty list for EDA blurbs.
+                Each action dict should have at minimum an "action" key.
+                Example: {"action": "transform", "method": "log1p", "column": col}
+            metric (dict): The observed metric values that triggered this blurb.
                 Always include the raw numeric values, not just labels.
-                Example: ``{"skewness": 2.84, "mean": 312.4, "median": 287.0}``
-            model_sensitivity: Optional structured model-family impact summary
-                for ML-phase blurbs.  Rendered as a tag strip in the dashboard
-                so users can see at a glance which model families are affected
-                without reading the full body.  Two keys are expected:
-
-                - ``"affected"``   — list of model family names that are
-                  materially impacted by this finding.
-                - ``"unaffected"`` — list of model family names that are
-                  immune or largely insensitive to this finding.
-
-                Example::
-
-                    {
-                        "affected":   ["Linear", "KNN / Distance-based", "SVM"],
-                        "unaffected": ["Tree-based"],
-                    }
-
-                Omit for EDA blurbs or when sensitivity is the same across all
-                model families (e.g. encoding a raw string column blocks every
-                model equally — the body text is sufficient).
+                Example: {"skewness": 2.84, "mean": 312.4, "median": 287.0}
         """
         if result.guidance is None:
             result.guidance = {}
         if column not in result.guidance:
             result.guidance[column] = {"eda": [], "ml": []}
 
-        blurb: dict[str, Any] = {
-            "phase": phase,
-            "column": column,
-            "level": level,
-            "title": title,
-            "body": body,
-            "actions": actions,
-            "metric": metric,
-        }
-        if model_sensitivity is not None:
-            blurb["model_sensitivity"] = model_sensitivity
-
-        result.guidance[column][phase].append(blurb)
+        result.guidance[column][phase].append(
+            {
+                "phase": phase,
+                "column": column,
+                "level": level,
+                "title": title,
+                "body": body,
+                "actions": actions,
+                "metric": metric,
+            }
+        )
 
     def set_ml_signals(
         self,
@@ -235,12 +213,12 @@ class BaseTask(ABC):
         Retrieve the expected semantic types from the task's registry entry.
 
         Returns:
-            List[str]: List of expected analysis-intent dtypes (e.g., ['continuous'])
+            list[str]: list of expected analysis-intent dtypes (e.g., ['continuous'])
         """
         from dsbf.eda.task_registry import TASK_REGISTRY, _to_snake_case
 
-        snake_name = _to_snake_case(self.__class__.__name__)
-        spec = TASK_REGISTRY.get(snake_name)
+        snake_name: str = _to_snake_case(self.__class__.__name__)
+        spec: TaskSpec | None = TASK_REGISTRY.get(snake_name)
         return spec.expected_semantic_types or [] if spec else []
 
     def get_columns_by_intent(
@@ -252,26 +230,26 @@ class BaseTask(ABC):
         inferred types for reporting.
 
         Args:
-            expected_types (list[str] or None): List of allowed semantic types
+            expected_types (list[str] or None): list of allowed semantic types
                 for the task. If None, will fall back to the task's registered
                 expected_semantic_types.
 
         Returns:
-            Tuple[list[str], Dict[str, str]]:
-                - List of matching column names
-                - Dict of excluded columns with their mismatched types
+            tuple[list[str], dict[str, str]]:
+                - list of matching column names
+                - dict of excluded columns with their mismatched types
         """
         if not self.context:
             return [], {}
 
-        semantic_types = self.context.get_metadata("semantic_types", {}) or {}
+        semantic_types: dict = self.context.get_metadata("semantic_types", {}) or {}
         _ = self.context.get_metadata("inferred_dtypes", {}) or {}
 
         if expected_types is None:
             expected_types = self.get_expected_types()
 
-        matched = []
-        excluded = {}
+        matched: list = []
+        excluded: dict = {}
 
         for col, intent_type in semantic_types.items():
             if "any" in expected_types or intent_type in expected_types:
@@ -281,16 +259,185 @@ class BaseTask(ABC):
 
         return matched, excluded
 
+    # ── DataFrame access helpers ──────────────────────────────────────────────
+
+    def get_dataframe_pandas(self) -> "pd.DataFrame":
+        """
+        Return the input DataFrame as a pandas DataFrame.
+
+        If the input is a Polars DataFrame it is converted to pandas.
+        If it is already pandas it is returned as-is (zero copy).
+
+        Use this in tasks that require scipy, statsmodels, sklearn, or
+        seaborn — libraries that do not accept Polars natively.
+
+        Returns:
+            pandas DataFrame.
+        """
+        from dsbf.utils.backend import is_polars
+
+        df = self.input_data
+        if is_polars(df):
+            return df.to_pandas()
+        return df
+
+    def get_dataframe(self):
+        """
+        Return the input DataFrame in its original backend format.
+
+        Unlike ``get_dataframe_pandas()``, this never converts — the
+        caller receives a Polars DataFrame when Polars was used to load
+        the data, and a pandas DataFrame otherwise.
+
+        Use this in tasks that are pure aggregations (null counts,
+        value counts, shape checks, etc.) and have been written to
+        handle both backends via ``is_polars()`` branching.
+
+        Returns:
+            pandas or Polars DataFrame, unchanged.
+        """
+        return self.input_data
+
+    def setup_run(
+        self,
+        log_label: str | None = None,
+    ) -> "tuple[Any, list[str], dict[str, str]]":
+        """
+        Handle the common opening sequence for tasks that need pandas.
+
+        Combines the three lines that appear at the top of almost every
+        ``run()`` method into a single call:
+
+        1. Retrieve ``self.input_data``
+        2. Convert to pandas if the input is Polars
+        3. Call ``get_columns_by_intent()``
+        4. Emit a debug log with the column count
+
+        This is for tasks that require pandas (scipy, statsmodels,
+        sklearn, seaborn dependencies). Tasks that can stay Polars-
+        native should use ``setup_run_native()`` instead.
+
+        Args:
+            log_label: Human-readable type label for the debug log,
+                e.g. ``"'continuous'"`` or ``"['categorical', 'text']"``.
+                Defaults to ``"eligible"``.
+
+        Returns:
+            tuple of (df_pandas, matched_cols, excluded).
+
+        Example::
+
+            df, matched_cols, excluded = self.setup_run("'continuous'")
+        """
+        from dsbf.utils.backend import is_polars
+
+        df = self.input_data
+        if is_polars(df):
+            df = df.to_pandas()
+
+        matched_cols, excluded = self.get_columns_by_intent()
+        label: str = log_label or "eligible"
+        self._log(
+            f"    Processing {len(matched_cols)} {label} column(s)",
+            "debug",
+        )
+        return df, matched_cols, excluded
+
+    def setup_run_native(
+        self,
+        log_label: str | None = None,
+    ) -> "tuple[Any, list[str], dict[str, str]]":
+        """
+        Handle the common opening sequence for tasks that stay backend-native.
+
+        Like ``setup_run()`` but does NOT convert the DataFrame. The
+        caller receives the input in its original format (Polars or
+        pandas) and is responsible for branching on ``is_polars(df)``
+        where the two APIs differ.
+
+        Use this for pure aggregation tasks (null counts, value counts,
+        shape checks, string length stats, etc.) that do not need
+        scipy, statsmodels, sklearn, or seaborn.
+
+        Args:
+            log_label: Human-readable type label for the debug log.
+                Defaults to ``"eligible"``.
+
+        Returns:
+            tuple of (df_native, matched_cols, excluded).
+
+        Example::
+
+            df, matched_cols, excluded = self.setup_run_native()
+            if is_polars(df):
+                pass  # Polars computation
+            else:
+                pass  # Pandas computation
+        """
+        df = self.input_data
+        matched_cols, excluded = self.get_columns_by_intent()
+        label: str = log_label or "eligible"
+        self._log(
+            f"    Processing {len(matched_cols)} {label} column(s)",
+            "debug",
+        )
+        return df, matched_cols, excluded
+
+    def make_empty_result(
+        self,
+        message: str,
+        excluded: dict[str, str] | None = None,
+    ) -> TaskResult:
+        """
+        Build a success TaskResult for the zero-eligible-columns case.
+
+        Every task that filters columns by semantic type needs to handle
+        the case where no columns match. This produces a consistent
+        ``status="success"`` result rather than an error, since "no
+        eligible columns" is a valid dataset state (e.g. an all-
+        categorical dataset passed to a continuous-only task).
+
+        Args:
+            message: Summary message describing why no computation
+                was performed, e.g.
+                ``"No continuous columns found — VIF not computed."``.
+            excluded: dict of excluded columns from
+                ``get_columns_by_intent()``. Included in metadata when
+                provided.
+
+        Returns:
+            TaskResult with empty data and the provided summary message.
+
+        Example::
+
+            df, matched_cols, excluded = self.setup_run("'continuous'")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found.", excluded
+                )
+                return
+        """
+        meta: dict[str, Any] = {}
+        if excluded is not None:
+            meta["excluded_columns"] = excluded
+        return TaskResult(
+            name=self.name,
+            status="success",
+            summary={"message": message},
+            data={},
+            metadata=meta,
+        )
+
     def get_column_type_info(self, columns: list[str]) -> dict[str, dict[str, str]]:
         """
         Returns a dictionary mapping each column name to its inferred and
          analysis-intent dtypes.
 
         Args:
-            columns (List[str]): List of column names to include
+            columns (list[str]): list of column names to include
 
         Returns:
-            Dict[str, Dict[str, str]]: {
+            dict[str, dict[str, str]]: {
                 column_name: {
                     "inferred_dtype": ...,
                     "analysis_intent_dtype": ...
@@ -301,8 +448,8 @@ class BaseTask(ABC):
         if not self.context:
             return {}
 
-        semantic_types = self.context.get_metadata("semantic_types", {}) or {}
-        inferred_types = self.context.get_metadata("inferred_dtypes", {}) or {}
+        semantic_types: dict = self.context.get_metadata("semantic_types", {}) or {}
+        inferred_types: dict = self.context.get_metadata("inferred_dtypes", {}) or {}
 
         return {
             col: {
