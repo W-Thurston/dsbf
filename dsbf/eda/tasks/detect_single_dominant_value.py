@@ -87,15 +87,18 @@ class DetectSingleDominantValue(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native("categorical")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
-
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — dominant value detection skipped.",
+                    excluded,
+                )
+                return
+            dominance_count = 0
             dominance_threshold = float(
                 self.get_task_param("dominance_threshold") or 0.95,
             )
-            dominance_count = 0
 
             if is_polars(df):
                 # pandas value_counts used for proportion computation.

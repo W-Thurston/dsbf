@@ -59,13 +59,14 @@ class DetectMixedTypeColumns(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — mixed type detection skipped.",
+                    excluded,
+                )
+                return
 
             min_ratio = float(self.get_task_param("min_ratio") or 0.05)
             ignore_null_type = bool(self.get_task_param("ignore_null_type") or True)

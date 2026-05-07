@@ -5,7 +5,7 @@ import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_data_leakage import DetectDataLeakage
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_leakage_pair_detected(tmp_path) -> None:
@@ -18,13 +18,13 @@ def test_leakage_pair_detected(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -44,13 +44,13 @@ def test_no_leakage_on_uncorrelated_data(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.status == "success"
     assert result.data["leakage_pairs"] == {}
@@ -65,13 +65,13 @@ def test_guidance_attached_for_both_columns(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -97,13 +97,13 @@ def test_polars_dataframe_handled(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.status == "success"
     assert "a|b" in result.data["leakage_pairs"]
@@ -113,13 +113,13 @@ def test_no_plots_generated(tmp_path) -> None:
     """Leakage detection task must not generate plots."""
     df = pd.DataFrame({"x": [1, 2, 3, 4, 5], "y": [2, 4, 6, 8, 10]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.status == "success"
     assert result.plots is None
@@ -129,12 +129,12 @@ def test_metadata_threshold_stored(tmp_path) -> None:
     """Configured correlation_threshold must be stored in metadata."""
     df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectDataLeakage,
         current_df=df,
         task_overrides={"correlation_threshold": 0.95},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.metadata["correlation_threshold"] == 0.95

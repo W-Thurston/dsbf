@@ -1,9 +1,10 @@
 # dsbf/eda/tasks/detect_data_leakage.py
 
+from pandas import DataFrame
+
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -49,19 +50,11 @@ class DetectDataLeakage(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df: DataFrame = self.get_dataframe_pandas()
 
             correlation_threshold = float(
                 self.get_task_param("correlation_threshold") or 0.99,
             )
-
-            if is_polars(df):
-                # pandas corr() is used for the pairwise scan.
-                self._log(
-                    "    Converting to pandas: correlation matrix requires pandas.",
-                    "debug",
-                )
-                df = df.to_pandas()
 
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
@@ -70,8 +63,15 @@ class DetectDataLeakage(BaseTask):
                 "debug",
             )
 
-            numeric_df = df.select_dtypes(include="number")
-            corr_matrix = numeric_df.corr().abs()
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — data leakage detection skipped.",
+                    excluded,
+                )
+                return
+
+            numeric_df: DataFrame = df.select_dtypes(include="number")
+            corr_matrix: DataFrame = numeric_df.corr().abs()
             leakage_pairs: dict[str, float] = {}
 
             # Scan upper triangle only - each pair is stored once.

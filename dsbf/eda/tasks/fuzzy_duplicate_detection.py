@@ -29,7 +29,6 @@ from dsbf.eda.task_result import (
     add_reliability_warning,
     make_failure_result,
 )
-from dsbf.utils.backend import is_polars
 
 # ── Row representation ────────────────────────────────────────────────────────
 
@@ -212,9 +211,14 @@ class FuzzyDuplicateDetection(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run()
+
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — fuzzy duplicate detection skipped.",
+                    excluded,
+                )
+                return
 
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(

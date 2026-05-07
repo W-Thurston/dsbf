@@ -8,7 +8,7 @@ import polars as pl
 import pytest
 
 from dsbf.eda.tasks.temporal_gap_detection import TemporalGapDetection, _analyse_gaps
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 if TYPE_CHECKING:
     from pandas import DatetimeIndex, Series, Timestamp
@@ -97,13 +97,13 @@ def test_daily_series_no_large_gaps(tmp_path) -> None:
     """A complete daily series must have zero large gaps."""
     df = pd.DataFrame({"date": pd.date_range("2020-01-01", periods=365, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert "date" in result.data
@@ -117,13 +117,13 @@ def test_series_with_gap_flagged(tmp_path) -> None:
     dates_after: DatetimeIndex = pd.date_range("2020-06-01", periods=90, freq="D")
     df = pd.DataFrame({"event_date": list(dates_before) + list(dates_after)})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"event_date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert result.data["event_date"]["large_gap_count"] >= 1
@@ -137,13 +137,13 @@ def test_guidance_emitted_for_column_with_gaps(tmp_path) -> None:
     dates_after: DatetimeIndex = pd.date_range("2020-06-01", periods=60, freq="D")
     df = pd.DataFrame({"ts": list(dates_before) + list(dates_after)})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"ts": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -158,17 +158,19 @@ def test_no_datetime_columns_returns_empty(tmp_path) -> None:
     """A DataFrame with no datetime columns must return a success with empty data."""
     df = pd.DataFrame({"x": range(50), "y": range(50)})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"x": "continuous", "y": "continuous"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert result.data == {}
-    assert result.summary["columns_analysed"] == 0
+    # make_empty_result returns a message-only summary; columns_analysed is
+    # only set when the task actually runs (non-empty matched_cols).
+    assert "message" in result.summary
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
@@ -176,14 +178,14 @@ def test_min_n_threshold_respected(tmp_path) -> None:
     """A column with fewer than min_n values must be skipped."""
     df = pd.DataFrame({"date": pd.date_range("2020-01-01", periods=5, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         task_overrides={"min_n": 10},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert "date" not in result.data
@@ -201,13 +203,13 @@ def test_summary_counts_correct(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"gappy": "datetime", "clean": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     expected: int = sum(1 for v in result.data.values() if v["large_gap_count"] > 0)
@@ -219,13 +221,13 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     dates: list[Timestamp] = pd.date_range("2020-01-01", periods=100, freq="D").tolist()
     df = pl.DataFrame({"date": dates})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
 
     assert result.status == "success"
     assert "date" in result.data
@@ -233,12 +235,12 @@ def test_polars_dataframe_handled(tmp_path) -> None:
 
 def test_no_plots_generated(tmp_path) -> None:
     df = pd.DataFrame({"d": pd.date_range("2020-01-01", periods=50, freq="D")})
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=TemporalGapDetection,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"d": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, TemporalGapDetection)
     assert result.status == "success"
     assert result.plots is None

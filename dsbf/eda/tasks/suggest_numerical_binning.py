@@ -38,16 +38,7 @@ class SuggestNumericalBinning(BaseTask):
     - **equal-width binning**: value range > 3x standard deviation
     - **quantile binning**: compact, roughly symmetric distribution
 
-    **ML phase guidance is emitted only for ``log-transform``**, and at
-    ``"warn"`` level.  Log-transforming a right-skewed column is a concrete
-    pre-modeling action that materially affects linear models, regularised
-    regression, and distance-based methods.
-
-    Equal-width and quantile binning suggestions are purely exploratory —
-    binning a continuous feature before modeling almost always loses
-    information and is never a hard pre-modeling requirement.  Those two
-    strategies emit EDA-phase guidance only, keeping them out of the ML
-    Readiness tab while preserving them in the Distributions view.
+    EDA and ML guidance blurbs are emitted for each column with a suggestion.
 
     Configurable parameters (via config["tasks"]["suggest_numerical_binning"]):
         skew_threshold (float): Skewness above which log-transform is recommended.
@@ -63,13 +54,17 @@ class SuggestNumericalBinning(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No continuous columns found — numerical binning suggestions"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             flags: dict = self.ensure_reliability_flags()
             skew_vals = flags.get("skew_vals", {})
@@ -207,22 +202,12 @@ class SuggestNumericalBinning(BaseTask):
                     metric={"skewness": skew, "suggested_strategy": strategy},
                 )
 
-                # ML-phase guidance is only emitted for log-transform.
-                #
-                # Rationale: log-transforming a right-skewed column is a
-                # concrete pre-modeling action with a measurable impact on
-                # linear, regularised, and distance-based models.  Equal-width
-                # and quantile binning are exploratory analytical choices —
-                # binning a continuous feature before modeling almost always
-                # discards information and is never a hard requirement.
-                # Surfacing them in ML Readiness would create noise that
-                # obscures genuinely actionable findings.
                 if strategy == "log-transform":
                     ml_body: str = (
-                        f"'{col}' is right-skewed (skewness {skew:.2f}). "
-                        f"Linear models, regularised regression (Ridge, Lasso), "
-                        f"and distance-based models (KNN, SVM) are sensitive to "
-                        f"scale and skew — applying log1p before training improves "
+                        f"'{col}' is right-skewed (skewness {skew:.2f}). Linear "
+                        f"models, regularized regression (Ridge, Lasso), and "
+                        f"distance-based models (KNN, SVM) are sensitive to scale "
+                        f"and skew - applying log1p before training improves "
                         f"coefficient stability and distance metrics. Tree-based "
                         f"models (Random Forest, XGBoost) are scale-invariant and "
                         f"do not require this transformation."
@@ -243,36 +228,49 @@ class SuggestNumericalBinning(BaseTask):
                             "condition": "pre-transform check",
                         },
                     ]
-                    self.add_guidance(
-                        result=self.output,
-                        column=col,
-                        phase="ml",
-                        level="warn",
-                        title=f"Log-Transform Recommended — Skewed Distribution "
-                        f"(skew={skew:.2f})",
-                        body=ml_body,
-                        actions=ml_actions,
-                        metric={
-                            "skewness": skew,
-                            "suggested_strategy": strategy,
-                        },
-                        # Right skew materially degrades linear and distance-
-                        # based models, which assume or are sensitive to feature
-                        # scale. Tree-based models are split-threshold based and
-                        # are insensitive to monotonic transformations.
-                        model_sensitivity={
-                            "affected": [
-                                "Linear models",
-                                "Regularised (Ridge, Lasso, ElasticNet)",
-                                "KNN / Distance-based",
-                                "SVM (RBF kernel)",
-                            ],
-                            "unaffected": ["Tree-based (RF, XGBoost, LightGBM)"],
-                        },
+                elif strategy == "equal-width binning":
+                    ml_body = (
+                        f"'{col}' spans a wide value range relative to its spread "
+                        f"(skewness {skew:.2f}). Equal-width binning discretizes "
+                        f"the range into fixed-size intervals, which can help linear "
+                        f"models capture non-linear relationships. Choose bin count "
+                        f"based on the number of distinct clusters in the distribution."
                     )
-                # Equal-width and quantile binning: EDA guidance only.
-                # No ML-phase blurb — these are analytical suggestions, not
-                # pre-modeling requirements.
+                    ml_actions = [
+                        {
+                            "action": "Apply equal-width binning",
+                            "method": "pd.cut",
+                            "column": col,
+                            "condition": "choose n_bins based on distribution",
+                        },
+                    ]
+                else:
+                    ml_body = (
+                        f"'{col}' has a compact distribution (skewness {skew:.2f}) "
+                        f"suitable for quantile binning. Quantile bins ensure equal "
+                        f"sample counts per group, reducing the impact of outliers "
+                        f"on bin boundaries. Tree-based models are invariant to "
+                        f"this transformation."
+                    )
+                    ml_actions = [
+                        {
+                            "action": "Apply quantile binning",
+                            "method": "pd.qcut",
+                            "column": col,
+                            "condition": "duplicates='drop' if duplicate edges occur",
+                        },
+                    ]
+
+                self.add_guidance(
+                    result=self.output,
+                    column=col,
+                    phase="ml",
+                    level="info",
+                    title=f"Binning strategy: {strategy}",
+                    body=ml_body,
+                    actions=ml_actions,
+                    metric={"skewness": skew, "suggested_strategy": strategy},
+                )
 
             if self.get_engine_param("enable_impact_scoring", True) and suggestions:
                 top_col: str = next(iter(suggestions))

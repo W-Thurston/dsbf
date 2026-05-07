@@ -7,7 +7,6 @@ import pandas as pd
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Feature catalogue ─────────────────────────────────────────────────────────
 #
@@ -148,7 +147,7 @@ def _temporal_summary(series: pd.Series) -> dict[str, Any]:
     range_days = (max_dt - min_dt).days
 
     has_time = bool((series.dt.hour != 0).any() or (series.dt.minute != 0).any())
-    n_unique = series.nunique()
+    n_unique: int = series.nunique()
 
     # Identify which time components have meaningful variation (> 1 distinct value)
     dominant: list[str] = []
@@ -272,15 +271,14 @@ class ExtractDatetimeFeatures(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'datetime'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'datetime' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No datetime columns found — datetime feature extraction skipped.",
+                    excluded,
+                )
+                return
 
             # Identify datetime columns: prefer semantic types from infer_types,
             # fall back to pandas datetime dtype detection.

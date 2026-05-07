@@ -4,7 +4,7 @@ import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_single_dominant_value import DetectSingleDominantValue
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_dominant_columns_flagged_in_summary(tmp_path) -> None:
@@ -17,13 +17,13 @@ def test_dominant_columns_flagged_in_summary(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         task_overrides={"dominance_threshold": 0.9},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -43,12 +43,12 @@ def test_all_null_column_produces_empty_data(tmp_path) -> None:
     """An all-null column must be skipped and return empty data."""
     df = pd.DataFrame({"col": [None, None, None]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert result.status == "success"
     assert result.data == {}
@@ -59,12 +59,12 @@ def test_constant_column_stored_with_full_dominance(tmp_path) -> None:
     """A constant column must be stored with mode_proportion of 1.0."""
     df = pd.DataFrame({"col": ["A"] * 100})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert result.status == "success"
     assert result.data is not None
@@ -76,13 +76,13 @@ def test_guidance_attached_for_highly_dominant_columns(tmp_path) -> None:
     """EDA and ML guidance blurbs must be attached when mode proportion ≥ 0.7."""
     df = pd.DataFrame({"col": ["A"] * 90 + ["B"] * 10})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         task_overrides={"dominance_threshold": 0.95},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -95,12 +95,12 @@ def test_mode_and_proportion_recorded_correctly(tmp_path) -> None:
     """Mode and mode_proportion must accurately reflect the most common value."""
     df = pd.DataFrame({"votes": ["yes"] * 80 + ["no"] * 20})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert result.status == "success"
     assert result.data["votes"]["mode"] == "yes"
@@ -111,12 +111,12 @@ def test_no_plots_generated(tmp_path) -> None:
     """Single dominant value task must not generate plots."""
     df = pd.DataFrame({"col": ["A"] * 90 + ["B"] * 10})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectSingleDominantValue,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectSingleDominantValue)
 
     assert result.status == "success"
     assert result.plots is None

@@ -47,14 +47,14 @@ class DetectIdColumns(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} "
-                "['id', 'categorical', 'text'] column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical/text/id columns found — ID detection skipped.",
+                    excluded,
+                )
+                return
 
             threshold_ratio = float(self.get_task_param("threshold_ratio") or 0.95)
             n_rows = df.shape[0]

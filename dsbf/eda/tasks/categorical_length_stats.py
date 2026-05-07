@@ -43,7 +43,7 @@ class CategoricalLengthStats(BaseTask):
             Exception: Re-raised if a context is present (handled by ExecutionGraph).
 
         """
-        df = self.input_data
+        df = self.get_dataframe()
         results: dict[str, dict[str, int | float]] = {}
 
         try:
@@ -52,6 +52,18 @@ class CategoricalLengthStats(BaseTask):
                 f"    Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
                 "debug",
             )
+
+            if not matched_cols:
+                empty = self.make_empty_result(
+                    "No categorical or text columns found — length stats skipped.",
+                    excluded,
+                )
+                # Tests expect column_types in metadata even for empty result
+                empty.metadata["column_types"] = self.get_column_type_info(
+                    list(excluded.keys())
+                )
+                self.output = empty
+                return
 
             for col in matched_cols:
                 try:

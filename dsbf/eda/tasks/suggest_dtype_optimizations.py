@@ -2,11 +2,11 @@
 
 import numpy as np
 import pandas as pd
+from pandas import Series
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Downcast rules ────────────────────────────────────────────────────────────
 #
@@ -20,7 +20,7 @@ def _fits_bool(series: pd.Series, inferred: str, intent: str) -> bool:
     """Int/object column with exactly two distinct values that map to True/False."""
     if inferred not in ("int64", "int32", "object"):
         return False
-    vals = set(series.dropna().unique())
+    vals: set = set(series.dropna().unique())
     return (
         vals <= {0, 1}
         or vals <= {True, False}
@@ -32,7 +32,7 @@ def _fits_int8(series: pd.Series, inferred: str, intent: str) -> bool:
     """int64/int32 column whose range fits in int8 [-128, 127]."""
     if inferred not in ("int64", "int32", "int16") or intent != "continuous":
         return False
-    non_null = series.dropna()
+    non_null: Series = series.dropna()
     if non_null.empty:
         return False
     return bool(non_null.min() >= -128 and non_null.max() <= 127)
@@ -42,7 +42,7 @@ def _fits_int16(series: pd.Series, inferred: str, intent: str) -> bool:
     """int64/int32 column whose range fits in int16 [-32768, 32767]."""
     if inferred not in ("int64", "int32") or intent != "continuous":
         return False
-    non_null = series.dropna()
+    non_null: Series = series.dropna()
     if non_null.empty:
         return False
     return bool(non_null.min() >= -32_768 and non_null.max() <= 32_767)
@@ -52,7 +52,7 @@ def _fits_int32(series: pd.Series, inferred: str, intent: str) -> bool:
     """int64 column whose range fits in int32 [-2^31, 2^31-1]."""
     if inferred != "int64" or intent != "continuous":
         return False
-    non_null = series.dropna()
+    non_null: Series = series.dropna()
     if non_null.empty:
         return False
     return bool(non_null.min() >= -(2**31) and non_null.max() <= 2**31 - 1)
@@ -62,14 +62,16 @@ def _fits_float32(series: pd.Series, inferred: str, intent: str) -> bool:
     """float64 column where float32 precision is sufficient (no extreme values)."""
     if inferred != "float64" or intent != "continuous":
         return False
-    non_null = series.dropna()
+    non_null: Series = series.dropna()
     if non_null.empty:
         return False
     # float32 range: ~±3.4e38. Flag columns with values safely inside that range
     # and no values so small they would underflow to zero in float32.
-    abs_vals = non_null.abs()
+    abs_vals: Series = non_null.abs()
     max_val = abs_vals.max()
-    min_nonzero = abs_vals[abs_vals > 0].min() if (abs_vals > 0).any() else np.inf
+    min_nonzero: float = (
+        abs_vals[abs_vals > 0].min() if (abs_vals > 0).any() else np.inf
+    )
     return bool(max_val < 1e37 and (min_nonzero > 1e-37 or np.isinf(min_nonzero)))
 
 
@@ -118,8 +120,8 @@ def _estimate_savings_bytes(
         "float32": 4,
         "bool": 1,
     }
-    current_size = dtype_sizes.get(current_dtype, 0)
-    suggested_size = dtype_sizes.get(suggested_dtype, 0)
+    current_size: int = dtype_sizes.get(current_dtype, 0)
+    suggested_size: int = dtype_sizes.get(suggested_dtype, 0)
     if current_size == 0 or suggested_size == 0:
         return 0
     return (current_size - suggested_size) * len(series)
@@ -182,15 +184,20 @@ class SuggestDtypeOptimizations(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No eligible columns found — dtype optimization suggestions"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             param = self.get_task_param("min_savings_bytes")
-            min_savings = int(param) if param is not None else 1024
+            min_savings: int = int(param) if param is not None else 1024
 
             # Read inferred dtypes from context (populated by infer_types).
             inferred_dtypes: dict[str, str] = {}
@@ -213,8 +220,8 @@ class SuggestDtypeOptimizations(BaseTask):
 
             for col in df.columns:
                 series = df[col]
-                inferred = inferred_dtypes.get(col, str(series.dtype))
-                intent = analysis_intents.get(col, "unknown")
+                inferred: str = inferred_dtypes.get(col, str(series.dtype))
+                intent: str = analysis_intents.get(col, "unknown")
 
                 for check_fn, target_dtype, savings_note in _DOWNCAST_RULES:
                     try:
@@ -224,7 +231,7 @@ class SuggestDtypeOptimizations(BaseTask):
                         continue
 
                     # Estimate savings from shape task data or from series size.
-                    current_bytes = current_memory_bytes.get(col)
+                    current_bytes: int | None = current_memory_bytes.get(col)
                     if current_bytes is not None:
                         estimated_savings: int = _estimate_savings_bytes(
                             series,

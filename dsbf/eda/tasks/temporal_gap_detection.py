@@ -7,7 +7,6 @@ import pandas as pd
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
     from pandas import Series
@@ -133,15 +132,14 @@ class TemporalGapDetection(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'datetime'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'datetime' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No datetime columns found — temporal gap detection skipped.",
+                    excluded,
+                )
+                return
 
             min_n_raw: Any | None = self.get_task_param("min_n")
             min_n: int = int(min_n_raw) if min_n_raw is not None else 10

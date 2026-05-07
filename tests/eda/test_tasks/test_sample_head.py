@@ -16,13 +16,13 @@ def test_returns_first_n_rows(tmp_path) -> None:
     """Sample must contain exactly N rows in column-oriented format."""
     df = pd.DataFrame({"a": [1, 2, 3, 4, 5], "b": ["x", "y", "z", "w", "v"]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SampleHead,
         current_df=df,
         task_overrides={"n": 3},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SampleHead)
 
     assert result.status == "success"
     assert result.data is not None
@@ -66,13 +66,13 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     """Task must work correctly on Polars DataFrames."""
     df = pl.DataFrame({"x": [10, 20, 30, 40, 50]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SampleHead,
         current_df=df,
         task_overrides={"n": 2},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SampleHead)
 
     assert result.status == "success"
     assert result.data["sample"]["x"] == [10, 20]
@@ -82,13 +82,13 @@ def test_metadata_n_stored(tmp_path) -> None:
     """The n value used must be stored in result metadata."""
     df = pd.DataFrame({"a": list(range(10))})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SampleHead,
         current_df=df,
         task_overrides={"n": 4},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, SampleHead)
 
     assert result.status == "success"
     assert result.metadata["n"] == 4
