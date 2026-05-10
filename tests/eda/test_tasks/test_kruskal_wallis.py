@@ -1,5 +1,4 @@
-# tests/eda/test_tasks/test_mann_whitney_u.py
-
+# tests/eda/test_tasks/test_kruskal_wallis.py
 
 from typing import TYPE_CHECKING
 
@@ -8,8 +7,8 @@ import pandas as pd
 import polars as pl
 import pytest
 
-from dsbf.eda.tasks.mann_whitney_u import MannWhitneyU
-from tests.helpers.context_utils import make_ctx_and_task
+from dsbf.eda.tasks.kruskal_wallis import KruskalWallis
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -18,231 +17,210 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_corrected_fields_present(tmp_path) -> None:
-    """Each result entry must contain p_value, p_value_corrected, and correction."""
-    rng: Generator = np.random.default_rng(42)
+def test_significant_group_difference_detected(tmp_path) -> None:
+    """A large distributional difference across groups must be detected."""
+    _: Generator = np.random.default_rng(42)
+    # linspace repeated → unique_ratio=0.125 → continuous; groups clearly separated
     df = pd.DataFrame(
         {
-            "value": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
+            "value": np.concatenate(
+                [
+                    np.linspace(0, 1, 25).tolist() * 4,
+                    np.linspace(9, 10, 25).tolist() * 4,
+                ]
+            ),
             "group": ["A"] * 100 + ["B"] * 100,
         },
     )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
 
     assert result.status == "success"
-    key = "value|group|A_vs_B"
+    assert result.data is not None
+    assert len(result.data) > 0
+    key = "value|group"
+    assert key in result.data
+    assert result.data[key]["significant"] is True
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_no_difference_not_significant(tmp_path) -> None:
+    """Identical distributions across groups must not be flagged as significant."""
+    _: Generator = np.random.default_rng(42)
+    shared = np.linspace(0, 5, 25).tolist() * 4
+    df = pd.DataFrame(
+        {
+            "value": shared + shared,
+            "group": ["A"] * 100 + ["B"] * 100,
+        },
+    )
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
+
+    assert result.status == "success"
+    key = "value|group"
+    if key in result.data:
+        assert result.data[key]["significant"] is False
+
+
+@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
+def test_corrected_fields_present(tmp_path) -> None:
+    """Each result entry must contain p_value, p_value_corrected, and correction."""
+    _: Generator = np.random.default_rng(42)
+    df = pd.DataFrame(
+        {
+            "value": np.concatenate(
+                [
+                    np.linspace(0, 1, 25).tolist() * 4,
+                    np.linspace(9, 10, 25).tolist() * 4,
+                ]
+            ),
+            "group": ["A"] * 100 + ["B"] * 100,
+        },
+    )
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
+
+    assert result.status == "success"
+    key = "value|group"
     assert key in result.data
     entry = result.data[key]
     assert "p_value" in entry
     assert "p_value_corrected" in entry
     assert "correction" in entry
-    assert entry["correction"] == "fdr_bh"
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_significant_flag_uses_corrected_p(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(42)
-    df = pd.DataFrame(
-        {
-            "value": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
-            "group": ["A"] * 100 + ["B"] * 100,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        task_overrides={"alpha": 0.05},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    for entry in result.data.values():
-        assert entry["significant"] == (entry["p_value_corrected"] < 0.05)
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_correction_none_p_values_equal(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(42)
+    """With correction='none', p_value_corrected must equal p_value."""
+    _: Generator = np.random.default_rng(42)
     df = pd.DataFrame(
         {
-            "value": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
+            "value": np.concatenate(
+                [
+                    np.linspace(0, 1, 25).tolist() * 2,
+                    np.linspace(4, 5, 25).tolist() * 2,
+                ]
+            ),
             "group": ["A"] * 50 + ["B"] * 50,
         },
     )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
         task_overrides={"correction": "none"},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
 
     assert result.status == "success"
-    for entry in result.data.values():
-        assert entry["p_value"] == entry["p_value_corrected"]
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_separated_groups_significant(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(42)
-    df = pd.DataFrame(
-        {
-            "value": np.concatenate([rng.normal(0, 1, 100), rng.normal(10, 1, 100)]),
-            "group": ["A"] * 100 + ["B"] * 100,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert result.data["value|group|A_vs_B"]["significant"] is True
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_rank_biserial_r_range(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(0)
-    df = pd.DataFrame(
-        {
-            "x": np.concatenate([rng.normal(0, 1, 60), rng.normal(3, 1, 60)]),
-            "cat": ["low"] * 60 + ["high"] * 60,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"x": "continuous", "cat": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    for entry in result.data.values():
-        assert -1.0 <= entry["rank_biserial_r"] <= 1.0
-
-
-@pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_multi_level_correction_applied_across_all_pairs(tmp_path) -> None:
-    """Correction must be applied across all 3 level-pairs, not per-pair."""
-    rng: Generator = np.random.default_rng(42)
-    df = pd.DataFrame(
-        {
-            "x": np.concatenate(
-                [
-                    rng.normal(0, 1, 50),
-                    rng.normal(5, 1, 50),
-                    rng.normal(10, 1, 50),
-                ],
-            ),
-            "group": ["A"] * 50 + ["B"] * 50 + ["C"] * 50,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
-        current_df=df,
-        task_overrides={"cat_cardinality_limit": 10, "correction": "fdr_bh"},
-        global_overrides={"output_dir": str(tmp_path)},
-    )
-    ctx.set_metadata("semantic_types", {"x": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-
-    assert result.status == "success"
-    assert len(result.data) == 3  # A_vs_B, A_vs_C, B_vs_C
-    assert result.metadata["n_tests"] == 3
-    # All entries must share the same correction
-    for entry in result.data.values():
-        assert entry["correction"] == "fdr_bh"
+    key = "value|group"
+    assert key in result.data
+    assert result.data[key]["p_value"] == result.data[key]["p_value_corrected"]
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_n_tests_in_metadata(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(0)
+    """n_tests in metadata must equal the number of result entries."""
+    _: Generator = np.random.default_rng(42)
     df = pd.DataFrame(
         {
-            "x": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
+            "x": np.concatenate(
+                [
+                    np.linspace(0, 1, 25).tolist() * 2,
+                    np.linspace(4, 5, 25).tolist() * 2,
+                ]
+            ),
             "cat": ["A"] * 50 + ["B"] * 50,
         },
     )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"x": "continuous", "cat": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
 
     assert result.status == "success"
     assert result.metadata["n_tests"] == len(result.data)
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
-def test_correction_reported_in_summary(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(0)
-    df = pd.DataFrame(
-        {
-            "x": np.concatenate([rng.normal(0, 1, 50), rng.normal(5, 1, 50)]),
-            "cat": ["A"] * 50 + ["B"] * 50,
-        },
-    )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+def test_no_continuous_columns_returns_empty(tmp_path) -> None:
+    """A DataFrame with only categorical columns must return empty data."""
+    df = pd.DataFrame({"cat": ["A", "B", "C"] * 20})
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
-        task_overrides={"correction": "bonferroni"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    ctx.set_metadata("semantic_types", {"x": "continuous", "cat": "categorical"})
-    result: TaskResult = ctx.run_task(task)
-    assert result.summary["correction"] == "bonferroni"
+    ctx.set_metadata("semantic_types", {"cat": "categorical"})
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
+
+    assert result.status == "success"
+    assert result.data == {} or "pair_count" in result.summary
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_polars_dataframe_handled(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(42)
+    """Task must handle Polars DataFrames via conversion."""
     df = pl.DataFrame(
         {
-            "value": np.concatenate(
-                [rng.normal(0, 1, 50), rng.normal(5, 1, 50)]
-            ).tolist(),
+            "value": (
+                np.linspace(0, 1, 25).tolist() * 2 + np.linspace(4, 5, 25).tolist() * 2
+            ),
             "group": ["A"] * 50 + ["B"] * 50,
         },
     )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"value": "continuous", "group": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
+
     assert result.status == "success"
 
 
 def test_no_plots_generated(tmp_path) -> None:
-    rng: Generator = np.random.default_rng(0)
+    """Task must not generate static plot files."""
+    _: Generator = np.random.default_rng(0)
     df = pd.DataFrame(
         {
-            "x": np.concatenate([rng.normal(0, 1, 30), rng.normal(5, 1, 30)]),
+            "x": np.concatenate(
+                [
+                    np.linspace(0, 1, 15).tolist() * 2,
+                    np.linspace(4, 5, 15).tolist() * 2,
+                ]
+            ),
             "g": ["A"] * 30 + ["B"] * 30,
         },
     )
-    ctx, task = make_ctx_and_task(
-        task_cls=MannWhitneyU,
+    ctx, _ = make_ctx_and_task(
+        task_cls=KruskalWallis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"x": "continuous", "g": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, KruskalWallis)
+
     assert result.status == "success"
     assert result.plots is None

@@ -10,7 +10,6 @@ from scipy.stats import f_oneway
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -104,12 +103,14 @@ class OneWayANOVA(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — one-way ANOVA skipped.",
+                    excluded,
+                )
+                return
 
             alpha_raw: Any | None = self.get_task_param("alpha")
             alpha: float = float(alpha_raw) if alpha_raw is not None else 0.05
@@ -132,19 +133,26 @@ class OneWayANOVA(BaseTask):
             card_raw: Any | None = self.get_task_param("cat_cardinality_limit")
             cat_cardinality_limit: int = int(card_raw) if card_raw is not None else 20
 
+            # Derive semantic type split from matched_cols + context metadata.
+            # matched_cols is the authoritative list returned by
+            # get_columns_by_intent();
+            # we re-read semantic_types only to split those columns into the two
+            # sub-lists the ANOVA loop needs.  We deliberately do NOT re-query
+            # df.columns, which would re-introduce all columns regardless of the
+            # type-inference result.
             semantic_types: dict[str, str] = {}
             if self.context:
                 semantic_types = self.context.get_metadata("semantic_types") or {}
 
             continuous_cols: list[str] = [
                 col
-                for col in df.columns
+                for col in matched_cols
                 if semantic_types.get(col, "") == "continuous"
                 and pd.api.types.is_numeric_dtype(df[col])
             ]
             categorical_cols: list[str] = [
                 col
-                for col in df.columns
+                for col in matched_cols
                 if semantic_types.get(col, "") == "categorical"
                 and df[col].nunique() <= cat_cardinality_limit
             ]

@@ -58,7 +58,7 @@ class ComputeEntropy(BaseTask):
         results: dict[str, float] = {}
 
         try:
-            df = self.input_data
+            df = self.get_dataframe()
             flags: dict = self.ensure_reliability_flags()
 
             matched_cols, excluded = self.get_columns_by_intent()
@@ -66,6 +66,16 @@ class ComputeEntropy(BaseTask):
                 f"    Processing {len(matched_cols)} ['categorical', 'text'] column(s)",
                 "debug",
             )
+
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No categorical or text columns found — entropy computation"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             if is_polars(df):
                 for col in matched_cols:

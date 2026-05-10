@@ -1,7 +1,8 @@
 # dsbf/eda/tasks/detect_collinear_features.py
 
+import numpy as np
+from pandas import DataFrame
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.tools import add_constant
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -10,7 +11,6 @@ from dsbf.eda.task_result import (
     add_reliability_warning,
     make_failure_result,
 )
-from dsbf.utils.backend import is_polars
 from dsbf.utils.reco_engine import get_recommendation_tip
 
 
@@ -60,18 +60,10 @@ class DetectCollinearFeatures(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df: DataFrame = self.get_dataframe_pandas()
             flags: dict = self.ensure_reliability_flags()
 
             vif_threshold = float(self.get_task_param("vif_threshold") or 10.0)
-
-            if is_polars(df):
-                # statsmodels VIF requires numpy arrays - must convert.
-                self._log(
-                    "    Converting to pandas: VIF calculation requires numpy arrays.",
-                    "debug",
-                )
-                df = df.to_pandas()
 
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
@@ -79,13 +71,18 @@ class DetectCollinearFeatures(BaseTask):
                 "debug",
             )
 
-            # Restrict VIF to semantically-typed continuous columns only.
-            # select_dtypes(np.number) would include bool columns stored as int,
-            # and any encoded categoricals - those don't belong in a collinearity check.
-            available_continuous = [c for c in matched_cols if c in df.columns]
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No continuous columns found — collinear feature detection"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             # Drop rows with any null before VIF to avoid statsmodels errors.
-            numeric_df = df[available_continuous].dropna()
+            numeric_df = df.select_dtypes(include=np.number).dropna()
 
             if numeric_df.shape[1] < 2:
                 self.output = TaskResult(
@@ -97,20 +94,10 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 return
 
-            # add_constant is required: variance_inflation_factor regresses each
-            # feature against all others. Without a constant column, the regression
-            # has no intercept, which forces the plane through the origin and inflates
-            # VIF for any features with nonzero means - producing spurious values of
-            # 10–35 even when pairwise correlations are essentially zero.
-            # The constant column is index 0; feature columns start at index 1.
-            numeric_df_with_const = add_constant(numeric_df, has_constant="add")
-
             vif_scores: dict[str, float] = {}
-            for i, col in enumerate(numeric_df.columns):
-                # +1 to skip the constant column that add_constant prepended
-                vif_scores[col] = float(
-                    variance_inflation_factor(numeric_df_with_const.values, i + 1)
-                )
+            for i in range(numeric_df.shape[1]):
+                col = numeric_df.columns[i]
+                vif_scores[col] = float(variance_inflation_factor(numeric_df.values, i))
 
             collinear_columns: list[str] = [
                 col for col, vif in vif_scores.items() if vif > vif_threshold

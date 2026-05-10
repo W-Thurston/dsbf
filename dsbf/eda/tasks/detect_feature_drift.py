@@ -129,13 +129,20 @@ class DetectFeatureDrift(BaseTask):
         """
         try:
             ctx: AnalysisContext | None = self.context
-            df = self.input_data
+            df = self.get_dataframe()
 
             matched_cols, excluded = self.get_columns_by_intent()
             self._log(
                 f"    Processing {len(matched_cols)} column(s)",
                 "debug",
             )
+
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — feature drift detection skipped.",
+                    excluded,
+                )
+                return
 
             reference: pl.DataFrame | None = getattr(ctx, "reference_data", None)
             if reference is None:
@@ -354,20 +361,26 @@ class DetectFeatureDrift(BaseTask):
 
         if col_type == "numerical":
             psi = drift_info.get("psi", 0.0)
-            ks_p = drift_info.get("ks_pvalue")
+            ks_p: float | None = drift_info.get("ks_pvalue")
             ks_str: str = f", KS p-value: {ks_p:.4f}" if ks_p is not None else ""
             metric_str: str = f"PSI = {psi:.4f}{ks_str}"
             threshold_str: str = f"PSI threshold: {psi_threshold}"
-            metric = {"psi": psi, "ks_pvalue": ks_p, "psi_threshold": psi_threshold}
+            metric: dict[str, float | None] = {
+                "psi": psi,
+                "ks_pvalue": ks_p,
+                "psi_threshold": psi_threshold,
+            }
         else:
             tvd = drift_info.get("tvd", 0.0)
-            chi2_p = drift_info.get("chi2_pvalue")
-            chi2_str = f", chi² p-value: {chi2_p:.4f}" if chi2_p is not None else ""
+            chi2_p: float | None = drift_info.get("chi2_pvalue")
+            chi2_str: str = (
+                f", chi² p-value: {chi2_p:.4f}" if chi2_p is not None else ""
+            )
             metric_str = f"TVD = {tvd:.4f}{chi2_str}"
             threshold_str = f"TVD threshold: {tvd_threshold}"
             metric = {"tvd": tvd, "chi2_pvalue": chi2_p, "tvd_threshold": tvd_threshold}
 
-        eda_body = (
+        eda_body: str = (
             f"'{col}' shows high distributional drift between the reference and "
             f"current datasets ({metric_str}; {threshold_str}). The distribution "
             f"of values has shifted substantially, which may indicate a change in "
