@@ -7,7 +7,6 @@ import numpy as np
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 
 @register_task(
@@ -38,7 +37,7 @@ class DetectZeros(BaseTask):
     represent genuine measurements (zero items sold, zero activity) or missing
     value placeholders. The guidance blurbs surface both interpretations.
 
-    Polars DataFrames are converted to pandas before the zero count computation.
+    Uses setup_run() to handle backend conversion and column filtering.
 
     Configurable parameters (via config["tasks"]["detect_zeros"]):
         flag_threshold (float): Proportion of zeros above which a column is
@@ -54,22 +53,16 @@ class DetectZeros(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — zero detection skipped.",
+                    excluded,
+                )
+                return
 
             flag_threshold = float(self.get_task_param("flag_threshold") or 0.95)
-
-            if is_polars(df):
-                df = df.to_pandas()
-
-            if not hasattr(df, "shape"):
-                raise ValueError("Input is not a valid dataframe.")  # noqa: TRY301
-
             n_rows = df.shape[0]
             zero_counts: dict[str, int] = {}
             zero_percentages: dict[str, float] = {}

@@ -7,7 +7,6 @@ import numpy as np
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 
 @register_task(
@@ -53,20 +52,14 @@ class SummarizeNumeric(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
-
-            if is_polars(df):
-                self._log(
-                    "    Converting Polars to pandas for numeric summarization",
-                    "debug",
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — numeric summary skipped.",
+                    excluded,
                 )
-                df = df.to_pandas()
+                return
 
             numeric_df = df.select_dtypes(include=np.number)
             extended_stats: dict[str, dict[str, Any]] = {}

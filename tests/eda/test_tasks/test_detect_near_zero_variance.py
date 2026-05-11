@@ -6,10 +6,11 @@ import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_near_zero_variance import DetectNearZeroVariance
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_detects_near_zero_variance_columns(tmp_path) -> None:
     """Constant and near-constant columns must be flagged; varying columns must not."""
     df = pl.DataFrame(
@@ -20,13 +21,13 @@ def test_detects_near_zero_variance_columns(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         task_overrides={"threshold": 1e-4},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectNearZeroVariance)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -45,30 +46,32 @@ def test_skips_non_numeric_columns(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectNearZeroVariance)
 
     assert result.status == "success"
-    assert result.data == {"low_variance_columns": {}}
-    # No recommendations field - guidance blurbs are used instead
+    # infer_types classifies "id" and "category" as non-continuous.
+    # get_columns_by_intent returns 0 eligible cols → make_empty_result fires.
+    assert result.data == {}
     assert result.recommendations is None
 
 
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_guidance_attached_for_flagged_columns(tmp_path) -> None:
     """EDA and ML guidance blurbs must be attached for each low-variance column."""
     df = pd.DataFrame({"const": [5.0] * 50, "varying": list(range(50))})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         task_overrides={"threshold": 1e-4},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectNearZeroVariance)
 
     assert result.status == "success"
     assert "const" in result.data["low_variance_columns"]
@@ -79,17 +82,18 @@ def test_guidance_attached_for_flagged_columns(tmp_path) -> None:
     assert result.guidance["const"]["ml"][0]["actions"][0]["action"] == "drop"
 
 
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_no_plots_generated(tmp_path) -> None:
     """Near-zero variance task must not generate plots."""
     df = pl.DataFrame({"const": [1.0] * 100, "vary": list(range(100))})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         task_overrides={"threshold": 1e-4},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectNearZeroVariance)
 
     assert result.status == "success"
     assert result.plots is None
@@ -104,21 +108,25 @@ def test_threshold_configurable(tmp_path) -> None:
         },
     )
 
-    ctx_tight, task_tight = make_ctx_and_task(
+    ctx_tight, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         task_overrides={"threshold": 1e-6},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result_tight: TaskResult = ctx_tight.run_task(task_tight)
+    result_tight: TaskResult = run_task_with_dependencies(
+        ctx_tight, DetectNearZeroVariance
+    )
 
-    ctx_loose, task_loose = make_ctx_and_task(
+    ctx_loose, _ = make_ctx_and_task(
         task_cls=DetectNearZeroVariance,
         current_df=df,
         task_overrides={"threshold": 1e-2},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result_loose: TaskResult = ctx_loose.run_task(task_loose)
+    result_loose: TaskResult = run_task_with_dependencies(
+        ctx_loose, DetectNearZeroVariance
+    )
 
     tight_count: int = len(result_tight.data["low_variance_columns"])
     loose_count: int = len(result_loose.data["low_variance_columns"])

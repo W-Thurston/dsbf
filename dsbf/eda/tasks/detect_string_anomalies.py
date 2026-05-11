@@ -10,7 +10,6 @@ from pandas import Series
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Anomaly detectors ──────────────────────────────────────────────────────────
 
@@ -241,15 +240,14 @@ class DetectStringAnomalies(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'categorical'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'categorical/text' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — string anomaly detection skipped.",
+                    excluded,
+                )
+                return
 
             min_values_raw: Any | None = self.get_task_param("min_values")
             min_values: int = int(min_values_raw) if min_values_raw is not None else 10

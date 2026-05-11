@@ -367,7 +367,9 @@ def test_no_string_columns_returns_gracefully(tmp_path) -> None:
     result: TaskResult = ctx.run_task(task)
 
     assert result.status == "success"
-    assert result.summary["fuzzy_pair_count"] == 0
+    # No categorical/text columns → make_empty_result; summary has no
+    # fuzzy_pair_count key — just verify the task returns cleanly.
+    assert "message" in result.summary
 
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")

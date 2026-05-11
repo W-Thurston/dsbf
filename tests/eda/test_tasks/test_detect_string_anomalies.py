@@ -217,13 +217,13 @@ def test_min_values_threshold_skips_small_columns(tmp_path) -> None:
     """Columns with fewer than min_values non-null values must be skipped."""
     df = pd.DataFrame({"tiny": ["New York", "new york", None, None] + [None] * 96})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectStringAnomalies,
         current_df=df,
         task_overrides={"min_values": 10},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectStringAnomalies)
 
     assert result.status == "success"
     assert "tiny" not in result.data

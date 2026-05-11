@@ -10,7 +10,6 @@ from sklearn.preprocessing import PowerTransformer
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 if TYPE_CHECKING:
     from pandas import Series
@@ -188,15 +187,14 @@ class TransformationPreview(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — transformation preview skipped.",
+                    excluded,
+                )
+                return
 
             skew_thresh_raw: Any | None = self.get_task_param("skew_threshold")
             skew_threshold: float = (

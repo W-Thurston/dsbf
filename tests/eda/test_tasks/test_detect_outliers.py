@@ -14,7 +14,7 @@ from dsbf.eda.tasks.detect_outliers import (
     _mad_outliers,
     _zscore_outliers,
 )
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -84,16 +84,17 @@ def test_mad_robust_to_outlier_inflation() -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_all_method_runs_all_three(tmp_path) -> None:
     """method='all' must run IQR, Z-score, and MAD on each column."""
-    base: list[float] = [1.0, 2.0, 3.0, 4.0, 5.0] * 30
+    # 25 distinct floats * 6 = 150 rows, unique_ratio=26/151≈0.17 → continuous
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((6, 25))).flatten().tolist()
     df = pd.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "all", "run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "x" in result.data
@@ -106,16 +107,17 @@ def test_all_method_runs_all_three(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_consensus_flag_set_when_multiple_methods_agree(tmp_path) -> None:
     """Consensus must be True when 2+ methods flag the column."""
-    base: list[float] = [1.0, 2.0, 3.0, 4.0, 5.0] * 30
+    # 25 distinct floats * 6 = 150 rows, unique_ratio=26/151≈0.17 → continuous
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((6, 25))).flatten().tolist()
     df = pd.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "all", "run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert result.data["x"]["consensus"] is True
@@ -128,13 +130,13 @@ def test_clean_column_not_flagged(tmp_path) -> None:
     # Arithmetic sequence - no tails, no outliers by any method
     df = pd.DataFrame({"clean": [float(i) for i in range(1, 201)]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     if "clean" in result.data:
@@ -145,16 +147,16 @@ def test_clean_column_not_flagged(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_method_iqr_only(tmp_path) -> None:
     """method='iqr' must only include iqr in the entry."""
-    base: list[float] = [1.0, 2.0, 3.0] * 40
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((5, 25))).flatten().tolist()
     df = pd.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "iqr"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "iqr" in result.data["x"]
@@ -165,16 +167,16 @@ def test_method_iqr_only(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_method_mad_only(tmp_path) -> None:
     """method='mad' must only include mad in the entry."""
-    base: list[float] = [1.0, 2.0, 3.0] * 40
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((5, 25))).flatten().tolist()
     df = pd.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "mad"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "mad" in result.data["x"]
@@ -192,13 +194,13 @@ def test_constant_column_not_in_results(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     # const has MAD=0, zscore std=0 - it should appear but with empty
@@ -210,16 +212,16 @@ def test_constant_column_not_in_results(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_guidance_emitted_for_outlier_column(tmp_path) -> None:
     """EDA and ML guidance must be attached for columns with outliers."""
-    base: list[float] = [1.0, 2.0, 3.0] * 40
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((5, 25))).flatten().tolist()
     df = pd.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "all", "run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -233,21 +235,26 @@ def test_guidance_emitted_for_outlier_column(tmp_path) -> None:
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_summary_counts_correct(tmp_path) -> None:
     """columns_with_outliers summary must reflect columns with outliers."""
-    base: list[float] = [1.0, 2.0, 3.0] * 20
+    # 20 distinct vals * 3 = 60 rows → ratio=21/61≈0.34 → continuous
+    base: list[float] = (np.linspace(0, 10, 20) * np.ones((3, 20))).flatten().tolist()
+    # clean: 61 distinct integers → ratio=61/61=1.0 → id. Use repeated range.
+    clean: list[float] = (
+        np.linspace(0, 10, 20) * np.ones((3, 20))
+    ).flatten().tolist() + [5.0]
     df = pd.DataFrame(
         {
             "with_outlier": [*base, 9999.0],
-            "clean": list(range(61)),
+            "clean": clean,
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert result.summary["columns_analysed"] == len(
@@ -265,13 +272,13 @@ def test_non_numeric_columns_not_in_results(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "name" not in result.data
@@ -282,12 +289,12 @@ def test_empty_dataframe_succeeds(tmp_path) -> None:
     """An empty DataFrame must return success with empty data."""
     df = pd.DataFrame()
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert result.data in ({}, {"__dataset__": {}})
@@ -295,16 +302,16 @@ def test_empty_dataframe_succeeds(tmp_path) -> None:
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_polars_dataframe_handled(tmp_path) -> None:
-    base: list[float] = [1.0, 2.0, 3.0] * 30
+    base: list[float] = (np.linspace(0, 10, 25) * np.ones((4, 25))).flatten().tolist()
     df = pl.DataFrame({"x": [*base, 9999.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "x" in result.data
@@ -325,7 +332,7 @@ def test_isolation_forest_runs_and_produces_dataset_entry(tmp_path) -> None:
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={
@@ -335,7 +342,7 @@ def test_isolation_forest_runs_and_produces_dataset_entry(tmp_path) -> None:
         },
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     assert "__dataset__" in result.data
@@ -358,13 +365,13 @@ def test_isolation_forest_guidance_under_dataset_key(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "isolation_forest", "contamination": 0.05},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     if (
@@ -386,13 +393,13 @@ def test_run_isolation_forest_false_skips_if(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"method": "all", "run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
 
     assert result.status == "success"
     if "__dataset__" in result.data:
@@ -402,12 +409,12 @@ def test_run_isolation_forest_false_skips_if(tmp_path) -> None:
 def test_no_plots_generated(tmp_path) -> None:
     """Detect outliers task must not generate plots."""
     df = pd.DataFrame({"x": list(range(50))})
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutliers,
         current_df=df,
         task_overrides={"run_isolation_forest": "false"},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutliers)
     assert result.status == "success"
     assert result.plots is None

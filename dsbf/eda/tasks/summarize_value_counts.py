@@ -5,7 +5,6 @@ from typing import Any
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 
 @register_task(
@@ -45,19 +44,16 @@ class SummarizeValueCounts(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run("'categorical'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — value counts skipped.",
+                    excluded,
+                )
+                return
 
             top_k = int(self.get_task_param("top_k") or 5)
-
-            if is_polars(df):
-                self._log(
-                    "    Converting Polars to pandas for value count computation",
-                    "debug",
-                )
-                df = df.to_pandas()
 
             result: dict[str, dict[Any, int]] = {}
 

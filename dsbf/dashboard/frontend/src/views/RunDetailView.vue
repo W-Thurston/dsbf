@@ -43,6 +43,10 @@
           v-else-if="activeTab === 'ml_readiness'"
           :run-key="runKey" :tasks="tasks"
         />
+        <TimeSeriesTab
+          v-else-if="activeTab === 'time_series'"
+          :tasks="tasks" :theme="theme"
+        />
         <div v-else class="placeholder">
           {{ activeTab.charAt(0).toUpperCase() + activeTab.slice(1) }} tab - coming soon.
         </div>
@@ -58,6 +62,7 @@ import OverviewTab        from './tabs/OverviewTab.vue'
 import QualityTab         from './tabs/QualityTab.vue'
 import DistributionsTab   from './tabs/DistributionsTab.vue'
 import RelationshipsTab   from './tabs/RelationshipsTab.vue'
+import TimeSeriesTab      from './tabs/TimeSeriesTab.vue'
 import MlReadinessTab     from './tabs/MlReadinessTab.vue'
 import DataHealthBar      from '../components/DataHealthBar.vue'
 
@@ -80,6 +85,7 @@ const tabs = [
   { key: 'quality',       label: 'Quality'       },
   { key: 'distributions', label: 'Distributions' },
   { key: 'relationships', label: 'Relationships' },
+  { key: 'time_series',   label: 'Time Series'   },
   { key: 'ml_readiness',  label: 'ML Readiness'  },
 ]
 const activeTab = ref('overview')

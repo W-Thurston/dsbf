@@ -47,13 +47,17 @@ class DetectHighCardinality(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native("'categorical'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'categorical' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No categorical columns found — high cardinality detection"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             cardinality_threshold = float(
                 self.get_task_param("cardinality_threshold") or 50,

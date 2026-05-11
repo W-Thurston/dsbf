@@ -37,10 +37,14 @@ class SummarizeModes(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No categorical columns found — mode summary skipped.",
+                    excluded,
+                )
+                return
 
             if is_polars(df):
                 result: dict = {}

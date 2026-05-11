@@ -5,7 +5,6 @@ from typing import Any
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Imputation strategy decision logic ────────────────────────────────────────
 #
@@ -238,12 +237,14 @@ class ImputationStrategySuggestions(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — imputation suggestions skipped.",
+                    excluded,
+                )
+                return
 
             min_null_raw: Any | None = self.get_task_param("min_null_pct")
             min_null_pct: float = (

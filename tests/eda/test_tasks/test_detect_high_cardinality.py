@@ -20,14 +20,14 @@ def test_high_cardinality_column_detected(tmp_path) -> None:
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
         task_overrides={"cardinality_threshold": 50},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"city": "categorical", "region": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -59,14 +59,14 @@ def test_guidance_attached_for_flagged_columns(tmp_path) -> None:
     """EDA and ML guidance blurbs must be attached for each high-cardinality column."""
     df = pd.DataFrame({"sku": [f"SKU-{i}" for i in range(100)]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
         task_overrides={"cardinality_threshold": 50},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"sku": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
 
     assert result.status == "success"
     assert "sku" in result.data
@@ -82,14 +82,14 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     """Task must work correctly on Polars DataFrames."""
     df = pl.DataFrame({"cat": [f"val_{i}" for i in range(100)]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectHighCardinality,
         current_df=df,
         task_overrides={"cardinality_threshold": 50},
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"cat": "categorical"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectHighCardinality)
 
     assert result.status == "success"
     assert "cat" in result.data

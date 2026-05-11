@@ -149,13 +149,18 @@ def test_binary_int_column_suggested_as_bool(tmp_path) -> None:
     """An int64 column with only 0 and 1 values must be suggested as bool."""
     df = pd.DataFrame({"flag": pd.array([0, 1, 0, 1, 1, 0] * 100, dtype="int64")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=SuggestDtypeOptimizations,
         current_df=df,
         task_overrides={"min_savings_bytes": 0},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    # Binary int64 → infer_types classifies as categorical (nunique=2).
+    # Inject semantic_types so task finds the column without running infer_types
+    # (which would be inconsistent with test_overrides not reaching the task).
+    ctx.set_metadata("semantic_types", {"flag": "categorical"})
+    ctx.set_metadata("inferred_dtypes", {"flag": "int64"})
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestDtypeOptimizations)
 
     assert result.status == "success"
     suggestions = result.data["suggestions"]

@@ -12,7 +12,7 @@ from dsbf.eda.tasks.extract_datetime_features import (
     _relevant_features,
     _temporal_summary,
 )
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 if TYPE_CHECKING:
     from pandas import Series, Timestamp
@@ -122,13 +122,13 @@ def test_datetime_column_analysed(tmp_path) -> None:
         {"event_date": pd.date_range("2020-01-01", periods=365, freq="D")},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"event_date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert "event_date" in result.data
@@ -142,13 +142,13 @@ def test_temporal_summary_in_result(tmp_path) -> None:
     """Temporal summary must contain expected keys."""
     df = pd.DataFrame({"ts": pd.date_range("2019-06-01", periods=500, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"ts": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     s = result.data["ts"]["temporal_summary"]
@@ -168,13 +168,13 @@ def test_hourly_data_recommends_hour_features(tmp_path) -> None:
     """Hourly data must recommend hour and hour_sin_cos features."""
     df = pd.DataFrame({"ts": pd.date_range("2021-01-01", periods=1000, freq="h")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"ts": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     features = result.data["ts"]["recommended_features"]
@@ -187,13 +187,13 @@ def test_multi_year_data_recommends_year(tmp_path) -> None:
     """Data spanning more than a year must recommend year extraction."""
     df = pd.DataFrame({"date": pd.date_range("2018-01-01", periods=1000, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert "year" in result.data["date"]["recommended_features"]
@@ -209,7 +209,7 @@ def test_non_datetime_column_not_analysed(tmp_path) -> None:
         }
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
@@ -221,7 +221,7 @@ def test_non_datetime_column_not_analysed(tmp_path) -> None:
             "date": "datetime",
         },
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert "revenue" not in result.data
@@ -235,13 +235,13 @@ def test_guidance_attached_eda_and_ml(tmp_path) -> None:
         {"created_at": pd.date_range("2020-01-01", periods=365, freq="D")}
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"created_at": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -255,13 +255,13 @@ def test_ml_guidance_has_extract_feature_actions(tmp_path) -> None:
     """ML guidance must contain extract_feature action chips."""
     df = pd.DataFrame({"event": pd.date_range("2020-01-01", periods=400, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"event": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     ml_actions = result.guidance["event"]["ml"][0]["actions"]
@@ -284,13 +284,13 @@ def test_summary_counts_correct(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"date_a": "datetime", "date_b": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     total: int = sum(len(v["recommended_features"]) for v in result.data.values())
@@ -304,13 +304,13 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     dates: list[Timestamp] = pd.date_range("2021-01-01", periods=200, freq="D").tolist()
     df = pl.DataFrame({"event_date": dates})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"event_date": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert "event_date" in result.data
@@ -320,13 +320,13 @@ def test_no_plots_generated(tmp_path) -> None:
     """Datetime features task must not generate plots."""
     df = pd.DataFrame({"d": pd.date_range("2020-01-01", periods=100, freq="D")})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=ExtractDatetimeFeatures,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
     ctx.set_metadata("semantic_types", {"d": "datetime"})
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, ExtractDatetimeFeatures)
 
     assert result.status == "success"
     assert result.plots is None

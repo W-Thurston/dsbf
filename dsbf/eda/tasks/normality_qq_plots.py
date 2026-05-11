@@ -196,6 +196,10 @@ class NormalityQQPlots(BaseTask):
                 "debug",
             )
 
+            # No early exit for empty matched_cols: the normality_tests result and
+            # skewness fallback operate on df.columns directly, so the task can still
+            # produce useful output even when get_columns_by_intent returns nothing.
+
             include_normal_raw: Any | None = self.get_task_param("include_normal")
             include_normal: bool = (
                 str(include_normal_raw).lower() in ("true", "1", "yes")
