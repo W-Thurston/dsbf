@@ -70,11 +70,18 @@ class DetectTargetDrift(BaseTask):
 
         """
         ctx = self.context
-        current_df = self.input_data
+        current_df = self.get_dataframe()
         reference_df: Any | None = getattr(ctx, "reference_data", None)
 
         matched_cols, excluded = self.get_columns_by_intent()
         self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+
+        if not matched_cols:
+            self.output = self.make_empty_result(
+                "No eligible columns found — target drift detection skipped.",
+                excluded,
+            )
+            return
 
         if reference_df is None:
             self.output = TaskResult(

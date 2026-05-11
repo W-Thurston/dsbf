@@ -15,11 +15,14 @@ if TYPE_CHECKING:
 def test_text_stats_computed(tmp_path) -> None:
     """Expected statistics keys must be present for a text column."""
     # Force text classification: long strings (mean length > 30)
+    # Use 6 rows (3 unique repeated twice) so unique_ratio = 3/6 = 0.5,
+    # below the 0.9 id-detection threshold, while mean length > 30 triggers
+    # text classification.
     long_texts: list[str] = [
         "This is a fairly long sentence that should be classified as text by DSBF.",
         "Another reasonably long sentence to ensure the column is typed as text.",
         "Yet another sentence of sufficient length to be treated as a text column.",
-    ]
+    ] * 2
     df = pd.DataFrame({"description": long_texts})
 
     ctx, _ = make_ctx_and_task(

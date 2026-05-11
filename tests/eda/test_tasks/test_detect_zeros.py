@@ -4,7 +4,7 @@ import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_zeros import DetectZeros
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_zero_counts_and_flags_correct(tmp_path) -> None:
@@ -16,13 +16,13 @@ def test_zero_counts_and_flags_correct(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectZeros,
         current_df=df,
         task_overrides={"flag_threshold": 0.3},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -38,13 +38,13 @@ def test_all_zeros_column_is_flagged(tmp_path) -> None:
     """A column where every value is zero must be flagged."""
     df = pd.DataFrame({"a": [0, 0, 0, 0], "b": [1, 2, 3, 4]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectZeros,
         current_df=df,
         task_overrides={"flag_threshold": 0.5},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert result.status == "success"
     assert result.data["zero_flags"]["a"] is True
@@ -55,13 +55,13 @@ def test_guidance_attached_for_high_zero_columns(tmp_path) -> None:
     """EDA and ML guidance blurbs must be attached when zero rate ≥ 30%."""
     df = pd.DataFrame({"col": [0, 0, 0, 1, 2, 3, 4, 5, 6, 7]})  # 30% zeros
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectZeros,
         current_df=df,
         task_overrides={"flag_threshold": 0.5},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -81,7 +81,7 @@ def test_no_guidance_for_low_zero_column(tmp_path) -> None:
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert result.status == "success"
     assert result.guidance is None or "col" not in (result.guidance or {})
@@ -96,7 +96,7 @@ def test_no_plots_generated(tmp_path) -> None:
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert result.status == "success"
     assert result.plots is None
@@ -118,7 +118,7 @@ def test_summary_message_has_correct_count(tmp_path) -> None:
         task_overrides={"flag_threshold": 0.3},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectZeros)
 
     assert result.status == "success"
     assert "2" in result.summary["message"]

@@ -4,7 +4,7 @@ import pandas as pd
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_out_of_bounds import DetectOutOfBounds
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_violations_detected_for_named_columns(tmp_path) -> None:
@@ -18,12 +18,12 @@ def test_violations_detected_for_named_columns(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutOfBounds,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutOfBounds)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -45,12 +45,12 @@ def test_no_violations_on_clean_data(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutOfBounds,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutOfBounds)
 
     assert result.status == "success"
     assert result.data == {}
@@ -60,13 +60,13 @@ def test_custom_bounds_respected(tmp_path) -> None:
     """Custom bounds from task config must override defaults."""
     df = pd.DataFrame({"height": [160, 175, 250, 300]})  # 250 and 300 violate (0, 220)
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutOfBounds,
         current_df=df,
         task_overrides={"custom_bounds": {"height": (0, 220)}},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutOfBounds)
 
     assert result.status == "success"
     assert "height" in result.data
@@ -77,12 +77,12 @@ def test_guidance_attached_for_violations(tmp_path) -> None:
     """Both EDA and ML guidance blurbs must be attached for violated columns."""
     df = pd.DataFrame({"age": [25, -5, 30, 200]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutOfBounds,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutOfBounds)
 
     assert result.status == "success"
     assert "age" in result.data
@@ -99,12 +99,12 @@ def test_no_plots_generated(tmp_path) -> None:
     """Out-of-bounds detection must not generate plots."""
     df = pd.DataFrame({"age": [25, -5, 30, 200]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectOutOfBounds,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectOutOfBounds)
 
     assert result.status == "success"
     assert result.plots is None

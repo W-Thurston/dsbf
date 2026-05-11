@@ -7,7 +7,7 @@ import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_feature_drift import DetectFeatureDrift
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_numeric_drift_detected(tmp_path):
@@ -16,13 +16,13 @@ def test_numeric_drift_detected(tmp_path):
     reference = pl.DataFrame({"x": rng.normal(0, 1, 1000).tolist()})
     current = pl.DataFrame({"x": rng.normal(3, 1, 1000).tolist()})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -43,13 +43,13 @@ def test_categorical_drift_detected(tmp_path):
         {"cat": rng.choice(["A", "B"], size=1000, p=[0.3, 0.7]).tolist()},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "success"
     assert "cat" in result.data
@@ -62,12 +62,12 @@ def test_skips_if_no_reference_data(tmp_path):
     """Task must return skipped status when no reference dataset is available."""
     current = pl.DataFrame({"x": [1, 2, 3]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "skipped"
     assert "reference" in result.summary.get("message", "").lower()
@@ -79,14 +79,14 @@ def test_guidance_attached_for_high_drift_columns(tmp_path):
     reference = pl.DataFrame({"feature": rng.normal(0, 1, 1000).tolist()})
     current = pl.DataFrame({"feature": rng.normal(5, 1, 1000).tolist()})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         task_overrides={"psi": 0.1},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "success"
     assert result.data["feature"]["severity"] == "high"
@@ -103,13 +103,13 @@ def test_no_drift_on_identical_distributions(tmp_path):
     reference = pl.DataFrame({"x": data})
     current = pl.DataFrame({"x": data})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "success"
     assert result.data["x"]["severity"] == "low"
@@ -121,13 +121,13 @@ def test_no_shared_columns_returns_skipped(tmp_path):
     current = pl.DataFrame({"a": [1.0, 2.0, 3.0]})
     reference = pl.DataFrame({"b": [4.0, 5.0, 6.0]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "skipped"
 
@@ -138,13 +138,13 @@ def test_no_plots_generated(tmp_path):
     reference = pl.DataFrame({"x": rng.normal(0, 1, 100).tolist()})
     current = pl.DataFrame({"x": rng.normal(3, 1, 100).tolist()})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectFeatureDrift,
         current_df=current,
         reference_df=reference,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectFeatureDrift)
 
     assert result.status == "success"
     assert result.plots is None

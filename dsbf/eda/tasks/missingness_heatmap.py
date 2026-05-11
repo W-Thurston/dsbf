@@ -49,10 +49,17 @@ class MissingnessHeatmap(BaseTask):
 
         """
         try:
-            df: pd.DataFrame = self._to_pandas(self.input_data)
+            df: pd.DataFrame = self.get_dataframe_pandas()
             matched_columns, excluded_columns = self.get_columns_by_intent()
 
             self._log(f"    Processing {len(matched_columns)} column(s)", "debug")
+
+            if not matched_columns:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — missingness heatmap skipped.",
+                    excluded_columns,
+                )
+                return
 
             missing_cells = int(df.isna().sum().sum())
             missing_columns: list[str] = [

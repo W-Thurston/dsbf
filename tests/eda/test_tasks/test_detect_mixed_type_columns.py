@@ -5,19 +5,19 @@ import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_mixed_type_columns import DetectMixedTypeColumns
-from tests.helpers.context_utils import make_ctx_and_task
+from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 
 def test_all_same_type_column_not_flagged(tmp_path) -> None:
     """A uniformly typed column must not be flagged."""
     df = pl.DataFrame({"col1": [1, 2, 3, 4, 5]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert isinstance(result, TaskResult)
     assert result.status == "success"
@@ -31,13 +31,13 @@ def test_detects_mixed_type_column(tmp_path) -> None:
         {"col1": pl.Series("col1", [1, 2, "three", 4.0, None], dtype=pl.Object)}
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.1, "ignore_null_type": True},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 1
@@ -51,13 +51,13 @@ def test_ignores_minor_type_below_threshold(tmp_path) -> None:
         {"col1": pl.Series("col1", [1] * 98 + ["x"] * 2, dtype=pl.Object)},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.05, "ignore_null_type": True},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 0
@@ -67,13 +67,13 @@ def test_null_type_excluded_when_ignored(tmp_path) -> None:
     """NoneType must not appear in type_counts when ignore_null_type=True."""
     df = pl.DataFrame({"col1": pl.Series("col1", [1, "two", 3, None], dtype=pl.Object)})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.1, "ignore_null_type": True},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 1
@@ -84,12 +84,12 @@ def test_skips_strictly_typed_column(tmp_path) -> None:
     """A non-Object Polars column cannot have mixed types and must not be flagged."""
     df = pl.DataFrame({"col1": [1, 2, 3, 4]})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 0
@@ -101,13 +101,13 @@ def test_guidance_attached_for_mixed_columns(tmp_path) -> None:
         {"mixed": pl.Series("mixed", [1, 2, "three", 4, "five"] * 10, dtype=pl.Object)},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.1, "ignore_null_type": True},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 1
@@ -122,13 +122,13 @@ def test_pandas_dataframe_handled(tmp_path) -> None:
         {"col": pd.array([1, 2, "three", 4.0, "five"] * 10, dtype=object)},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.1, "ignore_null_type": True},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.summary["num_mixed_type_columns"] == 1
@@ -140,13 +140,13 @@ def test_no_plots_generated(tmp_path) -> None:
         {"col1": pl.Series("col1", [1, 2, "three", 4.0, None], dtype=pl.Object)},
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=DetectMixedTypeColumns,
         current_df=df,
         task_overrides={"min_ratio": 0.1},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, DetectMixedTypeColumns)
 
     assert result.status == "success"
     assert result.plots is None

@@ -63,14 +63,15 @@ class DetectSkewness(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, numeric_cols, excluded = self.setup_run_native("'continuous'")
             column_stats: dict[str, dict[str, float]] = {}
 
-            numeric_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(numeric_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not numeric_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — skewness detection skipped.",
+                    excluded,
+                )
+                return
 
             if is_polars(df):
                 df_sel = df.select(numeric_cols) if numeric_cols else df
@@ -194,7 +195,9 @@ class DetectSkewness(BaseTask):
         if abs_skew <= _SKEW_MILD:
             return  # Symmetric - no blurb needed
 
-        direction: Literal = "right (positive)" if skew_val > 0 else "left (negative)"
+        direction: Literal["left (negative)", "right (positive)"] = (
+            "right (positive)" if skew_val > 0 else "left (negative)"
+        )
         tail_dir: Literal["higher", "lower"] = "higher" if skew_val > 0 else "lower"
         bulk_dir: Literal["higher", "lower"] = "lower" if skew_val > 0 else "higher"
         dir_word: Literal["Left", "Right"] = "Right" if skew_val > 0 else "Left"
@@ -377,18 +380,4 @@ class DetectSkewness(BaseTask):
             body=ml_body.strip(),
             actions=ml_actions,
             metric=metric,
-            # Skewness impacts model families differently.
-            # Linear, regularised, and distance-based models assume or are
-            # sensitive to approximate normality and feature scale.
-            # Tree-based models split on thresholds — monotonic transforms
-            # do not change the split structure, so they are unaffected.
-            model_sensitivity={
-                "affected": [
-                    "Linear models",
-                    "Regularised (Ridge, Lasso, ElasticNet)",
-                    "KNN / Distance-based",
-                    "SVM (RBF kernel)",
-                ],
-                "unaffected": ["Tree-based (RF, XGBoost, LightGBM)"],
-            },
         )

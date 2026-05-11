@@ -8,7 +8,6 @@ from scipy.stats import jarque_bera, kstest, shapiro
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -140,7 +139,7 @@ class NormalityTests(BaseTask):
 
     Each column's output includes results from both the size-appropriate test
     (SW or KS) and JB, plus an overall verdict that is ``"non_normal"`` if
-    *either* test rejects normality at the configured alpha.
+    either test rejects normality at the configured alpha.
 
     Columns with fewer than ``_MIN_N`` (8) non-null values are skipped.
 
@@ -161,15 +160,14 @@ class NormalityTests(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — normality tests skipped.",
+                    excluded,
+                )
+                return
 
             alpha_raw: Any | None = self.get_task_param("alpha")
             alpha: float = float(alpha_raw) if alpha_raw is not None else _DEFAULT_ALPHA

@@ -65,10 +65,14 @@ class DetectRegexFormatViolations(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native("'text'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} 'text' column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No text columns found — regex format violation detection skipped.",
+                    excluded,
+                )
+                return
 
             patterns: dict[str, str] = dict(
                 self.get_task_param("custom_patterns") or {},

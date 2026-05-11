@@ -50,10 +50,14 @@ class SummarizeTextFields(BaseTask):
 
         """
         try:
-            df = self.input_data
+            df, matched_cols, excluded = self.setup_run_native()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} 'text' column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No text columns found — text field summary skipped.",
+                    excluded,
+                )
+                return
 
             results: dict[str, dict[str, Any]] = {}
 
@@ -74,9 +78,11 @@ class SummarizeTextFields(BaseTask):
                             total_chars / total_words if total_words else 0.0
                         )
 
-                        most_common = Counter(strings).most_common(1)
+                        most_common: list[tuple] = Counter(strings).most_common(1)
                         top_value = most_common[0][0] if most_common else None
-                        has_symbols = any(re.search(r"[^\w\s]", s) for s in strings)
+                        has_symbols: bool = any(
+                            re.search(r"[^\w\s]", s) for s in strings
+                        )
 
                         self._log(f"    Summarized text column: '{col}'", "debug")
                         results[col] = {

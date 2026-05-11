@@ -231,12 +231,12 @@ def test_mcar_consistent_for_random_missingness(tmp_path) -> None:
         idx = rng.choice(n, size=20, replace=False)
         df.loc[idx, col] = np.nan
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
 
     assert result.status == "success"
     assert result.summary["columns_analysed"] >= 1
@@ -259,12 +259,12 @@ def test_mar_pattern_detected(tmp_path) -> None:
 
     df = pd.DataFrame({"income": income_with_missing, "age": age})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
 
     assert result.status == "success"
     assert "income" in result.data
@@ -283,12 +283,12 @@ def test_output_structure_complete(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
 
     assert result.status == "success"
     assert "a" in result.data
@@ -319,12 +319,12 @@ def test_guidance_uses_hedged_language(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
 
     assert result.status == "success"
     assert result.guidance is not None
@@ -370,7 +370,7 @@ def test_summarize_nulls_context_used(tmp_path) -> None:
         },
     )
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
@@ -388,7 +388,7 @@ def test_summarize_nulls_context_used(tmp_path) -> None:
             "null_patterns": {},
         },
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
 
     assert result.status == "success"
     assert "x" in result.data
@@ -402,12 +402,12 @@ def test_polars_dataframe_handled(tmp_path) -> None:
     vals[:20] = [None] * 20
     df = pl.DataFrame({"a": vals, "b": rng.normal(0, 1, 100).tolist()})
 
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
     assert result.status == "success"
 
 
@@ -418,11 +418,11 @@ def test_no_plots_generated(tmp_path) -> None:
             "b": list(range(50)),
         }
     )
-    ctx, task = make_ctx_and_task(
+    ctx, _ = make_ctx_and_task(
         task_cls=MissingnessMechanismAnalysis,
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result: TaskResult = ctx.run_task(task)
+    result: TaskResult = run_task_with_dependencies(ctx, MissingnessMechanismAnalysis)
     assert result.status == "success"
     assert result.plots is None

@@ -57,6 +57,13 @@ class DetectNearZeroVariance(BaseTask):
                 "debug",
             )
 
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — near-zero variance check skipped.",
+                    excluded,
+                )
+                return
+
             threshold = float(self.get_task_param("threshold") or 1e-4)
 
             # Reliability flags include per-column standard deviations computed

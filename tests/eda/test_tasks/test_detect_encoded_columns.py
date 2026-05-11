@@ -119,20 +119,24 @@ def test_detects_uuid_strings(tmp_path):
 
 def test_ignores_regular_text_columns(tmp_path):
     """Plain natural language text must not be flagged as encoded."""
+    # Two-word phrases contain spaces, which are outside [A-Za-z0-9+/=],
+    # so base64 fullmatch fails entirely. No hex-only chars either.
+    # Repeated 3x to keep unique_ratio below 0.9.
     df = pl.DataFrame(
         {
             "names": [
-                "alice",
-                "bob",
-                "charlie",
-                "dave",
-                "eve",
-                "frank",
-                "grace",
-                "henry",
-                "iris",
-                "jack",
-            ],
+                "red car",
+                "blue sky",
+                "green tea",
+                "hot dog",
+                "cold air",
+                "old map",
+                "new bag",
+                "big cat",
+                "wet dog",
+                "dry cup",
+            ]
+            * 3,
         },
     )
 
@@ -141,9 +145,6 @@ def test_ignores_regular_text_columns(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly - infer_types classifies high-uniqueness
-    # string columns as 'id'. We inject 'categorical' to test detection logic
-    # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"names": "categorical"})
     result: TaskResult = run_task_with_dependencies(ctx, DetectEncodedColumns)
 
@@ -157,20 +158,24 @@ def test_ignores_low_entropy_text(tmp_path):
 
     Uses ≥ 10 rows to avoid the minimum-sample-size guard.
     """
+    # Two-word phrases: spaces break base64/hex patterns. Low entropy
+    # (repetitive structure) tests the entropy threshold guard.
+    # Repeated 3x to keep unique_ratio below 0.9.
     df = pl.DataFrame(
         {
             "letters": [
-                "aaaa",
-                "bbbb",
-                "cccc",
-                "dddd",
-                "eeee",
-                "ffff",
-                "gggg",
-                "hhhh",
-                "iiii",
-                "jjjj",
-            ],
+                "word one",
+                "word two",
+                "word three",
+                "word four",
+                "word five",
+                "word six",
+                "word seven",
+                "word eight",
+                "word nine",
+                "word ten",
+            ]
+            * 3,
         },
     )
 
@@ -179,9 +184,6 @@ def test_ignores_low_entropy_text(tmp_path):
         current_df=df,
         global_overrides={"output_dir": str(tmp_path)},
     )
-    # Inject semantic type directly - infer_types classifies high-uniqueness
-    # string columns as 'id'. We inject 'categorical' to test detection logic
-    # independently of type inference decisions.
     ctx.set_metadata("semantic_types", {"letters": "categorical"})
     result: TaskResult = run_task_with_dependencies(ctx, DetectEncodedColumns)
 

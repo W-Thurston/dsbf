@@ -70,13 +70,19 @@ class DetectEncodedColumns(BaseTask):
 
         """
         try:
-            df = self.input_data
-
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} ['text', 'categorical'] column(s)",
-                "debug",
+            df, matched_cols, excluded = self.setup_run_native(
+                "['text', 'categorical']"
             )
+
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    (
+                        "No categorical/text columns found — encoded column detection"
+                        " skipped."
+                    ),
+                    excluded,
+                )
+                return
 
             min_entropy = float(self.get_task_param("min_entropy") or 4.5)
             length_std_threshold = float(
@@ -134,7 +140,7 @@ class DetectEncodedColumns(BaseTask):
                     statistics.stdev(lengths) if len(lengths) > 1 else 0.0
                 )
 
-                all_chars = "".join(values)
+                all_chars: str = "".join(values)
                 freqs: Counter[str] = Counter(all_chars)
                 probs: list[float] = [
                     v / len(all_chars) for v in freqs.values() if v > 0
@@ -252,7 +258,7 @@ class DetectEncodedColumns(BaseTask):
             "base64": "base64-encoded string",
             "high_entropy": "high-entropy string (likely a hash or fingerprint)",
         }
-        description = type_descriptions.get(match_type, match_type)
+        description: str = type_descriptions.get(match_type, match_type)
 
         eda_body: str = (
             f"'{col}' appears to contain {description} values "

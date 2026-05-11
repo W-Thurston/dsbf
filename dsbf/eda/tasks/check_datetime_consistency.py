@@ -53,7 +53,7 @@ class CheckDatetimeConsistency(BaseTask):
             Exception: Re-raised if a context is present (handled by ExecutionGraph).
 
         """
-        df = self.input_data
+        df = self.get_dataframe()
         results: dict[str, dict[str, Any]] = {}
 
         try:
@@ -62,6 +62,13 @@ class CheckDatetimeConsistency(BaseTask):
                 f"    Processing {len(datetime_cols)} datetime column(s)",
                 "debug",
             )
+
+            if not datetime_cols:
+                self.output = self.make_empty_result(
+                    "No datetime columns found — consistency check skipped.",
+                    excluded,
+                )
+                return
 
             for col in datetime_cols:
                 try:

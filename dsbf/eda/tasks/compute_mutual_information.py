@@ -9,7 +9,6 @@ from sklearn.feature_selection import mutual_info_classif, mutual_info_regressio
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 # ── Strength labelling ────────────────────────────────────────────────────────
 #
@@ -121,12 +120,14 @@ class ComputeMutualInformation(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run()
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(f"    Processing {len(matched_cols)} column(s)", "debug")
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No eligible columns found — mutual information skipped.",
+                    excluded,
+                )
+                return
 
             target_col: str | None = self.get_task_param("target_column")
             n_neighbors_raw: Any | None = self.get_task_param("n_neighbors")

@@ -34,7 +34,7 @@
 #       }
 
 import contextlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -42,7 +42,6 @@ import pandas as pd
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
-from dsbf.utils.backend import is_polars
 
 with contextlib.suppress(ImportError):
     from sklearn.ensemble import IsolationForest
@@ -316,15 +315,14 @@ class DetectOutliers(BaseTask):
 
         """
         try:
-            df = self.input_data
-            if is_polars(df):
-                df = df.to_pandas()
+            df, matched_cols, excluded = self.setup_run("'continuous'")
 
-            matched_cols, excluded = self.get_columns_by_intent()
-            self._log(
-                f"    Processing {len(matched_cols)} 'continuous' column(s)",
-                "debug",
-            )
+            if not matched_cols:
+                self.output = self.make_empty_result(
+                    "No continuous columns found — outlier detection skipped.",
+                    excluded,
+                )
+                return
 
             method_raw: Any | None = self.get_task_param("method")
             method: str = str(method_raw) if method_raw is not None else "all"
@@ -566,7 +564,9 @@ class DetectOutliers(BaseTask):
                     f"{label}: {d['outlier_count']} ({d['outlier_pct']:.1%})",
                 )
 
-        status = (
+        status: Literal[
+            "consensus - high confidence", "single method only - verify"
+        ] = (
             "consensus - high confidence"
             if consensus
             else "single method only - verify"
@@ -645,20 +645,6 @@ class DetectOutliers(BaseTask):
             body=ml_body.strip(),
             actions=actions,
             metric=metric,
-            # Outlier sensitivity is highly model-family-dependent.
-            # Tree-based models split on feature thresholds and are largely
-            # immune to outliers in the features (though not in the target).
-            # Linear, distance-based, and PCA-based methods are directly
-            # destabilised by extreme values.
-            model_sensitivity={
-                "affected": [
-                    "Linear models",
-                    "KNN / Distance-based",
-                    "SVM (RBF kernel)",
-                    "PCA",
-                ],
-                "unaffected": ["Tree-based (RF, XGBoost, LightGBM)"],
-            },
         )
 
     def _attach_if_guidance(self, if_result: dict[str, Any]) -> None:
