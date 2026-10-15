@@ -50,7 +50,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `docs: adopt unit workflow and add refactor plan, review findings and walkthrough`
 
 ### U0-02 · Make CI lint match local tooling
-- **Status:** done (2026-10-15) · **Notes:** The lint job installs the ruff version read from `poetry.lock`; the pre-commit rev is aligned to `v0.11.13`. **Deviation:** all four actions moved to Node 24 majors (checkout v7, setup-python v7, cache v6, upload-artifact v7), not just checkout and setup-python. PR number and merge SHA: backfilled by the next unit. · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-01 (lint part)
+- **Status:** done (2026-10-15) · **Notes:** The lint job installs the ruff version read from `poetry.lock`; the pre-commit rev is aligned to `v0.11.13`. **Deviation:** all four actions moved to Node 24 majors (checkout v7, setup-python v7, cache v6, upload-artifact v7), not just checkout and setup-python. PR #31, merged as `4b80da8`. · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-01 (lint part)
 - **Goal:** The CI lint job uses the ruff version pinned in `poetry.lock`, and actions run on Node 24.
 - **Context:** F-01. `.github/workflows/ci.yml:22` runs an unpinned `pip install ruff`. `.pre-commit-config.yaml` pins `v0.11.10`.
 - **Assumptions to confirm:**
@@ -66,7 +66,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `ci: pin ruff to the locked version and move actions to Node 24`
 
 ### U0-03 · Fix the five failing tests
-- **Status:** todo · **Size:** M · **Depends on:** U0-02 · **Resolves:** F-03
+- **Status:** done (2026-10-15) · **Notes:** `make_empty_result` takes a `data` argument, and the 18 fixed-key tasks pass their real empty shape (30 per-column tasks keep `{}`). **Deviation:** the five failures had four causes, not one: only the two bimodal tests were the empty-shape bug. The normality and encoding failures were test setup (no `infer_types`; a task built without its registry name), and the memory test needed the helper to accept a duck-typed stand-in. New `test_empty_results.py` pins the 18 shapes. PR number and merge SHA: backfilled by the next unit. · **Size:** M · **Depends on:** U0-02 · **Resolves:** F-03
 - **Goal:** `pytest` passes locally and in CI on 3.12 and 3.13.
 - **Context:** F-03. `BaseTask.make_empty_result()` (`dsbf/core/base_task.py:392`) returns `data={}`, which drops task-specific keys. `tests/helpers/context_utils.py:51` requires registered task classes.
 - **Assumptions to confirm:**
@@ -82,6 +82,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(core): keep task-specific empty result shapes and repair failing tests`
 
 ### U0-04 · Clear the Dependabot backlog
+- **Note from U0-03:** the Python 3.14 test job (non-blocking) fails at install because scipy 1.16.0 has no 3.14 build. Decide here whether a scipy bump fixes it or 3.14 stays experimental.
 - **Status:** todo · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
 - **Goal:** No stale Dependabot PRs; dependency majors are verified or declined with reasons.
 - **Context:** Open as of 2026-10-15:
@@ -135,6 +136,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U0-07 · Run tests hermetically from a temporary directory
 - **Status:** todo · **Size:** M · **Depends on:** U0-06 · **Resolves:** F-02, F-31
+- **Note from U0-03:** a running pytest deletes run directories under the shared `dsbf/outputs/` (a CLI run overlapped a test run and lost its output). Acceptance should include that a test run leaves other runs' output directories alone.
 - **Goal:** The test suite and DSBF itself run from any directory without touching the developer's DB, outputs or tracked files.
 - **Context:**
   - F-02: `tests/conftest.py:27` sets an ignored `engine.output_path`, and no `DSBF_DB_PATH` is set.
@@ -571,7 +573,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 ## Phase 4: Migrate checks (placeholder)
 
 - **U4-00 · Plan Phase 4** (`todo`, depends on U3-12): break down the batches below into full units using Phase 3 learnings and golden-run evidence. Update REFACTOR_PLAN if needed.
-- U4-A · Rule checks onto the profile, about 20 tasks (`placeholder`)
+- U4-A · Rule checks onto the profile, about 20 tasks (`placeholder`). From U0-03: the migrated guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. And a migrated task run without `infer_types` now skips instead of analysing all numeric columns. Decide the intended behaviour per check
 - U4-B · Analysis checks with statistical fixes: F-11, F-13, confidence intervals, bias-corrected Cramér's V (`placeholder`)
 - U4-C · Heavy checks redesigned with budgets: fuzzy duplicates (F-35), time series (F-39), drift against reference profiles (`placeholder`)
 - U4-D · Synthesis: quality dimensions, ML readiness, target-based leakage (F-26) (`placeholder`)

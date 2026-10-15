@@ -78,6 +78,7 @@ class DetectCollinearFeatures(BaseTask):
                         " skipped."
                     ),
                     excluded,
+                    data={"vif_scores": {}, "collinear_columns": []},
                 )
                 return
 

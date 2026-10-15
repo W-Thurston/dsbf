@@ -207,21 +207,23 @@ def test_custom_alpha_respected(tmp_path) -> None:
     # Mild non-normality - will reject at alpha=0.10 but may pass at alpha=0.01
     df = pd.DataFrame({"x": rng.lognormal(0, 0.3, 300)})
 
-    ctx_strict, task_strict = make_ctx_and_task(
+    # Run through the dependencies: the task only analyses columns that
+    # infer_types has classified as continuous.
+    ctx_strict, _ = make_ctx_and_task(
         task_cls=NormalityTests,
         current_df=df,
         task_overrides={"alpha": 0.001},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result_strict: TaskResult = ctx_strict.run_task(task_strict)
+    result_strict: TaskResult = run_task_with_dependencies(ctx_strict, NormalityTests)
 
-    ctx_loose, task_loose = make_ctx_and_task(
+    ctx_loose, _ = make_ctx_and_task(
         task_cls=NormalityTests,
         current_df=df,
         task_overrides={"alpha": 0.99},
         global_overrides={"output_dir": str(tmp_path)},
     )
-    result_loose: TaskResult = ctx_loose.run_task(task_loose)
+    result_loose: TaskResult = run_task_with_dependencies(ctx_loose, NormalityTests)
 
     assert result_strict.status == "success"
     assert result_loose.status == "success"

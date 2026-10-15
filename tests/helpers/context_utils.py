@@ -3,13 +3,13 @@
 from typing import TYPE_CHECKING, Any
 
 from dsbf.config import load_default_config
+from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_registry import TASK_REGISTRY
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.task_utils import instantiate_task
 
 if TYPE_CHECKING:
-    from dsbf.core.base_task import BaseTask
     from dsbf.eda.task_registry import TaskSpec
 
 
@@ -47,11 +47,18 @@ def make_ctx_and_task(
         (spec for spec in TASK_REGISTRY.values() if spec.cls == task_cls),
         None,
     )
-    if registry_entry is None:
+    if registry_entry is not None:
+        task_name: str = registry_entry.name
+    elif issubclass(task_cls, BaseTask):
+        # A real task that is missing from the registry is a registration
+        # mistake; don't hide it behind an empty task config.
         raise ValueError(
             f"Task class {task_cls.__name__!r} not found in TASK_REGISTRY."
         )
-    task_name: str = registry_entry.name
+    else:
+        # Duck-typed stand-in (not a BaseTask, so it can't be registered):
+        # use its own default name and an empty task config.
+        task_name = task_cls().name
 
     # Get and update task-specific config
     task_config = default_config.get("tasks", {}).get(task_name, {}).copy()

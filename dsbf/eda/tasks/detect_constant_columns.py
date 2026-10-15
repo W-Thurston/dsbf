@@ -48,6 +48,7 @@ class DetectConstantColumns(BaseTask):
                 self.output = self.make_empty_result(
                     "No columns found — constant column detection skipped.",
                     excluded,
+                    data={"constant_columns": []},
                 )
                 return
 
