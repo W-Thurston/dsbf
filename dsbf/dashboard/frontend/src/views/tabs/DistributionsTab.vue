@@ -27,29 +27,40 @@
       <!-- ── 2. Distribution plot - non-collapsible ──────────────────────── -->
       <div class="plot-guidance-row">
         <div class="plot-pane card">
-          <div class="card-title-row">
-            <div class="card-title">Distribution</div>
-            <div v-if="columnIntent === 'continuous'" class="plot-toggle">
-              <button
-                v-for="opt in plotOptions"
-                :key="opt.key"
-                class="toggle-btn"
-                :class="{ active: activePlotType === opt.key }"
-                @click="activePlotType = opt.key"
-              >{{ opt.label }}</button>
-            </div>
+          <!-- Toggle sits above the chart for continuous columns -->
+          <div v-if="columnIntent === 'continuous'" class="plot-toggle-row">
+            <button
+              v-for="opt in plotOptions"
+              :key="opt.key"
+              class="toggle-btn"
+              :class="{ active: activePlotType === opt.key }"
+              @click="activePlotType = opt.key"
+            >{{ opt.label }}</button>
           </div>
-          <PlotCard
-            v-if="columnFigure"
-            :title="plotTitle"
-            :figure="columnFigure"
+
+          <!-- Continuous: histogram or box plot -->
+          <template v-if="columnIntent === 'continuous'">
+            <DistributionHistogramChart
+              v-if="activePlotType === 'histogram'"
+              :column="selectedColumn"
+              :tasks="tasks"
+              :theme="theme"
+            />
+            <BoxPlotChart
+              v-else
+              :column="selectedColumn"
+              :tasks="tasks"
+              :theme="theme"
+            />
+          </template>
+
+          <!-- Categorical / boolean / other: value counts bar -->
+          <ValueCountsChart
+            v-else
+            :column="selectedColumn"
+            :tasks="tasks"
             :theme="theme"
-            :show-title="false"
           />
-          <div v-else class="no-figure">
-            <span class="no-figure-icon">📊</span>
-            No figure available for this column.
-          </div>
         </div>
 
         <!-- ── 3. Guidance - non-collapsible ────────────────────────────── -->
@@ -159,7 +170,7 @@
                   </span>
                 </div>
                 <div class="normality-placeholder">
-                  Q-Q plot visualisation coming in the D3 refactor.
+                  Q-Q plot coming soon.
                 </div>
               </div>
               <div v-else class="dist-not-run">
@@ -218,8 +229,9 @@ import ValueCountsTable           from '../../components/distributions/ValueCoun
 import TextLengthCard             from '../../components/distributions/TextLengthCard.vue'
 import OutlierDetailCard          from '../../components/distributions/OutlierDetailCard.vue'
 import ColumnCorrelationsPanel    from '../../components/distributions/ColumnCorrelationsPanel.vue'
-import PlotCard                   from '../../components/overview/PlotCard.vue'
-import { figureForColumn }        from '../../utils.js'
+import DistributionHistogramChart from '../../components/charts/DistributionHistogramChart.vue'
+import BoxPlotChart               from '../../components/charts/BoxPlotChart.vue'
+import ValueCountsChart           from '../../components/charts/ValueCountsChart.vue'
 
 const props = defineProps({
   run:           { type: Object, default: null },
@@ -278,34 +290,6 @@ const columnDtype = computed(() =>
   props.tasks.infer_types?.data?.[selectedColumn.value]?.inferred_dtype ?? ''
 )
 const runKey = computed(() => props.run?.run_key ?? '')
-
-// ── Figure selection ─────────────────────────────────────────────────────────
-
-const columnFigure = computed(() => {
-  const col    = selectedColumn.value
-  const intent = columnIntent.value
-  if (!col || !props.figures?.length) return null
-  if (intent === 'continuous') {
-    const type = activePlotType.value
-    return (
-      figureForColumn(props.figures, col, type, 'interactive', props.theme) ??
-      figureForColumn(props.figures, col, type, 'static',      props.theme) ??
-      figureForColumn(props.figures, col, 'composite', 'static', props.theme) ??
-      null
-    )
-  }
-  return (
-    figureForColumn(props.figures, col, 'bar', 'interactive', props.theme) ??
-    figureForColumn(props.figures, col, 'bar', 'static',      props.theme) ??
-    null
-  )
-})
-
-const plotTitle = computed(() =>
-  columnIntent.value === 'continuous'
-    ? (activePlotType.value === 'boxplot' ? 'Box Plot' : 'Distribution')
-    : 'Value Counts'
-)
 
 // ── Section badges and not-run states ────────────────────────────────────────
 
@@ -448,37 +432,10 @@ const normalityProse = computed(() => {
   flex: 3 1 0;
   min-width: 0;
   height: 100%;
-  overflow: hidden;
+  overflow: visible;        /* allow ECharts tooltips to escape card boundary */
   display: flex;
   flex-direction: column;
-}
-.guidance-pane {
-  flex: 1 1 0;
-  min-width: 200px;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Stack guidance below plot when the pane is too narrow for side-by-side */
-@media (max-width: 900px) {
-  .plot-guidance-row {
-    flex-direction: column;
-    height: auto;
-  }
-  .plot-pane {
-    height: 400px;
-    flex: none;
-  }
-  .guidance-pane {
-    flex: none;
-    height: auto;
-    min-width: 0;
-    width: 100%;
-  }
-  .guidance-pane :deep(.guidance-card) {
-    height: auto;
-    overflow-y: visible;
-  }
+  padding: 16px;
 }
 
 .plot-pane .card-title-row {
@@ -486,29 +443,35 @@ const normalityProse = computed(() => {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  margin-bottom: 12px;
+  margin-bottom: 0;        /* DsbfChart header has its own padding */
 }
-.plot-pane .card-title-row .card-title { margin-bottom: 0; }
-.plot-pane :deep(.plot-card) { flex: 1; min-height: 0; }
-.plot-pane :deep(.plot-container) { min-height: 0; height: calc(100% - 32px); }
+
+/* Make the DsbfChart card inside the pane fill remaining height */
+.plot-pane :deep(.dsbf-chart-card) {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+.guidance-pane {
+  flex: 1 1 0;
+  min-width: 200px;
+  height: 100%;
+  overflow: hidden;
+}
 .guidance-pane :deep(.guidance-card) { height: 100%; overflow-y: auto; }
 
-.no-figure {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #64748b;
-  font-size: 13px;
-  background: #0f172a;
-  border: 1px dashed #334155;
-  border-radius: 8px;
-}
-.no-figure-icon { font-size: 28px; opacity: 0.4; }
-
 /* ── Plot type toggle ────────────────────────────────────────────────────── */
+.plot-toggle-row {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0 18px 8px;    /* matches DsbfChart header padding */
+}
 .plot-toggle { display: flex; gap: 4px; }
 .toggle-btn {
   padding: 3px 12px; border-radius: 6px; border: 1px solid #334155;
