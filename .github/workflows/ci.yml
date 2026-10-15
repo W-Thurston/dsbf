@@ -11,15 +11,22 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
-      - name: Install Ruff
-        run: pip install ruff
+      # Pin ruff to the version in poetry.lock so CI lints and formats exactly like
+      # local tooling. An unpinned install takes every new release: ruff 0.17 started
+      # formatting Python code blocks in Markdown, which failed lint with no code
+      # change. Keep the ruff rev in .pre-commit-config.yaml in step with the lock.
+      - name: Install Ruff (version from poetry.lock)
+        run: |
+          RUFF_VERSION=$(python -c "import tomllib; print(next(p['version'] for p in tomllib.load(open('poetry.lock', 'rb'))['package'] if p['name'] == 'ruff'))")
+          echo "Installing ruff==${RUFF_VERSION}"
+          pip install "ruff==${RUFF_VERSION}"
 
       - name: Ruff check
         run: ruff check .
@@ -43,10 +50,10 @@ jobs:
     continue-on-error: ${{ matrix.experimental == true }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -56,7 +63,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Cache Poetry dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pypoetry
           key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
@@ -74,7 +81,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: .pytest_cache/
