@@ -32,7 +32,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Success criteria:** Every Phase 0 unit is `done`. CI runs the fast, full, type-check, golden and perf jobs green. ADRs D1–D11 are accepted.
 
 ### U0-01 · Park in-flight chart work and adopt the unit workflow
-- **Status:** done (2026-10-15) · **Notes:** ECharts work parked as `d4d949f` on `origin/wip/echarts-charts` (histogram-bin warning in the commit body). The NFL config edits, metadata churn, `poetry.lock` and `.vscode` edits were discarded, and local `feature/viz_refactor` was deleted (never on origin; tree identical to `main`). **Deviation:** the new CI lint (unpinned ruff 0.17) also formats Python code blocks in Markdown, and `main` was already red on it, so the code blocks in `CONTRIBUTING.md` and `docs/REFACTOR_PLAN.md` were reformatted (whitespace only) to get this PR green; ruff 0.11 is unaffected. U0-02 still owns pinning ruff. PR and merge SHA: backfilled by the next unit. · **Size:** S · **Depends on:** none · **Resolves:** F-05
+- **Status:** done (2026-10-15) · **Notes:** ECharts work parked as `d4d949f` on `origin/wip/echarts-charts` (histogram-bin warning in the commit body). The NFL config edits, metadata churn, `poetry.lock` and `.vscode` edits were discarded, and local `feature/viz_refactor` was deleted (never on origin; tree identical to `main`). **Deviation:** the new CI lint (unpinned ruff 0.17) also formats Python code blocks in Markdown, and `main` was already red on it, so the code blocks in `CONTRIBUTING.md` and `docs/REFACTOR_PLAN.md` were reformatted (whitespace only) to get this PR green; ruff 0.11 is unaffected. U0-02 still owns pinning ruff. PR #29, merged as `85f8697`. · **Size:** S · **Depends on:** none · **Resolves:** F-05
 - **Goal:** Move the uncommitted ECharts work to its own branch, sync `main`, and commit the planning documents so the unit workflow exists on `main`.
 - **Context:** `git status` on `feature/viz_refactor`. That branch's *committed* work is already on `main` (tree-identical to local `main`; `origin/main` adds 4 Dependabot merges). F-12: the parked histogram uses percentile bins and must not ship as-is.
 - **Assumptions to confirm:**
@@ -50,7 +50,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `docs: adopt unit workflow and add refactor plan, review findings and walkthrough`
 
 ### U0-02 · Make CI lint match local tooling
-- **Status:** todo · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-01 (lint part)
+- **Status:** done (2026-10-15) · **Notes:** The lint job installs the ruff version read from `poetry.lock`; the pre-commit rev is aligned to `v0.11.13`. **Deviation:** all four actions moved to Node 24 majors (checkout v7, setup-python v7, cache v6, upload-artifact v7), not just checkout and setup-python. PR number and merge SHA: backfilled by the next unit. · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-01 (lint part)
 - **Goal:** The CI lint job uses the ruff version pinned in `poetry.lock`, and actions run on Node 24.
 - **Context:** F-01. `.github/workflows/ci.yml:22` runs an unpinned `pip install ruff`. `.pre-commit-config.yaml` pins `v0.11.10`.
 - **Assumptions to confirm:**
@@ -110,6 +110,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - The build backend: `hatchling` or `uv_build`. **Ask the user.**
   - `uv lock` resolves the same versions as `poetry.lock` for direct dependencies. Diff `uv pip freeze` against `poetry export` and explain each difference.
   - The dev group maps to `[dependency-groups] dev`, and Dependabot supports the `uv` ecosystem for this repo.
+- **Note from U0-02:** the repo has no `.github/dependabot.yml`. Add one with the `uv` and `github-actions` ecosystems when the Dependabot ecosystem moves.
 - **Scope:** In: the pyproject conversion, `uv.lock`, deleting `poetry.lock`, CI on `astral-sh/setup-uv` with `uv sync --frozen`, the lint job pinned through the lock, doc and CLAUDE.md command updates. Out: version upgrades beyond what resolution forces.
 - **Steps:**
   1. Convert the metadata, scripts and groups.
@@ -127,6 +128,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - Which tests touch the network (seaborn, sklearn and OpenML loaders).
   - Per-file runtimes (`--durations=0`), to classify `slow`.
   - A fast-gate time target. Propose one from the measurements.
+- **Note from U0-02:** the test job's `upload-artifact` step uploads the hidden `.pytest_cache/`, which the action skips by default, so no artifact is stored. Fix it in the CI changes here (`include-hidden-files: true` or another path).
 - **Scope:** In: marker registration with `--strict-markers`, a collection hook that fails unmarked tests, marking via `pytestmark` per module, and CI jobs for the fast gate and the full suite. Out: speeding up slow tests.
 - **Acceptance:** Collection fails for an unmarked test (proved with a temporary test). The fast-gate time is recorded. Both CI jobs are green.
 - **Commit:** `test: classify tests by tier and add a fast gate`
