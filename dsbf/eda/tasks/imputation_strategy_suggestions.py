@@ -243,6 +243,7 @@ class ImputationStrategySuggestions(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — imputation suggestions skipped.",
                     excluded,
+                    data={"suggestions": {}},
                 )
                 return
 

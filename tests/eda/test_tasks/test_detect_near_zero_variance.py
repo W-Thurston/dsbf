@@ -55,8 +55,9 @@ def test_skips_non_numeric_columns(tmp_path) -> None:
 
     assert result.status == "success"
     # infer_types classifies "id" and "category" as non-continuous.
-    # get_columns_by_intent returns 0 eligible cols → make_empty_result fires.
-    assert result.data == {}
+    # get_columns_by_intent returns 0 eligible cols → make_empty_result fires,
+    # which keeps the task's data key with an empty value.
+    assert result.data == {"low_variance_columns": {}}
     assert result.recommendations is None
 
 

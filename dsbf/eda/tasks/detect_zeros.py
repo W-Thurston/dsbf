@@ -59,6 +59,7 @@ class DetectZeros(BaseTask):
                 self.output = self.make_empty_result(
                     "No continuous columns found — zero detection skipped.",
                     excluded,
+                    data={"zero_counts": {}, "zero_percentages": {}, "zero_flags": {}},
                 )
                 return
 

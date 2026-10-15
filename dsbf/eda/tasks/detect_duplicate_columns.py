@@ -57,6 +57,7 @@ class DetectDuplicateColumns(BaseTask):
                 self.output = self.make_empty_result(
                     "No columns found — duplicate column detection skipped.",
                     excluded,
+                    data={"duplicate_column_pairs": []},
                 )
                 return
 
