@@ -66,7 +66,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `ci: pin ruff to the locked version and move actions to Node 24`
 
 ### U0-03 · Fix the five failing tests
-- **Status:** done (2026-10-15) · **Notes:** `make_empty_result` takes a `data` argument, and the 18 fixed-key tasks pass their real empty shape (30 per-column tasks keep `{}`). **Deviation:** the five failures had four causes, not one: only the two bimodal tests were the empty-shape bug. The normality and encoding failures were test setup (no `infer_types`; a task built without its registry name), and the memory test needed the helper to accept a duck-typed stand-in. New `test_empty_results.py` pins the 18 shapes. PR number and merge SHA: backfilled by the next unit. · **Size:** M · **Depends on:** U0-02 · **Resolves:** F-03
+- **Status:** done (2026-10-15) · **Notes:** `make_empty_result` takes a `data` argument, and the 18 fixed-key tasks pass their real empty shape (30 per-column tasks keep `{}`). **Deviation:** the five failures had four causes, not one: only the two bimodal tests were the empty-shape bug. The normality and encoding failures were test setup (no `infer_types`; a task built without its registry name), and the memory test needed the helper to accept a duck-typed stand-in. New `test_empty_results.py` pins the 18 shapes. PR #32, merged as `fb6d825`. · **Size:** M · **Depends on:** U0-02 · **Resolves:** F-03
 - **Goal:** `pytest` passes locally and in CI on 3.12 and 3.13.
 - **Context:** F-03. `BaseTask.make_empty_result()` (`dsbf/core/base_task.py:392`) returns `data={}`, which drops task-specific keys. `tests/helpers/context_utils.py:51` requires registered task classes.
 - **Assumptions to confirm:**
@@ -82,7 +82,6 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(core): keep task-specific empty result shapes and repair failing tests`
 
 ### U0-04 · Clear the Dependabot backlog
-- **Note from U0-03:** the Python 3.14 test job (non-blocking) fails at install because scipy 1.16.0 has no 3.14 build. Decide here whether a scipy bump fixes it or 3.14 stays experimental.
 - **Status:** todo · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
 - **Goal:** No stale Dependabot PRs; dependency majors are verified or declined with reasons.
 - **Context:** Open as of 2026-10-15:
@@ -91,14 +90,26 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - #23 tornado
   - #24 form-data, #25 axios, #27 postcss, #28 nanoid (all in the frontend)
   - #26 pillow
+- **How the packages are reached (checked in the lock on 2026-10-15):**
+  - `tornado` is dev-only (through `ipykernel` and `jupyter-client`). `pillow` comes in through `matplotlib` only.
+  - `fastapi` 0.135.1 declares `starlette >=0.46.0` with no upper bound, so FastAPI doesn't block starlette 1.x on paper. A smoke test still has to confirm it.
+  - `pyarrow` is a direct dependency (`^20.0.0`) that no package in the lock requires and no code imports. Check whether the polars and pandas conversions need it before bumping the major.
+  - In the frontend, `axios` is the only direct dependency. `form-data`, `nanoid` and `postcss` are transitive, so those three PRs change the lockfile only.
 - **Assumptions to confirm:**
   - The list is still current (`gh pr list`).
-  - **Ask the user** whether this unit may merge Dependabot PRs itself, or should only prepare them.
+  - **Decided by the user on 2026-10-15:** this unit may merge the Dependabot PRs itself (squash merge, as the history does). Limits: only the open Dependabot PRs listed here; never merge on a red lint job or a red 3.12 or 3.13 test job (3.14 is non-blocking); a major goes in only after its smoke checks pass.
   - The FastAPI version in the lock supports starlette 1.x. If not, close #22 with a note.
+  - The Python 3.14 test job fails at install because scipy 1.16.0 has no 3.14 build (seen in U0-03). Decide whether a scipy bump fixes it or 3.14 stays experimental, and record the answer.
 - **Scope:** In: rebasing (`@dependabot rebase`), verification, merging or closing, and any `pyproject.toml` constraint change needed for pyarrow. Out: unrelated upgrades.
 - **Steps:**
-  1. Handle patch and minor PRs first: rebase, wait for green CI, merge.
-  2. For each major, check out the branch, run `pytest`, `dsbf quickstart titanic`, and an API smoke test (`uvicorn` plus `curl /health` and `/api/datasets`). Then merge, or close with the reason.
+  1. Merge in this order, one at a time. The PRs share `poetry.lock` or `package-lock.json`, so after each merge comment `@dependabot rebase` on the next PR and wait for green CI before merging it. The order goes from lowest to highest risk, with the PRs that are likeliest to be declined last:
+     1. #23 tornado 6.5.5 → 6.5.7: patch, dev-only. CI is enough.
+     2. #26 pillow 12.2 → 12.3: minor, reached only through matplotlib. Run `dsbf quickstart titanic` and check that figures are written.
+     3. #24 form-data, #28 nanoid, #27 postcss: patch bumps of transitive frontend packages (lockfile only). Run `npm ci && npm run build`.
+     4. #25 axios 1.15 → 1.18: minor, the one direct frontend dependency (its `package.json` range changes). Run `npm ci && npm run build`, then load the dashboard against a running API and open a dataset page.
+     5. #20 pyarrow 20 → 23: major. Raise the `pyproject.toml` constraint if the PR needs it. Run `pytest` and `dsbf quickstart titanic`.
+     6. #22 starlette 0.52 → 1.3: major, last because it is the likeliest to be declined. Run `pytest` and the API smoke test (`uvicorn`, then `curl /health` and `/api/datasets`). Close with a note if it is incompatible.
+  2. For each major (5 and 6), check out the PR branch and run the checks listed there before merging. Merge, or close with the reason.
   3. Record outcomes in the close-out notes.
 - **Acceptance:** `gh pr list --author app/dependabot` shows no PR older than this unit. `main` CI is green after the merges.
 - **Commit:** `chore(deps): record dependency backlog outcomes` (the close-out commit; the dependency changes come from the merged PRs)
@@ -136,7 +147,6 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U0-07 · Run tests hermetically from a temporary directory
 - **Status:** todo · **Size:** M · **Depends on:** U0-06 · **Resolves:** F-02, F-31
-- **Note from U0-03:** a running pytest deletes run directories under the shared `dsbf/outputs/` (a CLI run overlapped a test run and lost its output). Acceptance should include that a test run leaves other runs' output directories alone.
 - **Goal:** The test suite and DSBF itself run from any directory without touching the developer's DB, outputs or tracked files.
 - **Context:**
   - F-02: `tests/conftest.py:27` sets an ignored `engine.output_path`, and no `DSBF_DB_PATH` is set.
@@ -144,6 +154,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Assumptions to confirm:**
   - The full list of CWD-relative package-data reads. Grep `Path("dsbf/`, `open("dsbf/`, and `"dsbf/` string literals.
   - Which tests depend on the CWD being the repo root.
+- **Note from U0-03:** a running pytest deletes run directories under the shared `dsbf/outputs/` (a CLI run overlapped a test run and lost its output). Acceptance should include that a test run leaves other runs' output directories alone.
 - **Scope:** In: an autouse session fixture (tmp `DSBF_DB_PATH`, `DSBF_AUTO_EXPORT_METADATA=0`, `chdir` to a tmp dir); fixing `clean_engine_run` to pass `output_dir`; `importlib.resources` for every package-data **read**; making a missing tip non-fatal in `get_recommendation_tip`. Out: moving output, DB or metadata **write** locations (U1-04).
 - **Steps:**
   1. Add the fixture.
