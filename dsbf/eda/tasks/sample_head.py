@@ -44,6 +44,7 @@ class SampleHead(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — sample head skipped.",
                     excluded,
+                    data={"sample": {}},
                 )
                 return
 

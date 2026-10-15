@@ -50,6 +50,7 @@ class SampleTail(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — sample tail skipped.",
                     excluded,
+                    data={"sample": {}},
                 )
                 return
 

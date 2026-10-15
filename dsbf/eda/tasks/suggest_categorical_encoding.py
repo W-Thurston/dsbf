@@ -69,6 +69,7 @@ class SuggestCategoricalEncoding(BaseTask):
                 self.output = self.make_empty_result(
                     "No categorical columns found — encoding suggestions skipped.",
                     excluded,
+                    data={"encoding_suggestions": {}},
                 )
                 return
 

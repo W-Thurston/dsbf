@@ -393,6 +393,7 @@ class BaseTask(ABC):
         self,
         message: str,
         excluded: dict[str, str] | None = None,
+        data: dict[str, Any] | None = None,
     ) -> TaskResult:
         """
         Build a success TaskResult for the zero-eligible-columns case.
@@ -410,16 +411,24 @@ class BaseTask(ABC):
             excluded: dict of excluded columns from
                 ``get_columns_by_intent()``. Included in metadata when
                 provided.
+            data: The task's empty ``data`` payload. It must have the same
+                top-level keys as the task's normal result (with empty or
+                zero values), so consumers such as the dashboard and
+                dependent tasks can read them without a ``KeyError``.
+                Defaults to ``{}``, which is correct only for tasks whose
+                ``data`` is a per-column mapping.
 
         Returns:
-            TaskResult with empty data and the provided summary message.
+            TaskResult with the empty data and the provided summary message.
 
         Example::
 
             df, matched_cols, excluded = self.setup_run("'continuous'")
             if not matched_cols:
                 self.output = self.make_empty_result(
-                    "No continuous columns found.", excluded
+                    "No continuous columns found.",
+                    excluded,
+                    data={"vif_scores": {}, "collinear_columns": []},
                 )
                 return
         """
@@ -430,7 +439,7 @@ class BaseTask(ABC):
             name=self.name,
             status="success",
             summary={"message": message},
-            data={},
+            data=data if data is not None else {},
             metadata=meta,
         )
 

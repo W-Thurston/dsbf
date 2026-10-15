@@ -126,6 +126,7 @@ class ComputeMutualInformation(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — mutual information skipped.",
                     excluded,
+                    data={"mi_scores": {}},
                 )
                 return
 
