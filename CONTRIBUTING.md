@@ -101,11 +101,11 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
 @register_task(
     display_name="My New Task",
     description="One sentence describing what this task detects.",
-    depends_on=["infer_types"],          # tasks that must run first
-    profiling_depth="standard",          # basic | standard | full
-    stage="eda",                         # eda | modeling
+    depends_on=["infer_types"],  # tasks that must run first
+    profiling_depth="standard",  # basic | standard | full
+    stage="eda",  # eda | modeling
     domain="core",
-    runtime_estimate="fast",             # fast | medium | slow
+    runtime_estimate="fast",  # fast | medium | slow
     expected_semantic_types=["continuous"],  # filters matched_cols
 )
 class MyNewTask(BaseTask):
@@ -326,5 +326,6 @@ regresses each feature against all others without an intercept by default. Witho
 of actual collinearity. Always use:
 ```python
 from statsmodels.tools import add_constant
+
 numeric_df_with_const = add_constant(numeric_df, has_constant="add")
 ```
