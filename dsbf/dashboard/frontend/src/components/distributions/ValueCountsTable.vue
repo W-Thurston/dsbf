@@ -10,7 +10,7 @@
           <tr>
             <th class="th-val">Value</th>
             <th class="th-num">Count</th>
-            <th class="th-num">%</th>
+            <th class="th-num">% of column</th>
             <th class="th-bar" title="Bar width shows frequency relative to the most common value in this column">Relative Freq</th>
           </tr>
         </thead>
@@ -52,6 +52,13 @@ const props = defineProps({
 
 const totalUnique = computed(() => props.tasks.summarize_unique?.data?.[props.column] ?? null)
 
+// True total rows for whole-column percentage.
+// summarize_value_counts only stores top_k values, so summing its entries
+// would undercount. Use num_rows from dataset shape instead.
+const numRows = computed(() =>
+  props.tasks.summarize_dataset_shape?.data?.num_rows ?? null
+)
+
 const dominanceNote = computed(() => {
   const dom = props.tasks.detect_single_dominant_value?.data?.[props.column]
   if (!dom) return null
@@ -73,16 +80,17 @@ const rows = computed(() => {
 
   const entries = Object.entries(vc)
     .filter(([, v]) => typeof v === 'number')
-    .sort((a, b) => b[1] - a[1])  // count descending - most common first
+    .sort((a, b) => b[1] - a[1])
 
-  const total   = entries.reduce((s, [, n]) => s + n, 0)
+  // Use true row count for whole-column percentages; fall back to entry sum
+  const denom   = numRows.value ?? entries.reduce((s, [, n]) => s + n, 0)
   const topN    = entries.slice(0, props.maxRows)
   const maxCount = topN[0]?.[1] ?? 1
 
   return topN.map(([val, count]) => ({
     value:    String(val),
     count,
-    pct:      total > 0 ? `${((count / total) * 100).toFixed(1)}%` : '-',
+    pct:      denom > 0 ? `${((count / denom) * 100).toFixed(1)}%` : '-',
     barWidth: `${((count / maxCount) * 100).toFixed(1)}%`,
   }))
 })
