@@ -1,0 +1,59 @@
+name: Performance
+
+# The benchmark profiles four datasets end to end (kitchen50k alone takes over ten
+# minutes) and compares each stage, task and dashboard payload with the committed
+# baseline in tests/perf/baseline.json, so it stays out of the CI workflow. It runs
+# nightly, on demand, and on pull requests that carry the `perf` label.
+#
+# The baseline must come from this runner type: download the `perf-results` artifact of a
+# run on main and commit perf.json as tests/perf/baseline.json.
+on:
+  schedule:
+    - cron: "47 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+# The job only reads the repository and uploads an artifact.
+permissions:
+  contents: read
+
+jobs:
+  perf:
+    name: Performance
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'perf')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # Records the numbers even when there is no baseline yet, or when a scenario
+      # regressed, so the artifact is always there to inspect or promote.
+      - name: Measure and compare with the baseline
+        run: uv run --no-sync pytest -m perf --tb=short -q --junitxml=perf-results/junit.xml
+
+      - name: Summarise
+        if: always()
+        run: |
+          if [ -f perf-results/perf.md ]; then
+            { echo "### Performance against tests/perf/baseline.json"; echo; cat perf-results/perf.md; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: perf-results
+          path: perf-results/
