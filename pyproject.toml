@@ -54,7 +54,7 @@ dev = [
     "pytest-order>=1.3.0,<2",
     "ruff>=0.11.10,<0.18",
     "pre-commit>=4.2.0,<5",
-    "ipykernel>=6.29.5,<7",
+    "ipykernel>=6.29.5,<8",
     "pyrefly>=1.1.1,<2",
 ]
 
