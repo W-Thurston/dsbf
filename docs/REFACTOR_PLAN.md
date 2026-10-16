@@ -1,6 +1,6 @@
 # DSBF Refactor Plan
 
-**Status:** proposal, 2026-10-15
+**Status:** proposal, 2026-10-15; decisions D1–D11 accepted 2026-10-16 ([ADRs](adr/README.md))
 **Inputs:** [`REVIEW_FINDINGS.md`](REVIEW_FINDINGS.md) (fixes F-01 to F-39, next steps N-*),
 [`docs/WALKTHROUGH.md`](WALKTHROUGH.md) (measured practice run), and the maintainer's goals below.
 
@@ -514,7 +514,7 @@ These are delivered as part of the check migrations in Phase 4, not as a separat
 | Calibration | FP/FN rates per check | Nightly |
 | Install smoke test | Build the wheel → install in a clean venv → run `dsbf check` **from a temp directory** → `dsbf dashboard` health check | Every PR (fast) |
 | Frontend | Vitest, ESLint, `vite build`, one Playwright test against a fixture store | Every PR |
-| Types and lint | ruff (`E,W,F,I,UP,B,BLE,SIM,PERF,PTH,RET,ARG,S`), pyrefly (strict on new packages, baseline on legacy) | Every PR |
+| Types and lint | ruff (`E,W,F,I,UP,B,BLE,SIM,PERF,PTH,RET,ARG,S`), pyrefly (`default` preset, baseline for legacy code) | Every PR |
 
 ### Performance budgets (targets, to be confirmed by Phase 2 benchmarks)
 
@@ -545,7 +545,7 @@ The goal is a trustworthy baseline to measure the refactor against. This is the 
 - Escape `v-html` (F-14). Remove or fix the percentile histogram (F-12). Park the viz branch (A3).
 - Clean up repo clutter (F-28). README corrections (F-27).
 - **Capture baselines:** golden findings snapshots for all archetypes plus titanic and kitchen5k; `tests/perf/` from the practice-run scripts; the adversarial frame as a fixture.
-- **Write ADRs** for decisions D1–D11 ([§13](#13-decisions-to-record-adrs)).
+- **Write ADRs** for decisions D1–D11 ([§13](#13-decisions-adrs)), now in [`docs/adr/`](adr/README.md).
 
 **Exit:** CI green, baselines committed, ADRs merged.
 
@@ -638,21 +638,24 @@ case the incremental approach in `REVIEW_FINDINGS.md` still applies.
 
 ---
 
-## 13. Decisions to record (ADRs)
+## 13. Decisions (ADRs)
 
-| # | Decision | Recommendation | Main alternative considered |
-|---|---|---|---|
-| D1 | Layering | Library-first pure core; everything else optional | Keep the engine coupled to storage and files |
-| D2 | Primary output | `Finding` with typed evidence; bulky outputs as artifacts | Free-form per-task `data` dicts (today) |
-| D3 | Data representation | Polars/Arrow internally, NumPy at the statistics boundary, pandas at edges | Standardise on pandas (the right call for incremental fixes, not for a rebuild) |
-| D4 | Warehouse pushdown | Ibis behind the `Source`/profile interface (T3) | Hand-written SQL per dialect; DuckDB-only federation |
-| D5 | Contracts | pydantic v2, JSON Schema, generated TS, semver `schema_version` | Dataclasses plus hand-written TS |
-| D6 | Failure semantics | Report-only, isolated checks, explicit statuses and notes; opt-in policies | Fail-fast; built-in default gate |
-| D7 | Plugins | Entry points plus local dirs; same contract as core | Import side effects (today) |
-| D8 | Storage | SQLAlchemy Core plus Alembic; SQLite then Postgres; fsspec artifacts | Raw sqlite3 (today); DuckDB as the store |
-| D9 | Packaging | Single distribution with extras, `src/` layout | Multiple packages (`dsbf-core`, `dsbf-server`) |
-| D10 | Naming | Rename to "check" outright; no alias, since there are no external users (A2) | Keep "task" |
-| D11 | Toolchain | uv (dependencies and builds), pytest tier markers, pyrefly, pnpm with ESLint and Vitest. Decided 2026-10-15 to match the maintainer's other projects | Poetry and npm, no type checker |
+All eleven decisions were accepted on 2026-10-16 (D11 was decided on 2026-10-15), without amendment.
+Each is recorded in [`docs/adr/`](adr/README.md). The table summarises them; the ADR holds the context, alternatives and consequences.
+
+| # | Decision | Accepted | Main alternative considered | ADR |
+|---|---|---|---|---|
+| D1 | Layering | Library-first pure core; everything else optional | Keep the engine coupled to storage and files | [0001](adr/0001-library-first-layering.md) |
+| D2 | Primary output | `Finding` with typed evidence; bulky outputs as artifacts | Free-form per-task `data` dicts (today) | [0002](adr/0002-findings-as-primary-output.md) |
+| D3 | Data representation | Polars/Arrow internally, NumPy at the statistics boundary, pandas at edges | Standardise on pandas (the right call for incremental fixes, not for a rebuild) | [0003](adr/0003-polars-arrow-data-representation.md) |
+| D4 | Warehouse pushdown | Ibis behind the `Source`/profile interface (T3) | Hand-written SQL per dialect; DuckDB-only federation | [0004](adr/0004-ibis-warehouse-pushdown.md) |
+| D5 | Contracts | pydantic v2, JSON Schema, generated TS, semver `schema_version` | Dataclasses plus hand-written TS | [0005](adr/0005-pydantic-contracts.md) |
+| D6 | Failure semantics | Report-only, isolated checks, explicit statuses and notes; opt-in policies | Fail-fast; built-in default gate | [0006](adr/0006-report-only-failure-semantics.md) |
+| D7 | Plugins | Entry points plus local dirs; same contract as core | Import side effects (today) | [0007](adr/0007-entry-point-plugins.md) |
+| D8 | Storage | SQLAlchemy Core plus Alembic; SQLite then Postgres; fsspec artifacts | Raw sqlite3 (today); DuckDB as the store | [0008](adr/0008-sqlalchemy-alembic-fsspec-storage.md) |
+| D9 | Packaging | Single distribution with extras, `src/` layout | Multiple packages (`dsbf-core`, `dsbf-server`) | [0009](adr/0009-single-distribution-with-extras.md) |
+| D10 | Naming | Rename to "check" outright; no alias, since there are no external users (A2) | Keep "task" | [0010](adr/0010-check-naming.md) |
+| D11 | Toolchain | uv (dependencies and builds), pytest tier markers, pyrefly, pnpm with ESLint and Vitest. Decided 2026-10-15 to match the maintainer's other projects | Poetry and npm, no type checker | [0011](adr/0011-toolchain.md) |
 
 ---
 
