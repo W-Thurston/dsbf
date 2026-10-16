@@ -50,6 +50,13 @@ class DSBFTestDataGenerator:
     def __init__(self, n_rows: int = 5000, random_seed: int = 42):
         self.n_rows = n_rows
         _seed(random_seed)
+        # A separate stream keeps uuids reproducible without shifting the values the
+        # global generators produce for the other columns.
+        self._uuid_rng = random.Random(random_seed)
+
+    def _uuid4(self) -> uuid.UUID:
+        """Return a version 4 uuid drawn from the seeded stream."""
+        return uuid.UUID(int=self._uuid_rng.getrandbits(128), version=4)
 
     def generate(self) -> pd.DataFrame:
         data: dict[str, list[Any]] = {}
@@ -128,7 +135,7 @@ class DSBFTestDataGenerator:
 
     def _generate_high_cardinality_columns(self):
         return {
-            "high_cardinality_uuid": [str(uuid.uuid4()) for _ in range(self.n_rows)],
+            "high_cardinality_uuid": [str(self._uuid4()) for _ in range(self.n_rows)],
             "high_cardinality_random": [
                 f"VAL_{random.randint(1, self.n_rows)}" for _ in range(self.n_rows)
             ],
@@ -138,7 +145,7 @@ class DSBFTestDataGenerator:
         return {
             "user_id": [f"USER_{i:06d}" for i in range(self.n_rows)],
             "transaction_id": [
-                f"TXN_{uuid.uuid4().hex[:8].upper()}" for _ in range(self.n_rows)
+                f"TXN_{self._uuid4().hex[:8].upper()}" for _ in range(self.n_rows)
             ],
             "sequential_id": list(range(1, self.n_rows + 1)),
         }
@@ -161,7 +168,7 @@ class DSBFTestDataGenerator:
                 for i in range(self.n_rows)
             ],
             "hex_encoded": [f"{i:08x}" for i in range(self.n_rows)],
-            "uuid_column": [str(uuid.uuid4()) for _ in range(self.n_rows)],
+            "uuid_column": [str(self._uuid4()) for _ in range(self.n_rows)],
         }
 
     def _generate_outlier_columns(self):
