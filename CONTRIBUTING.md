@@ -57,6 +57,16 @@ Two modifiers can be added to a test: `slow` (more than 5 s on a developer machi
 `network` (needs network access). The fast gate is `unit and not slow`. Select any
 tier with `-m`, for example `uv run pytest -m "integration and not network"`.
 
+### Test isolation
+
+The suite never touches your own runs. `tests/conftest.py` points `DSBF_DB_PATH` at a
+temporary database, turns off the metadata export (`DSBF_AUTO_EXPORT_METADATA=0`), and
+runs the whole session from a temporary working directory. Anything DSBF writes relative
+to the working directory (`dsbf/outputs/`, `dsbf_run.json`) lands there and is deleted
+afterwards. Both variables are forced, so values you export are ignored while tests run.
+Write tests that don't assume the working directory is the repository root: build paths
+from `Path(dsbf.__file__)` or `tmp_path`.
+
 ---
 
 ## Project structure
