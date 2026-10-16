@@ -11,6 +11,10 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, labeled]
 
+# The job only reads the repository and uploads an artifact.
+permissions:
+  contents: read
+
 jobs:
   golden:
     name: Golden runs

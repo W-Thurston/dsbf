@@ -11,12 +11,17 @@ manager to avoid accessing them after the connection is closed.
 
 import contextlib
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 from dsbf.storage.schema import get_connection
+
+logger = logging.getLogger(__name__)
+
+SOURCE_READ_ERROR = "Could not read the source data. See the server log for details."
 
 
 def _row_to_dict(row) -> dict:
@@ -192,8 +197,9 @@ def _load_dataframe(
             else:
                 df = pd.read_csv(str(p), usecols=columns)
             return df
-        except Exception as e:
-            return {"error": str(e)}  # type: ignore[return-value]
+        except Exception:
+            logger.exception("Could not read source file for run %s", run_key)
+            return {"error": SOURCE_READ_ERROR}  # type: ignore[return-value]
 
     # ── Built-in dataset fallback (seaborn / sklearn) ─────────────────────────
     # Look up the dataset name and source from the run config snapshot in the DB
@@ -228,8 +234,9 @@ def _load_dataframe(
             existing = [c for c in columns if c in df.columns]
             df = df[existing] if existing else df
         return df
-    except Exception as e:
-        return {"error": str(e)}  # type: ignore[return-value]
+    except Exception:
+        logger.exception("Could not load dataset %r for run %s", ds_name, run_key)
+        return {"error": SOURCE_READ_ERROR}  # type: ignore[return-value]
 
 
 def get_run_sample(run_key: str, n: int = 10, db_path=None) -> dict | None:

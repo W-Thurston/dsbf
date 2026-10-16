@@ -8,10 +8,13 @@ and the 404 and 400 responses, so a framework upgrade that changes routing,
 validation or file serving shows up here.
 """
 
+import logging
+from types import SimpleNamespace
+
 import pytest
 from fastapi.testclient import TestClient
 
-from dsbf.api import main
+from dsbf.api import db, main
 from dsbf.storage.writer import persist_run_from_dict
 
 pytestmark = pytest.mark.integration
@@ -201,6 +204,44 @@ def test_source_data_endpoints(client):
     ).json()
     assert data["total_rows"] == 3
     assert client.get(f"/api/runs/{RUN_A}/column-data").status_code == 400
+
+
+SECRET = "/srv/private/toy.csv: secret failure detail"
+
+
+def _raise_secret(*args, **kwargs):
+    raise RuntimeError(SECRET)
+
+
+@pytest.mark.parametrize(
+    ("path", "params", "key"),
+    [
+        (f"/api/runs/{RUN_A}/sample", {"n": 2}, "error"),
+        (f"/api/runs/{RUN_A}/column-data", {"cols": ["a", "b"]}, "error"),
+    ],
+)
+def test_source_read_failure_hides_exception_text(
+    client, monkeypatch, caplog, path, params, key
+):
+    monkeypatch.setattr(db.pd, "read_csv", _raise_secret)
+    with caplog.at_level(logging.ERROR, logger="dsbf.api.db"):
+        response = client.get(path, params=params)
+
+    assert response.json()[key] == db.SOURCE_READ_ERROR
+    assert "secret" not in response.text
+    assert SECRET in caplog.text
+
+
+def test_correlation_parse_failure_hides_exception_text(client, monkeypatch, caplog):
+    monkeypatch.setattr(main.db, "get_task", lambda *a, **k: {"data": "not json"})
+    monkeypatch.setattr(main, "_json", SimpleNamespace(loads=_raise_secret))
+    with caplog.at_level(logging.ERROR, logger="dsbf.api.main"):
+        body = client.get(f"/api/runs/{RUN_A}/correlations/a").json()
+
+    assert body["unavailable"] is True
+    assert body["reason"].startswith("Could not parse correlation data")
+    assert "secret" not in body["reason"]
+    assert SECRET in caplog.text
 
 
 def test_figures(client):
