@@ -15,6 +15,8 @@ from dsbf.utils.task_utils import (
     write_task_metadata,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def test_is_diagnostic_task():
     assert is_diagnostic_task("IdentifyBottleneckTasks") is True

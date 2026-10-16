@@ -2,8 +2,12 @@
 
 import json
 
+import pytest
+
 from dsbf.eda.task_registry import TASK_REGISTRY
 from dsbf.utils.task_utils import write_task_metadata
+
+pytestmark = pytest.mark.unit
 
 
 def test_all_task_names_are_unique():

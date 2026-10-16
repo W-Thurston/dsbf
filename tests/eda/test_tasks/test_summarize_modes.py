@@ -2,10 +2,13 @@
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.summarize_modes import SummarizeModes
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_single_mode_returned_as_scalar(tmp_path) -> None:
@@ -84,3 +87,35 @@ def test_no_plots_generated(tmp_path) -> None:
 
     assert result.status == "success"
     assert result.plots is None
+
+
+def test_all_null_column_has_no_mode(tmp_path) -> None:
+    """An all-null column maps to None and is named in the result metadata."""
+    df = pd.DataFrame({"a": [1, 1, 2], "empty": [None, None, None]})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeModes,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
+
+    assert result.status == "success"
+    assert result.data["a"] == 1
+    assert result.data["empty"] is None
+    assert result.metadata["columns_without_mode"] == ["empty"]
+    assert "no mode" in result.summary["message"]
+
+
+def test_all_null_polars_column_has_no_mode(tmp_path) -> None:
+    df = pl.DataFrame({"a": [1, 1, 2], "empty": pl.Series([None] * 3, dtype=pl.Int64)})
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=SummarizeModes,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, SummarizeModes)
+
+    assert result.status == "success"
+    assert result.data["empty"] is None

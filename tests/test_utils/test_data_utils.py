@@ -1,9 +1,12 @@
 # tests/test_utils/test_data_utils.py
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from dsbf.utils.data_utils import data_sampling
+from dsbf.utils.data_utils import data_sampling, ranked_value_counts
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.parametrize(
@@ -35,3 +38,26 @@ def test_data_sampling_behavior(n_rows, strategy, expected_rows):
         assert "strategy" in info
     else:
         assert info is None
+
+
+def test_ranked_value_counts_orders_by_count_then_first_appearance():
+    series = pd.Series(["b", "a", "c", "a", "b", "d", "c"])
+    ranked = ranked_value_counts(series)
+    assert list(ranked.index) == ["b", "a", "c", "d"]
+    assert list(ranked.to_numpy()) == [2, 2, 2, 1]
+
+
+def test_ranked_value_counts_breaks_large_ties_by_first_appearance():
+    # Every value occurs twice, so the tie-break decides the whole ranking.
+    values = np.random.default_rng(0).permutation(np.repeat(np.arange(5000.0), 2))
+    ranked = ranked_value_counts(pd.Series(values))
+    first_seen = list(dict.fromkeys(values))
+    assert list(ranked.index) == first_seen
+
+
+def test_ranked_value_counts_keeps_nulls_only_when_asked():
+    series = pd.Series([1.0, None, None, 2.0])
+    assert ranked_value_counts(series).sum() == 2
+    with_nulls = ranked_value_counts(series, dropna=False)
+    assert with_nulls.iloc[0] == 2
+    assert pd.isna(with_nulls.index[0])

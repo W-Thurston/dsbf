@@ -18,6 +18,8 @@ from dsbf.eda.tasks._time_series_utils import (
     validate_time_series_config,
 )
 
+pytestmark = pytest.mark.unit
+
 # ── Minimal task stub for testing helpers that need a task_instance ───────────
 
 
@@ -36,7 +38,7 @@ class _StubTask:
         return None
 
     def get_shared_param(self, block_name, key, default=None):
-        return self.config.get("tasks", {}).get(block_name, {}).get(key, default)
+        return self.config.get(block_name, {}).get(key, default)
 
 
 # ── TimeSeriesConfig ──────────────────────────────────────────────────────────
@@ -70,14 +72,12 @@ def test_read_config_disabled_by_default() -> None:
 def test_read_config_reads_values() -> None:
     task = _StubTask(
         config={
-            "tasks": {
-                "time_series": {
-                    "enabled": True,
-                    "datetime_index_column": "event_date",
-                    "value_columns": ["revenue", "sessions"],
-                    "frequency": "W",
-                    "group_by_column": None,
-                }
+            "time_series": {
+                "enabled": True,
+                "datetime_index_column": "event_date",
+                "value_columns": ["revenue", "sessions"],
+                "frequency": "W",
+                "group_by_column": None,
             }
         }
     )
@@ -90,9 +90,7 @@ def test_read_config_reads_values() -> None:
 
 def test_read_config_empty_string_index_col_treated_as_none() -> None:
     task = _StubTask(
-        config={
-            "tasks": {"time_series": {"enabled": True, "datetime_index_column": ""}}
-        }
+        config={"time_series": {"enabled": True, "datetime_index_column": ""}}
     )
     cfg = read_time_series_config(task)
     assert cfg.index_col is None

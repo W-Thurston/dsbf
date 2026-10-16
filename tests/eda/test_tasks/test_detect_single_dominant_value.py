@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_detect_single_dominant_value.py
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_single_dominant_value import DetectSingleDominantValue
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_dominant_columns_flagged_in_summary(tmp_path) -> None:

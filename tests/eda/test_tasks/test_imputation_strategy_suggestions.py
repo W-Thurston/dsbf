@@ -14,6 +14,8 @@ from dsbf.eda.tasks.imputation_strategy_suggestions import (
 )
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 # ── Unit tests for _select_strategy ───────────────────────────────────────────
 
 

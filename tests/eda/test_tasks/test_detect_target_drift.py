@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_detect_target_drift.py
 
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_target_drift import DetectTargetDrift
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_numeric_target_drift_detected(tmp_path) -> None:

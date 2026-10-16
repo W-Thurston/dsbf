@@ -1,0 +1,42 @@
+name: Golden runs
+
+# The golden suite profiles ten datasets end to end (kitchen5k alone takes about five
+# minutes), so it stays out of the CI workflow. It runs nightly, on demand, and on pull
+# requests that carry the `golden` label.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  golden:
+    name: Golden runs
+    if: >-
+      github.event_name != 'pull_request' ||
+      contains(github.event.pull_request.labels.*.name, 'golden')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Compare runs with the committed snapshots
+        run: uv run --no-sync pytest -m golden --tb=short -q --junitxml=test-results/junit.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: golden-results
+          path: test-results/

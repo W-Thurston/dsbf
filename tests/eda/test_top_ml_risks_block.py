@@ -4,6 +4,8 @@ import json
 
 import pytest
 
+pytestmark = [pytest.mark.integration, pytest.mark.slow, pytest.mark.network]
+
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 def test_top_ml_risks_structure(clean_engine_run):

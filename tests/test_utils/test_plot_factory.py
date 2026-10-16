@@ -9,6 +9,8 @@ from pandas import Series
 
 from dsbf.utils.plot_factory import PlotFactory
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def test_series() -> Series:

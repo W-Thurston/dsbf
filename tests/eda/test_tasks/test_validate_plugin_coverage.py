@@ -3,9 +3,12 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import pytest
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.tasks.validate_plugin_coverage import ValidatePluginCoverageTask
+
+pytestmark = pytest.mark.unit
 
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult
