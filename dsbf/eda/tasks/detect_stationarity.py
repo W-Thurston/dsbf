@@ -111,8 +111,8 @@ class DetectStationarity(BaseTask):
     (< 50 observations). Results on short series should be treated as
     suggestive, not conclusive.
 
-    Configurable parameters
-    (via config["tasks"]["time_series"]["tasks"]["stationarity"]):
+    Configurable parameters (via config["tasks"]["detect_stationarity"]; the
+    shared time series settings live in config["time_series"]):
         alpha (float): Significance threshold. Default: 0.05
         tests (list[str]): Which tests to run. Default: ["adf", "kpss"]
     """

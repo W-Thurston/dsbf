@@ -31,18 +31,16 @@ def _ts_config(
 ) -> dict:
     """Build a minimal config dict with time series enabled."""
     return {
-        "tasks": {
-            "time_series": {
-                "enabled": True,
-                "datetime_index_column": index_col,
-                "value_columns": value_cols or [],
-                "frequency": frequency,
-                "group_by_column": None,
-                "tasks": {
-                    "acf_pacf": {
-                        "max_lags": max_lags,
-                        "alpha": alpha,
-                    },
+        "time_series": {
+            "enabled": True,
+            "datetime_index_column": index_col,
+            "value_columns": value_cols or [],
+            "frequency": frequency,
+            "group_by_column": None,
+            "tasks": {
+                "acf_pacf": {
+                    "max_lags": max_lags,
+                    "alpha": alpha,
                 },
             },
         },
@@ -101,7 +99,7 @@ def test_disabled_returns_success_with_message() -> None:
         current_df=df,
         global_overrides={"output_dir": "/tmp"},
     )
-    ctx.config = {"tasks": {"time_series": {"enabled": False}}}
+    ctx.config = {"time_series": {"enabled": False}}
     result: TaskResult = ctx.run_task(task)
     assert result.status == "success"
     assert result.summary["time_series_enabled"] is False
@@ -116,15 +114,13 @@ def test_missing_index_col_returns_graceful_result() -> None:
         global_overrides={"output_dir": "/tmp"},
     )
     ctx.config = {
-        "tasks": {
-            "time_series": {
-                "enabled": True,
-                "datetime_index_column": None,
-                "value_columns": [],
-                "frequency": None,
-                "group_by_column": None,
-                "tasks": {"acf_pacf": {"max_lags": 10, "alpha": 0.05}},
-            },
+        "time_series": {
+            "enabled": True,
+            "datetime_index_column": None,
+            "value_columns": [],
+            "frequency": None,
+            "group_by_column": None,
+            "tasks": {"acf_pacf": {"max_lags": 10, "alpha": 0.05}},
         },
     }
     result: TaskResult = ctx.run_task(task)
