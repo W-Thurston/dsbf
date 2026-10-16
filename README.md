@@ -1,9 +1,9 @@
 # DSBF — Data Scientist's Best Friend
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
 [![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-d97706)](https://github.com/astral-sh/ruff)
-[![Type checked: Pyrefly](https://img.shields.io/badge/type%20checked-pyrefly-60a5fa)](https://github.com/facebook/pyrefly)
+[![Type checked: Pyrefly](https://img.shields.io/badge/type%20checked-pyrefly-2563eb)](https://pyrefly.org/)
 
 **DSBF is a statistically grounded, workflow-aware profiling engine designed to be a reliable co-pilot at every phase of the data science process.**
 
@@ -90,7 +90,7 @@ cd dsbf
 uv sync
 ```
 
-**Requirements:** Python 3.10+ · [uv](https://docs.astral.sh/uv/) · Optional: Graphviz (DAG visualizations)
+**Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard) · Graphviz (the `dot` executable, for the task-graph image)
 
 ---
 
@@ -100,8 +100,10 @@ uv sync
 
 ```bash
 uv run dsbf profile data.csv
-uv run dsbf profile data.csv --depth full --verbosity debug
+uv run dsbf profile data.csv --depth full --name my_data
 ```
+
+`--depth` defaults to `standard` here (`basic | standard | full`), and `--name` sets the dataset name shown in the dashboard (the default is the file name without its extension).
 
 ### CLI — built-in datasets
 
@@ -113,20 +115,19 @@ uv run dsbf quickstart iris        # sklearn built-in
 ### Python API
 
 ```python
-from dsbf.api import profile_file
+from dsbf.interfaces.api import EDA
 
-results = profile_file("data.csv", depth="standard")
+results = EDA("data.csv").run()   # dict of task name -> TaskResult
 ```
 
 ### In-memory DataFrame
 
 ```python
-from dsbf.api import ProfileEngine
 import pandas as pd
+from dsbf.interfaces.api import EDA
 
-engine = ProfileEngine()
-engine.df = pd.read_csv("data.csv")
-results = engine.run()
+df = pd.read_csv("data.csv")      # a Polars DataFrame works too
+results = EDA(df).run()
 ```
 
 ### Launch the dashboard
@@ -143,8 +144,17 @@ cd dsbf/dashboard/frontend && npm install && npm run dev
 
 ## Profiling depth
 
-| Depth | Tasks | Best for |
+Each depth includes the ones above it. Of the 67 registered tasks, 17 run at `basic`, 54 at `standard` and all of them at `full`.
+
+| Depth | Adds | Best for |
 |---|---|---|
+| `basic` | Shape, nulls, types, duplicates, constant columns, value counts, data quality scoring | Quick triage, large datasets |
+| `standard` | + missingness, distributions and normality, skewness, encoding and binning suggestions, group-difference tests, fuzzy duplicates, time series (when configured), ML readiness | Typical EDA workflow |
+| `full` | + outliers, pairwise associations, mutual information, collinearity (VIF), data leakage, drift, schema validation | Pre-modeling audit |
+
+`dsbf profile` runs at `standard` unless you pass `--depth`. The default config sets `full`, which `dsbf quickstart` and `dsbf run` use.
+
+---|---|---|
 | `basic` | Core shape, nulls, types | Quick triage, large datasets |
 | `standard` | + distributions, outliers, associations | Typical EDA workflow |
 | `full` | + ML readiness, time series, fuzzy duplicates | Pre-modeling audit |
@@ -153,10 +163,17 @@ cd dsbf/dashboard/frontend && npm install && npm run dev
 
 ## Output artifacts
 
-Each run writes to a timestamped directory under `dsbf/outputs/`:
+Each run writes to a timestamped directory under `dsbf/outputs/` (relative to the working directory) and records the run in a SQLite database. The database is `dsbf/dsbf.db` inside the repository unless `DSBF_DB_PATH` points elsewhere.
 
 | File | Description |
 |---|---|
+| `report.json` | All task results — findings, guidance, reliability warnings |
+| `metadata_report.json` | Timing, system info, task diagnostics |
+| `run.log` | Full execution log |
+| `figs/` | Plots as PNG, plus Plotly figures as JSON |
+| `figs/dag.png` | Task execution graph (when `metadata.visualize_dag` is on and Graphviz is installed) |
+
+---|---|
 | `report.json` | All task results — findings, guidance, reliability warnings |
 | `metadata_report.json` | Timing, system info, task diagnostics |
 | `run.log` | Full execution log |
@@ -167,57 +184,76 @@ Each run writes to a timestamped directory under `dsbf/outputs/`:
 
 ## Configuration
 
+`dsbf/config/default_config.yaml` holds every option. A few of them, with their default values:
+
 ```yaml
-# default_config.yaml — key options
 metadata:
-  profiling_depth: "standard"   # basic | standard | full
-  message_verbosity: "info"     # quiet | warn | stage | info | debug
+  profiling_depth: full         # basic | standard | full
+  message_verbosity: debug      # quiet | warn | stage | info | debug
+  visualize_dag: true
 
 engine:
-  backend: "polars"             # polars | pandas
+  backend: polars               # polars | pandas
+
+safety:
+  strict_mode: false            # true: halt on config or task-graph errors
 
 tasks:
   detect_outliers:
-    sensitivity: 0.01
+    method: all                 # all | iqr | zscore | mad | isolation_forest
+    flag_threshold: 0.01
   detect_collinear_features:
     vif_threshold: 10.0
 
 time_series:
   enabled: false
-  index_column: null            # must be set explicitly — DSBF will not guess
+  datetime_index_column: null   # must be set explicitly — DSBF will not guess
 ```
+
+Pass a config of your own with `uv run dsbf run --config my_config.yaml`.
 
 ---
 
 ## Extending DSBF
 
-Tasks are registered with a decorator and discovered automatically:
+Tasks are registered with a decorator. Save this as `custom_plugins/my_domain/numeric_columns.py`:
 
 ```python
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
+from dsbf.eda.task_result import TaskResult
+
 
 @register_task(
-    display_name="My Custom Task",
+    display_name="Numeric Column Count",
+    domain="my_domain",
     depends_on=["infer_types"],
     profiling_depth="standard",
     expected_semantic_types=["continuous"],
 )
-class MyCustomTask(BaseTask):
+class NumericColumnCount(BaseTask):
     def run(self) -> None:
-        df = self.input_data
         matched_cols, _ = self.get_columns_by_intent()
-        # ... your logic here
-        self.output = TaskResult(name=self.name, status="success", ...)
+        self.output = TaskResult(
+            name=self.name,
+            status="success",
+            summary={"numeric_columns": len(matched_cols)},
+            data={"columns": matched_cols},
+        )
 ```
 
-Load custom task directories via config:
+Then point the config at the directory (a path relative to the working directory) and include the task's domain, because the default config only runs tasks from the `core` domain:
 
 ```yaml
 task_groups:
   - core
   - ./custom_plugins/my_domain/
+
+task_selection:
+  include_domains: [core, my_domain]
 ```
+
+The built-in `core` group is loaded from `dsbf/custom_plugins/core`. `dsbf/custom_plugins/example_plugin_domain/` holds a minimal example.
 
 ---
 
@@ -237,28 +273,23 @@ DSBF ships with a purpose-built validation suite covering eight dataset archetyp
 | `wide` | 100-column scale — column browser, heatmap, pairwise associations |
 
 ```bash
-# Run the full validation suite
-uv run python tests/validation/run_validation.py
+# Generate the datasets into tests/datasets/ (all of them, or --only near_clean ...)
+uv run python tests/generators/dsbf_test_dataset_generator.py --only near_clean
 
-# Run a single dataset
-uv run python tests/validation/run_validation.py --datasets near_clean --skip-generate
+# Profile one, then validate its report (pass the report path printed by the run)
+uv run dsbf profile tests/datasets/near_clean.csv --name near_clean
+uv run python tests/validation/run_validation.py --datasets near_clean \
+    --skip-generate --report dsbf/outputs/<timestamp>/report.json
 ```
+
+Without `--report`, the script picks the most recently written report in `dsbf/outputs/`, which may belong to a different dataset.
 
 ---
 
 ## Roadmap
 
-**Near-term — designed, partially built:**
-- [ ] Time Series tab — complete ACF/PACF, stationarity, and decomposition views with friendly empty state when no datetime index is configured
-- [ ] Visualization refactor — D3-native chart components replacing the current static SVG approach; richer interactivity in the Distributions and Relationships tabs
-- [ ] Findings tab — cross-column finding explorer with column-level deep-dive linking
+The plan for what comes next, phase by phase, is in [`ROADMAP.md`](ROADMAP.md). The design behind it is in [`docs/REFACTOR_PLAN.md`](docs/REFACTOR_PLAN.md), and [`docs/architecture.md`](docs/architecture.md) describes how the code works today.
 
-**Medium-term — direction clear, scope open:**
-- [ ] Domain packs — pre-configured task sets and thresholds for specific domains (healthcare, financial, NLP)
-- [ ] Dataset comparison — profile two datasets side-by-side to detect drift, schema changes, or distribution shift across time windows
-- [ ] Pipeline hooks — lightweight integrations for dbt, Airflow, and Prefect to run DSBF as a data quality gate
-
-**Vision:**
 DSBF is designed to eventually cover the full data science workflow — EDA today, then modeling preparation, modeling, inference, and tradeoff analysis — all under the same statistically honest, reproducible framework. Each phase will follow the same principle: the reproducible parts of data science work should be standardized so practitioners can focus their judgment on the parts that actually require it.
 
 ---
@@ -268,16 +299,16 @@ DSBF is designed to eventually cover the full data science workflow — EDA toda
 Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for conventions on task structure, commit style, and the review process.
 
 ```bash
-# Run tests
+# Run the fast gate (about 30 seconds), then the full suite (about 5 minutes, needs network)
+uv run pytest -m "unit and not slow"
 uv run pytest
 
-# Run validation suite
-uv run python tests/generators/dsbf_test_dataset_generator.py
-uv run python tests/validation/run_validation.py
-
-# Lint
+# Lint and format
 uv run ruff check .
+uv run ruff format --check .
 ```
+
+The validation suite is described above.
 
 All contributions must include docstrings, pass Ruff linting (`max-line-length = 88`), and include or update relevant validation assertions.
 

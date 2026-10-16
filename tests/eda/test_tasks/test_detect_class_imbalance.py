@@ -2,10 +2,13 @@
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_class_imbalance import DetectClassImbalance
 from tests.helpers.context_utils import make_ctx_and_task
+
+pytestmark = pytest.mark.unit
 
 
 def test_balanced_dataset_not_flagged(tmp_path) -> None:

@@ -9,6 +9,8 @@ import pytest
 from dsbf.eda.tasks.generate_dataset_summary_plots import GenerateDatasetSummaryPlots
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult
 

@@ -7,8 +7,6 @@ import typer
 import yaml
 
 from dsbf.config import load_default_config
-
-# from dsbf.dashboard.render_dashboard import render_and_show
 from dsbf.eda.profile_engine import ProfileEngine
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -103,19 +101,3 @@ def quickstart(
 def version() -> None:
     """Print DSBF version and exit."""
     typer.echo(f"DSBF version: {get_dsbf_version()}")
-
-
-# @app.command()
-# def render_dashboard(
-#     output_dir: str = typer.Argument(
-#         ...,
-#         help="Path to output folder with report.json",
-#     ),
-#     save_html: bool = typer.Option(
-#         False,
-#         "--save-html",
-#         help="Export to standalone HTML instead of serving.",
-#     ),
-# ) -> None:
-#     """Render the interactive dashboard from a completed DSBF run."""
-#     render_and_show(output_dir=output_dir, save_html=save_html)

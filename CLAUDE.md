@@ -7,7 +7,7 @@ Work in this repo is planned at two levels:
 The documents involved:
 - `ROADMAP.md` is the backlog of programs and their units: status, dependencies, assumptions, steps and acceptance criteria.
 - `PLAN.md` holds the **active unit**, at most one, and nothing else.
-- `docs/REFACTOR_PLAN.md` is the design. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite. `docs/WALKTHROUGH.md` explains how a run works today.
+- `docs/REFACTOR_PLAN.md` is the design, and `docs/adr/` records the architecture decisions (D1–D11) it rests on. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite. `docs/WALKTHROUGH.md` explains how a run works today.
 
 ## Ways of working
 
@@ -30,7 +30,7 @@ Read this section before planning or modifying the repository.
    ```bash
    uv run ruff check . --fix && \
    uv run ruff format . && \
-   uvx pyrefly check && \
+   uv run pyrefly check --baseline .pyrefly-baseline.json --error-stale-baseline && \
    uv run pytest -m "unit and not slow"
    ```
 
@@ -107,7 +107,5 @@ Branch: unit/<ID>-<slug> · Started: <YYYY-MM-DD>
 
 Each gotcha names the unit that removes it. Delete the line at that unit's close-out.
 
-- The gates in practice 7 need the toolchain units. Until U0-06 (tier markers), run the whole suite with `pytest`. Until U0-12, skip `pyrefly`. Until U1-03, the frontend lives in `dsbf/dashboard/frontend` and only has `npm run build`.
-- Tests write to `dsbf/dsbf.db` and `dsbf/outputs/`. Run them with `DSBF_DB_PATH=$(mktemp -d)/t.db DSBF_AUTO_EXPORT_METADATA=0`. A running test suite deletes run directories under `dsbf/outputs/`, so don't run DSBF while it runs (until U0-07).
-- DSBF reads package data relative to the working directory. Run it from the repo root (until U0-07).
+- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `dsbf/dashboard/frontend` and only has `npm run build`.
 - Every run rewrites `dsbf/static_metadata/task_metadata.json` (until U1-04).

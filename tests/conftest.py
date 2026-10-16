@@ -1,6 +1,7 @@
-import json
 import os
 import shutil
+import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -9,22 +10,120 @@ import pytest
 from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
 
+# Exactly one of these tiers per test; slow and network are optional modifiers.
+PRIMARY_TIERS = ("unit", "integration", "golden", "perf")
+
+# Runtime state the suite must never share with a developer's own runs. Each
+# variable is forced for the whole session, whatever the caller exported.
+_ISOLATED_ENV_KEYS = ("DSBF_DB_PATH", "DSBF_AUTO_EXPORT_METADATA")
+_RUNTIME_ROOT_KEY = pytest.StashKey[Path]()
+_SAVED_ENV_KEY = pytest.StashKey[dict[str, str | None]]()
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="Rewrite the snapshots in tests/golden/snapshots instead of comparing.",
+    )
+    parser.addoption(
+        "--perf-results",
+        default="perf-results/perf.json",
+        help="Where `-m perf` writes its results JSON (from the invocation directory).",
+    )
+    parser.addoption(
+        "--update-perf-baseline",
+        action="store_true",
+        default=False,
+        help="Merge the measured scenarios into tests/perf/baseline.json.",
+    )
+    parser.addoption(
+        "--perf-no-compare",
+        action="store_true",
+        default=False,
+        help="Measure and write results without failing on a regression.",
+    )
+    parser.addoption(
+        "--perf-cprofile",
+        action="store_true",
+        default=False,
+        help="Also run each perf scenario under cProfile (slower; for diagnosis only).",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Point the database and metadata export at a throwaway root.
+
+    This runs at configure time, not in a fixture, because modules such as
+    ``dsbf.api.main`` read ``DSBF_DB_PATH`` when they are imported during collection.
+    """
+    root = Path(tempfile.mkdtemp(prefix="dsbf-tests-")).resolve()
+    (root / "cwd").mkdir()
+    config.stash[_RUNTIME_ROOT_KEY] = root
+    config.stash[_SAVED_ENV_KEY] = {k: os.environ.get(k) for k in _ISOLATED_ENV_KEYS}
+    os.environ["DSBF_DB_PATH"] = str(root / "dsbf.db")
+    os.environ["DSBF_AUTO_EXPORT_METADATA"] = "0"
+
+
+def pytest_unconfigure(config: pytest.Config) -> None:
+    saved = config.stash.get(_SAVED_ENV_KEY, {})
+    for key, previous in saved.items():
+        if previous is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = previous
+    root = config.stash.get(_RUNTIME_ROOT_KEY, None)
+    if root is not None:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolated_working_directory(pytestconfig: pytest.Config) -> Iterator[Path]:
+    """Run the whole session from a temporary directory.
+
+    DSBF writes ``dsbf/outputs/`` and ``dsbf_run.json`` relative to the CWD, so
+    this keeps those writes away from the repository and from the developer's runs.
+    """
+    cwd = pytestconfig.stash[_RUNTIME_ROOT_KEY] / "cwd"
+    previous = Path.cwd()
+    os.chdir(cwd)
+    try:
+        yield cwd
+    finally:
+        os.chdir(previous)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Fail collection for any test without exactly one primary tier marker.
+
+    Runs before ``-m`` deselects, so the check sees every collected test.
+    """
+    problems: list[str] = []
+    for item in items:
+        tiers = [t for t in PRIMARY_TIERS if item.get_closest_marker(t)]
+        if len(tiers) != 1:
+            found = ", ".join(tiers) if tiers else "none"
+            problems.append(f"  {item.nodeid} (tiers: {found})")
+    if problems:
+        raise pytest.UsageError(
+            f"Every test needs exactly one of {', '.join(PRIMARY_TIERS)} "
+            "(see markers in pyproject.toml):\n" + "\n".join(problems)
+        )
+
 
 @pytest.fixture
 def clean_engine_run(tmp_path):
-    outputs_dir = Path("dsbf/outputs")
-    outputs_dir.mkdir(parents=True, exist_ok=True)
+    """Return a callable that runs the engine on titanic into ``tmp_path``.
 
-    preexisting: set[str] = {p.name for p in outputs_dir.iterdir() if p.is_dir()}
-
-    dsbf_run_path = Path("dsbf_run.json")
-    previous_runs: list = []
-    if dsbf_run_path.exists():
-        previous_runs = json.loads(dsbf_run_path.read_text())
+    The engine honours ``output_dir`` (top-level or under ``metadata``); it ignores
+    ``engine.output_path``. The database and any CWD-relative writes are already
+    isolated for the whole session, so there is nothing to clean up afterwards.
+    """
 
     def run_engine_with_temp_config(extra_config=None) -> Path:
         config: dict[str, Any] = load_default_config()
-        config.setdefault("engine", {})["output_path"] = str(tmp_path)
         # Override the sentinel dataset name with a real seaborn dataset.
         # default_config.yaml uses "default_dataset_name" deliberately so
         # callers that forget to set a dataset fail loudly — conftest must
@@ -33,6 +132,7 @@ def clean_engine_run(tmp_path):
         config.setdefault("metadata", {})["dataset_source"] = "seaborn"
         if extra_config:
             config.update(extra_config)
+        config["output_dir"] = str(tmp_path)
 
         engine = ProfileEngine(config=config)
         engine.run()
@@ -41,28 +141,7 @@ def clean_engine_run(tmp_path):
         assert report_path.exists(), f"Report not found at {report_path}"
         return report_path
 
-    yield run_engine_with_temp_config
-
-    for p in outputs_dir.iterdir():
-        if p.is_dir() and p.name not in preexisting:
-            shutil.rmtree(p, ignore_errors=True)
-
-    dsbf_run_path.write_text(json.dumps(previous_runs, indent=2))
-
-
-@pytest.fixture(scope="session", autouse=True)
-def clean_outputs_latest_after_tests():
-    yield  # Let all tests run first
-
-    latest_dir: str = os.path.join("dsbf", "outputs", "latest")
-    if os.path.exists(latest_dir):
-        for fname in os.listdir(latest_dir):
-            fpath: str = os.path.join(latest_dir, fname)
-            if os.path.isfile(fpath):
-                os.remove(fpath)
-            elif os.path.isdir(fpath):
-                shutil.rmtree(fpath, ignore_errors=True)
-    shutil.rmtree(latest_dir, ignore_errors=True)
+    return run_engine_with_temp_config
 
 
 @pytest.fixture

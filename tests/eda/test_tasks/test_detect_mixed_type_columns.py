@@ -2,10 +2,13 @@
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_mixed_type_columns import DetectMixedTypeColumns
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_all_same_type_column_not_flagged(tmp_path) -> None:

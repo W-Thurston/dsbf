@@ -10,6 +10,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.log_resource_usage import LogResourceUsage
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def base_df() -> DataFrame:

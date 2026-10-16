@@ -1,8 +1,12 @@
 # tests/eda/test_execution_graph_failure.py
 
+import pytest
+
 from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.graph import ExecutionGraph, Task
+
+pytestmark = pytest.mark.unit
 
 
 class FailingTask(BaseTask):

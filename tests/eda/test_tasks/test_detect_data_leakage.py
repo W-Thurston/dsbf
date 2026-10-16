@@ -2,10 +2,13 @@
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_data_leakage import DetectDataLeakage
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_leakage_pair_detected(tmp_path) -> None:
@@ -138,3 +141,28 @@ def test_metadata_threshold_stored(tmp_path) -> None:
     result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
 
     assert result.metadata["correlation_threshold"] == 0.95
+
+
+def test_pair_with_delimiter_in_column_names_is_flagged(tmp_path) -> None:
+    """Column names containing the pair delimiter must not break guidance."""
+    df = pd.DataFrame(
+        {
+            "price|usd": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "price|eur": [0.9, 1.8, 2.7, 3.6, 4.5],
+            "other": [5.0, 1.0, 4.0, 2.0, 3.0],
+        },
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectDataLeakage,
+        current_df=df,
+        task_overrides={"correlation_threshold": 0.99},
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, DetectDataLeakage)
+
+    assert result.status == "success"
+    assert list(result.data["leakage_pairs"]) == ["price|usd|price|eur"]
+    assert result.guidance is not None
+    assert {"price|usd", "price|eur"} <= set(result.guidance)
+    assert result.summary["column"] == "price|usd"

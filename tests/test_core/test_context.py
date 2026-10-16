@@ -8,6 +8,8 @@ from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 
+pytestmark = pytest.mark.unit
+
 
 class DummyTask(BaseTask):
     def __init__(self, name="dummy_task", output=None):

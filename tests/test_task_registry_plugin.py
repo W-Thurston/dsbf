@@ -3,11 +3,18 @@
 import uuid
 from pathlib import Path
 
+import pytest
+
+import dsbf
 from dsbf.eda.task_registry import TASK_REGISTRY, load_task_group
+
+pytestmark = pytest.mark.unit
+
+CUSTOM_PLUGINS_DIR = Path(dsbf.__file__).parent / "custom_plugins"
 
 
 def test_load_real_plugin_print_shape_debug():
-    plugin_dir = Path("dsbf/custom_plugins/example_plugin_domain")
+    plugin_dir = CUSTOM_PLUGINS_DIR / "example_plugin_domain"
     assert plugin_dir.exists(), f"Missing plugin directory: {plugin_dir}"
 
     # Clear first in case of repeated test runs
@@ -30,7 +37,7 @@ def test_load_real_plugin_print_shape_debug():
 
 
 def test_load_nonexistent_plugin_path_does_not_crash(capfd):
-    bogus_path = f"dsbf/custom_plugins/_nonexistent_{uuid.uuid4().hex}"
+    bogus_path = str(CUSTOM_PLUGINS_DIR / f"_nonexistent_{uuid.uuid4().hex}")
     before = set(TASK_REGISTRY.keys())
 
     try:

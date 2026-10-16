@@ -92,7 +92,7 @@ user's YAML **instead of** the defaults (no merge).
 **Measured:** negligible.
 
 **Issues:** no deep merge with defaults (F-22). Several documented keys are ignored by their tasks
-(F-07). The shipped config fails its own validation (F-04).
+(F-07).
 
 ## 2. Construct the engine
 
@@ -158,10 +158,10 @@ unless `DSBF_AUTO_EXPORT_METADATA=0`.
 unknown task names in `config["tasks"]`, unknown dependencies, cycles, and plugin warnings. With
 `safety.strict_mode` it raises.
 
-**Measured:** 1 ms. **Every run** logged
-`Unknown task name in config['tasks']: 'time_series'`.
+**Measured:** 1 ms. The shipped config validates cleanly: the shared `time_series` settings are a
+top-level section, not a `tasks` entry.
 
-**Issues:** F-04. It doesn't validate values such as depth, backend or thresholds (F-22).
+**Issues:** It doesn't validate values such as depth, backend or thresholds (F-22).
 
 ## 3g. Infer data stage
 
@@ -342,12 +342,17 @@ The five tasks above account for about 90% of runtime. Fixing F-35, F-37, F-38 a
 retiring backend plotting, N-A2) would bring this run from about 12 minutes to roughly 1–2 minutes.
 That's an estimate from the profile, not a measurement.
 
-## Reproducing the practice run
+## Reproducing the measurements
 
-The scripts used are small and self-contained. A natural next step is to turn them into
-`tests/perf/` (see REVIEW_FINDINGS N-F):
+The practice-run scripts were promoted to the benchmark in [`tests/perf/`](../tests/perf/README.md),
+which runs the same datasets in a fresh interpreter and records the stage, task, memory and
+dashboard-payload numbers described above:
 
-1. Generate data: `DSBFTestDataGenerator(n_rows=N).generate().to_csv(...)`, plus the adversarial frame described above.
-2. From a **scratch directory**, run with `DSBF_DB_PATH=<scratch>/practice.db DSBF_AUTO_EXPORT_METADATA=0` and `config["output_dir"]` pointing into the scratch dir.
-3. Wrap the stage functions in `dsbf.eda.profile_engine` with a timer, run under `cProfile`, and read `context.metadata["task_durations"]`.
-4. Start `uvicorn dsbf.api.main:app` with the same `DSBF_DB_PATH` and `curl` each endpoint with `-w "%{http_code} %{size_download} %{time_total}"`.
+```bash
+uv run pytest -m perf --perf-no-compare
+```
+
+It writes `perf-results/perf.json`. The committed `tests/perf/baseline.json` holds the current
+numbers from CI. The tables in this document are the 2026-10-15 measurements: they were taken
+under `cProfile` and before the crash fixes, so they run slower than a run today and are kept as
+history, not as a reference.

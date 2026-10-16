@@ -49,11 +49,13 @@ dsbf = "dsbf.interfaces.cli:app"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0,<9",
+    "pytest>=8.0.0,<10",
+    "httpx2>=2.13,<3",
     "pytest-order>=1.3.0,<2",
     "ruff>=0.11.10,<0.12",
     "pre-commit>=4.2.0,<5",
     "ipykernel>=6.29.5,<7",
+    "pyrefly>=1.1.1,<2",
 ]
 
 [build-system]
@@ -102,7 +104,29 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
+[tool.pyrefly]
+# The default preset, not the `basic` one pyrefly picks when unconfigured: `basic`
+# finds almost nothing. Errors that predate the checker live in the committed
+# .pyrefly-baseline.json, which only the CLI can load (see CONTRIBUTING.md), so new
+# code is checked in full. Pin the interpreter and platform so the baseline doesn't
+# depend on the machine that wrote it.
+preset = "default"
+python-version = "3.12"
+python-platform = "linux"
+
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q"
+addopts = "-ra -q --strict-markers -m \"not golden and not perf\""
 testpaths = ["tests"]
+# Every test carries exactly one tier (unit, integration, golden or perf) and may add
+# the slow and network modifiers; tests/conftest.py fails collection otherwise.
+# The golden and perf tiers take minutes, so addopts deselects them; `-m golden` or
+# `-m perf` on the command line replaces that expression.
+markers = [
+    "unit: fast, isolated test with no network and no full engine run",
+    "integration: exercises several components together, such as the engine or the API",
+    "slow: takes more than 5 s on a developer machine; excluded from the fast gate",
+    "network: needs network access, such as a seaborn dataset download",
+    "golden: compares a full run against a committed snapshot; deselected by default, run with -m golden",
+    "perf: times full runs against a committed baseline; deselected by default, run with -m perf",
+]

@@ -2,12 +2,16 @@
 
 from pathlib import Path
 
+import pytest
+
 from dsbf.eda.task_result import (
     TaskResult,
     add_reliability_warning,
     log_reliability_warnings,
     make_failure_result,
 )
+
+pytestmark = pytest.mark.unit
 
 
 def test_task_result_to_dict():

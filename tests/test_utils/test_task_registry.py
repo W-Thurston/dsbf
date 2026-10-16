@@ -2,7 +2,11 @@
 
 import re
 
+import pytest
+
 from dsbf.eda.task_registry import _import_local_python_file
+
+pytestmark = pytest.mark.unit
 
 
 def strip_ansi_and_whitespace(text: str) -> str:
