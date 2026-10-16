@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Every job only reads the repository (artifact upload uses the runtime token).
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint

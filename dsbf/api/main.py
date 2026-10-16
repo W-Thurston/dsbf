@@ -26,6 +26,7 @@ Endpoints
 """
 
 import json as _json
+import logging
 import os
 from pathlib import Path
 from typing import Annotated, Any
@@ -35,6 +36,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from dsbf.api import db
+
+logger = logging.getLogger(__name__)
 
 #############
 # App setup #
@@ -206,12 +209,13 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
             if isinstance(task["data"], dict)
             else _json.loads(task["data"])
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
+        logger.exception("Could not parse correlation data for run %s", run_key)
         return {
             "column": column,
             "correlations": [],
             "unavailable": True,
-            "reason": f"Could not parse correlation data: {exc}",
+            "reason": "Could not parse correlation data. See the server log.",
         }
 
     results = []
