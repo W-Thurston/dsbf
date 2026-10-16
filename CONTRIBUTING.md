@@ -106,7 +106,23 @@ dashboard/
 ```bash
 uv run ruff check .
 uv run ruff format .
+uv run pyrefly check --baseline .pyrefly-baseline.json --error-stale-baseline
 ```
+
+Pyrefly is pinned in the dev group and configured under `[tool.pyrefly]` in
+`pyproject.toml`. Errors that predate the checker are listed in
+`.pyrefly-baseline.json`, which is generated: don't edit it by hand. A new error fails
+the check, and so does a baseline entry that no longer matches, so the file only shrinks.
+After you fix baselined errors, drop their entries:
+
+```bash
+uv run pyrefly check --baseline .pyrefly-baseline.json --prune-baseline
+```
+
+`--update-baseline` rewrites the file with every current error, so use it only when a
+dependency upgrade changes legacy errors that you are not fixing, and say so in the PR.
+The baseline matches on file, column, error kind and message, not line number, so an
+identical error added to a file that already has it isn't reported.
 
 All Python files must have:
 - Module-level docstring explaining the file's purpose

@@ -55,6 +55,7 @@ dev = [
     "ruff>=0.11.10,<0.12",
     "pre-commit>=4.2.0,<5",
     "ipykernel>=6.29.5,<7",
+    "pyrefly>=1.1.1,<2",
 ]
 
 [build-system]
@@ -102,6 +103,16 @@ known-first-party = ["dsbf"]
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+
+[tool.pyrefly]
+# The default preset, not the `basic` one pyrefly picks when unconfigured: `basic`
+# finds almost nothing. Errors that predate the checker live in the committed
+# .pyrefly-baseline.json, which only the CLI can load (see CONTRIBUTING.md), so new
+# code is checked in full. Pin the interpreter and platform so the baseline doesn't
+# depend on the machine that wrote it.
+preset = "default"
+python-version = "3.12"
+python-platform = "linux"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
