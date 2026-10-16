@@ -1,6 +1,17 @@
 # dsbf/utils/data_utils.py
 
 
+def ranked_value_counts(series, dropna=True):
+    """Count values, most frequent first, with ties in order of first appearance.
+
+    ``Series.value_counts()`` sorts with an unstable sort, so values with equal counts
+    can come back in a different order on different CPUs. Sorting the unsorted counts
+    with a stable sort makes "the mode" and "the top k" repeatable.
+    """
+    counts = series.value_counts(dropna=dropna, sort=False)
+    return counts.sort_values(ascending=False, kind="stable")
+
+
 def data_sampling(df, config, log_fn=None):
     limits = config.get("resource_limits", {})
     if not limits.get("enable_sampling", True):

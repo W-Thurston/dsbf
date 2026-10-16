@@ -6,6 +6,7 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
 from dsbf.utils.backend import is_polars
+from dsbf.utils.data_utils import ranked_value_counts
 
 
 @register_task(
@@ -111,7 +112,7 @@ class DetectSingleDominantValue(BaseTask):
                 if series.empty:
                     continue
 
-                value_counts = series.value_counts()
+                value_counts = ranked_value_counts(series)
                 top_val = value_counts.index[0]
                 proportion = series.value_counts(normalize=True).iloc[0]
                 unique_count: int = len(series.unique())

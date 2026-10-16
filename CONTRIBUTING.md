@@ -51,11 +51,31 @@ one. Set it for a whole module with `pytestmark = pytest.mark.unit`.
 |---|---|
 | `unit` | Fast and isolated: no network and no full engine run. |
 | `integration` | Exercises several components together, such as the engine or the API. |
-| `golden`, `perf` | Reserved for the snapshot and benchmark suites. |
+| `golden` | Profiles a dataset end to end and compares it with a committed snapshot. Deselected by default; see [Golden runs](#golden-runs). |
+| `perf` | Times full runs and compares them with a committed baseline. Deselected by default; see [Performance runs](#performance-runs). |
 
 Two modifiers can be added to a test: `slow` (more than 5 s on a developer machine) and
 `network` (needs network access). The fast gate is `unit and not slow`. Select any
 tier with `-m`, for example `uv run pytest -m "integration and not network"`.
+
+### Golden runs
+
+`tests/golden/` holds snapshots of what DSBF reports on ten datasets (the eight validation
+archetypes, titanic and a 5,000-row kitchen-sink frame). They take about ten minutes, so
+`pytest` skips them. Run them with `uv run pytest -m golden`, and add the `golden` label to
+a pull request to run them in CI. If a change to a task or the engine moves a snapshot,
+review the diff and accept it with `uv run pytest -m golden --update-golden`. The review
+steps are in [`tests/golden/README.md`](tests/golden/README.md).
+
+### Performance runs
+
+`tests/perf/` times a full run on four datasets (titanic, the adversarial frame, and the
+kitchen-sink frame at 5,000 and 50,000 rows) and fails when a stage, a task, the peak memory
+or a dashboard payload grows by more than 25% against `tests/perf/baseline.json`. The suite
+takes about fifteen minutes, so `pytest` skips it. Run it with `uv run pytest -m perf`, and add
+the `perf` label to a pull request to run it in CI, where the baseline was recorded. Local
+numbers from another machine are only roughly comparable. How to read the results and update
+the baseline is in [`tests/perf/README.md`](tests/perf/README.md).
 
 ### Test isolation
 
@@ -85,6 +105,8 @@ dsbf/
 
 tests/
 ├── generators/         # Dataset generators for the validation suite
+├── golden/             # Golden-run snapshots and the code that compares them
+├── perf/               # Performance benchmark and its committed baseline
 ├── validation/
 │   ├── assertions/     # Per-dataset assertion modules
 │   └── run_validation.py

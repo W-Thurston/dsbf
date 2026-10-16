@@ -1,48 +1,6 @@
 {
   "errors": [
     {
-      "column": 10,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `NoneType` has no attribute `metadata`",
-      "severity": "error"
-    },
-    {
-      "column": 23,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `NoneType` has no attribute `data`",
-      "severity": "error"
-    },
-    {
-      "column": 27,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `NoneType` has no attribute `data`",
-      "severity": "error"
-    },
-    {
-      "column": 28,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `NoneType` has no attribute `data`",
-      "severity": "error"
-    },
-    {
-      "column": 38,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `NoneType` has no attribute `reliability_flags`",
-      "severity": "error"
-    },
-    {
-      "column": 9,
-      "path": "docs/practice_run/run_stages.py",
-      "name": "missing-attribute",
-      "concise_description": "Object of class `Stats` has no attribute `stream`",
-      "severity": "error"
-    },
-    {
       "column": 16,
       "path": "dsbf/api/db.py",
       "name": "bad-return",

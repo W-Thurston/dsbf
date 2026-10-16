@@ -20,6 +20,38 @@ _RUNTIME_ROOT_KEY = pytest.StashKey[Path]()
 _SAVED_ENV_KEY = pytest.StashKey[dict[str, str | None]]()
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="Rewrite the snapshots in tests/golden/snapshots instead of comparing.",
+    )
+    parser.addoption(
+        "--perf-results",
+        default="perf-results/perf.json",
+        help="Where `-m perf` writes its results JSON (from the invocation directory).",
+    )
+    parser.addoption(
+        "--update-perf-baseline",
+        action="store_true",
+        default=False,
+        help="Merge the measured scenarios into tests/perf/baseline.json.",
+    )
+    parser.addoption(
+        "--perf-no-compare",
+        action="store_true",
+        default=False,
+        help="Measure and write results without failing on a regression.",
+    )
+    parser.addoption(
+        "--perf-cprofile",
+        action="store_true",
+        default=False,
+        help="Also run each perf scenario under cProfile (slower; for diagnosis only).",
+    )
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Point the database and metadata export at a throwaway root.
 

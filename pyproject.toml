@@ -116,15 +116,17 @@ python-platform = "linux"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q --strict-markers"
+addopts = "-ra -q --strict-markers -m \"not golden and not perf\""
 testpaths = ["tests"]
 # Every test carries exactly one tier (unit, integration, golden or perf) and may add
 # the slow and network modifiers; tests/conftest.py fails collection otherwise.
+# The golden and perf tiers take minutes, so addopts deselects them; `-m golden` or
+# `-m perf` on the command line replaces that expression.
 markers = [
     "unit: fast, isolated test with no network and no full engine run",
     "integration: exercises several components together, such as the engine or the API",
     "slow: takes more than 5 s on a developer machine; excluded from the fast gate",
     "network: needs network access, such as a seaborn dataset download",
-    "golden: compares a full run against a committed snapshot (reserved)",
-    "perf: performance benchmark (reserved)",
+    "golden: compares a full run against a committed snapshot; deselected by default, run with -m golden",
+    "perf: times full runs against a committed baseline; deselected by default, run with -m perf",
 ]

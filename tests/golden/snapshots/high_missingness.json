@@ -1,0 +1,5285 @@
+{
+ "dataset": "high_missingness",
+ "format": 1,
+ "run": {
+  "inferred_dtypes": {
+   "age": "float64",
+   "channel": "object",
+   "device_type": "object",
+   "income": "float64",
+   "is_churned": "bool",
+   "notes": "object",
+   "plan_type": "object",
+   "premium_score": "float64",
+   "region": "object"
+  },
+  "inferred_stage": "exploratory",
+  "sampling": null,
+  "semantic_types": {
+   "age": "continuous",
+   "channel": "categorical",
+   "device_type": "categorical",
+   "income": "continuous",
+   "is_churned": "categorical",
+   "notes": "categorical",
+   "plan_type": "categorical",
+   "premium_score": "continuous",
+   "region": "categorical"
+  },
+  "shape": [
+   2000,
+   9
+  ],
+  "task_count": 67,
+  "task_outcomes": {
+   "failed": [],
+   "skipped": [],
+   "success": [
+    "infer_types",
+    "identify_bottleneck_tasks",
+    "log_resource_usage",
+    "schema_validation",
+    "validate_plugin_coverage",
+    "categorical_length_stats",
+    "check_datetime_consistency",
+    "compare_with_reference_dataset",
+    "compute_entropy",
+    "compute_kurtosis",
+    "compute_mutual_information",
+    "compute_pairwise_associations",
+    "contingency_tables",
+    "detect_bimodal_distribution",
+    "detect_class_imbalance",
+    "detect_collinear_features",
+    "detect_constant_columns",
+    "detect_data_leakage",
+    "detect_duplicate_columns",
+    "detect_duplicates",
+    "detect_encoded_columns",
+    "detect_feature_drift",
+    "detect_high_cardinality",
+    "detect_id_columns",
+    "detect_mixed_type_columns",
+    "detect_near_zero_variance",
+    "detect_out_of_bounds",
+    "detect_outliers",
+    "detect_regex_format_violations",
+    "detect_single_dominant_value",
+    "detect_skewness",
+    "detect_string_anomalies",
+    "detect_target_drift",
+    "detect_zeros",
+    "extract_datetime_features",
+    "fuzzy_duplicate_detection",
+    "generate_dataset_summary_plots",
+    "generate_univariate_plots",
+    "one_way_anova",
+    "kruskal_wallis",
+    "mann_whitney_u",
+    "missingness_heatmap",
+    "normality_tests",
+    "sample_head",
+    "sample_size_adequacy",
+    "sample_tail",
+    "suggest_categorical_encoding",
+    "suggest_numerical_binning",
+    "summarize_boolean_fields",
+    "summarize_dataset_shape",
+    "summarize_modes",
+    "summarize_nulls",
+    "summarize_numeric",
+    "summarize_text_fields",
+    "summarize_unique",
+    "summarize_value_counts",
+    "temporal_gap_detection",
+    "transformation_preview",
+    "normality_qq_plots",
+    "suggest_dtype_optimizations",
+    "data_quality_scorer",
+    "imputation_strategy_suggestions",
+    "missingness_mechanism_analysis",
+    "compute_acf_pacf",
+    "decompose_time_series",
+    "detect_stationarity",
+    "ml_readiness_scorer"
+   ]
+  }
+ },
+ "tasks": {
+  "categorical_length_stats": {
+   "data": {
+    "channel": {
+     "max_length": 6,
+     "mean_length": 4.612,
+     "min_length": 3
+    },
+    "device_type": {
+     "max_length": 7,
+     "mean_length": 6.36766,
+     "min_length": 6
+    },
+    "is_churned": {
+     "max_length": 5,
+     "mean_length": 4.7995,
+     "min_length": 4
+    },
+    "notes": {
+     "max_length": 18,
+     "mean_length": 13.936,
+     "min_length": 9
+    },
+    "plan_type": {
+     "max_length": 8,
+     "mean_length": 6.5295,
+     "min_length": 5
+    },
+    "region": {
+     "max_length": 5,
+     "mean_length": 4.512,
+     "min_length": 4
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed string length stats for 6 column(s)."
+   }
+  },
+  "check_datetime_consistency": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "No datetime columns found — consistency check skipped."
+   }
+  },
+  "compare_with_reference_dataset": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": [],
+   "reliability_warnings": null,
+   "status": "skipped",
+   "summary": {
+    "message": "[SKIPPED] No reference dataset provided."
+   }
+  },
+  "compute_acf_pacf": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Time series analysis is not enabled. Set time_series.enabled: true and time_series.datetime_index_column in config to run ACF/PACF analysis.",
+    "time_series_enabled": false
+   }
+  },
+  "compute_entropy": {
+   "data": {
+    "channel": 1.85819,
+    "device_type": 1.58106,
+    "is_churned": 0.722927,
+    "notes": 2.57738,
+    "plan_type": 1.55458,
+    "region": 1.99873
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed entropy for 6 columns."
+   }
+  },
+  "compute_kurtosis": {
+   "data": {
+    "age": {
+     "classification": "mesokurtic",
+     "kurtosis": -0.4475
+    },
+    "income": {
+     "classification": "mesokurtic",
+     "kurtosis": -0.3143
+    },
+    "premium_score": {
+     "classification": "mesokurtic",
+     "kurtosis": -0.6045
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed kurtosis for 3 numeric columns; 0 with notable tail behaviour.",
+    "notable_count": 0
+   }
+  },
+  "compute_mutual_information": {
+   "data": {
+    "mi_scores": {}
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "feature_count": 0,
+    "message": "No target column configured. Set target_column in task config to enable mutual information computation."
+   }
+  },
+  "compute_pairwise_associations": {
+   "data": {
+    "__correlation_matrix__": {
+     "age": {
+      "age": 1.0,
+      "income": 0.0305,
+      "premium_score": 0.010497
+     },
+     "income": {
+      "age": 0.0305,
+      "income": 1.0,
+      "premium_score": -0.009302
+     },
+     "premium_score": {
+      "age": 0.010497,
+      "income": -0.009302,
+      "premium_score": 1.0
+     }
+    },
+    "age|channel": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.000986,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "age|device_type": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001029,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "age|income": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "continuous",
+     "metric": 0.0305,
+     "metric_type": "pearson_r",
+     "strength": "negligible"
+    },
+    "age|is_churned": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": -0.00468,
+     "metric_type": "point_biserial_r",
+     "strength": "negligible"
+    },
+    "age|notes": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.00219,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "age|plan_type": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001664,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "age|premium_score": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "continuous",
+     "metric": 0.010497,
+     "metric_type": "pearson_r",
+     "strength": "negligible"
+    },
+    "age|region": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001964,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "channel|is_churned": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.025434,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "channel|plan_type": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.011393,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "device_type|channel": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.042552,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "device_type|is_churned": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.041577,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "device_type|notes": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.145307,
+     "metric_type": "cramers_v",
+     "strength": "weak"
+    },
+    "device_type|plan_type": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.047723,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "device_type|premium_score": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "continuous",
+     "metric": 0.003617,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "device_type|region": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.032806,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "income|channel": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001641,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "income|device_type": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.012225,
+     "metric_type": "eta_squared",
+     "strength": "weak"
+    },
+    "income|is_churned": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.016146,
+     "metric_type": "point_biserial_r",
+     "strength": "negligible"
+    },
+    "income|notes": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.002511,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "income|plan_type": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001159,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "income|premium_score": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "continuous",
+     "metric": -0.009302,
+     "metric_type": "pearson_r",
+     "strength": "negligible"
+    },
+    "income|region": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.002176,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "notes|channel": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.068452,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "notes|is_churned": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.073291,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "notes|plan_type": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.122676,
+     "metric_type": "cramers_v",
+     "strength": "weak"
+    },
+    "notes|region": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.109389,
+     "metric_type": "cramers_v",
+     "strength": "weak"
+    },
+    "plan_type|is_churned": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.024901,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "premium_score|channel": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001464,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "premium_score|is_churned": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001924,
+     "metric_type": "point_biserial_r",
+     "strength": "negligible"
+    },
+    "premium_score|notes": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.008153,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "premium_score|plan_type": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.00156,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "premium_score|region": {
+     "col_a_intent": "continuous",
+     "col_b_intent": "categorical",
+     "metric": 0.001428,
+     "metric_type": "eta_squared",
+     "strength": "negligible"
+    },
+    "region|channel": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.043455,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "region|is_churned": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.012844,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    },
+    "region|plan_type": {
+     "col_a_intent": "categorical",
+     "col_b_intent": "categorical",
+     "metric": 0.04179,
+     "metric_type": "cramers_v",
+     "strength": "negligible"
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": {
+    "heuristic_caution": {
+     "extreme_outliers": {
+      "description": "Some features contain extreme z-scores (|z| > 3), which may distort Pearson correlation.",
+      "recommendation": "Winsorize outliers or use Spearman correlation (set method='spearman') or Kendall's tau (set method='kendall' or method='auto' on small samples)."
+     }
+    }
+   },
+   "status": "success",
+   "summary": {
+    "message": "Computed 36 pairwise associations across 9 columns.",
+    "metric_type_counts": {
+     "cramers_v": 15,
+     "eta_squared": 15,
+     "pearson_r": 3,
+     "point_biserial_r": 3
+    },
+    "pair_count": 36,
+    "strength_counts": {
+     "moderate": 0,
+     "negligible": 32,
+     "strong": 0,
+     "weak": 4
+    }
+   }
+  },
+  "contingency_tables": {
+   "data": {
+    "channel|is_churned": {
+     "chi2": 1.2938,
+     "cramers_v": 0.0254,
+     "dof": 3,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.730601,
+     "strength": "negligible",
+     "table": {
+      "direct": {
+       "False": 169,
+       "True": 40
+      },
+      "email": {
+       "False": 322,
+       "True": 87
+      },
+      "mobile": {
+       "False": 469,
+       "True": 124
+      },
+      "web": {
+       "False": 639,
+       "True": 150
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "channel|plan_type": {
+     "chi2": 0.5192,
+     "cramers_v": 0.0114,
+     "dof": 6,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.997597,
+     "strength": "negligible",
+     "table": {
+      "direct": {
+       "Basic": 86,
+       "Premium": 50,
+       "Standard": 73
+      },
+      "email": {
+       "Basic": 163,
+       "Premium": 100,
+       "Standard": 146
+      },
+      "mobile": {
+       "Basic": 240,
+       "Premium": 148,
+       "Standard": 205
+      },
+      "web": {
+       "Basic": 328,
+       "Premium": 192,
+       "Standard": 269
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "device_type|channel": {
+     "chi2": 4.2551,
+     "cramers_v": 0.0426,
+     "dof": 6,
+     "low_sample_warning": false,
+     "n": 1175,
+     "p_value": 0.642202,
+     "strength": "negligible",
+     "table": {
+      "Desktop": {
+       "direct": 67,
+       "email": 157,
+       "mobile": 195,
+       "web": 13
+      },
+      "Mobile": {
+       "direct": 61,
+       "email": 120,
+       "mobile": 174,
+       "web": 10
+      },
+      "Tablet": {
+       "direct": 65,
+       "email": 112,
+       "mobile": 189,
+       "web": 12
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "device_type|is_churned": {
+     "chi2": 2.0312,
+     "cramers_v": 0.0416,
+     "dof": 2,
+     "low_sample_warning": false,
+     "n": 1175,
+     "p_value": 0.362185,
+     "strength": "negligible",
+     "table": {
+      "Desktop": {
+       "False": 336,
+       "True": 96
+      },
+      "Mobile": {
+       "False": 298,
+       "True": 67
+      },
+      "Tablet": {
+       "False": 296,
+       "True": 82
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "device_type|notes": {
+     "chi2": 13.0907,
+     "cramers_v": 0.1453,
+     "dof": 10,
+     "low_sample_warning": false,
+     "n": 310,
+     "p_value": 0.218644,
+     "strength": "weak",
+     "table": {
+      "Desktop": {
+       "Billing issue": 19,
+       "Follow up needed": 13,
+       "No issues": 23,
+       "Product feedback": 13,
+       "Support escalation": 19,
+       "VIP customer": 26
+      },
+      "Mobile": {
+       "Billing issue": 14,
+       "Follow up needed": 18,
+       "No issues": 7,
+       "Product feedback": 16,
+       "Support escalation": 14,
+       "VIP customer": 14
+      },
+      "Tablet": {
+       "Billing issue": 12,
+       "Follow up needed": 18,
+       "No issues": 23,
+       "Product feedback": 19,
+       "Support escalation": 20,
+       "VIP customer": 22
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "device_type|plan_type": {
+     "chi2": 5.3522,
+     "cramers_v": 0.0477,
+     "dof": 4,
+     "low_sample_warning": false,
+     "n": 1175,
+     "p_value": 0.253033,
+     "strength": "negligible",
+     "table": {
+      "Desktop": {
+       "Basic": 182,
+       "Premium": 100,
+       "Standard": 150
+      },
+      "Mobile": {
+       "Basic": 154,
+       "Premium": 90,
+       "Standard": 121
+      },
+      "Tablet": {
+       "Basic": 134,
+       "Premium": 105,
+       "Standard": 139
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "device_type|region": {
+     "chi2": 2.5292,
+     "cramers_v": 0.0328,
+     "dof": 6,
+     "low_sample_warning": false,
+     "n": 1175,
+     "p_value": 0.865186,
+     "strength": "negligible",
+     "table": {
+      "Desktop": {
+       "East": 102,
+       "North": 121,
+       "South": 111,
+       "West": 98
+      },
+      "Mobile": {
+       "East": 83,
+       "North": 101,
+       "South": 103,
+       "West": 78
+      },
+      "Tablet": {
+       "East": 97,
+       "North": 98,
+       "South": 93,
+       "West": 90
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "notes|channel": {
+     "chi2": 7.0284,
+     "cramers_v": 0.0685,
+     "dof": 15,
+     "low_sample_warning": false,
+     "n": 500,
+     "p_value": 0.956856,
+     "strength": "negligible",
+     "table": {
+      "Billing issue": {
+       "direct": 9,
+       "email": 14,
+       "mobile": 23,
+       "web": 27
+      },
+      "Follow up needed": {
+       "direct": 7,
+       "email": 15,
+       "mobile": 28,
+       "web": 23
+      },
+      "No issues": {
+       "direct": 8,
+       "email": 23,
+       "mobile": 24,
+       "web": 32
+      },
+      "Product feedback": {
+       "direct": 9,
+       "email": 13,
+       "mobile": 28,
+       "web": 31
+      },
+      "Support escalation": {
+       "direct": 7,
+       "email": 19,
+       "mobile": 28,
+       "web": 36
+      },
+      "VIP customer": {
+       "direct": 11,
+       "email": 24,
+       "mobile": 27,
+       "web": 34
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "notes|is_churned": {
+     "chi2": 2.6858,
+     "cramers_v": 0.0733,
+     "dof": 5,
+     "low_sample_warning": false,
+     "n": 500,
+     "p_value": 0.748295,
+     "strength": "negligible",
+     "table": {
+      "Billing issue": {
+       "False": 56,
+       "True": 17
+      },
+      "Follow up needed": {
+       "False": 62,
+       "True": 11
+      },
+      "No issues": {
+       "False": 69,
+       "True": 18
+      },
+      "Product feedback": {
+       "False": 64,
+       "True": 17
+      },
+      "Support escalation": {
+       "False": 73,
+       "True": 17
+      },
+      "VIP customer": {
+       "False": 81,
+       "True": 15
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "notes|plan_type": {
+     "chi2": 15.0493,
+     "cramers_v": 0.1227,
+     "dof": 10,
+     "low_sample_warning": false,
+     "n": 500,
+     "p_value": 0.130274,
+     "strength": "weak",
+     "table": {
+      "Billing issue": {
+       "Basic": 21,
+       "Premium": 22,
+       "Standard": 30
+      },
+      "Follow up needed": {
+       "Basic": 40,
+       "Premium": 17,
+       "Standard": 16
+      },
+      "No issues": {
+       "Basic": 31,
+       "Premium": 19,
+       "Standard": 37
+      },
+      "Product feedback": {
+       "Basic": 36,
+       "Premium": 17,
+       "Standard": 28
+      },
+      "Support escalation": {
+       "Basic": 38,
+       "Premium": 23,
+       "Standard": 29
+      },
+      "VIP customer": {
+       "Basic": 42,
+       "Premium": 24,
+       "Standard": 30
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "notes|region": {
+     "chi2": 17.949,
+     "cramers_v": 0.1094,
+     "dof": 15,
+     "low_sample_warning": false,
+     "n": 500,
+     "p_value": 0.265358,
+     "strength": "weak",
+     "table": {
+      "Billing issue": {
+       "East": 15,
+       "North": 23,
+       "South": 16,
+       "West": 19
+      },
+      "Follow up needed": {
+       "East": 20,
+       "North": 22,
+       "South": 13,
+       "West": 18
+      },
+      "No issues": {
+       "East": 20,
+       "North": 26,
+       "South": 20,
+       "West": 21
+      },
+      "Product feedback": {
+       "East": 14,
+       "North": 25,
+       "South": 22,
+       "West": 20
+      },
+      "Support escalation": {
+       "East": 28,
+       "North": 21,
+       "South": 28,
+       "West": 13
+      },
+      "VIP customer": {
+       "East": 18,
+       "North": 20,
+       "South": 29,
+       "West": 29
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "plan_type|is_churned": {
+     "chi2": 1.2401,
+     "cramers_v": 0.0249,
+     "dof": 2,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.537911,
+     "strength": "negligible",
+     "table": {
+      "Basic": {
+       "False": 645,
+       "True": 172
+      },
+      "Premium": {
+       "False": 391,
+       "True": 99
+      },
+      "Standard": {
+       "False": 563,
+       "True": 130
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "region|channel": {
+     "chi2": 11.3302,
+     "cramers_v": 0.0435,
+     "dof": 9,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.253751,
+     "strength": "negligible",
+     "table": {
+      "East": {
+       "direct": 50,
+       "email": 89,
+       "mobile": 148,
+       "web": 223
+      },
+      "North": {
+       "direct": 52,
+       "email": 111,
+       "mobile": 164,
+       "web": 195
+      },
+      "South": {
+       "direct": 58,
+       "email": 112,
+       "mobile": 154,
+       "web": 178
+      },
+      "West": {
+       "direct": 49,
+       "email": 97,
+       "mobile": 127,
+       "web": 193
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "region|is_churned": {
+     "chi2": 0.33,
+     "cramers_v": 0.0128,
+     "dof": 3,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.9543,
+     "strength": "negligible",
+     "table": {
+      "East": {
+       "False": 410,
+       "True": 100
+      },
+      "North": {
+       "False": 418,
+       "True": 104
+      },
+      "South": {
+       "False": 397,
+       "True": 105
+      },
+      "West": {
+       "False": 374,
+       "True": 92
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    },
+    "region|plan_type": {
+     "chi2": 6.9857,
+     "cramers_v": 0.0418,
+     "dof": 6,
+     "low_sample_warning": false,
+     "n": 2000,
+     "p_value": 0.322174,
+     "strength": "negligible",
+     "table": {
+      "East": {
+       "Basic": 228,
+       "Premium": 117,
+       "Standard": 165
+      },
+      "North": {
+       "Basic": 213,
+       "Premium": 130,
+       "Standard": 179
+      },
+      "South": {
+       "Basic": 206,
+       "Premium": 123,
+       "Standard": 173
+      },
+      "West": {
+       "Basic": 170,
+       "Premium": 120,
+       "Standard": 176
+      }
+     },
+     "top_n_used": 10,
+     "truncated": false
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "message": "Computed 15 contingency table(s); 0 significant at α=0.05.",
+    "significant_count": 0,
+    "table_count": 15
+   }
+  },
+  "data_quality_scorer": {
+   "data": {
+    "all_columns": [
+     "age",
+     "income",
+     "device_type",
+     "premium_score",
+     "notes",
+     "region",
+     "channel",
+     "plan_type",
+     "is_churned"
+    ],
+    "categories": {
+     "completeness": {
+      "affected_columns": [
+       "age",
+       "income",
+       "device_type",
+       "premium_score",
+       "notes"
+      ],
+      "affected_count": 5,
+      "findings": [
+       {
+        "column": "notes",
+        "issue": "missing_values",
+        "pct_null": 0.75,
+        "severity": "error"
+       },
+       {
+        "column": "device_type",
+        "issue": "missing_values",
+        "pct_null": 0.4125,
+        "severity": "warn"
+       },
+       {
+        "column": "premium_score",
+        "issue": "missing_values",
+        "pct_null": 0.406,
+        "severity": "warn"
+       },
+       {
+        "column": "income",
+        "issue": "missing_values",
+        "pct_null": 0.246,
+        "severity": "warn"
+       },
+       {
+        "column": "age",
+        "issue": "missing_values",
+        "pct_null": 0.0755,
+        "severity": "info"
+       }
+      ],
+      "label": "",
+      "level": "red",
+      "pct_affected": 0.5556,
+      "total_columns": 9
+     },
+     "leakage": {
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": [],
+      "label": "",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     },
+     "redundancy": {
+      "affected_columns": [
+       "age"
+      ],
+      "affected_count": 1,
+      "findings": [
+       {
+        "column": "age",
+        "issue": "high_vif",
+        "severity": "warn",
+        "vif_score": 14.8
+       }
+      ],
+      "label": "",
+      "level": "amber",
+      "pct_affected": 0.1111,
+      "total_columns": 9
+     },
+     "usability": {
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": [],
+      "label": "",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     },
+     "validity": {
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": [],
+      "label": "",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     }
+    },
+    "total_columns": 9
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "completeness": "red",
+    "leakage": "green",
+    "redundancy": "amber",
+    "usability": "green",
+    "validity": "green"
+   }
+  },
+  "decompose_time_series": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Time series analysis is not enabled. Set time_series.enabled: true and time_series.datetime_index_column in config.",
+    "time_series_enabled": false
+   }
+  },
+  "detect_bimodal_distribution": {
+   "data": {
+    "bic_scores": {
+     "age": {
+      "bic_1_component": 11940.1,
+      "bic_2_components": 11948.1,
+      "delta": -7.96991,
+      "relative_improvement": -0.000667492
+     },
+     "income": {
+      "bic_1_component": 34166.5,
+      "bic_2_components": 34185.7,
+      "delta": -19.2017,
+      "relative_improvement": -0.000562004
+     },
+     "premium_score": {
+      "bic_1_component": 10492.0,
+      "bic_2_components": 10434.1,
+      "delta": 57.8938,
+      "relative_improvement": 0.0055179
+     }
+    },
+    "bimodal_flags": {
+     "age": false,
+     "income": false,
+     "premium_score": false
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Flagged 0 column(s) as likely bimodal."
+   }
+  },
+  "detect_class_imbalance": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": [
+    "Set a valid `target_column` in config to enable class imbalance checks."
+   ],
+   "reliability_warnings": null,
+   "status": "skipped",
+   "summary": {
+    "message": "[SKIPPED] No valid target column configured for imbalance detection."
+   }
+  },
+  "detect_collinear_features": {
+   "data": {
+    "collinear_columns": [
+     "age"
+    ],
+    "vif_scores": {
+     "age": 14.7962,
+     "income": 9.04976,
+     "premium_score": 8.86316
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "warn",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "High Multicollinearity (VIF = 14.8)"
+    },
+    {
+     "column": "age",
+     "level": "warn",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "VIF = 14.8 - Collinearity Impact on Models"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Moderate Multicollinearity (VIF = 9.0)"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "VIF = 9.0 - Collinearity Impact on Models"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Moderate Multicollinearity (VIF = 8.9)"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/ml",
+     "phase": "ml",
+     "title": "VIF = 8.9 - Collinearity Impact on Models"
+    }
+   ],
+   "ml_impact_score": 0.75,
+   "recommendations": [
+    "This feature has high collinearity with others, which may distort model coefficients. Consider dropping, combining, or using regularization.\n"
+   ],
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "column": "age",
+    "message": "Flagged 1 column(s) with VIF > 10.0."
+   }
+  },
+  "detect_constant_columns": {
+   "data": {
+    "constant_columns": []
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Found 0 constant column(s)."
+   }
+  },
+  "detect_data_leakage": {
+   "data": {
+    "leakage_pairs": {}
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Found 0 highly correlated feature pairs."
+   }
+  },
+  "detect_duplicate_columns": {
+   "data": {
+    "duplicate_column_pairs": []
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Found 0 duplicate column pair(s)."
+   }
+  },
+  "detect_duplicates": {
+   "data": {
+    "duplicate_count": 11
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "__dataset__",
+     "level": "info",
+     "path": "__dataset__/eda",
+     "phase": "eda",
+     "title": "Duplicate Rows Detected (11 rows, 0.5%)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Found 11 duplicate row(s)."
+   }
+  },
+  "detect_encoded_columns": {
+   "data": {
+    "channel": {
+     "avg_length": 4.612,
+     "entropy": 3.22134,
+     "length_std": 1.35254,
+     "match_type": "base64",
+     "sample_values": [
+      "email",
+      "mobile",
+      "email",
+      "mobile",
+      "web"
+     ]
+    },
+    "device_type": {
+     "avg_length": 6.36766,
+     "entropy": 3.58313,
+     "length_std": 0.482373,
+     "match_type": "base64",
+     "sample_values": [
+      "Tablet",
+      "Desktop",
+      "Desktop",
+      "Mobile",
+      "Desktop"
+     ]
+    },
+    "plan_type": {
+     "avg_length": 6.5295,
+     "entropy": 3.66114,
+     "length_std": 1.32665,
+     "match_type": "base64",
+     "sample_values": [
+      "Premium",
+      "Standard",
+      "Premium",
+      "Standard",
+      "Basic"
+     ]
+    },
+    "region": {
+     "avg_length": 4.512,
+     "entropy": 3.39086,
+     "length_std": 0.499981,
+     "match_type": "base64",
+     "sample_values": [
+      "East",
+      "South",
+      "West",
+      "North",
+      "East"
+     ]
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "channel",
+     "level": "info",
+     "path": "channel/eda",
+     "phase": "eda",
+     "title": "Likely Encoded Column (base64)"
+    },
+    {
+     "column": "device_type",
+     "level": "info",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Likely Encoded Column (base64)"
+    },
+    {
+     "column": "plan_type",
+     "level": "info",
+     "path": "plan_type/eda",
+     "phase": "eda",
+     "title": "Likely Encoded Column (base64)"
+    },
+    {
+     "column": "region",
+     "level": "info",
+     "path": "region/eda",
+     "phase": "eda",
+     "title": "Likely Encoded Column (base64)"
+    }
+   ],
+   "ml_impact_score": 0.9,
+   "recommendations": [
+    "Column 'device_type' appears to contain base64 strings. Consider decoding or excluding from modeling.",
+    "Column 'region' appears to contain base64 strings. Consider decoding or excluding from modeling.",
+    "Column 'channel' appears to contain base64 strings. Consider decoding or excluding from modeling.",
+    "Column 'plan_type' appears to contain base64 strings. Consider decoding or excluding from modeling.",
+    "This column appears to be encoded and is unlikely to generalize well. Drop it unless it has domain-specific meaning.\n"
+   ],
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "column": "device_type",
+    "columns": [
+     "device_type",
+     "region",
+     "channel",
+     "plan_type"
+    ],
+    "num_encoded_columns": 4
+   }
+  },
+  "detect_feature_drift": {
+   "data": null,
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "skipped",
+   "summary": {
+    "message": "Reference dataset not provided in context."
+   }
+  },
+  "detect_high_cardinality": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Detected 0 high-cardinality column(s)."
+   }
+  },
+  "detect_id_columns": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Detected 0 likely ID column(s)."
+   }
+  },
+  "detect_mixed_type_columns": {
+   "data": {
+    "device_type": {
+     "sample_values": {
+      "float": [
+       "nan",
+       "nan",
+       "nan",
+       "nan",
+       "nan"
+      ]
+     },
+     "type_counts": {
+      "float": 825,
+      "str": 1175
+     }
+    },
+    "notes": {
+     "sample_values": {
+      "str": [
+       "'Billing issue'",
+       "'Product feedback'",
+       "'Support escalation'",
+       "'Support escalation'",
+       "'Product feedback'"
+      ]
+     },
+     "type_counts": {
+      "float": 1500,
+      "str": 500
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "device_type",
+     "level": "warn",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Mixed Value Types (2 types detected)"
+    },
+    {
+     "column": "notes",
+     "level": "warn",
+     "path": "notes/eda",
+     "phase": "eda",
+     "title": "Mixed Value Types (2 types detected)"
+    }
+   ],
+   "ml_impact_score": 0.6,
+   "recommendations": [
+    "Column 'device_type' contains multiple data types (str, float). Consider cleaning or coercing values.",
+    "Column 'notes' contains multiple data types (float, str). Consider cleaning or coercing values.",
+    "Column 'device_type' contains mixed types (str, float). Consider coercing to a single type or cleaning inconsistent entries."
+   ],
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "column": "device_type",
+    "columns": [
+     "device_type",
+     "notes"
+    ],
+    "num_mixed_type_columns": 2
+   }
+  },
+  "detect_near_zero_variance": {
+   "data": {
+    "low_variance_columns": {}
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "0 column(s) have near-zero variance."
+   }
+  },
+  "detect_out_of_bounds": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Detected 0 column(s) with out-of-bounds values."
+   }
+  },
+  "detect_outliers": {
+   "data": {
+    "__dataset__": {
+     "isolation_forest": {
+      "contamination": 0.05,
+      "feature_columns": [
+       "age",
+       "income",
+       "premium_score"
+      ],
+      "flagged_row_indices": [
+       70,
+       79,
+       111,
+       145,
+       155,
+       199,
+       224,
+       253,
+       257,
+       258,
+       259,
+       260,
+       268,
+       276,
+       302,
+       328,
+       330,
+       335,
+       390,
+       404,
+       410,
+       432,
+       453,
+       480,
+       534,
+       574,
+       597,
+       600,
+       643,
+       645,
+       705,
+       717,
+       723,
+       761,
+       793,
+       794,
+       807,
+       820,
+       829,
+       860,
+       915,
+       965,
+       1016,
+       1073,
+       1111,
+       1124,
+       1144,
+       1189,
+       1193,
+       1204,
+       1214,
+       1232,
+       1267,
+       1341,
+       1344,
+       1364,
+       1388,
+       1395,
+       1403,
+       1430,
+       1466,
+       1473,
+       1476,
+       1481,
+       1503,
+       1506,
+       1508,
+       1514,
+       1550,
+       1553,
+       1554,
+       1555,
+       1582,
+       1624,
+       1628,
+       1631,
+       1638,
+       1652,
+       1682,
+       1683,
+       1694,
+       1758,
+       1782,
+       1787,
+       1806,
+       1814,
+       1820,
+       1828,
+       1831,
+       1842,
+       1857,
+       1862,
+       1880,
+       1883,
+       1896,
+       1901,
+       1940,
+       1948,
+       1952,
+       1962
+      ],
+      "n_features_used": 3,
+      "n_flagged": 100
+     }
+    },
+    "age": {
+     "consensus": false,
+     "iqr": {
+      "iqr_val": 8.0,
+      "lower_fence": 29.0,
+      "outlier_count": 2,
+      "outlier_pct": 0.001,
+      "outlier_row_indices": [
+       1508,
+       1896
+      ],
+      "q1": 41.0,
+      "q3": 49.0,
+      "upper_fence": 61.0
+     },
+     "mad": {
+      "mad": 4.0,
+      "max_modified_z_score": 2.8666,
+      "median": 45.0,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "threshold": 3.5,
+      "top_outlier_values": []
+     },
+     "methods_flagging": [
+      "iqr"
+     ],
+     "n": 1849,
+     "zscore": {
+      "max_zscore": 2.8136,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "threshold": 3.0
+     }
+    },
+    "income": {
+     "consensus": true,
+     "iqr": {
+      "iqr_val": 28190.5,
+      "lower_fence": 4599.94,
+      "outlier_count": 3,
+      "outlier_pct": 0.0015,
+      "outlier_row_indices": [
+       258,
+       1204,
+       1315
+      ],
+      "q1": 46885.7,
+      "q3": 75076.2,
+      "upper_fence": 117362.0
+     },
+     "mad": {
+      "mad": 14051.9,
+      "max_modified_z_score": 2.9125,
+      "median": 61492.2,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "threshold": 3.5,
+      "top_outlier_values": []
+     },
+     "methods_flagging": [
+      "iqr",
+      "zscore"
+     ],
+     "n": 1508,
+     "zscore": {
+      "max_zscore": 3.0426,
+      "outlier_count": 1,
+      "outlier_pct": 0.0005,
+      "threshold": 3.0
+     }
+    },
+    "premium_score": {
+     "consensus": false,
+     "iqr": {
+      "iqr_val": 29.4375,
+      "lower_fence": 3.27625,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "outlier_row_indices": [],
+      "q1": 47.4325,
+      "q3": 76.87,
+      "upper_fence": 121.026
+     },
+     "mad": {
+      "mad": 14.51,
+      "max_modified_z_score": 2.6615,
+      "median": 62.995,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "threshold": 3.5,
+      "top_outlier_values": []
+     },
+     "methods_flagging": [],
+     "n": 1188,
+     "zscore": {
+      "max_zscore": 2.7837,
+      "outlier_count": 0,
+      "outlier_pct": 0.0,
+      "threshold": 3.0
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "__dataset__",
+     "level": "info",
+     "path": "__dataset__/eda",
+     "phase": "eda",
+     "title": "Multivariate Anomalies: 100 row(s) (Isolation Forest)"
+    },
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Outliers: 1 method(s) agree (verify)"
+    },
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "Outlier Sensitivity (1 method(s))"
+    },
+    {
+     "column": "income",
+     "level": "warn",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Outliers: 2 method(s) agree (consensus)"
+    },
+    {
+     "column": "income",
+     "level": "warn",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "Outlier Sensitivity (2 method(s))"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "columns_analysed": 3,
+    "columns_with_outliers": 0,
+    "consensus_columns": 1,
+    "message": "Outlier detection on 3 column(s); 0 with outliers, 1 with method consensus.",
+    "method": "all"
+   }
+  },
+  "detect_regex_format_violations": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "No text columns found — regex format violation detection skipped."
+   }
+  },
+  "detect_single_dominant_value": {
+   "data": {
+    "age": {
+     "dominance_level": "moderate",
+     "mode": "44.0",
+     "mode_proportion": 0.0692,
+     "unique_values": 35
+    },
+    "channel": {
+     "dominance_level": "low",
+     "mode": "web",
+     "mode_proportion": 0.3945,
+     "unique_values": 4
+    },
+    "device_type": {
+     "dominance_level": "very low",
+     "mode": "Desktop",
+     "mode_proportion": 0.3677,
+     "unique_values": 3
+    },
+    "income": {
+     "dominance_level": "very high",
+     "mode": "15000.0",
+     "mode_proportion": 0.0099,
+     "unique_values": 1493
+    },
+    "is_churned": {
+     "dominance_level": "low",
+     "mode": "False",
+     "mode_proportion": 0.7995,
+     "unique_values": 2
+    },
+    "notes": {
+     "dominance_level": "very low",
+     "mode": "VIP customer",
+     "mode_proportion": 0.192,
+     "unique_values": 6
+    },
+    "plan_type": {
+     "dominance_level": "low",
+     "mode": "Basic",
+     "mode_proportion": 0.4085,
+     "unique_values": 3
+    },
+    "premium_score": {
+     "dominance_level": "moderate",
+     "mode": "70.31",
+     "mode_proportion": 0.0034,
+     "unique_values": 1100
+    },
+    "region": {
+     "dominance_level": "very low",
+     "mode": "North",
+     "mode_proportion": 0.261,
+     "unique_values": 4
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "is_churned",
+     "level": "info",
+     "path": "is_churned/eda",
+     "phase": "eda",
+     "title": "Dominant Value \"False\" (80.0%)"
+    },
+    {
+     "column": "is_churned",
+     "level": "info",
+     "path": "is_churned/ml",
+     "phase": "ml",
+     "title": "Class Imbalance - \"False\" Dominates (80.0%)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Detected 0 column(s) with dominant values above 95%."
+   }
+  },
+  "detect_skewness": {
+   "data": {
+    "age": -0.00480486,
+    "income": 0.0201523,
+    "premium_score": -0.350078
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed skewness for 3 numeric column(s)."
+   }
+  },
+  "detect_stationarity": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Time series analysis is not enabled. Set time_series.enabled: true and time_series.datetime_index_column in config.",
+    "time_series_enabled": false
+   }
+  },
+  "detect_string_anomalies": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "columns_with_anomalies": 0,
+    "message": "0 column(s) have string anomalies (0 total finding(s)).",
+    "total_findings": 0
+   }
+  },
+  "detect_target_drift": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": [],
+   "reliability_warnings": null,
+   "status": "skipped",
+   "summary": {
+    "message": "[SKIPPED] No reference dataset provided."
+   }
+  },
+  "detect_zeros": {
+   "data": {
+    "zero_counts": {
+     "age": 0,
+     "income": 0,
+     "premium_score": 0
+    },
+    "zero_flags": {
+     "age": false,
+     "income": false,
+     "premium_score": false
+    },
+    "zero_percentages": {
+     "age": 0.0,
+     "income": 0.0,
+     "premium_score": 0.0
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Flagged 0 column(s) with high zero counts."
+   }
+  },
+  "extract_datetime_features": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "No datetime columns found — datetime feature extraction skipped."
+   }
+  },
+  "fuzzy_duplicate_detection": {
+   "data": {
+    "__dataset__": {
+     "fuzzy_pairs": {
+      "_digest": "b8b4aa04131d",
+      "_len": 4091
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "__dataset__",
+     "level": "warn",
+     "path": "__dataset__/eda",
+     "phase": "eda",
+     "title": "Near-Duplicate Rows: 4091 pair(s) at similarity ≥ 0.85"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "fuzzy_pair_count": 4091,
+    "message": "Found 4091 near-duplicate row pair(s) at similarity ≥ 0.85 (2000 rows).",
+    "rows_compared": 2000,
+    "sampled": false,
+    "threshold": 0.85
+   }
+  },
+  "generate_dataset_summary_plots": {
+   "data": {
+    "correlation_matrix": {
+     "interactive": {
+      "dark": "<run>/figs/correlation_matrix_dark.json",
+      "light": "<run>/figs/correlation_matrix_light.json"
+     },
+     "static": {
+      "dark": "<run>/figs/correlation_matrix_dark.png",
+      "light": "<run>/figs/correlation_matrix_light.png"
+     }
+    },
+    "dtype_stacked_bar": {
+     "interactive": {
+      "dark": "<run>/figs/dtype_stacked_bar_dark.json",
+      "light": "<run>/figs/dtype_stacked_bar_light.json"
+     }
+    },
+    "missingness_matrix": {
+     "static": "<run>/figs/missingness_matrix.png"
+    },
+    "null_matrix": {
+     "interactive": "<run>/figs/null_matrix.json",
+     "static": "<run>/figs/null_matrix.png"
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Generated 4 dataset-level plots."
+   }
+  },
+  "generate_univariate_plots": {
+   "data": {
+    "age": {
+     "boxplot": {
+      "interactive": {
+       "dark": "<run>/figs/age_boxplot_dark.json",
+       "light": "<run>/figs/age_boxplot_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/age_boxplot_dark.png",
+       "light": "<run>/figs/age_boxplot_light.png"
+      }
+     },
+     "composite": {
+      "static": {
+       "dark": {
+        "box_above": "<run>/figs/age_composite_box_above_dark.png",
+        "hist_above": "<run>/figs/age_composite_hist_above_dark.png"
+       },
+       "light": {
+        "box_above": "<run>/figs/age_composite_box_above_light.png",
+        "hist_above": "<run>/figs/age_composite_hist_above_light.png"
+       }
+      }
+     },
+     "histogram": {
+      "interactive": {
+       "dark": "<run>/figs/age_hist_dark.json",
+       "light": "<run>/figs/age_hist_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/age_hist_dark.png",
+       "light": "<run>/figs/age_hist_light.png"
+      }
+     }
+    },
+    "channel": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/channel_bar_dark.json",
+       "light": "<run>/figs/channel_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/channel_bar_dark.png",
+       "light": "<run>/figs/channel_bar_light.png"
+      }
+     }
+    },
+    "device_type": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/device_type_bar_dark.json",
+       "light": "<run>/figs/device_type_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/device_type_bar_dark.png",
+       "light": "<run>/figs/device_type_bar_light.png"
+      }
+     }
+    },
+    "income": {
+     "boxplot": {
+      "interactive": {
+       "dark": "<run>/figs/income_boxplot_dark.json",
+       "light": "<run>/figs/income_boxplot_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/income_boxplot_dark.png",
+       "light": "<run>/figs/income_boxplot_light.png"
+      }
+     },
+     "composite": {
+      "static": {
+       "dark": {
+        "box_above": "<run>/figs/income_composite_box_above_dark.png",
+        "hist_above": "<run>/figs/income_composite_hist_above_dark.png"
+       },
+       "light": {
+        "box_above": "<run>/figs/income_composite_box_above_light.png",
+        "hist_above": "<run>/figs/income_composite_hist_above_light.png"
+       }
+      }
+     },
+     "histogram": {
+      "interactive": {
+       "dark": "<run>/figs/income_hist_dark.json",
+       "light": "<run>/figs/income_hist_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/income_hist_dark.png",
+       "light": "<run>/figs/income_hist_light.png"
+      }
+     }
+    },
+    "is_churned": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/is_churned_bar_dark.json",
+       "light": "<run>/figs/is_churned_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/is_churned_bar_dark.png",
+       "light": "<run>/figs/is_churned_bar_light.png"
+      }
+     }
+    },
+    "notes": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/notes_bar_dark.json",
+       "light": "<run>/figs/notes_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/notes_bar_dark.png",
+       "light": "<run>/figs/notes_bar_light.png"
+      }
+     }
+    },
+    "plan_type": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/plan_type_bar_dark.json",
+       "light": "<run>/figs/plan_type_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/plan_type_bar_dark.png",
+       "light": "<run>/figs/plan_type_bar_light.png"
+      }
+     }
+    },
+    "premium_score": {
+     "boxplot": {
+      "interactive": {
+       "dark": "<run>/figs/premium_score_boxplot_dark.json",
+       "light": "<run>/figs/premium_score_boxplot_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/premium_score_boxplot_dark.png",
+       "light": "<run>/figs/premium_score_boxplot_light.png"
+      }
+     },
+     "composite": {
+      "static": {
+       "dark": {
+        "box_above": "<run>/figs/premium_score_composite_box_above_dark.png",
+        "hist_above": "<run>/figs/premium_score_composite_hist_above_dark.png"
+       },
+       "light": {
+        "box_above": "<run>/figs/premium_score_composite_box_above_light.png",
+        "hist_above": "<run>/figs/premium_score_composite_hist_above_light.png"
+       }
+      }
+     },
+     "histogram": {
+      "interactive": {
+       "dark": "<run>/figs/premium_score_hist_dark.json",
+       "light": "<run>/figs/premium_score_hist_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/premium_score_hist_dark.png",
+       "light": "<run>/figs/premium_score_hist_light.png"
+      }
+     }
+    },
+    "region": {
+     "bar": {
+      "interactive": {
+       "dark": "<run>/figs/region_bar_dark.json",
+       "light": "<run>/figs/region_bar_light.json"
+      },
+      "static": {
+       "dark": "<run>/figs/region_bar_dark.png",
+       "light": "<run>/figs/region_bar_light.png"
+      }
+     }
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Generated univariate plots for 9 columns."
+   }
+  },
+  "imputation_strategy_suggestions": {
+   "data": {
+    "suggestions": {
+     "age": {
+      "add_indicator": false,
+      "column": "age",
+      "method": "mean imputation",
+      "null_pct": 0.0755,
+      "rationale": "7.5% missing in a continuous column. Mean imputation is appropriate at this missingness level for symmetric distributions.",
+      "strategy": "mean",
+      "tier": "moderate"
+     },
+     "device_type": {
+      "add_indicator": true,
+      "column": "device_type",
+      "method": "mode imputation + is_missing indicator",
+      "null_pct": 0.4125,
+      "rationale": "41.2% missing in a categorical column. Mode imputation fills with the most frequent category. At this missingness level also add a binary is_missing indicator to preserve the signal from the gap pattern.",
+      "strategy": "mode_with_indicator",
+      "tier": "significant"
+     },
+     "income": {
+      "add_indicator": true,
+      "column": "income",
+      "method": "mean or KNN imputation + is_missing indicator",
+      "null_pct": 0.246,
+      "rationale": "24.6% missing in a continuous column. Mean imputation is reasonable for symmetric distributions but introduces bias at this level. KNN imputation uses similar rows and is preferable when correlated features exist. Add a binary is_missing indicator alongside the imputed values.",
+      "strategy": "mean_or_knn_with_indicator",
+      "tier": "significant"
+     },
+     "notes": {
+      "add_indicator": true,
+      "column": "notes",
+      "method": "drop column or add binary is_missing indicator",
+      "null_pct": 0.75,
+      "rationale": "75.0% missing. Imputing more than half the values introduces substantial bias regardless of method. Drop the column unless the fact of missingness is itself informative, in which case retain a binary is_missing indicator and drop the original.",
+      "strategy": "drop_or_indicator",
+      "tier": "severe"
+     },
+     "premium_score": {
+      "add_indicator": true,
+      "column": "premium_score",
+      "method": "mean or KNN imputation + is_missing indicator",
+      "null_pct": 0.406,
+      "rationale": "40.6% missing in a continuous column. Mean imputation is reasonable for symmetric distributions but introduces bias at this level. KNN imputation uses similar rows and is preferable when correlated features exist. Add a binary is_missing indicator alongside the imputed values.",
+      "strategy": "mean_or_knn_with_indicator",
+      "tier": "significant"
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "Imputation: mean imputation (7.5% missing)"
+    },
+    {
+     "column": "device_type",
+     "level": "info",
+     "path": "device_type/ml",
+     "phase": "ml",
+     "title": "Imputation: mode imputation + is_missing indicator (41.2% missing)"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "Imputation: mean or KNN imputation + is_missing indicator (24.6% missing)"
+    },
+    {
+     "column": "notes",
+     "level": "warn",
+     "path": "notes/ml",
+     "phase": "ml",
+     "title": "Imputation: drop column or add binary is_missing indicator (75.0% missing)"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/ml",
+     "phase": "ml",
+     "title": "Imputation: mean or KNN imputation + is_missing indicator (40.6% missing)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Imputation strategies suggested for 5 column(s) (1 with severe missingness).",
+    "severe_count": 1,
+    "suggestion_count": 5
+   }
+  },
+  "infer_types": {
+   "data": {
+    "age": {
+     "analysis_intent_dtype": "continuous",
+     "inferred_dtype": "float64"
+    },
+    "channel": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "object"
+    },
+    "device_type": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "object"
+    },
+    "income": {
+     "analysis_intent_dtype": "continuous",
+     "inferred_dtype": "float64"
+    },
+    "is_churned": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "bool"
+    },
+    "notes": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "object"
+    },
+    "plan_type": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "object"
+    },
+    "premium_score": {
+     "analysis_intent_dtype": "continuous",
+     "inferred_dtype": "float64"
+    },
+    "region": {
+     "analysis_intent_dtype": "categorical",
+     "inferred_dtype": "object"
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Inferred types for 9 columns."
+   }
+  },
+  "kruskal_wallis": {
+   "data": {
+    "age|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 1.9402,
+     "n_groups": 4,
+     "n_total": 1849,
+     "p_value": 0.5849,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "age|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 1.158,
+     "n_groups": 3,
+     "n_total": 1080,
+     "p_value": 0.560457,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "age|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 0.2485,
+     "n_groups": 2,
+     "n_total": 1849,
+     "p_value": 0.618137,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "age|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.0988,
+     "n_groups": 6,
+     "n_total": 467,
+     "p_value": 0.83531,
+     "p_value_corrected": 0.83531,
+     "significant": false
+    },
+    "age|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.6363,
+     "n_groups": 3,
+     "n_total": 1849,
+     "p_value": 0.267636,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "age|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 4.0817,
+     "n_groups": 4,
+     "n_total": 1849,
+     "p_value": 0.252779,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "income|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.6049,
+     "n_groups": 4,
+     "n_total": 1508,
+     "p_value": 0.456632,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "income|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 10.2341,
+     "n_groups": 3,
+     "n_total": 876,
+     "p_value": 0.005994,
+     "p_value_corrected": 0.107892,
+     "significant": false
+    },
+    "income|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 0.4076,
+     "n_groups": 2,
+     "n_total": 1508,
+     "p_value": 0.523199,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "income|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.6837,
+     "n_groups": 6,
+     "n_total": 392,
+     "p_value": 0.748613,
+     "p_value_corrected": 0.83349,
+     "significant": false
+    },
+    "income|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 3.1278,
+     "n_groups": 3,
+     "n_total": 1508,
+     "p_value": 0.209317,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "income|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 3.0679,
+     "n_groups": 4,
+     "n_total": 1508,
+     "p_value": 0.381273,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "premium_score|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.0609,
+     "n_groups": 4,
+     "n_total": 1188,
+     "p_value": 0.559873,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "premium_score|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.6427,
+     "n_groups": 3,
+     "n_total": 709,
+     "p_value": 0.266778,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "premium_score|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 0.0729,
+     "n_groups": 2,
+     "n_total": 1188,
+     "p_value": 0.787185,
+     "p_value_corrected": 0.83349,
+     "significant": false
+    },
+    "premium_score|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 2.5197,
+     "n_groups": 6,
+     "n_total": 296,
+     "p_value": 0.773521,
+     "p_value_corrected": 0.83349,
+     "significant": false
+    },
+    "premium_score|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 1.3261,
+     "n_groups": 3,
+     "n_total": 1188,
+     "p_value": 0.515273,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    },
+    "premium_score|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "h_statistic": 1.9686,
+     "n_groups": 4,
+     "n_total": 1188,
+     "p_value": 0.578957,
+     "p_value_corrected": 0.794748,
+     "significant": false
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "correction": "fdr_bh",
+    "message": "Kruskal-Wallis: 18 pair(s); 0 significant at α=0.05 after fdr_bh correction.",
+    "pair_count": 18,
+    "significant_count": 0
+   }
+  },
+  "mann_whitney_u": {
+   "data": {
+    "_digest": "37e5de31da97",
+    "_len": 87
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "correction": "fdr_bh",
+    "message": "Mann-Whitney U: 87 test(s); 0 significant at α=0.05 after fdr_bh correction.",
+    "significant_count": 0,
+    "test_count": 87
+   }
+  },
+  "missingness_heatmap": {
+   "data": {
+    "column_count": 9,
+    "missing_cells": 3780,
+    "missing_columns": [
+     "age",
+     "income",
+     "device_type",
+     "premium_score",
+     "notes"
+    ],
+    "row_count": 2000
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Found 3780 missing cells in dataset."
+   }
+  },
+  "missingness_mechanism_analysis": {
+   "data": {
+    "age": {
+     "group_difference_tests": {
+      "income": {
+       "n_missing_group": 108,
+       "n_observed_group": 1400,
+       "p_value": 0.219629,
+       "rank_biserial_r": -0.0708,
+       "significant": false,
+       "u_statistic": 80953.0
+      },
+      "premium_score": {
+       "n_missing_group": 87,
+       "n_observed_group": 1101,
+       "p_value": 0.316248,
+       "rank_biserial_r": 0.0645,
+       "significant": false,
+       "u_statistic": 44805.5
+      }
+     },
+     "mechanism_assessment": {
+      "caveats": [
+       "MCAR not rejected does not mean MCAR is confirmed. The test may have low power, particularly with small samples.",
+       "MNAR (Missing Not At Random) cannot be confirmed or ruled out from observed data alone. If missingness is likely to depend on the unobserved values themselves (e.g. patients with worse outcomes less likely to attend follow-up), domain knowledge is the only reliable guide."
+      ],
+      "confidence": "moderate",
+      "consistent_with": [
+       "mcar"
+      ],
+      "evidence_summary": [
+       "Little's MCAR test not rejected (p=0.4745 >= 0.05) - data is consistent with MCAR."
+      ]
+     },
+     "missingness_correlations": {
+      "income": {
+       "correlation": 0.0239,
+       "n": 1508,
+       "p_value": 0.353011,
+       "strength": "weak"
+      },
+      "is_churned": {
+       "correlation": 0.0129,
+       "n": 2000,
+       "p_value": 0.564882,
+       "strength": "weak"
+      },
+      "premium_score": {
+       "correlation": -0.0316,
+       "n": 1188,
+       "p_value": 0.27675,
+       "strength": "weak"
+      }
+     },
+     "n_missing": 151,
+     "n_total": 2000,
+     "null_pct": 0.0755
+    },
+    "device_type": {
+     "group_difference_tests": {
+      "age": {
+       "n_missing_group": 769,
+       "n_observed_group": 1080,
+       "p_value": 0.102151,
+       "rank_biserial_r": -0.0445,
+       "significant": false,
+       "u_statistic": 433734.0
+      },
+      "income": {
+       "n_missing_group": 632,
+       "n_observed_group": 876,
+       "p_value": 0.135008,
+       "rank_biserial_r": -0.0451,
+       "significant": false,
+       "u_statistic": 289288.0
+      },
+      "premium_score": {
+       "n_missing_group": 479,
+       "n_observed_group": 709,
+       "p_value": 0.195564,
+       "rank_biserial_r": 0.0442,
+       "significant": false,
+       "u_statistic": 162297.0
+      }
+     },
+     "mechanism_assessment": {
+      "caveats": [
+       "MCAR not rejected does not mean MCAR is confirmed. The test may have low power, particularly with small samples.",
+       "MNAR (Missing Not At Random) cannot be confirmed or ruled out from observed data alone. If missingness is likely to depend on the unobserved values themselves (e.g. patients with worse outcomes less likely to attend follow-up), domain knowledge is the only reliable guide."
+      ],
+      "confidence": "moderate",
+      "consistent_with": [
+       "mcar"
+      ],
+      "evidence_summary": [
+       "Little's MCAR test not rejected (p=0.4745 >= 0.05) - data is consistent with MCAR."
+      ]
+     },
+     "missingness_correlations": {
+      "age": {
+       "correlation": 0.039,
+       "n": 1849,
+       "p_value": 0.09393,
+       "strength": "weak"
+      },
+      "income": {
+       "correlation": 0.038,
+       "n": 1508,
+       "p_value": 0.139962,
+       "strength": "weak"
+      },
+      "is_churned": {
+       "correlation": -0.0239,
+       "n": 2000,
+       "p_value": 0.285824,
+       "strength": "weak"
+      },
+      "premium_score": {
+       "correlation": -0.0371,
+       "n": 1188,
+       "p_value": 0.201891,
+       "strength": "weak"
+      }
+     },
+     "n_missing": 825,
+     "n_total": 2000,
+     "null_pct": 0.4125
+    },
+    "income": {
+     "group_difference_tests": {
+      "age": {
+       "n_missing_group": 449,
+       "n_observed_group": 1400,
+       "p_value": 0.322442,
+       "rank_biserial_r": 0.031,
+       "significant": false,
+       "u_statistic": 304570.0
+      },
+      "premium_score": {
+       "n_missing_group": 293,
+       "n_observed_group": 895,
+       "p_value": 0.948147,
+       "rank_biserial_r": 0.0025,
+       "significant": false,
+       "u_statistic": 130786.0
+      }
+     },
+     "mechanism_assessment": {
+      "caveats": [
+       "MCAR not rejected does not mean MCAR is confirmed. The test may have low power, particularly with small samples.",
+       "MNAR (Missing Not At Random) cannot be confirmed or ruled out from observed data alone. If missingness is likely to depend on the unobserved values themselves (e.g. patients with worse outcomes less likely to attend follow-up), domain knowledge is the only reliable guide."
+      ],
+      "confidence": "moderate",
+      "consistent_with": [
+       "mcar"
+      ],
+      "evidence_summary": [
+       "Little's MCAR test not rejected (p=0.4745 >= 0.05) - data is consistent with MCAR."
+      ]
+     },
+     "missingness_correlations": {
+      "age": {
+       "correlation": -0.0195,
+       "n": 1849,
+       "p_value": 0.402864,
+       "strength": "weak"
+      },
+      "is_churned": {
+       "correlation": 0.0155,
+       "n": 2000,
+       "p_value": 0.487744,
+       "strength": "weak"
+      },
+      "premium_score": {
+       "correlation": 0.0094,
+       "n": 1188,
+       "p_value": 0.745127,
+       "strength": "weak"
+      }
+     },
+     "n_missing": 492,
+     "n_total": 2000,
+     "null_pct": 0.246
+    },
+    "notes": {
+     "group_difference_tests": {
+      "age": {
+       "n_missing_group": 1382,
+       "n_observed_group": 467,
+       "p_value": 0.088715,
+       "rank_biserial_r": 0.0526,
+       "significant": false,
+       "u_statistic": 305737.0
+      },
+      "income": {
+       "n_missing_group": 1116,
+       "n_observed_group": 392,
+       "p_value": 0.957474,
+       "rank_biserial_r": -0.0018,
+       "significant": false,
+       "u_statistic": 219132.0
+      },
+      "premium_score": {
+       "n_missing_group": 892,
+       "n_observed_group": 296,
+       "p_value": 0.491574,
+       "rank_biserial_r": 0.0267,
+       "significant": false,
+       "u_statistic": 128498.0
+      }
+     },
+     "mechanism_assessment": {
+      "caveats": [
+       "MCAR not rejected does not mean MCAR is confirmed. The test may have low power, particularly with small samples.",
+       "MNAR (Missing Not At Random) cannot be confirmed or ruled out from observed data alone. If missingness is likely to depend on the unobserved values themselves (e.g. patients with worse outcomes less likely to attend follow-up), domain knowledge is the only reliable guide."
+      ],
+      "confidence": "moderate",
+      "consistent_with": [
+       "mcar"
+      ],
+      "evidence_summary": [
+       "Little's MCAR test not rejected (p=0.4745 >= 0.05) - data is consistent with MCAR."
+      ]
+     },
+     "missingness_correlations": {
+      "age": {
+       "correlation": -0.0336,
+       "n": 1849,
+       "p_value": 0.148434,
+       "strength": "weak"
+      },
+      "income": {
+       "correlation": 0.0043,
+       "n": 1508,
+       "p_value": 0.866466,
+       "strength": "weak"
+      },
+      "is_churned": {
+       "correlation": 0.0151,
+       "n": 2000,
+       "p_value": 0.498562,
+       "strength": "weak"
+      },
+      "premium_score": {
+       "correlation": -0.014,
+       "n": 1188,
+       "p_value": 0.630428,
+       "strength": "weak"
+      }
+     },
+     "n_missing": 1500,
+     "n_total": 2000,
+     "null_pct": 0.75
+    },
+    "premium_score": {
+     "group_difference_tests": {
+      "age": {
+       "n_missing_group": 748,
+       "n_observed_group": 1101,
+       "p_value": 0.191206,
+       "rank_biserial_r": 0.0357,
+       "significant": false,
+       "u_statistic": 397064.0
+      },
+      "income": {
+       "n_missing_group": 613,
+       "n_observed_group": 895,
+       "p_value": 0.492255,
+       "rank_biserial_r": 0.0208,
+       "significant": false,
+       "u_statistic": 268613.0
+      }
+     },
+     "mechanism_assessment": {
+      "caveats": [
+       "MCAR not rejected does not mean MCAR is confirmed. The test may have low power, particularly with small samples.",
+       "MNAR (Missing Not At Random) cannot be confirmed or ruled out from observed data alone. If missingness is likely to depend on the unobserved values themselves (e.g. patients with worse outcomes less likely to attend follow-up), domain knowledge is the only reliable guide."
+      ],
+      "confidence": "moderate",
+      "consistent_with": [
+       "mcar"
+      ],
+      "evidence_summary": [
+       "Little's MCAR test not rejected (p=0.4745 >= 0.05) - data is consistent with MCAR."
+      ]
+     },
+     "missingness_correlations": {
+      "age": {
+       "correlation": -0.0327,
+       "n": 1849,
+       "p_value": 0.159901,
+       "strength": "weak"
+      },
+      "income": {
+       "correlation": -0.0142,
+       "n": 1508,
+       "p_value": 0.581798,
+       "strength": "weak"
+      },
+      "is_churned": {
+       "correlation": 0.0183,
+       "n": 2000,
+       "p_value": 0.413525,
+       "strength": "weak"
+      }
+     },
+     "n_missing": 812,
+     "n_total": 2000,
+     "null_pct": 0.406
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Missingness Mechanism: consistent with MCAR (7.5% missing, confidence: moderate)"
+    },
+    {
+     "column": "device_type",
+     "level": "info",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Missingness Mechanism: consistent with MCAR (41.2% missing, confidence: moderate)"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Missingness Mechanism: consistent with MCAR (24.6% missing, confidence: moderate)"
+    },
+    {
+     "column": "notes",
+     "level": "info",
+     "path": "notes/eda",
+     "phase": "eda",
+     "title": "Missingness Mechanism: consistent with MCAR (75.0% missing, confidence: moderate)"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Missingness Mechanism: consistent with MCAR (40.6% missing, confidence: moderate)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "columns_analysed": 5,
+    "epistemic_note": "MCAR is the only mechanism with a statistical test. MAR is not directly testable. MNAR is unverifiable from observed data. All assessments are evidence-based hypotheses, not confirmations.",
+    "little_mcar_test": {
+     "caveats": [
+      "A non-significant result (p >= alpha) is consistent with MCAR but does not confirm it - the test has low statistical power on small samples and can miss subtle non-random patterns.",
+      "This implementation uses a diagonal covariance approximation for numerical stability. Results may differ from software that uses the full covariance matrix (e.g., R's naniar::mcar_test).",
+      "The test operates on the joint distribution of all numeric columns. If missingness is selective across column types it may not be detected."
+     ],
+     "degrees_of_freedom": 12,
+     "n": 2000,
+     "n_patterns": 8,
+     "p_value": 0.474484,
+     "test_statistic": 11.6463
+    },
+    "mcar_rejected": false,
+    "message": "Missingness mechanism analysis on 5 column(s). MCAR not rejected at α=0.05. Note: mechanism diagnosis is inherently uncertain - see per-column caveats."
+   }
+  },
+  "ml_readiness_scorer": {
+   "data": {
+    "action_columns": [
+     "device_type",
+     "income",
+     "notes",
+     "premium_score"
+    ],
+    "advisory_columns": [
+     "age",
+     "channel",
+     "is_churned",
+     "plan_type",
+     "region"
+    ],
+    "all_columns": [
+     "age",
+     "income",
+     "device_type",
+     "premium_score",
+     "notes",
+     "region",
+     "channel",
+     "plan_type",
+     "is_churned"
+    ],
+    "categories": {
+     "encoding": {
+      "advisory_columns": [
+       "channel",
+       "device_type",
+       "is_churned",
+       "notes",
+       "plan_type",
+       "region"
+      ],
+      "advisory_count": 6,
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": {
+       "_digest": "3d69f0f79960",
+       "_len": 6
+      },
+      "label": "Encoding Required",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     },
+     "leakage": {
+      "advisory_columns": [],
+      "advisory_count": 0,
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": [],
+      "label": "Leakage Risk",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     },
+     "missingness": {
+      "advisory_columns": [
+       "age"
+      ],
+      "advisory_count": 1,
+      "affected_columns": [
+       "device_type",
+       "income",
+       "notes",
+       "premium_score"
+      ],
+      "affected_count": 4,
+      "findings": {
+       "_digest": "cebe1282b4b9",
+       "_len": 5
+      },
+      "label": "Missingness Impact",
+      "level": "red",
+      "pct_affected": 0.4444,
+      "total_columns": 9
+     },
+     "transformations": {
+      "advisory_columns": [
+       "age",
+       "premium_score"
+      ],
+      "advisory_count": 2,
+      "affected_columns": [
+       "income"
+      ],
+      "affected_count": 1,
+      "findings": {
+       "_digest": "4df15210b2d3",
+       "_len": 5
+      },
+      "label": "Transformations Needed",
+      "level": "amber",
+      "pct_affected": 0.1111,
+      "total_columns": 9
+     },
+     "unusable": {
+      "advisory_columns": [
+       "is_churned"
+      ],
+      "advisory_count": 1,
+      "affected_columns": [],
+      "affected_count": 0,
+      "findings": [
+       {
+        "actions": [
+         {
+          "action": "stratified_split",
+          "column": "is_churned",
+          "detail": "Ensure minority classes appear in train and test sets"
+         },
+         {
+          "action": "class_weight",
+          "column": "is_churned",
+          "detail": "Improve minority class recall if used as target"
+         }
+        ],
+        "body": "\"False\" accounts for 80.0% of 'is_churned'. If used as a classification target, use stratified train/test splits to ensure the minority classes are represented in both sets. Class weighting may improve minority class recall.",
+        "column": "is_churned",
+        "level": "info",
+        "metric": {
+         "mode": "False",
+         "mode_proportion": 0.7995,
+         "unique_values": 2
+        },
+        "task": "detect_single_dominant_value",
+        "title": "Class Imbalance - \"False\" Dominates (80.0%)"
+       }
+      ],
+      "label": "Unusable Features",
+      "level": "green",
+      "pct_affected": 0.0,
+      "total_columns": 9
+     }
+    },
+    "clean_columns": [],
+    "readiness_gate": "not_ready",
+    "total_columns": 9
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "readiness_gate": "not_ready"
+   }
+  },
+  "normality_qq_plots": {
+   "data": {
+    "age": {
+     "deviation_summary": {
+      "max_deviation": 4.01748,
+      "mean_abs_deviation": 0.376788,
+      "tail_deviation_lower": 0.768925,
+      "tail_deviation_upper": 0.695507
+     },
+     "empirical": [
+      28.9989,
+      32.0,
+      33.0,
+      34.0,
+      34.0,
+      35.0,
+      35.0,
+      36.0,
+      36.0,
+      37.0,
+      37.0,
+      37.0,
+      38.0,
+      38.0,
+      38.0,
+      38.0,
+      39.0,
+      39.0,
+      39.0,
+      39.0,
+      40.0,
+      40.0,
+      40.0,
+      40.0,
+      40.0,
+      41.0,
+      41.0,
+      41.0,
+      41.0,
+      41.0,
+      42.0,
+      42.0,
+      42.0,
+      42.0,
+      42.0,
+      42.0,
+      43.0,
+      43.0,
+      43.0,
+      43.0,
+      43.0,
+      44.0,
+      44.0,
+      44.0,
+      44.0,
+      44.0,
+      44.0,
+      44.0,
+      45.0,
+      45.0,
+      45.0,
+      45.0,
+      45.0,
+      45.0,
+      46.0,
+      46.0,
+      46.0,
+      46.0,
+      46.0,
+      46.0,
+      47.0,
+      47.0,
+      47.0,
+      47.0,
+      47.0,
+      47.0,
+      48.0,
+      48.0,
+      48.0,
+      48.0,
+      48.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.0,
+      49.1319,
+      50.0,
+      50.0,
+      50.0,
+      50.7178,
+      51.0,
+      51.0,
+      51.0,
+      52.0,
+      52.0,
+      52.0,
+      52.0,
+      53.0,
+      53.0,
+      53.0,
+      54.0,
+      54.0,
+      54.0,
+      55.0,
+      55.0,
+      56.0,
+      57.0,
+      58.0,
+      61.0011
+     ],
+     "fit_mean": 44.8751,
+     "fit_std": 6.08641,
+     "n": 1849,
+     "n_quantiles": 100,
+     "normality_verdict": "non_normal",
+     "reference_line": {
+      "x": [
+       40.7698,
+       48.9803
+      ],
+      "y": [
+       41.0,
+       49.0
+      ]
+     },
+     "theoretical": [
+      24.9814,
+      30.8562,
+      32.4643,
+      33.4995,
+      34.2827,
+      34.9218,
+      35.4669,
+      35.9455,
+      36.3745,
+      36.765,
+      37.1247,
+      37.4592,
+      37.7727,
+      38.0684,
+      38.3489,
+      38.6161,
+      38.8718,
+      39.1173,
+      39.3537,
+      39.5822,
+      39.8034,
+      40.018,
+      40.2269,
+      40.4303,
+      40.629,
+      40.8232,
+      41.0133,
+      41.1998,
+      41.3829,
+      41.5629,
+      41.74,
+      41.9145,
+      42.0866,
+      42.2565,
+      42.4244,
+      42.5904,
+      42.7548,
+      42.9176,
+      43.0791,
+      43.2392,
+      43.3983,
+      43.5563,
+      43.7135,
+      43.8699,
+      44.0257,
+      44.1808,
+      44.3356,
+      44.49,
+      44.6441,
+      44.7981,
+      44.952,
+      45.106,
+      45.2602,
+      45.4146,
+      45.5693,
+      45.7245,
+      45.8802,
+      46.0366,
+      46.1938,
+      46.3518,
+      46.5109,
+      46.6711,
+      46.8325,
+      46.9954,
+      47.1597,
+      47.3257,
+      47.4936,
+      47.6635,
+      47.8356,
+      48.0102,
+      48.1873,
+      48.3672,
+      48.5503,
+      48.7368,
+      48.927,
+      49.1212,
+      49.3198,
+      49.5233,
+      49.7321,
+      49.9468,
+      50.168,
+      50.3964,
+      50.6329,
+      50.8784,
+      51.1341,
+      51.4013,
+      51.6817,
+      51.9774,
+      52.2909,
+      52.6254,
+      52.9851,
+      53.3756,
+      53.8046,
+      54.2832,
+      54.8283,
+      55.4674,
+      56.2506,
+      57.2858,
+      58.894,
+      64.7687
+     ]
+    },
+    "income": {
+     "deviation_summary": {
+      "max_deviation": 18074.7,
+      "mean_abs_deviation": 603.326,
+      "tail_deviation_lower": 2237.42,
+      "tail_deviation_upper": 1164.34
+     },
+     "empirical": [
+      15000.0,
+      15861.8,
+      19690.2,
+      23538.7,
+      25897.5,
+      28142.6,
+      29622.0,
+      31324.6,
+      33135.4,
+      34142.3,
+      35504.7,
+      36418.6,
+      37707.4,
+      38513.8,
+      39353.3,
+      40147.2,
+      41100.9,
+      42150.8,
+      42761.8,
+      43277.6,
+      43806.1,
+      44511.5,
+      44952.5,
+      45898.4,
+      46421.3,
+      47105.3,
+      47717.2,
+      48244.8,
+      48633.5,
+      49487.9,
+      50338.3,
+      50990.2,
+      51785.9,
+      52340.5,
+      52966.6,
+      53678.0,
+      54221.7,
+      54845.8,
+      55438.4,
+      55821.0,
+      56446.6,
+      57065.7,
+      57665.7,
+      58002.0,
+      58491.4,
+      59082.7,
+      59541.2,
+      60078.8,
+      60598.5,
+      61208.9,
+      61800.1,
+      62333.3,
+      62859.9,
+      63256.4,
+      63682.2,
+      64301.2,
+      64756.5,
+      65102.0,
+      65921.6,
+      66430.4,
+      66863.7,
+      67335.8,
+      67795.6,
+      68404.0,
+      69051.3,
+      69562.9,
+      70010.0,
+      70720.2,
+      71355.2,
+      71887.4,
+      72295.2,
+      73020.3,
+      73784.6,
+      74228.4,
+      74924.6,
+      75435.6,
+      76005.2,
+      76424.3,
+      77105.7,
+      77868.5,
+      78566.2,
+      79554.0,
+      80342.1,
+      81496.1,
+      82267.4,
+      83257.2,
+      84016.2,
+      85030.8,
+      86118.3,
+      86975.2,
+      87823.2,
+      89379.0,
+      90776.7,
+      92486.4,
+      94460.7,
+      96270.8,
+      99908.9,
+      101685.0,
+      104353.0,
+      119906.0
+     ],
+     "fit_mean": 61227.3,
+     "fit_std": 20029.1,
+     "n": 1508,
+     "n_quantiles": 100,
+     "normality_verdict": "non_normal",
+     "reference_line": {
+      "x": [
+       47717.9,
+       74736.8
+      ],
+      "y": [
+       46885.7,
+       75076.2
+      ]
+     },
+     "theoretical": [
+      -3074.74,
+      15178.8,
+      20433.1,
+      23825.7,
+      26395.7,
+      28494.3,
+      30284.8,
+      31857.5,
+      33267.5,
+      34551.1,
+      35733.6,
+      36833.4,
+      37864.1,
+      38836.5,
+      39758.7,
+      40637.5,
+      41478.4,
+      42285.9,
+      43063.7,
+      43815.0,
+      44542.5,
+      45248.7,
+      45935.6,
+      46604.9,
+      47258.3,
+      47897.2,
+      48522.7,
+      49136.1,
+      49738.4,
+      50330.5,
+      50913.2,
+      51487.2,
+      52053.4,
+      52612.4,
+      53164.7,
+      53711.0,
+      54251.7,
+      54787.4,
+      55318.5,
+      55845.5,
+      56368.8,
+      56888.8,
+      57405.8,
+      57920.4,
+      58432.8,
+      58943.3,
+      59452.4,
+      59960.3,
+      60467.4,
+      60974.1,
+      61480.5,
+      61987.2,
+      62494.3,
+      63002.2,
+      63511.3,
+      64021.9,
+      64534.2,
+      65048.8,
+      65565.9,
+      66085.9,
+      66609.2,
+      67136.1,
+      67667.3,
+      68202.9,
+      68743.7,
+      69289.9,
+      69842.2,
+      70401.2,
+      70967.4,
+      71541.5,
+      72124.2,
+      72716.2,
+      73318.5,
+      73931.9,
+      74557.5,
+      75196.3,
+      75849.7,
+      76519.0,
+      77205.9,
+      77912.1,
+      78639.7,
+      79391.0,
+      80168.7,
+      80976.2,
+      81817.1,
+      82695.9,
+      83618.2,
+      84590.5,
+      85621.3,
+      86721.0,
+      87903.5,
+      89187.1,
+      90597.1,
+      92169.8,
+      93960.4,
+      96058.9,
+      98628.9,
+      102021.0,
+      107276.0,
+      125529.0
+     ]
+    },
+    "premium_score": {
+     "deviation_summary": {
+      "max_deviation": 24.2407,
+      "mean_abs_deviation": 2.16366,
+      "tail_deviation_lower": 3.0087,
+      "tail_deviation_upper": 6.16109
+     },
+     "empirical": [
+      7.72665,
+      15.7878,
+      19.6044,
+      21.4471,
+      24.0732,
+      25.5508,
+      27.2963,
+      28.7229,
+      30.8232,
+      32.219,
+      33.4678,
+      34.2,
+      35.6054,
+      36.4686,
+      37.133,
+      38.2135,
+      38.9808,
+      40.3748,
+      41.6117,
+      42.5512,
+      43.3239,
+      44.2071,
+      44.8633,
+      45.583,
+      46.7889,
+      47.7248,
+      48.499,
+      49.4518,
+      49.9915,
+      50.4212,
+      51.2136,
+      51.6266,
+      52.2,
+      52.74,
+      53.5769,
+      54.1894,
+      54.6563,
+      55.21,
+      56.0278,
+      56.9082,
+      57.4309,
+      58.0379,
+      58.5673,
+      59.047,
+      59.9767,
+      60.5527,
+      61.1721,
+      61.4461,
+      62.0855,
+      62.6324,
+      63.2097,
+      63.9073,
+      64.3855,
+      64.8418,
+      65.6036,
+      66.22,
+      66.6861,
+      67.3155,
+      67.8949,
+      68.6264,
+      69.05,
+      69.3461,
+      70.1312,
+      70.5209,
+      71.1149,
+      71.6712,
+      72.1501,
+      72.6097,
+      73.2088,
+      73.8873,
+      74.3064,
+      74.674,
+      75.5755,
+      76.11,
+      76.6955,
+      77.1673,
+      77.8889,
+      78.53,
+      79.1864,
+      79.6621,
+      80.37,
+      80.7383,
+      81.39,
+      82.0037,
+      82.8637,
+      83.3643,
+      83.7074,
+      84.5738,
+      85.0533,
+      85.8957,
+      87.0874,
+      87.8822,
+      88.6056,
+      89.5657,
+      90.8115,
+      91.856,
+      92.6483,
+      93.8656,
+      95.4202,
+      99.4803
+     ],
+     "fit_mean": 61.1703,
+     "fit_std": 19.9124,
+     "n": 1188,
+     "n_quantiles": 100,
+     "normality_verdict": "non_normal",
+     "reference_line": {
+      "x": [
+       47.7396,
+       74.6011
+      ],
+      "y": [
+       47.4325,
+       76.87
+      ]
+     },
+     "theoretical": [
+      -1.38035,
+      15.5118,
+      20.6815,
+      24.0343,
+      26.5787,
+      28.6583,
+      30.4339,
+      31.994,
+      33.3931,
+      34.6672,
+      35.8411,
+      36.933,
+      37.9565,
+      38.9222,
+      39.8381,
+      40.711,
+      41.5463,
+      42.3484,
+      43.121,
+      43.8674,
+      44.5902,
+      45.2919,
+      45.9743,
+      46.6393,
+      47.2885,
+      47.9233,
+      48.5449,
+      49.1544,
+      49.7529,
+      50.3412,
+      50.9203,
+      51.4907,
+      52.0534,
+      52.6088,
+      53.1577,
+      53.7005,
+      54.2379,
+      54.7702,
+      55.2981,
+      55.8218,
+      56.3418,
+      56.8586,
+      57.3725,
+      57.8838,
+      58.393,
+      58.9004,
+      59.4064,
+      59.9112,
+      60.4151,
+      60.9186,
+      61.422,
+      61.9255,
+      62.4295,
+      62.9343,
+      63.4402,
+      63.9476,
+      64.4568,
+      64.9681,
+      65.482,
+      65.9988,
+      66.5188,
+      67.0426,
+      67.5704,
+      68.1027,
+      68.6401,
+      69.1829,
+      69.7318,
+      70.2873,
+      70.8499,
+      71.4204,
+      71.9994,
+      72.5877,
+      73.1862,
+      73.7957,
+      74.4173,
+      75.0521,
+      75.7013,
+      76.3663,
+      77.0488,
+      77.7504,
+      78.4732,
+      79.2196,
+      79.9923,
+      80.7943,
+      81.6296,
+      82.5025,
+      83.4185,
+      84.3841,
+      85.4076,
+      86.4995,
+      87.6735,
+      88.9475,
+      90.3466,
+      91.9067,
+      93.6823,
+      95.7619,
+      98.3063,
+      101.659,
+      106.829,
+      123.721
+     ]
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "warn",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "QQ Plot: Heavy Tails (Both Ends Deviate)"
+    },
+    {
+     "column": "income",
+     "level": "warn",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "QQ Plot: Heavy Tails (Both Ends Deviate)"
+    },
+    {
+     "column": "premium_score",
+     "level": "warn",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "QQ Plot: Right Tail Deviation"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "columns_computed": 3,
+    "include_normal": false,
+    "message": "QQ plot data computed for 3 column(s).",
+    "normality_source": "normality_tests"
+   }
+  },
+  "normality_tests": {
+   "data": {
+    "age": {
+     "alpha": 0.05,
+     "jarque_bera": {
+      "p_value": 0.000414453,
+      "statistic": 15.5771,
+      "test": "jarque_bera"
+     },
+     "jb_verdict": "non_normal",
+     "n": 1849,
+     "overall_verdict": "non_normal",
+     "primary_test": {
+      "p_value": 1.63319e-06,
+      "statistic": 0.994329,
+      "test": "shapiro_wilk"
+     },
+     "primary_verdict": "non_normal"
+    },
+    "income": {
+     "alpha": 0.05,
+     "jarque_bera": {
+      "p_value": 0.0402364,
+      "statistic": 6.42597,
+      "test": "jarque_bera"
+     },
+     "jb_verdict": "non_normal",
+     "n": 1508,
+     "overall_verdict": "non_normal",
+     "primary_test": {
+      "p_value": 0.00341901,
+      "statistic": 0.996807,
+      "test": "shapiro_wilk"
+     },
+     "primary_verdict": "non_normal"
+    },
+    "premium_score": {
+     "alpha": 0.05,
+     "jarque_bera": {
+      "p_value": 5.90136e-10,
+      "statistic": 42.5013,
+      "test": "jarque_bera"
+     },
+     "jb_verdict": "non_normal",
+     "n": 1188,
+     "overall_verdict": "non_normal",
+     "primary_test": {
+      "p_value": 3.47305e-12,
+      "statistic": 0.978791,
+      "test": "shapiro_wilk"
+     },
+     "primary_verdict": "non_normal"
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Non-Normal Distribution (Shapiro Wilk (p=0.0000) and Jarque-Bera (p=0.0004))"
+    },
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "Normality Assumption May Not Hold"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Non-Normal Distribution (Shapiro Wilk (p=0.0034) and Jarque-Bera (p=0.0402))"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "Normality Assumption May Not Hold"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Non-Normal Distribution (Shapiro Wilk (p=0.0000) and Jarque-Bera (p=0.0000))"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/ml",
+     "phase": "ml",
+     "title": "Normality Assumption May Not Hold"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "message": "Tested 3 columns for normality; 3 rejected normality at α=0.05.",
+    "non_normal_count": 3,
+    "tested_count": 3
+   }
+  },
+  "one_way_anova": {
+   "data": {
+    "age|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.6072,
+     "n_groups": 4,
+     "n_total": 1849,
+     "p_value": 0.610344,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "age|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.5546,
+     "n_groups": 3,
+     "n_total": 1080,
+     "p_value": 0.574485,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "age|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.0405,
+     "n_groups": 2,
+     "n_total": 1849,
+     "p_value": 0.840601,
+     "p_value_corrected": 0.964628,
+     "significant": false
+    },
+    "age|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.2023,
+     "n_groups": 6,
+     "n_total": 467,
+     "p_value": 0.96144,
+     "p_value_corrected": 0.964628,
+     "significant": false
+    },
+    "age|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 1.5387,
+     "n_groups": 3,
+     "n_total": 1849,
+     "p_value": 0.214925,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "age|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 1.2104,
+     "n_groups": 4,
+     "n_total": 1849,
+     "p_value": 0.304469,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "income|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.8239,
+     "n_groups": 4,
+     "n_total": 1508,
+     "p_value": 0.480648,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "income|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 5.4022,
+     "n_groups": 3,
+     "n_total": 876,
+     "p_value": 0.004659,
+     "p_value_corrected": 0.083862,
+     "significant": false
+    },
+    "income|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.3927,
+     "n_groups": 2,
+     "n_total": 1508,
+     "p_value": 0.530964,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "income|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.1943,
+     "n_groups": 6,
+     "n_total": 392,
+     "p_value": 0.964628,
+     "p_value_corrected": 0.964628,
+     "significant": false
+    },
+    "income|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.8732,
+     "n_groups": 3,
+     "n_total": 1508,
+     "p_value": 0.417817,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "income|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 1.0932,
+     "n_groups": 4,
+     "n_total": 1508,
+     "p_value": 0.350841,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "premium_score|channel": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.5787,
+     "n_groups": 4,
+     "n_total": 1188,
+     "p_value": 0.629027,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "premium_score|device_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 1.2814,
+     "n_groups": 3,
+     "n_total": 709,
+     "p_value": 0.278303,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "premium_score|is_churned": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.0044,
+     "n_groups": 2,
+     "n_total": 1188,
+     "p_value": 0.947175,
+     "p_value_corrected": 0.964628,
+     "significant": false
+    },
+    "premium_score|notes": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.4768,
+     "n_groups": 6,
+     "n_total": 296,
+     "p_value": 0.793507,
+     "p_value_corrected": 0.964628,
+     "significant": false
+    },
+    "premium_score|plan_type": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.9259,
+     "n_groups": 3,
+     "n_total": 1188,
+     "p_value": 0.396445,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    },
+    "premium_score|region": {
+     "alpha": 0.05,
+     "correction": "fdr_bh",
+     "f_statistic": 0.5644,
+     "n_groups": 4,
+     "n_total": 1188,
+     "p_value": 0.638555,
+     "p_value_corrected": 0.884153,
+     "significant": false
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "alpha": 0.05,
+    "correction": "fdr_bh",
+    "message": "One-way ANOVA: 18 pair(s); 0 significant at α=0.05 after fdr_bh correction.",
+    "pair_count": 18,
+    "significant_count": 0
+   }
+  },
+  "sample_head": {
+   "data": {
+    "sample": {
+     "age": [
+      38.0,
+      52.0,
+      39.0,
+      47.0,
+      51.0
+     ],
+     "channel": [
+      "email",
+      "mobile",
+      "email",
+      "mobile",
+      "web"
+     ],
+     "device_type": [
+      "Tablet",
+      "Desktop",
+      "Desktop",
+      "Mobile",
+      "NaN"
+     ],
+     "income": [
+      80981.6,
+      45799.1,
+      68703.0,
+      "NaN",
+      39668.5
+     ],
+     "is_churned": [
+      false,
+      true,
+      false,
+      true,
+      true
+     ],
+     "notes": [
+      "NaN",
+      "Billing issue",
+      "NaN",
+      "Product feedback",
+      "NaN"
+     ],
+     "plan_type": [
+      "Premium",
+      "Standard",
+      "Premium",
+      "Standard",
+      "Basic"
+     ],
+     "premium_score": [
+      94.55,
+      49.67,
+      49.39,
+      56.48,
+      "NaN"
+     ],
+     "region": [
+      "East",
+      "South",
+      "West",
+      "North",
+      "East"
+     ]
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Returned first 5 rows."
+   }
+  },
+  "sample_size_adequacy": {
+   "data": {
+    "general_ml": {
+     "actual_rows": 2000,
+     "adequate": true,
+     "label": "General ML / Train-Val-Test Split",
+     "rationale": "A 60/20/20 train/val/test split requires ~1000 rows to produce a validation set large enough for reliable metric estimation. Below this, evaluation variance dominates reported performance.",
+     "required_rows": 1000,
+     "rule": "general_ml",
+     "shortfall": 0
+    },
+    "linear_model": {
+     "actual_rows": 2000,
+     "adequate": true,
+     "label": "Linear / Logistic Regression",
+     "rationale": "Linear models estimate one coefficient per feature. Fewer than 20 rows per predictor produces unstable coefficient estimates with wide confidence intervals (Harrell 2001).",
+     "required_rows": 180,
+     "rule": "linear_model",
+     "shortfall": 0
+    },
+    "tree_model": {
+     "actual_rows": 2000,
+     "adequate": true,
+     "label": "Tree-Based Models (RF, XGBoost, LightGBM)",
+     "rationale": "Tree models are less sensitive to the rows-per-feature ratio but still require enough samples to find meaningful splits. Below ~100 rows, overfitting risk is severe.",
+     "required_rows": 100,
+     "rule": "tree_model",
+     "shortfall": 0
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Dataset has 2,000 rows and 9 feature(s). Verdict: adequate (3/3 rules pass).",
+    "n_features": 9,
+    "n_rows": 2000,
+    "rows_per_feature": 222.22,
+    "rules_failing": 0,
+    "rules_passing": 3,
+    "verdict": "adequate"
+   }
+  },
+  "sample_tail": {
+   "data": {
+    "sample": {
+     "age": [
+      40.0,
+      47.0,
+      40.0,
+      44.0,
+      44.0
+     ],
+     "channel": [
+      "email",
+      "web",
+      "web",
+      "email",
+      "mobile"
+     ],
+     "device_type": [
+      "Desktop",
+      "NaN",
+      "NaN",
+      "NaN",
+      "Tablet"
+     ],
+     "income": [
+      65223.3,
+      "NaN",
+      "NaN",
+      "NaN",
+      82870.6
+     ],
+     "is_churned": [
+      false,
+      true,
+      false,
+      false,
+      false
+     ],
+     "notes": [
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN",
+      "NaN"
+     ],
+     "plan_type": [
+      "Basic",
+      "Basic",
+      "Standard",
+      "Basic",
+      "Basic"
+     ],
+     "premium_score": [
+      "NaN",
+      "NaN",
+      88.41,
+      87.41,
+      "NaN"
+     ],
+     "region": [
+      "South",
+      "East",
+      "West",
+      "West",
+      "West"
+     ]
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Returned last 5 rows."
+   }
+  },
+  "schema_validation": {
+   "data": null,
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "skipped",
+   "summary": {
+    "message": "Validation disabled."
+   }
+  },
+  "suggest_categorical_encoding": {
+   "data": {
+    "encoding_suggestions": {
+     "channel": {
+      "cardinality": 4,
+      "suggested_encoding": "one-hot"
+     },
+     "device_type": {
+      "cardinality": 3,
+      "suggested_encoding": "one-hot"
+     },
+     "notes": {
+      "cardinality": 6,
+      "suggested_encoding": "one-hot"
+     },
+     "plan_type": {
+      "cardinality": 3,
+      "suggested_encoding": "one-hot"
+     },
+     "region": {
+      "cardinality": 4,
+      "suggested_encoding": "one-hot"
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "channel",
+     "level": "good",
+     "path": "channel/eda",
+     "phase": "eda",
+     "title": "Low Cardinality (4 values)"
+    },
+    {
+     "column": "channel",
+     "level": "good",
+     "path": "channel/ml",
+     "phase": "ml",
+     "title": "One-Hot Encoding Recommended (4 values)"
+    },
+    {
+     "column": "device_type",
+     "level": "good",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Low Cardinality (3 values)"
+    },
+    {
+     "column": "device_type",
+     "level": "good",
+     "path": "device_type/ml",
+     "phase": "ml",
+     "title": "One-Hot Encoding Recommended (3 values)"
+    },
+    {
+     "column": "notes",
+     "level": "good",
+     "path": "notes/eda",
+     "phase": "eda",
+     "title": "Low Cardinality (6 values)"
+    },
+    {
+     "column": "notes",
+     "level": "good",
+     "path": "notes/ml",
+     "phase": "ml",
+     "title": "One-Hot Encoding Recommended (6 values)"
+    },
+    {
+     "column": "plan_type",
+     "level": "good",
+     "path": "plan_type/eda",
+     "phase": "eda",
+     "title": "Low Cardinality (3 values)"
+    },
+    {
+     "column": "plan_type",
+     "level": "good",
+     "path": "plan_type/ml",
+     "phase": "ml",
+     "title": "One-Hot Encoding Recommended (3 values)"
+    },
+    {
+     "column": "region",
+     "level": "good",
+     "path": "region/eda",
+     "phase": "eda",
+     "title": "Low Cardinality (4 values)"
+    },
+    {
+     "column": "region",
+     "level": "good",
+     "path": "region/ml",
+     "phase": "ml",
+     "title": "One-Hot Encoding Recommended (4 values)"
+    }
+   ],
+   "ml_impact_score": 0.6,
+   "recommendations": [
+    "Apply appropriate encoding based on cardinality. Use target encoding for high-cardinality columns with numeric correlation.",
+    "Column 'device_type' is best encoded using: one-hot. This improves modeling of categorical variables."
+   ],
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "column": "device_type",
+    "message": "Encoding suggestions generated for 5 categorical columns."
+   }
+  },
+  "suggest_dtype_optimizations": {
+   "data": {
+    "suggestions": {
+     "age": {
+      "analysis_intent": "continuous",
+      "current_dtype": "float64",
+      "estimated_savings_MB": 0.0076,
+      "estimated_savings_bytes": 8000,
+      "savings_note": "float32 precision sufficient (4 bytes vs 8 bytes per row)",
+      "suggested_dtype": "float32"
+     },
+     "channel": {
+      "analysis_intent": "categorical",
+      "current_dtype": "object",
+      "estimated_savings_MB": 0.1002,
+      "estimated_savings_bytes": 105024,
+      "savings_note": "low-cardinality string - category encoding stores one int per row",
+      "suggested_dtype": "category"
+     },
+     "device_type": {
+      "analysis_intent": "categorical",
+      "current_dtype": "object",
+      "estimated_savings_MB": 0.0852,
+      "estimated_savings_bytes": 89307,
+      "savings_note": "low-cardinality string - category encoding stores one int per row",
+      "suggested_dtype": "category"
+     },
+     "income": {
+      "analysis_intent": "continuous",
+      "current_dtype": "float64",
+      "estimated_savings_MB": 0.0076,
+      "estimated_savings_bytes": 8000,
+      "savings_note": "float32 precision sufficient (4 bytes vs 8 bytes per row)",
+      "suggested_dtype": "float32"
+     },
+     "notes": {
+      "analysis_intent": "categorical",
+      "current_dtype": "object",
+      "estimated_savings_MB": 0.0736,
+      "estimated_savings_bytes": 77168,
+      "savings_note": "low-cardinality string - category encoding stores one int per row",
+      "suggested_dtype": "category"
+     },
+     "plan_type": {
+      "analysis_intent": "categorical",
+      "current_dtype": "object",
+      "estimated_savings_MB": 0.1039,
+      "estimated_savings_bytes": 108909,
+      "savings_note": "low-cardinality string - category encoding stores one int per row",
+      "suggested_dtype": "category"
+     },
+     "premium_score": {
+      "analysis_intent": "continuous",
+      "current_dtype": "float64",
+      "estimated_savings_MB": 0.0076,
+      "estimated_savings_bytes": 8000,
+      "savings_note": "float32 precision sufficient (4 bytes vs 8 bytes per row)",
+      "suggested_dtype": "float32"
+     },
+     "region": {
+      "analysis_intent": "categorical",
+      "current_dtype": "object",
+      "estimated_savings_MB": 0.1,
+      "estimated_savings_bytes": 104824,
+      "savings_note": "low-cardinality string - category encoding stores one int per row",
+      "suggested_dtype": "category"
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: float64 → float32 (~0.0076 MB saved)"
+    },
+    {
+     "column": "channel",
+     "level": "info",
+     "path": "channel/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: object → category (~0.1002 MB saved)"
+    },
+    {
+     "column": "device_type",
+     "level": "info",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: object → category (~0.0852 MB saved)"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: float64 → float32 (~0.0076 MB saved)"
+    },
+    {
+     "column": "notes",
+     "level": "info",
+     "path": "notes/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: object → category (~0.0736 MB saved)"
+    },
+    {
+     "column": "plan_type",
+     "level": "info",
+     "path": "plan_type/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: object → category (~0.1039 MB saved)"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: float64 → float32 (~0.0076 MB saved)"
+    },
+    {
+     "column": "region",
+     "level": "info",
+     "path": "region/eda",
+     "phase": "eda",
+     "title": "Dtype Optimization: object → category (~0.1000 MB saved)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "8 dtype optimization(s) suggested, ~0.49 MB potential savings.",
+    "suggestion_count": 8,
+    "total_potential_savings_MB": 0.4856
+   }
+  },
+  "suggest_numerical_binning": {
+   "data": {
+    "binning_suggestions": {
+     "age": {
+      "skewness": -0.0223,
+      "suggested_binning": "equal-width binning"
+     },
+     "income": {
+      "skewness": 0.0126,
+      "suggested_binning": "equal-width binning"
+     },
+     "premium_score": {
+      "skewness": -0.3865,
+      "suggested_binning": "equal-width binning"
+     }
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Wide value range - equal-width binning may help"
+    },
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "Binning strategy: equal-width binning"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Wide value range - equal-width binning may help"
+    },
+    {
+     "column": "income",
+     "level": "info",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "Binning strategy: equal-width binning"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Wide value range - equal-width binning may help"
+    },
+    {
+     "column": "premium_score",
+     "level": "info",
+     "path": "premium_score/ml",
+     "phase": "ml",
+     "title": "Binning strategy: equal-width binning"
+    }
+   ],
+   "ml_impact_score": 0.6,
+   "recommendations": [
+    "Use quantile or equal-width binning for non-linear features. Apply log transform to reduce high skew.",
+    "Column 'age' shows distribution skew or spread. Recommended strategy: equal-width binning."
+   ],
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "column": "age",
+    "message": "Binning suggestions generated for 3 numeric columns."
+   }
+  },
+  "summarize_boolean_fields": {
+   "data": {
+    "is_churned": {
+     "pct_false": 0.7995,
+     "pct_null": 0.0,
+     "pct_true": 0.2005
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "is_churned",
+     "level": "info",
+     "path": "is_churned/eda",
+     "phase": "eda",
+     "title": "Moderate Imbalance (80.0% False)"
+    },
+    {
+     "column": "is_churned",
+     "level": "info",
+     "path": "is_churned/ml",
+     "phase": "ml",
+     "title": "Class Imbalance (80.0% False)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Summarized 1 boolean columns."
+   }
+  },
+  "summarize_dataset_shape": {
+   "data": {
+    "null_cell_percentage": 0.21,
+    "num_columns": 9,
+    "num_rows": 2000
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Dataset has 2000 rows and 9 columns."
+   }
+  },
+  "summarize_modes": {
+   "data": {
+    "age": 44.0,
+    "channel": "web",
+    "device_type": "Desktop",
+    "income": 15000.0,
+    "is_churned": false,
+    "notes": "VIP customer",
+    "plan_type": "Basic",
+    "premium_score": 70.31,
+    "region": "North"
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed mode(s) for 9 columns."
+   }
+  },
+  "summarize_nulls": {
+   "data": {
+    "high_null_columns": [
+     "notes"
+    ],
+    "null_counts": {
+     "age": 151,
+     "channel": 0,
+     "device_type": 825,
+     "income": 492,
+     "is_churned": 0,
+     "notes": 1500,
+     "plan_type": 0,
+     "premium_score": 812,
+     "region": 0
+    },
+    "null_patterns": {
+     "000000000": 134,
+     "000010000": 357,
+     "000100000": 93,
+     "000110000": 226,
+     "001000000": 78,
+     "001010000": 261,
+     "001100000": 61,
+     "001110000": 190,
+     "010000000": 38,
+     "010010000": 128,
+     "010100000": 22,
+     "010110000": 82,
+     "011000000": 23,
+     "011010000": 82,
+     "011100000": 18,
+     "011110000": 56,
+     "100000000": 12,
+     "100010000": 25,
+     "100100000": 5,
+     "100110000": 24,
+     "101000000": 7,
+     "101010000": 21,
+     "101100000": 2,
+     "101110000": 12,
+     "110000000": 4,
+     "110010000": 11,
+     "110100000": 2,
+     "110110000": 12,
+     "111010000": 7,
+     "111100000": 1,
+     "111110000": 6
+    },
+    "null_percentages": {
+     "age": 0.0755,
+     "channel": 0.0,
+     "device_type": 0.4125,
+     "income": 0.246,
+     "is_churned": 0.0,
+     "notes": 0.75,
+     "plan_type": 0.0,
+     "premium_score": 0.406,
+     "region": 0.0
+    }
+   },
+   "error": null,
+   "guidance": [
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/eda",
+     "phase": "eda",
+     "title": "Some Missingness (7.5%)"
+    },
+    {
+     "column": "age",
+     "level": "info",
+     "path": "age/ml",
+     "phase": "ml",
+     "title": "Some Missingness (7.5%)"
+    },
+    {
+     "column": "device_type",
+     "level": "warn",
+     "path": "device_type/eda",
+     "phase": "eda",
+     "title": "Significant Missingness (41.2%)"
+    },
+    {
+     "column": "device_type",
+     "level": "warn",
+     "path": "device_type/ml",
+     "phase": "ml",
+     "title": "Significant Missingness (41.2%)"
+    },
+    {
+     "column": "income",
+     "level": "warn",
+     "path": "income/eda",
+     "phase": "eda",
+     "title": "Significant Missingness (24.6%)"
+    },
+    {
+     "column": "income",
+     "level": "warn",
+     "path": "income/ml",
+     "phase": "ml",
+     "title": "Significant Missingness (24.6%)"
+    },
+    {
+     "column": "notes",
+     "level": "error",
+     "path": "notes/eda",
+     "phase": "eda",
+     "title": "Severe Missingness (75.0%)"
+    },
+    {
+     "column": "notes",
+     "level": "error",
+     "path": "notes/ml",
+     "phase": "ml",
+     "title": "Severe Missingness (75.0%)"
+    },
+    {
+     "column": "premium_score",
+     "level": "warn",
+     "path": "premium_score/eda",
+     "phase": "eda",
+     "title": "Significant Missingness (40.6%)"
+    },
+    {
+     "column": "premium_score",
+     "level": "warn",
+     "path": "premium_score/ml",
+     "phase": "ml",
+     "title": "Significant Missingness (40.6%)"
+    }
+   ],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "1 column(s) have >50% missing values."
+   }
+  },
+  "summarize_numeric": {
+   "data": {
+    "age": {
+     "1%": 32.0,
+     "25%": 41.0,
+     "5%": 35.0,
+     "50%": 45.0,
+     "75%": 49.0,
+     "95%": 55.0,
+     "99%": 58.0,
+     "count": 1849.0,
+     "max": 62.0,
+     "mean": 44.8751,
+     "min": 28.0,
+     "near_zero_variance": false,
+     "std": 6.08642
+    },
+    "income": {
+     "1%": 15332.2,
+     "25%": 46885.7,
+     "5%": 28085.4,
+     "50%": 61492.2,
+     "75%": 75076.2,
+     "95%": 94768.0,
+     "99%": 105217.0,
+     "count": 1508.0,
+     "max": 122168.0,
+     "mean": 61227.3,
+     "min": 15000.0,
+     "near_zero_variance": false,
+     "std": 20029.1
+    },
+    "premium_score": {
+     "1%": 15.6472,
+     "25%": 47.4325,
+     "5%": 25.305,
+     "50%": 62.995,
+     "75%": 76.87,
+     "95%": 90.8525,
+     "99%": 95.73,
+     "count": 1188.0,
+     "max": 99.65,
+     "mean": 61.1703,
+     "min": 5.74,
+     "near_zero_variance": false,
+     "std": 19.9124
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Extended summary for 3 numeric columns."
+   }
+  },
+  "summarize_text_fields": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "No text columns found — text field summary skipped."
+   }
+  },
+  "summarize_unique": {
+   "data": {
+    "age": 35,
+    "channel": 4,
+    "device_type": 3,
+    "income": 1493,
+    "is_churned": 2,
+    "notes": 6,
+    "plan_type": 3,
+    "premium_score": 1100,
+    "region": 4
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed unique counts for 9 columns."
+   }
+  },
+  "summarize_value_counts": {
+   "data": {
+    "age": {
+     "44.0": 128,
+     "45.0": 104,
+     "46.0": 122,
+     "47.0": 117,
+     "NaN": 151
+    },
+    "channel": {
+     "direct": 209,
+     "email": 409,
+     "mobile": 593,
+     "web": 789
+    },
+    "device_type": {
+     "Desktop": 432,
+     "Mobile": 365,
+     "NaN": 825,
+     "Tablet": 378
+    },
+    "income": {
+     "15000.0": 15,
+     "45799.13": 1,
+     "61176.3": 2,
+     "80981.64": 1,
+     "NaN": 492
+    },
+    "is_churned": {
+     "false": 1599,
+     "true": 401
+    },
+    "notes": {
+     "NaN": 1500,
+     "No issues": 87,
+     "Product feedback": 81,
+     "Support escalation": 90,
+     "VIP customer": 96
+    },
+    "plan_type": {
+     "Basic": 817,
+     "Premium": 490,
+     "Standard": 693
+    },
+    "premium_score": {
+     "55.21": 3,
+     "66.28": 3,
+     "70.31": 4,
+     "84.7": 2,
+     "NaN": 812
+    },
+    "region": {
+     "East": 510,
+     "North": 522,
+     "South": 502,
+     "West": 466
+    }
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Computed value counts for 9 columns."
+   }
+  },
+  "temporal_gap_detection": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "No datetime columns found — temporal gap detection skipped."
+   }
+  },
+  "transformation_preview": {
+   "data": {},
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "Transformation previews computed for 0 skewed column(s).",
+    "previewed_count": 0,
+    "skew_threshold": 1.0
+   }
+  },
+  "validate_plugin_coverage": {
+   "data": {
+    "plugin_warnings": []
+   },
+   "error": null,
+   "guidance": [],
+   "ml_impact_score": null,
+   "recommendations": null,
+   "reliability_warnings": null,
+   "status": "success",
+   "summary": {
+    "message": "All plugin files registered tasks successfully."
+   }
+  }
+ },
+ "top_ml_risks": [
+  {
+   "column": "device_type",
+   "recommendation": "Column 'device_type' appears to contain base64 strings. Consider decoding or excluding from modeling.",
+   "score": 0.9,
+   "tags": [
+    "drop",
+    "check_leakage"
+   ],
+   "task": "detect_encoded_columns"
+  },
+  {
+   "column": "age",
+   "recommendation": "This feature has high collinearity with others, which may distort model coefficients. Consider dropping, combining, or using regularization.\n",
+   "score": 0.75,
+   "tags": [
+    "drop",
+    "transform"
+   ],
+   "task": "detect_collinear_features"
+  },
+  {
+   "column": "device_type",
+   "recommendation": "Column 'device_type' contains multiple data types (str, float). Consider cleaning or coercing values.",
+   "score": 0.6,
+   "tags": [
+    "transform"
+   ],
+   "task": "detect_mixed_type_columns"
+  },
+  {
+   "column": "device_type",
+   "recommendation": "Apply appropriate encoding based on cardinality. Use target encoding for high-cardinality columns with numeric correlation.",
+   "score": 0.6,
+   "tags": [
+    "transform"
+   ],
+   "task": "suggest_categorical_encoding"
+  },
+  {
+   "column": "age",
+   "recommendation": "Use quantile or equal-width binning for non-linear features. Apply log transform to reduce high skew.",
+   "score": 0.6,
+   "tags": [
+    "transform"
+   ],
+   "task": "suggest_numerical_binning"
+  }
+ ]
+}
