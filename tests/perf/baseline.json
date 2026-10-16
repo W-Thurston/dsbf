@@ -1,0 +1,593 @@
+{
+  "environment": {
+    "ci": true,
+    "commit": "a918bbf",
+    "cpu_count": 4,
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "recorded_at": "2026-10-16T19:54:25Z"
+  },
+  "scenarios": {
+    "adversarial": {
+      "api": {
+        "associations": {
+          "bytes": 21,
+          "milliseconds": 3.3,
+          "status": 500
+        },
+        "dq_status": {
+          "bytes": 397,
+          "milliseconds": 2.8,
+          "status": 200
+        },
+        "figures": {
+          "bytes": 28075,
+          "milliseconds": 3.2,
+          "status": 200
+        },
+        "ml_readiness": {
+          "bytes": 28954,
+          "milliseconds": 2.9,
+          "status": 200
+        },
+        "run": {
+          "bytes": 5414,
+          "milliseconds": 6.5,
+          "status": 200
+        },
+        "sample": {
+          "bytes": 21,
+          "milliseconds": 5.3,
+          "status": 500
+        },
+        "tasks": {
+          "bytes": 3292964,
+          "milliseconds": 58.2,
+          "status": 200
+        }
+      },
+      "failed_tasks": [],
+      "import_seconds": 1.67,
+      "inferred_stage": "exploratory",
+      "output_bytes": 9446667,
+      "peak_rss_mb": 396.7,
+      "repeats": 3,
+      "report_bytes": 7345885,
+      "shape": [
+        200,
+        14
+      ],
+      "stages": {
+        "AnalysisContext": 0.0,
+        "ProfileEngine.__init__": 0.004,
+        "_load_data": 0.004,
+        "build_column_task_mappings": 0.059,
+        "build_graph": 0.003,
+        "data_sampling": 0.0,
+        "graph.run (all tasks)": 14.624,
+        "infer_stage": 0.002,
+        "load_task_group": 0.0,
+        "persist_run": 0.065,
+        "record_run": 0.0,
+        "render_user_report": 0.258,
+        "validate_config_and_graph": 0.001,
+        "write_metadata_report": 0.003
+      },
+      "task_outcomes": {
+        "failed": 0,
+        "skipped": 0,
+        "success": 67
+      },
+      "tasks": {
+        "categorical_length_stats": 0.003,
+        "check_datetime_consistency": 0.003,
+        "compare_with_reference_dataset": 0.0,
+        "compute_acf_pacf": 0.0,
+        "compute_entropy": 0.007,
+        "compute_kurtosis": 0.021,
+        "compute_mutual_information": 0.002,
+        "compute_pairwise_associations": 0.112,
+        "contingency_tables": 0.039,
+        "data_quality_scorer": 0.0,
+        "decompose_time_series": 0.0,
+        "detect_bimodal_distribution": 0.08,
+        "detect_class_imbalance": 0.0,
+        "detect_collinear_features": 0.002,
+        "detect_constant_columns": 0.002,
+        "detect_data_leakage": 0.006,
+        "detect_duplicate_columns": 0.002,
+        "detect_duplicates": 0.003,
+        "detect_encoded_columns": 0.002,
+        "detect_feature_drift": 0.001,
+        "detect_high_cardinality": 0.001,
+        "detect_id_columns": 0.001,
+        "detect_mixed_type_columns": 0.001,
+        "detect_near_zero_variance": 0.001,
+        "detect_out_of_bounds": 0.001,
+        "detect_outliers": 0.172,
+        "detect_regex_format_violations": 0.001,
+        "detect_single_dominant_value": 0.007,
+        "detect_skewness": 0.007,
+        "detect_stationarity": 0.0,
+        "detect_string_anomalies": 0.006,
+        "detect_target_drift": 0.001,
+        "detect_zeros": 0.002,
+        "extract_datetime_features": 0.005,
+        "fuzzy_duplicate_detection": 4.25,
+        "generate_dataset_summary_plots": 0.886,
+        "generate_univariate_plots": 8.47,
+        "identify_bottleneck_tasks": 0.001,
+        "imputation_strategy_suggestions": 0.006,
+        "infer_types": 0.013,
+        "kruskal_wallis": 0.043,
+        "log_resource_usage": 0.001,
+        "mann_whitney_u": 0.118,
+        "missingness_heatmap": 0.002,
+        "missingness_mechanism_analysis": 0.048,
+        "ml_readiness_scorer": 0.0,
+        "normality_qq_plots": 0.012,
+        "normality_tests": 0.024,
+        "one_way_anova": 0.043,
+        "sample_head": 0.002,
+        "sample_size_adequacy": 0.006,
+        "sample_tail": 0.002,
+        "schema_validation": 0.001,
+        "suggest_categorical_encoding": 0.001,
+        "suggest_dtype_optimizations": 0.014,
+        "suggest_numerical_binning": 0.003,
+        "summarize_boolean_fields": 0.003,
+        "summarize_dataset_shape": 0.003,
+        "summarize_modes": 0.005,
+        "summarize_nulls": 0.004,
+        "summarize_numeric": 0.015,
+        "summarize_text_fields": 0.001,
+        "summarize_unique": 0.002,
+        "summarize_value_counts": 0.004,
+        "temporal_gap_detection": 0.005,
+        "transformation_preview": 0.009,
+        "validate_plugin_coverage": 0.0
+      },
+      "total_seconds": 15.676,
+      "total_seconds_all_runs": [
+        15.676,
+        15.73,
+        15.509
+      ]
+    },
+    "kitchen50k": {
+      "api": {
+        "associations": {
+          "bytes": 124174,
+          "milliseconds": 11.4,
+          "status": 200
+        },
+        "dq_status": {
+          "bytes": 400,
+          "milliseconds": 2.7,
+          "status": 200
+        },
+        "figures": {
+          "bytes": 96935,
+          "milliseconds": 4.6,
+          "status": 200
+        },
+        "ml_readiness": {
+          "bytes": 129633,
+          "milliseconds": 3.6,
+          "status": 200
+        },
+        "run": {
+          "bytes": 5422,
+          "milliseconds": 6.3,
+          "status": 200
+        },
+        "sample": {
+          "bytes": 24764,
+          "milliseconds": 594.6,
+          "status": 200
+        },
+        "tasks": {
+          "bytes": 3656100,
+          "milliseconds": 206.8,
+          "status": 200
+        }
+      },
+      "failed_tasks": [],
+      "import_seconds": 1.708,
+      "inferred_stage": "exploratory",
+      "output_bytes": 117142426,
+      "peak_rss_mb": 2079.1,
+      "repeats": 1,
+      "report_bytes": 6372431,
+      "shape": [
+        52500,
+        60
+      ],
+      "stages": {
+        "AnalysisContext": 0.0,
+        "ProfileEngine.__init__": 0.004,
+        "_load_data": 0.605,
+        "build_column_task_mappings": 0.064,
+        "build_graph": 0.003,
+        "data_sampling": 0.0,
+        "graph.run (all tasks)": 355.375,
+        "infer_stage": 0.217,
+        "load_task_group": 0.0,
+        "persist_run": 0.073,
+        "record_run": 0.0,
+        "render_user_report": 0.183,
+        "validate_config_and_graph": 0.001,
+        "write_metadata_report": 0.008
+      },
+      "task_outcomes": {
+        "failed": 0,
+        "skipped": 0,
+        "success": 67
+      },
+      "tasks": {
+        "categorical_length_stats": 0.35,
+        "check_datetime_consistency": 0.007,
+        "compare_with_reference_dataset": 0.0,
+        "compute_acf_pacf": 1.113,
+        "compute_entropy": 0.085,
+        "compute_kurtosis": 0.064,
+        "compute_mutual_information": 0.002,
+        "compute_pairwise_associations": 34.117,
+        "contingency_tables": 2.503,
+        "data_quality_scorer": 0.0,
+        "decompose_time_series": 0.108,
+        "detect_bimodal_distribution": 3.504,
+        "detect_class_imbalance": 0.0,
+        "detect_collinear_features": 0.007,
+        "detect_constant_columns": 0.188,
+        "detect_data_leakage": 0.1,
+        "detect_duplicate_columns": 0.021,
+        "detect_duplicates": 0.159,
+        "detect_encoded_columns": 0.435,
+        "detect_feature_drift": 0.001,
+        "detect_high_cardinality": 0.031,
+        "detect_id_columns": 0.147,
+        "detect_mixed_type_columns": 0.327,
+        "detect_near_zero_variance": 0.001,
+        "detect_out_of_bounds": 0.002,
+        "detect_outliers": 0.876,
+        "detect_regex_format_violations": 0.001,
+        "detect_single_dominant_value": 0.693,
+        "detect_skewness": 0.061,
+        "detect_stationarity": 89.358,
+        "detect_string_anomalies": 2.399,
+        "detect_target_drift": 0.001,
+        "detect_zeros": 0.007,
+        "extract_datetime_features": 0.017,
+        "fuzzy_duplicate_detection": 71.853,
+        "generate_dataset_summary_plots": 4.182,
+        "generate_univariate_plots": 91.317,
+        "identify_bottleneck_tasks": 0.001,
+        "imputation_strategy_suggestions": 0.009,
+        "infer_types": 25.566,
+        "kruskal_wallis": 3.416,
+        "log_resource_usage": 0.001,
+        "mann_whitney_u": 8.588,
+        "missingness_heatmap": 0.102,
+        "missingness_mechanism_analysis": 7.629,
+        "ml_readiness_scorer": 0.001,
+        "normality_qq_plots": 0.083,
+        "normality_tests": 0.534,
+        "one_way_anova": 2.406,
+        "sample_head": 0.003,
+        "sample_size_adequacy": 0.006,
+        "sample_tail": 0.003,
+        "schema_validation": 0.001,
+        "suggest_categorical_encoding": 0.15,
+        "suggest_dtype_optimizations": 0.285,
+        "suggest_numerical_binning": 0.013,
+        "summarize_boolean_fields": 0.063,
+        "summarize_dataset_shape": 0.243,
+        "summarize_modes": 0.246,
+        "summarize_nulls": 1.029,
+        "summarize_numeric": 0.077,
+        "summarize_text_fields": 0.001,
+        "summarize_unique": 0.16,
+        "summarize_value_counts": 0.209,
+        "temporal_gap_detection": 0.013,
+        "transformation_preview": 0.347,
+        "validate_plugin_coverage": 0.0
+      },
+      "total_seconds": 357.18,
+      "total_seconds_all_runs": [
+        357.18
+      ]
+    },
+    "kitchen5k": {
+      "api": {
+        "associations": {
+          "bytes": 124296,
+          "milliseconds": 11.7,
+          "status": 200
+        },
+        "dq_status": {
+          "bytes": 398,
+          "milliseconds": 2.9,
+          "status": 200
+        },
+        "figures": {
+          "bytes": 96935,
+          "milliseconds": 4.5,
+          "status": 200
+        },
+        "ml_readiness": {
+          "bytes": 130170,
+          "milliseconds": 3.7,
+          "status": 200
+        },
+        "run": {
+          "bytes": 5417,
+          "milliseconds": 6.6,
+          "status": 200
+        },
+        "sample": {
+          "bytes": 24024,
+          "milliseconds": 69.7,
+          "status": 200
+        },
+        "tasks": {
+          "bytes": 1909143,
+          "milliseconds": 37.1,
+          "status": 200
+        }
+      },
+      "failed_tasks": [],
+      "import_seconds": 1.719,
+      "inferred_stage": "exploratory",
+      "output_bytes": 49982652,
+      "peak_rss_mb": 1782.5,
+      "repeats": 1,
+      "report_bytes": 3575511,
+      "shape": [
+        5250,
+        60
+      ],
+      "stages": {
+        "AnalysisContext": 0.0,
+        "ProfileEngine.__init__": 0.004,
+        "_load_data": 0.065,
+        "build_column_task_mappings": 0.037,
+        "build_graph": 0.003,
+        "data_sampling": 0.0,
+        "graph.run (all tasks)": 146.068,
+        "infer_stage": 0.024,
+        "load_task_group": 0.0,
+        "persist_run": 0.051,
+        "record_run": 0.0,
+        "render_user_report": 0.123,
+        "validate_config_and_graph": 0.001,
+        "write_metadata_report": 0.009
+      },
+      "task_outcomes": {
+        "failed": 0,
+        "skipped": 0,
+        "success": 67
+      },
+      "tasks": {
+        "categorical_length_stats": 0.043,
+        "check_datetime_consistency": 0.002,
+        "compare_with_reference_dataset": 0.0,
+        "compute_acf_pacf": 0.285,
+        "compute_entropy": 0.025,
+        "compute_kurtosis": 0.056,
+        "compute_mutual_information": 0.002,
+        "compute_pairwise_associations": 4.961,
+        "contingency_tables": 1.038,
+        "data_quality_scorer": 0.0,
+        "decompose_time_series": 0.012,
+        "detect_bimodal_distribution": 0.324,
+        "detect_class_imbalance": 0.0,
+        "detect_collinear_features": 0.003,
+        "detect_constant_columns": 0.023,
+        "detect_data_leakage": 0.018,
+        "detect_duplicate_columns": 0.012,
+        "detect_duplicates": 0.02,
+        "detect_encoded_columns": 0.047,
+        "detect_feature_drift": 0.001,
+        "detect_high_cardinality": 0.007,
+        "detect_id_columns": 0.028,
+        "detect_mixed_type_columns": 0.033,
+        "detect_near_zero_variance": 0.001,
+        "detect_out_of_bounds": 0.001,
+        "detect_outliers": 0.324,
+        "detect_regex_format_violations": 0.001,
+        "detect_single_dominant_value": 0.098,
+        "detect_skewness": 0.024,
+        "detect_stationarity": 3.343,
+        "detect_string_anomalies": 0.2,
+        "detect_target_drift": 0.001,
+        "detect_zeros": 0.005,
+        "extract_datetime_features": 0.006,
+        "fuzzy_duplicate_detection": 67.556,
+        "generate_dataset_summary_plots": 2.114,
+        "generate_univariate_plots": 57.306,
+        "identify_bottleneck_tasks": 0.001,
+        "imputation_strategy_suggestions": 0.009,
+        "infer_types": 2.646,
+        "kruskal_wallis": 0.847,
+        "log_resource_usage": 0.001,
+        "mann_whitney_u": 2.01,
+        "missingness_heatmap": 0.014,
+        "missingness_mechanism_analysis": 1.135,
+        "ml_readiness_scorer": 0.001,
+        "normality_qq_plots": 0.053,
+        "normality_tests": 0.142,
+        "one_way_anova": 0.674,
+        "sample_head": 0.003,
+        "sample_size_adequacy": 0.006,
+        "sample_tail": 0.003,
+        "schema_validation": 0.001,
+        "suggest_categorical_encoding": 0.017,
+        "suggest_dtype_optimizations": 0.076,
+        "suggest_numerical_binning": 0.007,
+        "summarize_boolean_fields": 0.011,
+        "summarize_dataset_shape": 0.027,
+        "summarize_modes": 0.036,
+        "summarize_nulls": 0.102,
+        "summarize_numeric": 0.039,
+        "summarize_text_fields": 0.001,
+        "summarize_unique": 0.02,
+        "summarize_value_counts": 0.028,
+        "temporal_gap_detection": 0.005,
+        "transformation_preview": 0.088,
+        "validate_plugin_coverage": 0.0
+      },
+      "total_seconds": 147.047,
+      "total_seconds_all_runs": [
+        147.047
+      ]
+    },
+    "titanic": {
+      "api": {
+        "associations": {
+          "bytes": 15018,
+          "milliseconds": 3.8,
+          "status": 200
+        },
+        "dq_status": {
+          "bytes": 396,
+          "milliseconds": 2.7,
+          "status": 200
+        },
+        "figures": {
+          "bytes": 20725,
+          "milliseconds": 3.5,
+          "status": 200
+        },
+        "ml_readiness": {
+          "bytes": 23699,
+          "milliseconds": 2.8,
+          "status": 200
+        },
+        "run": {
+          "bytes": 5343,
+          "milliseconds": 26.7,
+          "status": 200
+        },
+        "sample": {
+          "bytes": 2290,
+          "milliseconds": 5.7,
+          "status": 200
+        },
+        "tasks": {
+          "bytes": 7594695,
+          "milliseconds": 132.3,
+          "status": 200
+        }
+      },
+      "failed_tasks": [],
+      "import_seconds": 1.662,
+      "inferred_stage": "exploratory",
+      "output_bytes": 18830625,
+      "peak_rss_mb": 428.8,
+      "repeats": 3,
+      "report_bytes": 17169332,
+      "shape": [
+        891,
+        15
+      ],
+      "stages": {
+        "AnalysisContext": 0.0,
+        "ProfileEngine.__init__": 0.004,
+        "_load_data": 0.004,
+        "build_column_task_mappings": 0.286,
+        "build_graph": 0.003,
+        "data_sampling": 0.0,
+        "graph.run (all tasks)": 24.339,
+        "infer_stage": 0.002,
+        "load_task_group": 0.0,
+        "persist_run": 0.135,
+        "record_run": 0.0,
+        "render_user_report": 0.642,
+        "validate_config_and_graph": 0.001,
+        "write_metadata_report": 0.003
+      },
+      "task_outcomes": {
+        "failed": 0,
+        "skipped": 0,
+        "success": 67
+      },
+      "tasks": {
+        "categorical_length_stats": 0.008,
+        "check_datetime_consistency": 0.001,
+        "compare_with_reference_dataset": 0.0,
+        "compute_acf_pacf": 0.0,
+        "compute_entropy": 0.013,
+        "compute_kurtosis": 0.012,
+        "compute_mutual_information": 0.002,
+        "compute_pairwise_associations": 0.413,
+        "contingency_tables": 0.464,
+        "data_quality_scorer": 0.0,
+        "decompose_time_series": 0.0,
+        "detect_bimodal_distribution": 0.05,
+        "detect_class_imbalance": 0.0,
+        "detect_collinear_features": 0.005,
+        "detect_constant_columns": 0.002,
+        "detect_data_leakage": 0.002,
+        "detect_duplicate_columns": 0.002,
+        "detect_duplicates": 0.003,
+        "detect_encoded_columns": 0.01,
+        "detect_feature_drift": 0.001,
+        "detect_high_cardinality": 0.002,
+        "detect_id_columns": 0.002,
+        "detect_mixed_type_columns": 0.003,
+        "detect_near_zero_variance": 0.001,
+        "detect_out_of_bounds": 0.002,
+        "detect_outliers": 0.181,
+        "detect_regex_format_violations": 0.001,
+        "detect_single_dominant_value": 0.009,
+        "detect_skewness": 0.003,
+        "detect_stationarity": 0.0,
+        "detect_string_anomalies": 0.018,
+        "detect_target_drift": 0.001,
+        "detect_zeros": 0.002,
+        "extract_datetime_features": 0.001,
+        "fuzzy_duplicate_detection": 16.638,
+        "generate_dataset_summary_plots": 0.943,
+        "generate_univariate_plots": 4.996,
+        "identify_bottleneck_tasks": 0.001,
+        "imputation_strategy_suggestions": 0.005,
+        "infer_types": 0.036,
+        "kruskal_wallis": 0.046,
+        "log_resource_usage": 0.001,
+        "mann_whitney_u": 0.115,
+        "missingness_heatmap": 0.002,
+        "missingness_mechanism_analysis": 0.06,
+        "ml_readiness_scorer": 0.0,
+        "normality_qq_plots": 0.014,
+        "normality_tests": 0.014,
+        "one_way_anova": 0.043,
+        "sample_head": 0.002,
+        "sample_size_adequacy": 0.006,
+        "sample_tail": 0.002,
+        "schema_validation": 0.001,
+        "suggest_categorical_encoding": 0.002,
+        "suggest_dtype_optimizations": 0.016,
+        "suggest_numerical_binning": 0.002,
+        "summarize_boolean_fields": 0.005,
+        "summarize_dataset_shape": 0.004,
+        "summarize_modes": 0.005,
+        "summarize_nulls": 0.008,
+        "summarize_numeric": 0.008,
+        "summarize_text_fields": 0.001,
+        "summarize_unique": 0.002,
+        "summarize_value_counts": 0.004,
+        "temporal_gap_detection": 0.001,
+        "transformation_preview": 0.014,
+        "validate_plugin_coverage": 0.0
+      },
+      "total_seconds": 26.056,
+      "total_seconds_all_runs": [
+        26.056,
+        26.092,
+        26.053
+      ]
+    }
+  },
+  "schema": 1
+}
