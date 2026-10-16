@@ -20,6 +20,15 @@ _RUNTIME_ROOT_KEY = pytest.StashKey[Path]()
 _SAVED_ENV_KEY = pytest.StashKey[dict[str, str | None]]()
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="Rewrite the snapshots in tests/golden/snapshots instead of comparing.",
+    )
+
+
 def pytest_configure(config: pytest.Config) -> None:
     """Point the database and metadata export at a throwaway root.
 

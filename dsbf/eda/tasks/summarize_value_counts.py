@@ -5,6 +5,7 @@ from typing import Any
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.data_utils import ranked_value_counts
 
 
 @register_task(
@@ -59,7 +60,7 @@ class SummarizeValueCounts(BaseTask):
 
             for col in df.columns:
                 try:
-                    vc = df[col].value_counts(dropna=False).head(top_k)
+                    vc = ranked_value_counts(df[col], dropna=False).head(top_k)
                     result[col] = vc.to_dict()
                 except Exception:  # noqa: BLE001, PERF203, S112
                     continue  # Skip columns with unhashable or incomparable types
