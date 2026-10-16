@@ -29,7 +29,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Motivation:** Every later phase is judged by diffing against these baselines. They only mean something if the current code is stable and measured first.
 - **Boundaries:** Work on the **current** code is limited to blockers and cheap safety fixes (REFACTOR_PLAN §12, Phase 0). Other findings wait for the code that replaces them. No new features.
 - **Sequence and dependencies:** Toolchain first (CI, tests, dependencies, uv, markers), then isolation and crash fixes, then hygiene and type checking, then baselines and decisions.
-- **Success criteria:** Every Phase 0 unit is `done`. CI runs the fast, full, type-check, golden and perf jobs green. ADRs D1–D11 are accepted.
+- **Success criteria:** Every Phase 0 unit is `done`. CI runs the fast, full, type-check, golden and perf jobs green. ADRs D1–D11 are accepted. No security alert is open on `main` (code scanning and Dependabot), or each is dismissed with a reason.
 
 ### U0-01 · Park in-flight chart work and adopt the unit workflow
 - **Status:** done (2026-10-15) · **Notes:** ECharts work parked as `d4d949f` on `origin/wip/echarts-charts` (histogram-bin warning in the commit body). The NFL config edits, metadata churn, `poetry.lock` and `.vscode` edits were discarded, and local `feature/viz_refactor` was deleted (never on origin; tree identical to `main`). **Deviation:** the new CI lint (unpinned ruff 0.17) also formats Python code blocks in Markdown, and `main` was already red on it, so the code blocks in `CONTRIBUTING.md` and `docs/REFACTOR_PLAN.md` were reformatted (whitespace only) to get this PR green; ruff 0.11 is unaffected. U0-02 still owns pinning ruff. PR #29, merged as `85f8697`. · **Size:** S · **Depends on:** none · **Resolves:** F-05
@@ -235,7 +235,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `chore: remove stray files and dead modules, correct the README`
 
 ### U0-12 · Adopt pyrefly type checking
-- **Status:** done (2026-10-16) · **Notes:** pyrefly is a pinned dev dependency (the user's choice; locked at 1.4.0) configured under `[tool.pyrefly]` with the `default` preset, because the auto-selected `basic` preset reports 1 error. The committed `.pyrefly-baseline.json` holds the 895 existing errors across `dsbf/`, `tests/` and `docs/practice_run/` (about 705 are in tests). It is CLI-only, so the gate is `uv run pyrefly check --baseline .pyrefly-baseline.json --error-stale-baseline`: a new error fails, and so does a baseline entry that no longer matches, so the file only shrinks (`--prune-baseline`). A new `Type check` CI job runs on one interpreter. **Deviations:** the README Pyrefly badge came back. Limit: the baseline keys on file, column, kind and message, so an identical error added to a file that already has it is not reported. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-11
+- **Status:** done (2026-10-16) · **Notes:** pyrefly is a pinned dev dependency (the user's choice; locked at 1.4.0) configured under `[tool.pyrefly]` with the `default` preset, because the auto-selected `basic` preset reports 1 error. The committed `.pyrefly-baseline.json` holds the 895 existing errors across `dsbf/`, `tests/` and `docs/practice_run/` (about 705 are in tests). It is CLI-only, so the gate is `uv run pyrefly check --baseline .pyrefly-baseline.json --error-stale-baseline`: a new error fails, and so does a baseline entry that no longer matches, so the file only shrinks (`--prune-baseline`). A new `Type check` CI job runs on one interpreter. **Deviations:** the README Pyrefly badge came back. Limit: the baseline keys on file, column, kind and message, so an identical error added to a file that already has it is not reported. PR #55, merged as `ecc2353`. · **Size:** M · **Depends on:** U0-11
 - **Goal:** `pyrefly check` runs in CI and passes, with a committed baseline that suppresses existing errors in legacy modules, so new code is checked strictly.
 - **Context:** No type checker is configured today. The legacy code has about 328 `Any` annotations.
 - **Assumptions to confirm:**
@@ -247,7 +247,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `build: add pyrefly type checking with a baseline for existing code`
 
 ### U0-13 · Golden-run baselines
-- **Status:** todo · **Size:** M · **Depends on:** U0-08, U0-09 · **Resolves:** baseline for Phases 2–4
+- **Status:** done (2026-10-16) · **Notes:** `tests/golden/` holds ten snapshots (the 8 archetypes, vendored `titanic.csv` and kitchen5k; 60 successful and 5 skipped tasks each, 0 errors). Each dataset runs in a child process with `PYTHONHASHSEED=0`, and two full runs matched the snapshots byte for byte. `pytest -m golden` compares, `--update-golden` rewrites; `golden` is deselected by default, and `.github/workflows/golden.yml` runs nightly, on demand and on PRs labelled `golden`. **Deviations:** the hash seed is pinned because `fuzzy_duplicate_detection` depends on set order (titanic reported 7,102 and 20,029 pairs on two runs; follow-up under U4-C); the kitchen5k generator's three uuid columns were unseeded and are now seeded; the first CI golden run disagreed with the local snapshots on the order of tied counts, because pandas `value_counts()` sorts with an unstable, CPU-dependent sort, so `detect_single_dominant_value`, `summarize_value_counts` and `contingency_tables` now rank through `ranked_value_counts` (stable, ties by first appearance) and the snapshots were regenerated; titanic was vendored by the user's decision (seaborn-data has no license, see `tests/golden/data/README.md`); kitchen5k takes about 150 s, and the suite 7-8 minutes. The README validation warning stays, because `run_validation.py` is unchanged (see U5-00). PR #56, merged as `9115786`. · **Size:** M · **Depends on:** U0-08, U0-09 · **Resolves:** baseline for Phases 2–4
 - **Goal:** A committed, deterministic snapshot of what today's code reports, used to review every later behaviour change.
 - **Context:** REFACTOR_PLAN §11 and §14. Datasets: the 8 validation archetypes (`tests/generators`), titanic, and kitchen5k (generator seed 42).
 - **Assumptions to confirm:**
@@ -267,12 +267,10 @@ planning unit that turns the placeholders into full units, using what earlier ph
   3. Add the workflow.
   4. Document how to review and update the snapshots.
 - **Acceptance:** Two consecutive runs produce byte-identical snapshots. The golden CI job is green. The snapshots are committed.
-- **Note from U0-11:** `tests/validation/run_validation.py` (without `--report`) takes the newest `report.json` under `dsbf/outputs/` whatever its dataset: on 2026-10-16 it checked `near_clean` against a stale 9,217-row run and failed with "Expected 3000 rows, got 9217". The golden runner should select its report by dataset (or run the profiler itself), and the README's validation section should then drop its warning.
 - **Commit:** `test: add golden-run baselines for archetypes, titanic and kitchen5k`
 
 ### U0-14 · Performance benchmark harness and baseline
-- **Status:** todo · **Size:** M · **Depends on:** U0-07 · **Resolves:** baseline for the REFACTOR_PLAN §11 budgets
-- **Note from U0-09:** `docs/practice_run/run_stages.py` still patches `decompose_time_series` under `tasks`, and went stale once already when U0-08 moved `time_series`. Promoting it to `tests/perf/` removes that risk.
+- **Status:** done (2026-10-16) · **Notes:** `tests/perf/` runs titanic, the adversarial frame, kitchen5k and kitchen50k in fresh interpreters (no `cProfile`; titanic and adversarial 3 times, median kept) and records stage and task times, peak RSS, output sizes and the dashboard payloads that open a run. `pytest -m perf` writes `perf-results/perf.json`; a stage, task, total, peak memory or API payload more than 25% above `tests/perf/baseline.json` **and** above a floor (1 s, 100 MB, 10 KB) fails, as does an endpoint that stops answering 200. `perf` is now deselected by default (`addopts`), and `.github/workflows/perf.yml` runs nightly, on demand and on PRs labelled `perf`. `docs/practice_run/` is deleted and the walkthrough points at `tests/perf/`. Baseline from the first CI run on `ubuntu-latest` (4 CPUs): titanic 26 s, adversarial 16 s, kitchen5k 147 s, kitchen50k 357 s with a 2.08 GB peak, 0 failed tasks (the walkthrough's 80 s, 298 s and 707 s were under `cProfile` with 12 crashed tasks). **Deviations:** the baseline was recorded locally first, then replaced with the artifact of the PR's first `perf` run, because local numbers differ (kitchen50k took 453 s locally and 357 s on the runner, mostly `detect_stationarity` at 184 s against 89 s, so local runs can't be compared with the baseline). CodeQL flagged the new `perf.yml` for missing `permissions` (fixed in the PR). Follow-ups: the dashboard API returns 500 on the adversarial run (see U1-06); a 1M x 50 scenario goes to U2-08; the other open security alerts go to U0-16. PR #57, merged as `33fcc3f`. · **Size:** M · **Depends on:** U0-07 · **Resolves:** baseline for the REFACTOR_PLAN §11 budgets
 - **Goal:** A repeatable benchmark that records per-stage and per-task timings and memory, with today's numbers committed.
 - **Context:** `docs/practice_run/` scripts and `docs/WALKTHROUGH.md` (measured on 2026-10-15: titanic 80 s, kitchen5k 298 s, kitchen50k 707 s and 2.1 GB).
 - **Assumptions to confirm:**
@@ -288,13 +286,34 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `test: add performance benchmark harness and baseline`
 
 ### U0-15 · Architecture decision records D1–D11
-- **Status:** todo · **Size:** M · **Depends on:** U0-01 · **Resolves:** REFACTOR_PLAN §13
-- **Goal:** Each of the ten design decisions is accepted (or amended) and recorded before Phase 1 code is written.
+- **Status:** done (2026-10-16) · **Notes:** `docs/adr/0001` to `0011` record D1–D11, all `Accepted`; the user accepted D1–D10 as proposed with no amendment, and D11 (decided 2026-10-15) was checked against `main`. `docs/adr/README.md` indexes them, REFACTOR_PLAN §13 links to each, and `CLAUDE.md` names `docs/adr/`. **Deviations:** REFACTOR_PLAN §11 said pyrefly is "strict on new packages"; it uses the `default` preset with a baseline, so §11 and ADR 0011 say that. Follow-ups are notes on U1-05, U4-00 and U7-00. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-01 · **Resolves:** REFACTOR_PLAN §13
+- **Goal:** Each of the eleven design decisions is accepted (or amended) and recorded before Phase 1 code is written.
 - **Context:** REFACTOR_PLAN §13 (D1 layering, D2 findings, D3 Polars/NumPy, D4 Ibis, D5 pydantic contracts, D6 report-only failure semantics, D7 entry-point plugins, D8 SQLAlchemy/Alembic/fsspec storage, D9 single distribution with extras, D10 "check" naming, D11 toolchain: uv, pyrefly, pnpm, decided 2026-10-15).
 - **Assumptions to confirm:** **Each decision is walked through with the user.** Their answer is the confirmation. D11 is already decided; record it.
 - **Scope:** In: `docs/adr/0001-…md` through `0011-…md` (context, decision, alternatives, consequences, status), plus edits to REFACTOR_PLAN if any decision changes. Out: code.
 - **Acceptance:** 11 ADRs with status `Accepted` (or `Superseded` with a pointer). REFACTOR_PLAN is consistent with them.
 - **Commit:** `docs(adr): record architecture decisions for the library-first redesign`
+
+### U0-16 · Clear the security alerts
+- **Status:** todo · **Size:** M · **Depends on:** U0-14 · **Resolves:** open code-scanning and Dependabot security alerts (opened 2026-10-16: code scanning 3–10, Dependabot 112 and 115)
+- **Goal:** No open security alert on `main`: each is fixed, or dismissed with a written reason.
+- **Context:** `gh api "repos/W-Thurston/dsbf/code-scanning/alerts?state=open"` and `.../dependabot/alerts?state=open`. Found while closing U0-14, when CodeQL flagged the new `perf.yml` (fixed there with `permissions: contents: read`).
+  - `actions/missing-workflow-permissions` (medium): `ci.yml` (alerts 6–9, one per job) and `golden.yml` (10). Give each workflow a top-level `permissions: contents: read`, plus anything a job needs beyond that.
+  - `py/stack-trace-exposure` (medium): `dsbf/api/main.py` (alerts 3–5), where an exception's text goes back to the client. Return a generic message and log the exception.
+  - Dependabot alerts: `@vue/server-renderer` (high, fixed in 3.5.42; PR #38) and `echarts` (medium, fixed in 6.1.0; PR #34, a major version). Both PRs are recorded under U1-03 because they predate the frontend toolchain move.
+- **Assumptions to confirm:**
+  - The alert list is still current. Re-list both APIs first, since Dependabot raises alerts as advisories appear.
+  - **Decided on 2026-10-16 (the user deferred to Claude):** take both frontend upgrades, #38 (vue 3.5.42) and #34 (echarts 6.1.0 with vue-echarts), rather than dismiss either alert. The ECharts components are live on `main` (`DsbfChart.vue`, the histogram, box-plot and value-count charts in the Distributions tab; PR #49), and echarts 6.1.0 fixes an XSS (GHSA-fgmj-fm8m-jvvx, runtime scope) in code that renders column names and values. Before merging #34, verify in headless Chromium, as U0-10 did, that the Distributions tab still renders every chart type with the dashboard's theme and with a hostile column name, and that `npm run build` passes. If the major breaks a chart and the fix is not small, pin `vue` only, dismiss alert 112 with that reason, and record it here.
+  - No `py/stack-trace-exposure` response is relied on by the dashboard frontend (grep `frontend/src` for the `detail` and `error` fields).
+- **Scope:** In: workflow permissions; the three API error responses with tests; the two frontend alerts; dismissing any alert that cannot be fixed, with its reason. Out: other open Dependabot PRs (#42–47 are version bumps, not alerts; they stay with their owning units); a CodeQL configuration change.
+- **Steps:**
+  1. Re-list both alert sets.
+  2. Add least-privilege `permissions` to `ci.yml` and `golden.yml`, and check that CI and the golden workflow still pass (artifact upload needs no extra scope).
+  3. Replace the exception text in the three API responses with a generic message and a logged exception; test each with a forced failure.
+  4. Resolve the frontend alerts as decided with the user. If #34 or #38 merge here, remove their note under U1-03.
+  5. Confirm CodeQL re-scans `main` with no open alert.
+- **Acceptance:** Both alert APIs list no open alert, or each remaining one is dismissed with a reason recorded in this entry. CI and CodeQL are green on the PR and on `main`.
+- **Commit:** `fix(security): clear code-scanning and dependency security alerts`
 
 ---
 
@@ -363,10 +382,13 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Note from U0-04:** no DSBF code imports `pyarrow`; pandas uses it as its parquet engine (`pd.read_parquet` in `dsbf/api/db.py` and `dsbf/eda/profile_engine.py`) and polars doesn't need it. Put it in the extra that covers parquet input rather than the base install. The constraint is currently `>=20,<24` after the 23.0.1 bump.
 - **Assumptions to confirm:** `[project.optional-dependencies]` resolves with `uv`, and `pip install dsbf[all]` from the built wheel resolves.
 - **Acceptance:** `pip install "<wheel>[all]"` in a clean venv passes the test suite.
+- **Note from U0-15:** ADR 0009 fixes the extras split (`ml` scikit-learn, `timeseries` statsmodels, `text` rapidfuzz, `pandas`, `sql` Ibis, `server` FastAPI, SQLAlchemy, Alembic). Heavy libraries are imported lazily, and each extra needs a test that the core runs without it.
 - **Commit:** `build: declare optional dependency extras`
 
 ### U1-06 · Contracts I: subjects, severities, dimensions and evidence
 - **Status:** todo · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-10, F-36 (schema side)
+- **Note from U0-14:** on the adversarial run `GET /api/runs/{run_key}/associations` and `/sample` return 500 (`Out of range float values are not JSON compliant: nan`), because all-NaN and `inf` columns reach the JSON encoder. `tests/perf/baseline.json` records the 500s; once the contracts or API stop emitting non-finite floats, update the baseline so the benchmark guards the 200s.
+- **Note from U0-13:** the legacy `report.json` writes bare `NaN` (invalid JSON) in sample rows (`sample_head`, `sample_tail`); the golden normaliser spells non-finite floats as strings. The validators here must make that impossible in the new contracts.
 - **Note from U0-09:** `data_quality_scorer` still splits leakage pair keys with `split("|", 1)` and mis-attributes a pair when the first column name contains `|` (U0-09 only stopped the crash). Pairs become structured records here; include a `|` pair case in the tests.
 - **Goal:** `dsbf.model` provides `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, as in REFACTOR_PLAN §4.2.
 - **Assumptions to confirm:**
@@ -488,6 +510,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U2-08 · Profile performance budget
 - **Status:** todo · **Size:** S · **Depends on:** U2-07, U0-14 · **Resolves:** F-30 (profiling part)
+- **Note from U0-14:** `tests/perf/scenarios.py` has no 1M x 50 scenario, because today's engine would take hours on it. Add it here if the new profile pass can run it; the REFACTOR_PLAN §11 budget names it. The baseline shows where the legacy time goes: `fuzzy_duplicate_detection` (65% of titanic, 46% of kitchen5k) and `detect_stationarity` (40% of kitchen50k).
 - **Goal:** Add the profile pass to the perf harness, with the budget enforced.
 - **Acceptance:** Profile pass under 2 s at kitchen50k (52.5k × 60) on CI hardware, and under 2.5× peak memory over the in-memory data size. Or record the actual numbers and amend the budget with reasons.
 - **Commit:** `test(perf): enforce profiling pass budget`
@@ -598,16 +621,16 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ## Phase 4: Migrate checks (placeholder)
 
-- **U4-00 · Plan Phase 4** (`todo`, depends on U3-12): break down the batches below into full units using Phase 3 learnings and golden-run evidence. Update REFACTOR_PLAN if needed.
+- **U4-00 · Plan Phase 4** (`todo`, depends on U3-12): break down the batches below into full units using Phase 3 learnings and golden-run evidence. Update REFACTOR_PLAN if needed. Carry in from U0-15 (ADR 0009): shrink the base install to the core dependency set as the legacy tasks migrate, moving the rest behind extras and deleting dependencies nothing imports (for example matplotlib, plotly, seaborn, networkx, graphviz, pydot and missingno, to be verified by grep).
 - U4-A · Rule checks onto the profile, about 20 tasks (`placeholder`). From U0-03: the migrated guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. And a migrated task run without `infer_types` now skips instead of analysing all numeric columns. Decide the intended behaviour per check. From U0-08: the time-series test configs still carry an inert nested `time_series.tasks.<name>` block that no task reads (tasks read `tasks.<task name>`); drop it when those tests migrate. From U0-07: `get_recommendation_tip` (`dsbf/utils/reco_engine.py`) still runs `eval` on the YAML `condition` strings (F-31); replace it with a declarative condition format (`{"field": ..., "op": ">", "value": ...}`) when the 14 tasks that call it migrate
 - U4-B · Analysis checks with statistical fixes: F-11, F-13, confidence intervals, bias-corrected Cramér's V (`placeholder`). From U0-09: `summarize_modes` iterates all columns rather than `matched_cols`, and the leakage correlation scan uses `select_dtypes` (F-11); the collinear check needs per-column VIF handling and `n_used` (F-32)
-- U4-C · Heavy checks redesigned with budgets: fuzzy duplicates (F-35), time series (F-39), drift against reference profiles (`placeholder`)
+- U4-C · Heavy checks redesigned with budgets: fuzzy duplicates (F-35), time series (F-39), drift against reference profiles (`placeholder`). From U0-13: `fuzzy_duplicate_detection` builds candidate pairs from a token index over sets of strings and stops at `max_candidates`, so which pairs it keeps (and the count) follows `PYTHONHASHSEED`; make the order deterministic, then the golden runner no longer needs the pinned seed. On kitchen5k, `decompose_time_series` cannot infer a seasonal period (frequency `None` for a daily index with repeated dates), and the golden baseline records that.
 - U4-D · Synthesis: quality dimensions, ML readiness, target-based leakage (F-26) (`placeholder`)
 - U4-E · Remove the legacy adapter, backend plotting and plotting dependencies (N-A2, F-38) (`placeholder`)
 
 ## Phase 5: Policy, sinks, CLI v2. First release for embedded use (placeholder)
 
-- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign.
+- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U0-13: `tests/validation/run_validation.py` without `--report` still takes the newest `report.json` under `dsbf/outputs/`, whatever its dataset (it checked `near_clean` against a stale 9,217-row run on 2026-10-16), and the README keeps a warning about it; make it profile into its own output directory, as the golden runner does, then drop the warning. Its `clean` checklist also says 10 columns where the dataset has 9. Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign.
 - Placeholders: policy evaluator (report-only default) · JSON/NDJSON sinks · Parquet sinks with a consumer schema guide · static HTML report · CLI v2 (`profile`, `check`, `plan`, `schema export`, run health summary) · pipeline and consumer docs · install smoke test from a temp dir · release `1.0.0a1`
 
 ## Phase 6: Store, service and dashboard v2. Standalone local (placeholder)
@@ -617,7 +640,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ## Phase 7: Scale and sources (placeholder)
 
-- **U7-00 · Plan Phase 7**
+- **U7-00 · Plan Phase 7**. Carry in from U0-15: re-check ADR 0004, that the profile interface can be expressed as an Ibis aggregation (with the approximate-statistics caveats), before committing to the pushdown design; amend or supersede the ADR if it can't.
 - Placeholders: larger-than-memory files and object storage (T2) · Ibis sources with DuckDB/Postgres, then Snowflake/BigQuery (T3) · recurring datasets, history and profile-based drift (T4) · scheduling recipes
 
 ## Phase 8: Team and cloud (placeholder)
