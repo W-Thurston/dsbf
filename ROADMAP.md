@@ -82,7 +82,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(core): keep task-specific empty result shapes and repair failing tests`
 
 ### U0-04 · Clear the Dependabot backlog
-- **Status:** todo · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
+- **Status:** done (2026-10-15) · **Notes:** Seven of the eight listed PRs merged (#23, #26, #24, #28, #27, #20, #22), plus #36 (axios 1.20.0) in place of #25, which Dependabot closed as superseded; the user chose to merge #36. Smoke checks all passed: pillow 12.3.0 (47 PNGs decode), pyarrow 23.0.1 (parquet round trip and `dsbf profile` on a parquet file; constraint now `>=20,<24`), axios 1.20.0 (real `api.js` against the API), starlette 1.3.1 (every endpoint, 404s, figure file). **Deviations:** `@dependabot rebase` failed once, so `update-branch` through the REST API was used for #24, #28 and #36. Dependabot opened #34, #37, #38 and #39 during the unit, and these are left open and recorded under U0-05 and U1-03. Python 3.14 stays experimental (scipy 1.16.0 has no 3.14 wheel; the bump is recorded under U0-05). PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
 - **Goal:** No stale Dependabot PRs; dependency majors are verified or declined with reasons.
 - **Context:** Open as of 2026-10-15:
   - #20 pyarrow 20 → 23 (major; `pyproject.toml` pins `^20`)
@@ -122,6 +122,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - The build backend: `hatchling` or `uv_build`. **Ask the user.**
   - `uv lock` resolves the same versions as `poetry.lock` for direct dependencies. Diff `uv pip freeze` against `poetry export` and explain each difference.
   - The dev group maps to `[dependency-groups] dev`, and Dependabot supports the `uv` ecosystem for this repo.
+- **Note from U0-04:** `scipy` 1.16.0 (transitive, locked) has no Python 3.14 wheel, which is why the 3.14 CI job fails at install; 1.16.1 and later do. Let `uv lock` pick a release with cp314 wheels, then decide whether 3.14 stays `experimental`. Also, Dependabot PRs #37 (virtualenv 20.36.1 → 21.7.13) and #39 (anyio 4.9.0 → 4.14.2) were opened against `poetry.lock` during U0-04 and left open. They are security updates (alerts 96 critical and 95 for anyio, 104, 105, 109 and 110 for virtualenv), so after the migration confirm that `uv.lock` resolves anyio ≥ 4.14.2 and virtualenv ≥ 21.7.13, and close the two PRs with a pointer here. Dependabot also regenerates `poetry.lock` with Poetry 2.5.1 (the lock header says 2.2.1), so lock diffs carry format churn until `poetry.lock` is gone.
 - **Note from U0-02:** the repo has no `.github/dependabot.yml`. Add one with the `uv` and `github-actions` ecosystems when the Dependabot ecosystem moves.
 - **Scope:** In: the pyproject conversion, `uv.lock`, deleting `poetry.lock`, CI on `astral-sh/setup-uv` with `uv sync --frozen`, the lint job pinned through the lock, doc and CLAUDE.md command updates. Out: version upgrades beyond what resolution forces.
 - **Steps:**
@@ -141,6 +142,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - Per-file runtimes (`--durations=0`), to classify `slow`.
   - A fast-gate time target. Propose one from the measurements.
 - **Note from U0-02:** the test job's `upload-artifact` step uploads the hidden `.pytest_cache/`, which the action skips by default, so no artifact is stored. Fix it in the CI changes here (`include-hidden-files: true` or another path).
+- **Note from U0-04:** there are no API tests (nothing in `tests/` uses `TestClient`), so the starlette 1.x bump was covered only by a manual smoke run (every `/api` endpoint, 404s and the figure file). Add an `integration` test that starts the FastAPI app against a small run in a temporary database and checks the same endpoints.
 - **Scope:** In: marker registration with `--strict-markers`, a collection hook that fails unmarked tests, marking via `pytestmark` per module, and CI jobs for the fast gate and the full suite. Out: speeding up slow tests.
 - **Acceptance:** Collection fails for an unmarked test (proved with a temporary test). The fast-gate time is recorded. Both CI jobs are green.
 - **Commit:** `test: classify tests by tier and add a fast gate`
@@ -327,6 +329,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - The pnpm version through the `packageManager` field and corepack.
   - A stable Vite release that can replace the beta pin.
   - **Ask the user:** include Prettier, or rely on ESLint stylistic rules?
+- **Note from U0-04:** Dependabot PRs #34 (echarts 5 → 6.1.0, vue-echarts) and #38 (vue, @vue/server-renderer 3.5.42) were opened against `package-lock.json` during U0-04 and left open. They are security updates (alerts 112 medium for echarts, 115 high for @vue/server-renderer). Take both in this unit, checking the echarts 6 major against the dashboard charts, then close the PRs with a pointer here. `axios` is now `^1.20.0` and `postcss` and `nanoid` are at current patch releases.
 - **Scope:** In: `pnpm-lock.yaml` (delete `package-lock.json`), scripts, ESLint and Vitest config with a few utility tests, a CI job, and the Dependabot ecosystem update. Out: refactoring components beyond lint autofixes. Remaining violations are suppressed per rule and recorded as follow-ups.
 - **Acceptance:** `pnpm lint && pnpm build && pnpm test:run` pass locally and in CI.
 - **Commit:** `build(dashboard): move frontend to pnpm with lint and unit tests`
@@ -349,6 +352,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 ### U1-05 · Declare optional-dependency extras
 - **Status:** todo · **Size:** S · **Depends on:** U1-01
 - **Goal:** `pyproject.toml` defines `ml`, `timeseries`, `text`, `pandas`, `sql`, `server` and `all` as in REFACTOR_PLAN §3.1. The base install doesn't change yet; legacy tasks still need everything.
+- **Note from U0-04:** no DSBF code imports `pyarrow`; pandas uses it as its parquet engine (`pd.read_parquet` in `dsbf/api/db.py` and `dsbf/eda/profile_engine.py`) and polars doesn't need it. Put it in the extra that covers parquet input rather than the base install. The constraint is currently `>=20,<24` after the 23.0.1 bump.
 - **Assumptions to confirm:** `[project.optional-dependencies]` resolves with `uv`, and `pip install dsbf[all]` from the built wheel resolves.
 - **Acceptance:** `pip install "<wheel>[all]"` in a clean venv passes the test suite.
 - **Commit:** `build: declare optional dependency extras`
