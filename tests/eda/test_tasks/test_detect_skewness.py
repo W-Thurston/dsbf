@@ -8,6 +8,8 @@ import pytest
 from dsbf.eda.tasks.detect_skewness import DetectSkewness
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult
 

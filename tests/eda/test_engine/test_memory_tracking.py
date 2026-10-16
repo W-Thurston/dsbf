@@ -1,10 +1,13 @@
 # tests/eda/test_engine/test_memory_tracking.py
 
 import polars as pl
+import pytest
 
 from dsbf.eda.graph import ExecutionGraph, Task
 from dsbf.eda.task_result import TaskResult
 from tests.helpers.context_utils import make_ctx_and_task
+
+pytestmark = pytest.mark.unit
 
 
 class MemoryTestTask:

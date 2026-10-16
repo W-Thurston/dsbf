@@ -17,6 +17,8 @@ from dsbf.eda.tasks.compute_pairwise_associations import (
 )
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 

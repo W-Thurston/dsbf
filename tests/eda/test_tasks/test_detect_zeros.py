@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_detect_zeros.py
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_zeros import DetectZeros
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_zero_counts_and_flags_correct(tmp_path) -> None:

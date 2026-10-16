@@ -5,7 +5,11 @@ import tempfile
 import textwrap
 from pathlib import Path
 
+import pytest
+
 from dsbf.eda.task_registry import load_task_group
+
+pytestmark = pytest.mark.unit
 
 
 def strip_ansi_and_whitespace(text: str) -> str:

@@ -7,6 +7,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.categorical_length_stats import CategoricalLengthStats
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_categorical_length_stats_expected_output(tmp_path) -> None:

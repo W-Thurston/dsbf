@@ -16,6 +16,8 @@ from dsbf.eda.tasks.fuzzy_duplicate_detection import (
 )
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from pandas import Series
 

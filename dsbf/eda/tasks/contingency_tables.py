@@ -9,6 +9,7 @@ from scipy.stats import chi2_contingency
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.data_utils import ranked_value_counts
 
 if TYPE_CHECKING:
     from pandas import DataFrame, Series
@@ -86,8 +87,8 @@ def _build_contingency(
         return None
 
     # Restrict to top-N values per column to keep tables readable
-    top_a = paired[col_a].value_counts().head(top_n).index
-    top_b = paired[col_b].value_counts().head(top_n).index
+    top_a = ranked_value_counts(paired[col_a]).head(top_n).index
+    top_b = ranked_value_counts(paired[col_b]).head(top_n).index
     truncated = paired[col_a].nunique() > top_n or paired[col_b].nunique() > top_n
     filtered = paired[paired[col_a].isin(top_a) & paired[col_b].isin(top_b)]
 

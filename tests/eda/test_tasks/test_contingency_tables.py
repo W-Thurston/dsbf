@@ -15,6 +15,8 @@ from dsbf.eda.tasks.contingency_tables import (
 )
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 

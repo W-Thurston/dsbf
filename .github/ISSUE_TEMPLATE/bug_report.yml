@@ -14,7 +14,7 @@ body:
     id: dsbf-version
     attributes:
       label: DSBF version
-      placeholder: "e.g. v0.20.0  (run: poetry run dsbf --version)"
+      placeholder: "e.g. v0.20.0  (run: uv run dsbf version)"
     validations:
       required: true
 

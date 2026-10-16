@@ -24,16 +24,68 @@ a new task, adding a validation dataset, and submitting a pull request.
 ```bash
 git clone https://github.com/W-Thurston/dsbf.git
 cd dsbf
-poetry install
-poetry run pre-commit install
+uv sync
+uv run pre-commit install
 ```
 
-Run the test suite to confirm everything is working:
+Run the fast gate to confirm everything is working. It takes about 30 seconds:
 
 ```bash
-poetry run pytest
-poetry run python tests/validation/run_validation.py
+uv run pytest -m "unit and not slow"
 ```
+
+The full suite adds the engine and API tests, and needs network access (the engine
+tests load seaborn's titanic dataset). It takes about 5 minutes:
+
+```bash
+uv run pytest
+uv run python tests/validation/run_validation.py
+```
+
+### Test tiers
+
+Every test carries exactly one tier marker, and collection fails for a test without
+one. Set it for a whole module with `pytestmark = pytest.mark.unit`.
+
+| Marker | Meaning |
+|---|---|
+| `unit` | Fast and isolated: no network and no full engine run. |
+| `integration` | Exercises several components together, such as the engine or the API. |
+| `golden` | Profiles a dataset end to end and compares it with a committed snapshot. Deselected by default; see [Golden runs](#golden-runs). |
+| `perf` | Times full runs and compares them with a committed baseline. Deselected by default; see [Performance runs](#performance-runs). |
+
+Two modifiers can be added to a test: `slow` (more than 5 s on a developer machine) and
+`network` (needs network access). The fast gate is `unit and not slow`. Select any
+tier with `-m`, for example `uv run pytest -m "integration and not network"`.
+
+### Golden runs
+
+`tests/golden/` holds snapshots of what DSBF reports on ten datasets (the eight validation
+archetypes, titanic and a 5,000-row kitchen-sink frame). They take about ten minutes, so
+`pytest` skips them. Run them with `uv run pytest -m golden`, and add the `golden` label to
+a pull request to run them in CI. If a change to a task or the engine moves a snapshot,
+review the diff and accept it with `uv run pytest -m golden --update-golden`. The review
+steps are in [`tests/golden/README.md`](tests/golden/README.md).
+
+### Performance runs
+
+`tests/perf/` times a full run on four datasets (titanic, the adversarial frame, and the
+kitchen-sink frame at 5,000 and 50,000 rows) and fails when a stage, a task, the peak memory
+or a dashboard payload grows by more than 25% against `tests/perf/baseline.json`. The suite
+takes about fifteen minutes, so `pytest` skips it. Run it with `uv run pytest -m perf`, and add
+the `perf` label to a pull request to run it in CI, where the baseline was recorded. Local
+numbers from another machine are only roughly comparable. How to read the results and update
+the baseline is in [`tests/perf/README.md`](tests/perf/README.md).
+
+### Test isolation
+
+The suite never touches your own runs. `tests/conftest.py` points `DSBF_DB_PATH` at a
+temporary database, turns off the metadata export (`DSBF_AUTO_EXPORT_METADATA=0`), and
+runs the whole session from a temporary working directory. Anything DSBF writes relative
+to the working directory (`dsbf/outputs/`, `dsbf_run.json`) lands there and is deleted
+afterwards. Both variables are forced, so values you export are ignored while tests run.
+Write tests that don't assume the working directory is the repository root: build paths
+from `Path(dsbf.__file__)` or `tmp_path`.
 
 ---
 
@@ -53,6 +105,8 @@ dsbf/
 
 tests/
 ├── generators/         # Dataset generators for the validation suite
+├── golden/             # Golden-run snapshots and the code that compares them
+├── perf/               # Performance benchmark and its committed baseline
 ├── validation/
 │   ├── assertions/     # Per-dataset assertion modules
 │   └── run_validation.py
@@ -72,9 +126,25 @@ dashboard/
 **Python:** Ruff for linting, Pyrefly for type checking. Max line length is **88 characters**.
 
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
+uv run pyrefly check --baseline .pyrefly-baseline.json --error-stale-baseline
 ```
+
+Pyrefly is pinned in the dev group and configured under `[tool.pyrefly]` in
+`pyproject.toml`. Errors that predate the checker are listed in
+`.pyrefly-baseline.json`, which is generated: don't edit it by hand. A new error fails
+the check, and so does a baseline entry that no longer matches, so the file only shrinks.
+After you fix baselined errors, drop their entries:
+
+```bash
+uv run pyrefly check --baseline .pyrefly-baseline.json --prune-baseline
+```
+
+`--update-baseline` rewrites the file with every current error, so use it only when a
+dependency upgrade changes legacy errors that you are not fixing, and say so in the PR.
+The baseline matches on file, column, error kind and message, not line number, so an
+identical error added to a file that already has it isn't reported.
 
 All Python files must have:
 - Module-level docstring explaining the file's purpose
@@ -267,16 +337,17 @@ the diff shows what changed.
 
 3. **Before opening the PR:**
    ```bash
-   ruff check .
-   poetry run pytest
-   poetry run python tests/validation/run_validation.py
+   uv run ruff check .
+   uv run pytest -m "unit and not slow"
+   uv run pytest
+   uv run python tests/validation/run_validation.py
    ```
 
 4. **PR description** — explain what changed, why, and how to verify it. Link to
    any relevant issues.
 
 5. **Checklist before merge:**
-   - [ ] Tests pass (`pytest`)
+   - [ ] Tests pass (`pytest -m "unit and not slow"` and `pytest`), and new tests carry a tier marker
    - [ ] Validation suite passes (`run_validation.py`)
    - [ ] Ruff clean
    - [ ] Docstrings on new public classes and methods

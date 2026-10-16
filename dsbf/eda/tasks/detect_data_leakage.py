@@ -74,6 +74,7 @@ class DetectDataLeakage(BaseTask):
             numeric_df: DataFrame = df.select_dtypes(include="number")
             corr_matrix: DataFrame = numeric_df.corr().abs()
             leakage_pairs: dict[str, float] = {}
+            flagged_pairs: list[tuple[str, str, float]] = []
 
             # Scan upper triangle only - each pair is stored once.
             for i, col1 in enumerate(corr_matrix.columns):
@@ -82,6 +83,7 @@ class DetectDataLeakage(BaseTask):
                     corr_val = corr_matrix.iloc[i, j]
                     if corr_val >= correlation_threshold:
                         leakage_pairs[f"{col1}|{col2}"] = float(corr_val)
+                        flagged_pairs.append((col1, col2, float(corr_val)))
 
             self.output = TaskResult(
                 name=self.name,
@@ -107,16 +109,14 @@ class DetectDataLeakage(BaseTask):
             # Emit guidance for every column in every flagged pair.
             # Both columns receive a blurb so the warning surfaces regardless
             # of which column the analyst is currently inspecting.
-            for pair_key, corr_val in leakage_pairs.items():
-                col1, col2 = pair_key.split("|")
+            # Use the tuples, not the encoded keys: column names may contain "|".
+            for col1, col2, corr_val in flagged_pairs:
                 self._attach_guidance(col1, col2, corr_val, correlation_threshold)
                 self._attach_guidance(col2, col1, corr_val, correlation_threshold)
 
             # ML impact scoring
-            if self.get_engine_param("enable_impact_scoring", True) and leakage_pairs:
-                first_pair: str = next(iter(leakage_pairs))
-                col1, col2 = first_pair.split("|")
-                corr: float = leakage_pairs[first_pair]
+            if self.get_engine_param("enable_impact_scoring", True) and flagged_pairs:
+                col1, col2, corr = flagged_pairs[0]
                 tip: str | None = get_recommendation_tip(
                     self.name,
                     {"correlation_with_target": corr},

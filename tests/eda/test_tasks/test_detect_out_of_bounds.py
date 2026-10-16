@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_detect_out_of_bounds.py
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_out_of_bounds import DetectOutOfBounds
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_violations_detected_for_named_columns(tmp_path) -> None:

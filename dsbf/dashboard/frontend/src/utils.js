@@ -109,3 +109,28 @@ export function figureFor(figures, plotType, format, theme) {
     null
   )
 }
+
+// ── Search highlighting ───────────────────────────────────────────────────────
+
+const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch])
+}
+
+/**
+ * Return HTML for `text` with case-insensitive matches of `query` wrapped in
+ * <mark>, for use with v-html. The text is split on the raw query first and
+ * each piece is escaped separately, so user-controlled text can't inject
+ * markup and a query like "amp" can't match inside an escaped entity.
+ */
+export function highlightHtml(text, query) {
+  const safe = String(text ?? '')
+  const q = (query ?? '').trim()
+  if (!q) return escapeHtml(safe)
+  const pattern = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+  return safe
+    .split(pattern)
+    .map((part, i) => (i % 2 ? `<mark>${escapeHtml(part)}</mark>` : escapeHtml(part)))
+    .join('')
+}

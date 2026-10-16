@@ -14,6 +14,8 @@ from dsbf.eda.task_registry import TASK_REGISTRY
 from dsbf.eda.task_result import TaskResult
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 # Registry name -> top-level keys of ``data`` for a result with no eligible columns.
 EMPTY_DATA_KEYS: dict[str, set[str]] = {
     "compute_mutual_information": {"mi_scores"},

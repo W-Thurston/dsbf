@@ -2,10 +2,13 @@
 
 import pandas as pd
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_duplicates import DetectDuplicates
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_duplicate_rows_counted_correctly(tmp_path):

@@ -360,8 +360,9 @@ deviations anyway.
 ### Overall run cost (for tracking)
 kitchen50k (52,500 × 60) took **707 s** with a 2.1 GB peak. Five tasks (`detect_stationarity`,
 `fuzzy_duplicate_detection`, `generate_univariate_plots`, `infer_types`,
-`compute_pairwise_associations`) account for about 90% of that. Turning the practice-run scripts
-into a `tests/perf/` benchmark that fails on large regressions would keep this from creeping back.
+`compute_pairwise_associations`) account for about 90% of that. The practice-run scripts are now the
+`tests/perf/` benchmark, which fails on a regression of more than 25% against a committed
+baseline and keeps this from creeping back.
 
 ---
 

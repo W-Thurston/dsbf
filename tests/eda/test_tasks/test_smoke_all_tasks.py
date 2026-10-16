@@ -10,6 +10,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.utils.task_utils import is_diagnostic_task
 from tests.helpers.context_utils import run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 load_all_tasks()
 
 

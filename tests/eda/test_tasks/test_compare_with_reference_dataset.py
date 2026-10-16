@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_compare_with_reference_dataset.py
 
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compare_with_reference_dataset import CompareWithReferenceDataset
 from tests.helpers.context_utils import make_ctx_and_task
+
+pytestmark = pytest.mark.unit
 
 
 def test_detects_added_and_dropped_columns(tmp_path) -> None:

@@ -8,6 +8,7 @@ from scipy.stats import jarque_bera, kstest, shapiro
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
 from dsbf.eda.task_result import TaskResult, make_failure_result
+from dsbf.utils.logging_utils import format_number
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -220,8 +221,8 @@ class NormalityTests(BaseTask):
 
                 self._log(
                     f"    '{col}' (n={n}): {primary['test']} "
-                    f"p={primary['p_value']:.4f}, "
-                    f"JB p={jb['p_value']:.4f} → {overall}",
+                    f"p={format_number(primary['p_value'])}, "
+                    f"JB p={format_number(jb['p_value'])} → {overall}",
                     "debug",
                 )
 

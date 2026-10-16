@@ -6,6 +6,8 @@ import pytest
 from dsbf.eda.tasks.schema_validation import SchemaValidation
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def titanic_like_df():

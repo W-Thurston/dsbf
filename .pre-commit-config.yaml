@@ -1,4 +1,4 @@
-exclude: ^dsbf/outputs/|dsbf_run.json
+exclude: ^dsbf/outputs/|dsbf_run.json|^\.pyrefly-baseline\.json$
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -11,7 +11,7 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Keep in step with the ruff version in poetry.lock: CI installs that version.
+    # Keep in step with the ruff version in uv.lock: CI installs that version.
     rev: v0.11.13
     hooks:
       # Linter — runs ruff check --fix (auto-fixes safe rules)
