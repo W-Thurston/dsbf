@@ -11,7 +11,8 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.10
+    # Keep in step with the ruff version in uv.lock: CI installs that version.
+    rev: v0.11.13
     hooks:
       # Linter — runs ruff check --fix (auto-fixes safe rules)
       - id: ruff

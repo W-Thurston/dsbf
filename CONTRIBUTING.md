@@ -24,15 +24,15 @@ a new task, adding a validation dataset, and submitting a pull request.
 ```bash
 git clone https://github.com/W-Thurston/dsbf.git
 cd dsbf
-poetry install
-poetry run pre-commit install
+uv sync
+uv run pre-commit install
 ```
 
 Run the test suite to confirm everything is working:
 
 ```bash
-poetry run pytest
-poetry run python tests/validation/run_validation.py
+uv run pytest
+uv run python tests/validation/run_validation.py
 ```
 
 ---
@@ -72,8 +72,8 @@ dashboard/
 **Python:** Ruff for linting, Pyrefly for type checking. Max line length is **88 characters**.
 
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 All Python files must have:
@@ -101,11 +101,11 @@ from dsbf.eda.task_result import TaskResult, make_failure_result
 @register_task(
     display_name="My New Task",
     description="One sentence describing what this task detects.",
-    depends_on=["infer_types"],          # tasks that must run first
-    profiling_depth="standard",          # basic | standard | full
-    stage="eda",                         # eda | modeling
+    depends_on=["infer_types"],  # tasks that must run first
+    profiling_depth="standard",  # basic | standard | full
+    stage="eda",  # eda | modeling
     domain="core",
-    runtime_estimate="fast",             # fast | medium | slow
+    runtime_estimate="fast",  # fast | medium | slow
     expected_semantic_types=["continuous"],  # filters matched_cols
 )
 class MyNewTask(BaseTask):
@@ -267,9 +267,9 @@ the diff shows what changed.
 
 3. **Before opening the PR:**
    ```bash
-   ruff check .
-   poetry run pytest
-   poetry run python tests/validation/run_validation.py
+   uv run ruff check .
+   uv run pytest
+   uv run python tests/validation/run_validation.py
    ```
 
 4. **PR description** — explain what changed, why, and how to verify it. Link to
@@ -326,5 +326,6 @@ regresses each feature against all others without an intercept by default. Witho
 of actual collinearity. Always use:
 ```python
 from statsmodels.tools import add_constant
+
 numeric_df_with_const = add_constant(numeric_df, has_constant="add")
 ```

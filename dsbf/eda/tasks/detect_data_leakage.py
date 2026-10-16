@@ -67,6 +67,7 @@ class DetectDataLeakage(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — data leakage detection skipped.",
                     excluded,
+                    data={"leakage_pairs": {}},
                 )
                 return
 

@@ -49,6 +49,7 @@ class DetectDuplicates(BaseTask):
                 self.output = self.make_empty_result(
                     "No columns found — duplicate row detection skipped.",
                     excluded,
+                    data={"duplicate_count": 0},
                 )
                 return
 

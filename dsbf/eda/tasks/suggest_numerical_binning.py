@@ -63,6 +63,7 @@ class SuggestNumericalBinning(BaseTask):
                         " skipped."
                     ),
                     excluded,
+                    data={"binning_suggestions": {}},
                 )
                 return
 

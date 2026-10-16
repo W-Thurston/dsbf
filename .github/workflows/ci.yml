@@ -11,21 +11,25 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # Ruff comes from uv.lock, so CI lints and formats exactly like local tooling.
+      # An unpinned install takes every new release: ruff 0.17 started formatting
+      # Python code blocks in Markdown, which failed lint with no code change. Keep
+      # the ruff rev in .pre-commit-config.yaml in step with uv.lock.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
         with:
-          python-version: "3.12"
+          enable-cache: true
 
-      - name: Install Ruff
-        run: pip install ruff
+      - name: Install Ruff (version from uv.lock)
+        run: uv sync --frozen --only-group dev
 
       - name: Ruff check
-        run: ruff check .
+        run: uv run --no-sync ruff check .
 
       - name: Ruff format check
-        run: ruff format --check .
+        run: uv run --no-sync ruff format --check .
 
   test:
     name: Tests (Python ${{ matrix.python-version }})
@@ -35,46 +39,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
-        include:
-          # 3.14 is recent — track compatibility but don't block on failures
-          - python-version: "3.14"
-            experimental: true
-    continue-on-error: ${{ matrix.experimental == true }}
+        python-version: ["3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 - --version 1.8.2
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Cache Poetry dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ matrix.python-version }}-
-
-      - name: Configure Poetry
-        run: poetry config virtualenvs.create false
-
       - name: Install dependencies
-        run: poetry install --no-interaction
+        run: uv sync --frozen
 
       - name: Run unit tests
-        run: poetry run pytest --tb=short -q
+        run: uv run --no-sync pytest --tb=short -q
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: .pytest_cache/

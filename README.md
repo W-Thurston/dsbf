@@ -87,10 +87,10 @@ Every task is a self-contained Python class that declares its dependencies, expe
 ```bash
 git clone https://github.com/W-Thurston/dsbf.git
 cd dsbf
-poetry install
+uv sync
 ```
 
-**Requirements:** Python 3.10+ · Optional: Graphviz (DAG visualizations)
+**Requirements:** Python 3.10+ · [uv](https://docs.astral.sh/uv/) · Optional: Graphviz (DAG visualizations)
 
 ---
 
@@ -99,15 +99,15 @@ poetry install
 ### CLI — profile a CSV
 
 ```bash
-poetry run dsbf profile data.csv
-poetry run dsbf profile data.csv --depth full --verbosity debug
+uv run dsbf profile data.csv
+uv run dsbf profile data.csv --depth full --verbosity debug
 ```
 
 ### CLI — built-in datasets
 
 ```bash
-poetry run dsbf quickstart titanic     # seaborn built-in
-poetry run dsbf quickstart iris        # sklearn built-in
+uv run dsbf quickstart titanic     # seaborn built-in
+uv run dsbf quickstart iris        # sklearn built-in
 ```
 
 ### Python API
@@ -133,7 +133,7 @@ results = engine.run()
 
 ```bash
 # Start the FastAPI backend
-poetry run uvicorn dsbf.api.main:app --reload
+uv run uvicorn dsbf.api.main:app --reload
 
 # In a separate terminal, start the Vue dev server
 cd dsbf/dashboard/frontend && npm install && npm run dev
@@ -238,10 +238,10 @@ DSBF ships with a purpose-built validation suite covering eight dataset archetyp
 
 ```bash
 # Run the full validation suite
-poetry run python tests/validation/run_validation.py
+uv run python tests/validation/run_validation.py
 
 # Run a single dataset
-poetry run python tests/validation/run_validation.py --datasets near_clean --skip-generate
+uv run python tests/validation/run_validation.py --datasets near_clean --skip-generate
 ```
 
 ---
@@ -269,14 +269,14 @@ Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for 
 
 ```bash
 # Run tests
-poetry run pytest
+uv run pytest
 
 # Run validation suite
-poetry run python tests/generators/dsbf_test_dataset_generator.py
-poetry run python tests/validation/run_validation.py
+uv run python tests/generators/dsbf_test_dataset_generator.py
+uv run python tests/validation/run_validation.py
 
 # Lint
-ruff check .
+uv run ruff check .
 ```
 
 All contributions must include docstrings, pass Ruff linting (`max-line-length = 88`), and include or update relevant validation assertions.
