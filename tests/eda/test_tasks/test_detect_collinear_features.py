@@ -4,6 +4,7 @@ import warnings
 from collections.abc import Generator
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 from numpy import dtype, ndarray
@@ -106,3 +107,49 @@ def test_detect_collinear_features_core_output(tmp_path) -> None:
     # Guidance should be attached for high-VIF columns
     assert result.guidance is not None
     assert any(col in result.guidance for col in flagged)
+
+
+def test_non_finite_values_are_dropped_before_vif(tmp_path) -> None:
+    """An infinite value must not reach statsmodels."""
+    rng = np.random.default_rng(1)
+    df = pd.DataFrame(
+        {
+            "a": rng.normal(0, 1, 40),
+            "b": rng.normal(0, 1, 40),
+            "c": rng.normal(0, 1, 40),
+        }
+    )
+    df.loc[3, "a"] = np.inf
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectCollinearFeatures,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
+
+    assert result.status == "success"
+    assert set(result.data["vif_scores"]) == {"a", "b", "c"}
+
+
+def test_too_few_complete_rows_returns_empty_result(tmp_path) -> None:
+    """A numeric column that is entirely NaN leaves zero rows after dropna."""
+    rng = np.random.default_rng(2)
+    df = pd.DataFrame(
+        {
+            "a": rng.normal(0, 1, 30),
+            "b": rng.normal(0, 1, 30),
+            "empty": np.full(30, np.nan),
+        }
+    )
+
+    ctx, _ = make_ctx_and_task(
+        task_cls=DetectCollinearFeatures,
+        current_df=df,
+        global_overrides={"output_dir": str(tmp_path)},
+    )
+    result: TaskResult = run_task_with_dependencies(ctx, DetectCollinearFeatures)
+
+    assert result.status == "success"
+    assert result.data == {"vif_scores": {}, "collinear_columns": []}
+    assert "complete row" in result.summary["message"]

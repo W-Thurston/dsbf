@@ -79,9 +79,7 @@ def main() -> None:
 
     cfg = load_default_config()
     # Match committed defaults (working tree enables NFL-specific TS settings).
-    cfg["tasks"]["time_series"].update(
-        enabled=bool(ts_col), datetime_index_column=ts_col
-    )
+    cfg["time_series"].update(enabled=bool(ts_col), datetime_index_column=ts_col)
     cfg["tasks"]["decompose_time_series"]["seasonal_period"] = None
     cfg["metadata"]["message_verbosity"] = "stage"
     cfg["output_dir"] = os.path.join(out_root, label)

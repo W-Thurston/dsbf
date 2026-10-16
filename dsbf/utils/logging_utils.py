@@ -67,8 +67,9 @@ def setup_logger(
         logger.disabled = True
         return cast(DSBFLogger, logger)
 
-    # Console (Rich)
-    rich_handler = RichHandler(rich_tracebacks=True, markup=True)
+    # Console (Rich). Messages carry user column names such as "[/x]", so they
+    # must never be parsed as Rich markup.
+    rich_handler = RichHandler(rich_tracebacks=True, markup=False)
     rich_handler.setLevel(logging_level)
     rich_handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(rich_handler)
@@ -89,6 +90,20 @@ def setup_logger(
 
     logger.propagate = False
     return cast(DSBFLogger, logger)
+
+
+def format_number(value: object, spec: str = ".4f") -> str:
+    """Format ``value`` for a log message, rendering ``None`` and NaN as ``n/a``.
+
+    Log calls build their f-strings eagerly, so a format that raises on a missing
+    value would fail the task even when debug logging is off.
+    """
+    if value is None or value != value:
+        return "n/a"
+    try:
+        return format(value, spec)
+    except (TypeError, ValueError):
+        return "n/a"
 
 
 def get_log_fn(logger: DSBFLogger, level: str = "info"):

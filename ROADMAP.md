@@ -170,7 +170,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `test: isolate test runs and load package data via importlib.resources`
 
 ### U0-08 · Make the default config pass its own validation
-- **Status:** done (2026-10-15) · **Notes:** The shared `time_series` settings are now a top-level section of `default_config.yaml`, and `get_shared_param` reads `config[block_name]`, with no fallback to `tasks`. `validate_config_and_graph(load_default_config())` returns no errors once the task groups it names are loaded (the validator itself is unchanged), and a `tasks.time_series` left in a user config is flagged. A strict-mode titanic run from a scratch directory exits 0 with no validation warnings. The five time-series test modules moved to the new layout; `tests/eda/test_engine/test_default_config.py` adds 5 tests. **Deviations:** also fixed three stale config paths in task docstrings, the README snippet key (`datetime_index_column`) and the §3f claim in `docs/WALKTHROUGH.md`. Follow-ups: the `time_series:` comment in the default config describes a Settings panel and `user_config.yaml` that don't exist (see U0-11); the inert nested `time_series.tasks` blocks in the time-series tests go with U4-A. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** S · **Depends on:** U0-07 · **Resolves:** F-04
+- **Status:** done (2026-10-15) · **Notes:** The shared `time_series` settings are now a top-level section of `default_config.yaml`, and `get_shared_param` reads `config[block_name]`, with no fallback to `tasks`. `validate_config_and_graph(load_default_config())` returns no errors once the task groups it names are loaded (the validator itself is unchanged), and a `tasks.time_series` left in a user config is flagged. A strict-mode titanic run from a scratch directory exits 0 with no validation warnings. The five time-series test modules moved to the new layout; `tests/eda/test_engine/test_default_config.py` adds 5 tests. **Deviations:** also fixed three stale config paths in task docstrings, the README snippet key (`datetime_index_column`) and the §3f claim in `docs/WALKTHROUGH.md`. Follow-ups: the `time_series:` comment in the default config describes a Settings panel and `user_config.yaml` that don't exist (see U0-11); the inert nested `time_series.tasks` blocks in the time-series tests go with U4-A. PR #51, merged as `40f4db9`. · **Size:** S · **Depends on:** U0-07 · **Resolves:** F-04
 - **Goal:** `validate_config_and_graph(load_default_config())` returns no errors, and strict mode works with the defaults.
 - **Context:** F-04. `tasks.time_series` (`default_config.yaml:285`) is a shared block that `config_validation.py:27` flags as an unknown task. `BaseTask.get_shared_param()` reads shared blocks from under `tasks`.
 - **Assumptions to confirm:**
@@ -185,7 +185,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(config): move shared time_series settings out of the tasks block`
 
 ### U0-09 · Stop task crashes on adversarial data
-- **Status:** todo · **Size:** M · **Depends on:** U0-07 · **Resolves:** F-33, F-32 (crash guard only), F-10 (leakage crash only)
+- **Status:** done (2026-10-16) · **Notes:** `tests/fixtures/adversarial.py` and a parametrised test run all 67 registered tasks with their dependencies on the hostile frame (15 s, `unit`). Before the fixes, 13 cases failed. The largest cause was not in the unit: seven tasks died with a rich `MarkupError` because `RichHandler(markup=True)` parsed column names like `[/x]`; it is now `markup=False` (the `[task]` log prefix also shows again, and the `\\[` escapes are gone). Guards: `summarize_modes` (all-null column gives `None` plus `columns_without_mode`), `detect_collinear_features` (infinities treated as missing, row-count guard), `detect_data_leakage` (tuples internally, output keys unchanged), and a `format_number` log helper used by `normality_tests`. `run_stages.py kitchen5k`: 3 failed tasks before, **0** after (5 skipped by design); `adversarial.csv`: 0 failed. **Deviations:** the frame gained `price|eur` and a float all-NaN column so the leakage and zero-row cases actually fire; `docs/practice_run/run_stages.py` was fixed for the U0-08 config layout. Follow-ups: `data_quality_scorer` still mis-attributes `|` pairs (U1-06 contracts, F-10); per-column VIF handling and `matched_cols` filtering in `summarize_modes` and the leakage scan go to Phase 4 (F-32, F-11). PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-07 · **Resolves:** F-33, F-32 (crash guard only), F-10 (leakage crash only)
 - **Goal:** Every registered task completes, without an exception, on a frame of hostile but legal data.
 - **Context:**
   - F-33: `summarize_modes.py:59` crashes on an all-null column; a log f-string at `normality_tests.py:223` formats `None`.
@@ -271,6 +271,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U0-14 · Performance benchmark harness and baseline
 - **Status:** todo · **Size:** M · **Depends on:** U0-07 · **Resolves:** baseline for the REFACTOR_PLAN §11 budgets
+- **Note from U0-09:** `docs/practice_run/run_stages.py` still patches `decompose_time_series` under `tasks`, and went stale once already when U0-08 moved `time_series`. Promoting it to `tests/perf/` removes that risk.
 - **Goal:** A repeatable benchmark that records per-stage and per-task timings and memory, with today's numbers committed.
 - **Context:** `docs/practice_run/` scripts and `docs/WALKTHROUGH.md` (measured on 2026-10-15: titanic 80 s, kitchen5k 298 s, kitchen50k 707 s and 2.1 GB).
 - **Assumptions to confirm:**
@@ -365,6 +366,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U1-06 · Contracts I: subjects, severities, dimensions and evidence
 - **Status:** todo · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-10, F-36 (schema side)
+- **Note from U0-09:** `data_quality_scorer` still splits leakage pair keys with `split("|", 1)` and mis-attributes a pair when the first column name contains `|` (U0-09 only stopped the crash). Pairs become structured records here; include a `|` pair case in the tests.
 - **Goal:** `dsbf.model` provides `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, as in REFACTOR_PLAN §4.2.
 - **Assumptions to confirm:**
   - pydantic v2 is already a transitive dependency; make it direct.
@@ -454,6 +456,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U2-04 · Column profile I: counts and numeric statistics
 - **Status:** todo · **Size:** M · **Depends on:** U2-03 · **Resolves:** F-32 (per-column statistics)
+- **Note from U0-09:** `detect_collinear_features` now only guards on complete-row count (infinities treated as missing). Per-column handling, dropping high-missingness columns first and recording `n_used` stay with the VIF redesign in Phase 4.
 - **Goal:** One pass computes counts, nulls, distinct (exact or sketched), zeros, empty strings, non-finite values, and numeric min, max, mean, std, skew, kurtosis, MAD and quantiles, per column on that column's non-null values.
 - **Acceptance:** Values match `summarize_numeric`, `summarize_nulls` and `summarize_unique` on the baselines within tolerance.
 - **Commit:** `feat(profile): add count and numeric column statistics`
@@ -595,7 +598,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 - **U4-00 · Plan Phase 4** (`todo`, depends on U3-12): break down the batches below into full units using Phase 3 learnings and golden-run evidence. Update REFACTOR_PLAN if needed.
 - U4-A · Rule checks onto the profile, about 20 tasks (`placeholder`). From U0-03: the migrated guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. And a migrated task run without `infer_types` now skips instead of analysing all numeric columns. Decide the intended behaviour per check. From U0-08: the time-series test configs still carry an inert nested `time_series.tasks.<name>` block that no task reads (tasks read `tasks.<task name>`); drop it when those tests migrate. From U0-07: `get_recommendation_tip` (`dsbf/utils/reco_engine.py`) still runs `eval` on the YAML `condition` strings (F-31); replace it with a declarative condition format (`{"field": ..., "op": ">", "value": ...}`) when the 14 tasks that call it migrate
-- U4-B · Analysis checks with statistical fixes: F-11, F-13, confidence intervals, bias-corrected Cramér's V (`placeholder`)
+- U4-B · Analysis checks with statistical fixes: F-11, F-13, confidence intervals, bias-corrected Cramér's V (`placeholder`). From U0-09: `summarize_modes` iterates all columns rather than `matched_cols`, and the leakage correlation scan uses `select_dtypes` (F-11); the collinear check needs per-column VIF handling and `n_used` (F-32)
 - U4-C · Heavy checks redesigned with budgets: fuzzy duplicates (F-35), time series (F-39), drift against reference profiles (`placeholder`)
 - U4-D · Synthesis: quality dimensions, ML readiness, target-based leakage (F-26) (`placeholder`)
 - U4-E · Remove the legacy adapter, backend plotting and plotting dependencies (N-A2, F-38) (`placeholder`)
