@@ -82,7 +82,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(core): keep task-specific empty result shapes and repair failing tests`
 
 ### U0-04 · Clear the Dependabot backlog
-- **Status:** done (2026-10-15) · **Notes:** Seven of the eight listed PRs merged (#23, #26, #24, #28, #27, #20, #22), plus #36 (axios 1.20.0) in place of #25, which Dependabot closed as superseded; the user chose to merge #36. Smoke checks all passed: pillow 12.3.0 (47 PNGs decode), pyarrow 23.0.1 (parquet round trip and `dsbf profile` on a parquet file; constraint now `>=20,<24`), axios 1.20.0 (real `api.js` against the API), starlette 1.3.1 (every endpoint, 404s, figure file). **Deviations:** `@dependabot rebase` failed once, so `update-branch` through the REST API was used for #24, #28 and #36. Dependabot opened #34, #37, #38 and #39 during the unit, and these are left open and recorded under U0-05 and U1-03. Python 3.14 stays experimental (scipy 1.16.0 has no 3.14 wheel; the bump is recorded under U0-05). PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
+- **Status:** done (2026-10-15) · **Notes:** Seven of the eight listed PRs merged (#23, #26, #24, #28, #27, #20, #22), plus #36 (axios 1.20.0) in place of #25, which Dependabot closed as superseded; the user chose to merge #36. Smoke checks all passed: pillow 12.3.0 (47 PNGs decode), pyarrow 23.0.1 (parquet round trip and `dsbf profile` on a parquet file; constraint now `>=20,<24`), axios 1.20.0 (real `api.js` against the API), starlette 1.3.1 (every endpoint, 404s, figure file). **Deviations:** `@dependabot rebase` failed once, so `update-branch` through the REST API was used for #24, #28 and #36. Dependabot opened #34, #37, #38 and #39 during the unit, and these are left open and recorded under U0-05 and U1-03. Python 3.14 stays experimental (scipy 1.16.0 has no 3.14 wheel; the bump is recorded under U0-05). PR #40, merged as `7ed185b`. · **Size:** M · **Depends on:** U0-03 · **Resolves:** F-01 (backlog part)
 - **Goal:** No stale Dependabot PRs; dependency majors are verified or declined with reasons.
 - **Context:** Open as of 2026-10-15:
   - #20 pyarrow 20 → 23 (major; `pyproject.toml` pins `^20`)
@@ -115,7 +115,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `chore(deps): record dependency backlog outcomes` (the close-out commit; the dependency changes come from the merged PRs)
 
 ### U0-05 · Migrate dependency management from Poetry to uv
-- **Status:** todo · **Size:** M · **Depends on:** U0-04 · **Resolves:** toolchain alignment (ADR D11)
+- **Status:** done (2026-10-15) · **Notes:** `pyproject.toml` now uses `[project]` metadata, `[dependency-groups] dev` and the `uv_build` backend (the user's choice, matching ADR D11); `uv.lock` replaces `poetry.lock`; CI runs on `astral-sh/setup-uv` with ruff taken from the lock; `.github/dependabot.yml` covers `uv` and `github-actions`; `.python-version` pins 3.12. `uv.lock` reproduces every `poetry.lock` pin except anyio 4.14.2, virtualenv 21.14.5 (plus the new `python-discovery`), sniffio (dropped) and scipy 1.16.3. A wheel and sdist hold exactly the tracked files under `dsbf/` (174), after `source-exclude` and `wheel-exclude` entries, because `uv_build` ignores `.gitignore`. **Deviations:** Python 3.14 was dropped from the CI matrix (the user's decision), since nine locked packages have no cp314 wheel; `.python-version` was added after uv chose 3.14 by default. After the merge, close Dependabot PRs #37 and #39 with a pointer to this PR. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-04 · **Resolves:** toolchain alignment (ADR D11)
 - **Goal:** `pyproject.toml` uses standard `[project]` metadata, `uv.lock` replaces `poetry.lock`, and CI, docs and contributor instructions use uv.
 - **Context:** `pyproject.toml` (`[tool.poetry]`, `[tool.poetry.scripts]`, dev group), `.github/workflows/ci.yml` (Poetry install and cache), README and CONTRIBUTING install commands.
 - **Assumptions to confirm:**
@@ -143,6 +143,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - A fast-gate time target. Propose one from the measurements.
 - **Note from U0-02:** the test job's `upload-artifact` step uploads the hidden `.pytest_cache/`, which the action skips by default, so no artifact is stored. Fix it in the CI changes here (`include-hidden-files: true` or another path).
 - **Note from U0-04:** there are no API tests (nothing in `tests/` uses `TestClient`), so the starlette 1.x bump was covered only by a manual smoke run (every `/api` endpoint, 404s and the figure file). Add an `integration` test that starts the FastAPI app against a small run in a temporary database and checks the same endpoints.
+- **Note from U0-05:** (1) Python 3.14 is out of the CI matrix because nine locked packages have no cp314 wheel (numpy 2.3.1, pandas 2.3.1, scikit-learn 1.7.1, matplotlib 3.10.3, contourpy 1.3.2, kiwisolver 1.4.8, psutil 7.0.0, pyyaml 6.0.2, cffi 1.17.1). Once Dependabot's grouped uv updates have moved them, re-add `"3.14"` to the matrix (as non-blocking if it still fails). (2) Dependabot alert 32 (pytest, patched in 9.0.3) is open because `pyproject.toml` caps pytest at `<9`; decide whether to lift the cap while configuring pytest here. (3) After the first Dependabot run on `main`, confirm that it scans `[dependency-groups]` (GitHub's docs don't say) and record the answer here.
 - **Scope:** In: marker registration with `--strict-markers`, a collection hook that fails unmarked tests, marking via `pytestmark` per module, and CI jobs for the fast gate and the full suite. Out: speeding up slow tests.
 - **Acceptance:** Collection fails for an unmarked test (proved with a temporary test). The fast-gate time is recorded. Both CI jobs are green.
 - **Commit:** `test: classify tests by tier and add a fast gate`
@@ -309,6 +310,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   - Code that relies on the repo layout: `Path(__file__).parents[2]` in `storage/schema.py`, `api/main.py` and `api/db.py`, plus test paths.
   - The build backend's package discovery config.
   - CI caching keys.
+- **Note from U0-05:** `pyproject.toml` has `[tool.uv.build-backend] module-root = ""` plus `source-exclude` and `wheel-exclude` entries for `dsbf/outputs/**`, `dsbf/dsbf.db` and the frontend directories (`uv_build` ignores `.gitignore`). Drop `module-root` (the `src/` default applies) and re-point the excludes. Rebuild with `uv build` and compare the wheel's file list with `git ls-files src`.
 - **Scope:** In: the move, imports, packaging config, path fixes, tests. Out: the frontend (U1-02) and runtime paths (U1-04).
 - **Acceptance:** All tests and golden runs pass unchanged. `uv build` produces a wheel that installs in a clean venv, and `dsbf version` works from a temp dir.
 - **Commit:** `refactor: move package to src layout`
@@ -317,6 +319,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Status:** todo · **Size:** S · **Depends on:** U1-01
 - **Goal:** The dashboard source no longer sits inside the Python package.
 - **Assumptions to confirm:** The paths that reference `dsbf/dashboard/frontend`: Dependabot directories, `.nvmrc`, docs, and `.gitignore`.
+- **Note from U0-05:** the wheel and sdist still ship the frontend source (`dsbf/dashboard/frontend`), as they did under Poetry, with only `node_modules/` and `dist/` excluded in `pyproject.toml`. Once the frontend leaves the package, remove those two exclude entries and check with `uv build` that the wheel holds no frontend files.
 - **Scope:** In: the move and path updates; `dsbf/dashboard/__init__.py` cleanup. Out: bundling the built frontend into the wheel (Phase 6).
 - **Acceptance:** `npm ci && npm run build` works in `frontend/`. The dev proxy still reaches the API. Dependabot config points at the new path.
 - **Commit:** `refactor(dashboard): move frontend to top-level directory`

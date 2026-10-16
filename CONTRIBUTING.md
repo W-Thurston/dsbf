@@ -24,15 +24,15 @@ a new task, adding a validation dataset, and submitting a pull request.
 ```bash
 git clone https://github.com/W-Thurston/dsbf.git
 cd dsbf
-poetry install
-poetry run pre-commit install
+uv sync
+uv run pre-commit install
 ```
 
 Run the test suite to confirm everything is working:
 
 ```bash
-poetry run pytest
-poetry run python tests/validation/run_validation.py
+uv run pytest
+uv run python tests/validation/run_validation.py
 ```
 
 ---
@@ -72,8 +72,8 @@ dashboard/
 **Python:** Ruff for linting, Pyrefly for type checking. Max line length is **88 characters**.
 
 ```bash
-ruff check .
-ruff format .
+uv run ruff check .
+uv run ruff format .
 ```
 
 All Python files must have:
@@ -267,9 +267,9 @@ the diff shows what changed.
 
 3. **Before opening the PR:**
    ```bash
-   ruff check .
-   poetry run pytest
-   poetry run python tests/validation/run_validation.py
+   uv run ruff check .
+   uv run pytest
+   uv run python tests/validation/run_validation.py
    ```
 
 4. **PR description** — explain what changed, why, and how to verify it. Link to
