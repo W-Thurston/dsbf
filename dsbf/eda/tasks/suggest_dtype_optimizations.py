@@ -193,6 +193,7 @@ class SuggestDtypeOptimizations(BaseTask):
                         " skipped."
                     ),
                     excluded,
+                    data={"suggestions": {}},
                 )
                 return
 

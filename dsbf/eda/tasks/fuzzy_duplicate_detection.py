@@ -217,6 +217,7 @@ class FuzzyDuplicateDetection(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — fuzzy duplicate detection skipped.",
                     excluded,
+                    data={"__dataset__": {"fuzzy_pairs": []}},
                 )
                 return
 

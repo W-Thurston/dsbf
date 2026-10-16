@@ -40,10 +40,9 @@ def test_high_cardinality_gets_frequency_encoding(tmp_path) -> None:
     # Inject semantic type - 100% unique strings classified as 'id' by infer_types
     ctx.set_metadata("semantic_types", {"city": "categorical"})
 
-    task = SuggestCategoricalEncoding()
-    task.set_input(df)
-    task.context = ctx
-    result: TaskResult = ctx.run_task(task)
+    # Use the task from the helper: it carries the registry name, which
+    # get_expected_types() needs to find the task's expected semantic types.
+    result: TaskResult = run_task_with_dependencies(ctx, SuggestCategoricalEncoding)
 
     assert result.status == "success"
     suggestions = result.data["encoding_suggestions"]

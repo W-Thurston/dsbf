@@ -86,6 +86,7 @@ class DetectBimodalDistribution(BaseTask):
                 self.output = self.make_empty_result(
                     "No continuous columns found — bimodal detection skipped.",
                     excluded,
+                    data={"bimodal_flags": {}, "bic_scores": {}},
                 )
                 return
 

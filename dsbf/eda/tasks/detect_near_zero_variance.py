@@ -61,6 +61,7 @@ class DetectNearZeroVariance(BaseTask):
                 self.output = self.make_empty_result(
                     "No continuous columns found — near-zero variance check skipped.",
                     excluded,
+                    data={"low_variance_columns": {}},
                 )
                 return
 

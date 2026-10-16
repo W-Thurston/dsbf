@@ -58,6 +58,12 @@ class MissingnessHeatmap(BaseTask):
                 self.output = self.make_empty_result(
                     "No eligible columns found — missingness heatmap skipped.",
                     excluded_columns,
+                    data={
+                        "missing_cells": 0,
+                        "missing_columns": [],
+                        "column_count": int(df.shape[1]),
+                        "row_count": int(df.shape[0]),
+                    },
                 )
                 return
 

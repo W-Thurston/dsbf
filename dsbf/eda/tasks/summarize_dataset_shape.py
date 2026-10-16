@@ -59,6 +59,14 @@ class SummarizeDatasetShape(BaseTask):
                 self.output = self.make_empty_result(
                     "No columns found — dataset shape summary skipped.",
                     excluded,
+                    data={
+                        "num_rows": int(df.shape[0]),
+                        "num_columns": int(df.shape[1]),
+                        "null_cell_percentage": 0.0,
+                        "approx_memory_MB": 0.0,
+                        "column_memory_bytes": {},
+                        "column_memory_MB": {},
+                    },
                 )
                 return
 
