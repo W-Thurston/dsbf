@@ -80,18 +80,16 @@ def _ts_config(
     frequency: str | None = "D",
 ) -> dict:
     return {
-        "tasks": {
-            "time_series": {
-                "enabled": True,
-                "datetime_index_column": index_col,
-                "value_columns": [],
-                "frequency": frequency,
-                "group_by_column": None,
-                "tasks": {
-                    "stl_decomposition": {
-                        "seasonal_period": seasonal_period,
-                        "robust": robust,
-                    },
+        "time_series": {
+            "enabled": True,
+            "datetime_index_column": index_col,
+            "value_columns": [],
+            "frequency": frequency,
+            "group_by_column": None,
+            "tasks": {
+                "stl_decomposition": {
+                    "seasonal_period": seasonal_period,
+                    "robust": robust,
                 },
             },
         },
@@ -153,7 +151,7 @@ def test_disabled_returns_success() -> None:
         current_df=df,
         global_overrides={"output_dir": "/tmp"},
     )
-    ctx.config = {"tasks": {"time_series": {"enabled": False}}}
+    ctx.config = {"time_series": {"enabled": False}}
     result: TaskResult = ctx.run_task(task)
     assert result.status == "success"
     assert result.summary["time_series_enabled"] is False

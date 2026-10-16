@@ -92,7 +92,7 @@ user's YAML **instead of** the defaults (no merge).
 **Measured:** negligible.
 
 **Issues:** no deep merge with defaults (F-22). Several documented keys are ignored by their tasks
-(F-07). The shipped config fails its own validation (F-04).
+(F-07).
 
 ## 2. Construct the engine
 
@@ -158,10 +158,10 @@ unless `DSBF_AUTO_EXPORT_METADATA=0`.
 unknown task names in `config["tasks"]`, unknown dependencies, cycles, and plugin warnings. With
 `safety.strict_mode` it raises.
 
-**Measured:** 1 ms. **Every run** logged
-`Unknown task name in config['tasks']: 'time_series'`.
+**Measured:** 1 ms. The shipped config validates cleanly: the shared `time_series` settings are a
+top-level section, not a `tasks` entry.
 
-**Issues:** F-04. It doesn't validate values such as depth, backend or thresholds (F-22).
+**Issues:** It doesn't validate values such as depth, backend or thresholds (F-22).
 
 ## 3g. Infer data stage
 

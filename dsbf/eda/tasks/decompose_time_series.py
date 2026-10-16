@@ -146,8 +146,8 @@ class DecomposeTimeSeries(BaseTask):
     Values near 1.0 indicate strong components; near 0.0 indicates the
     component explains little variance.
 
-    Configurable parameters
-    (via config["tasks"]["time_series"]["tasks"]["stl_decomposition"]):
+    Configurable parameters (via config["tasks"]["decompose_time_series"]; the
+    shared time series settings live in config["time_series"]):
         seasonal_period (int): Seasonal period. Default: inferred from frequency.
         robust (bool): Use robust LOESS (resistant to outliers). Default: True
     """

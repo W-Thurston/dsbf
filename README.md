@@ -184,7 +184,7 @@ tasks:
 
 time_series:
   enabled: false
-  index_column: null            # must be set explicitly — DSBF will not guess
+  datetime_index_column: null   # must be set explicitly — DSBF will not guess
 ```
 
 ---

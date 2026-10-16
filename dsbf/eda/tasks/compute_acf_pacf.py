@@ -68,7 +68,8 @@ class ComputeACFPACF(BaseTask):
     irregular observations as if they were equally spaced - this is
     incorrect and can produce misleading results.
 
-    Configurable parameters (via config["tasks"]["time_series"]["tasks"]["acf_pacf"]):
+    Configurable parameters (via config["tasks"]["compute_acf_pacf"]; the shared
+    time series settings live in config["time_series"]):
         max_lags (int): Maximum number of lags to compute. Default: 40
         alpha (float): Confidence interval level. Default: 0.05
     """
