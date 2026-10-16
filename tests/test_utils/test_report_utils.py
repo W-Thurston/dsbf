@@ -11,6 +11,8 @@ from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def sample_context(tmp_path):

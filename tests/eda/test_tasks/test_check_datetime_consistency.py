@@ -8,6 +8,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.check_datetime_consistency import CheckDatetimeConsistency
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_fully_valid_datetime_column(tmp_path) -> None:

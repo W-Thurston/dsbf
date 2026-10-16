@@ -11,6 +11,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.compute_acf_pacf import ComputeACFPACF
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 

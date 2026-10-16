@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.tasks.ml_readiness_scorer import (
     _DIMENSIONS,
@@ -11,6 +12,8 @@ from dsbf.eda.tasks.ml_readiness_scorer import (
     _traffic_light,
 )
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult

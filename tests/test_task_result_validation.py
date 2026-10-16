@@ -1,7 +1,11 @@
 # tests/test_task_result_validation.py
 
+import pytest
+
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.task_utils import validate_task_result
+
+pytestmark = pytest.mark.unit
 
 
 def test_valid_result_passes():

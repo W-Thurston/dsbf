@@ -4,10 +4,13 @@ import logging
 import re
 
 import pandas as pd
+import pytest
 
 from dsbf.core.base_task import BaseTask
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
+
+pytestmark = pytest.mark.unit
 
 
 def strip_ansi_and_whitespace(text: str) -> str:

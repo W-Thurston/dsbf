@@ -11,8 +11,11 @@ from dsbf.core.context import AnalysisContext
 from dsbf.eda.profile_engine import ProfileEngine
 from dsbf.eda.task_result import TaskResult
 
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
+
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.network
 def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -51,6 +54,7 @@ def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.network
 def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -80,6 +84,7 @@ def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.network
 def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
     try:
         __import__("polars")
@@ -114,6 +119,7 @@ def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.network
 def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
     config = {
         "metadata": {
@@ -156,6 +162,7 @@ def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
+@pytest.mark.network
 def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
     config = {
         "metadata": {

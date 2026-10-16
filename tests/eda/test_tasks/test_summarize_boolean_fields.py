@@ -3,9 +3,12 @@
 from typing import TYPE_CHECKING
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.tasks.summarize_boolean_fields import SummarizeBooleanFields
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 if TYPE_CHECKING:
     from dsbf.eda.task_result import TaskResult

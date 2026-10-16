@@ -31,8 +31,10 @@ jobs:
       - name: Ruff format check
         run: uv run --no-sync ruff format --check .
 
-  test:
-    name: Tests (Python ${{ matrix.python-version }})
+  # The fast gate runs only `unit` tests that are not `slow`: no network and no
+  # full engine run. It fails first so most mistakes surface in about a minute.
+  fast:
+    name: Fast gate (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: lint
 
@@ -53,12 +55,39 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Run unit tests
-        run: uv run --no-sync pytest --tb=short -q
+      - name: Run fast gate
+        run: uv run --no-sync pytest -m "unit and not slow" --tb=short -q
+
+  # The full suite adds the integration, slow and network tests (the engine runs
+  # on seaborn's titanic dataset, which needs network access).
+  full:
+    name: Full suite (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: fast
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run full suite
+        run: uv run --no-sync pytest --tb=short -q --junitxml=test-results/junit.xml
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: pytest-results-${{ matrix.python-version }}
-          path: .pytest_cache/
+          path: test-results/

@@ -1,11 +1,14 @@
 # tests/eda/test_tasks/test_data_quality_scorer.py
 
 import pandas as pd
+import pytest
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.data_quality_scorer import DataQualityScorer
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def _make_scorer_context(tmp_path, upstream_results: dict | None = None):

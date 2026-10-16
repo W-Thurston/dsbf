@@ -6,6 +6,8 @@ from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.utils.config_validation import validate_config_and_graph
 
+pytestmark = pytest.mark.unit
+
 
 # Shared dummy task for TaskSpec use
 class DummyTask(BaseTask):
