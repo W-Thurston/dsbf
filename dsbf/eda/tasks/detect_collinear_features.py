@@ -82,14 +82,29 @@ class DetectCollinearFeatures(BaseTask):
                 )
                 return
 
-            # Drop rows with any null before VIF to avoid statsmodels errors.
-            numeric_df = df.select_dtypes(include=np.number).dropna()
+            # Drop rows with any null or infinite value before VIF to avoid
+            # statsmodels errors.
+            numeric_df = (
+                df.select_dtypes(include=np.number)
+                .replace([np.inf, -np.inf], np.nan)
+                .dropna()
+            )
 
-            if numeric_df.shape[1] < 2:
+            n_rows, n_features = numeric_df.shape
+            if n_features < 2 or n_rows < n_features + 1:
+                reason = (
+                    "Not enough numeric features to compute VIF."
+                    if n_features < 2
+                    else (
+                        f"Only {n_rows} complete row(s) for {n_features} numeric "
+                        "features after dropping nulls and non-finite values; "
+                        "not enough to compute VIF."
+                    )
+                )
                 self.output = TaskResult(
                     name=self.name,
                     status="success",
-                    summary={"message": "Not enough numeric features to compute VIF."},
+                    summary={"message": reason},
                     data={"vif_scores": {}, "collinear_columns": []},
                     metadata={"vif_threshold": vif_threshold},
                 )

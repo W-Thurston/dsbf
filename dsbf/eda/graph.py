@@ -94,13 +94,13 @@ class ExecutionGraph:
                 dep_statuses = [f"{dep}: {self.task_map[dep].status}" for dep in deps]
                 if log_fn:
                     log_fn(
-                        f"\\[{task.name}] Starting task (depends on: "
+                        f"[{task.name}] Starting task (depends on: "
                         f"{', '.join(dep_statuses)})",
                         "info",
                     )
             else:
                 if log_fn:
-                    log_fn(f"\\[{task.name}] Starting task (no dependencies)", "info")
+                    log_fn(f"[{task.name}] Starting task (no dependencies)", "info")
 
             failed_deps = [
                 dep for dep in deps if self.task_map[dep].status != "success"
@@ -110,7 +110,7 @@ class ExecutionGraph:
                 task_outcomes["skipped"].append(task.name)
                 if log_fn:
                     log_fn(
-                        f"\\[{task.name}] Skipped due to failed dependency: "
+                        f"[{task.name}] Skipped due to failed dependency: "
                         f"{failed_deps}",
                         "info",
                     )
@@ -155,7 +155,7 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        f"\\[{task.name}] Completed in {duration:.2f}s"
+                        f"[{task.name}] Completed in {duration:.2f}s"
                         f" (status: {task.status})",
                         "info",
                     )
@@ -180,7 +180,7 @@ class ExecutionGraph:
 
                 if log_fn:
                     log_fn(
-                        f"\\[{task.name}] Failed after {duration:.2f}s: "
+                        f"[{task.name}] Failed after {duration:.2f}s: "
                         f"{error_metadata['trace_summary']}",
                         "warn",
                     )
