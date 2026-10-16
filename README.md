@@ -117,7 +117,7 @@ uv run dsbf quickstart iris        # sklearn built-in
 ```python
 from dsbf.interfaces.api import EDA
 
-results = EDA("data.csv").run()   # dict of task name -> TaskResult
+results = EDA("data.csv").run()  # dict of task name -> TaskResult
 ```
 
 ### In-memory DataFrame
@@ -126,7 +126,7 @@ results = EDA("data.csv").run()   # dict of task name -> TaskResult
 import pandas as pd
 from dsbf.interfaces.api import EDA
 
-df = pd.read_csv("data.csv")      # a Polars DataFrame works too
+df = pd.read_csv("data.csv")  # a Polars DataFrame works too
 results = EDA(df).run()
 ```
 
