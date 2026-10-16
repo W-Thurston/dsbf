@@ -10,6 +10,8 @@ import pytest
 from dsbf.eda.tasks.mann_whitney_u import MannWhitneyU
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 if TYPE_CHECKING:
     from collections.abc import Generator
 

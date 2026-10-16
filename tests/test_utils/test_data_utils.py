@@ -5,6 +5,8 @@ import pytest
 
 from dsbf.utils.data_utils import data_sampling
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize(
     "n_rows,strategy,expected_rows",

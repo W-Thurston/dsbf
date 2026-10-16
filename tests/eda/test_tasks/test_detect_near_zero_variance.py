@@ -8,6 +8,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_near_zero_variance import DetectNearZeroVariance
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")

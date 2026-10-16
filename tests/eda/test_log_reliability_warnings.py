@@ -1,10 +1,14 @@
 # tests/eda/test_log_reliability_warnings.py
 
+import pytest
+
 from dsbf.eda.task_result import (
     TaskResult,
     add_reliability_warning,
     log_reliability_warnings,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class DummyTask:

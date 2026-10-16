@@ -3,7 +3,11 @@
 import uuid
 from pathlib import Path
 
+import pytest
+
 from dsbf.eda.task_registry import TASK_REGISTRY, load_task_group
+
+pytestmark = pytest.mark.unit
 
 
 def test_load_real_plugin_print_shape_debug():

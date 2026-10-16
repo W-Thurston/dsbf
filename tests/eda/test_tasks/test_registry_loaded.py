@@ -1,7 +1,11 @@
 # tests/test_tasks/test_registry_loaded.py
 
+import pytest
+
 from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY
+
+pytestmark = pytest.mark.unit
 
 
 def test_task_registry_is_populated():

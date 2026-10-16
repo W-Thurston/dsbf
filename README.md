@@ -268,7 +268,8 @@ DSBF is designed to eventually cover the full data science workflow — EDA toda
 Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for conventions on task structure, commit style, and the review process.
 
 ```bash
-# Run tests
+# Run the fast gate (about 30 seconds), then the full suite (about 5 minutes, needs network)
+uv run pytest -m "unit and not slow"
 uv run pytest
 
 # Run validation suite

@@ -18,6 +18,8 @@ from dsbf.eda.tasks._time_series_utils import (
     validate_time_series_config,
 )
 
+pytestmark = pytest.mark.unit
+
 # ── Minimal task stub for testing helpers that need a task_instance ───────────
 
 

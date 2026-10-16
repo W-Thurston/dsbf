@@ -10,6 +10,8 @@ from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.infer_types import InferTypes
 from tests.helpers.context_utils import make_ctx_and_task
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.filterwarnings("ignore:Could not infer format.*:UserWarning")
 def test_semantic_type_classifications(tmp_path) -> None:

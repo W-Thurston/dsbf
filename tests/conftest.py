@@ -9,6 +9,28 @@ import pytest
 from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
 
+# Exactly one of these tiers per test; slow and network are optional modifiers.
+PRIMARY_TIERS = ("unit", "integration", "golden", "perf")
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Fail collection for any test without exactly one primary tier marker.
+
+    Runs before ``-m`` deselects, so the check sees every collected test.
+    """
+    problems: list[str] = []
+    for item in items:
+        tiers = [t for t in PRIMARY_TIERS if item.get_closest_marker(t)]
+        if len(tiers) != 1:
+            found = ", ".join(tiers) if tiers else "none"
+            problems.append(f"  {item.nodeid} (tiers: {found})")
+    if problems:
+        raise pytest.UsageError(
+            f"Every test needs exactly one of {', '.join(PRIMARY_TIERS)} "
+            "(see markers in pyproject.toml):\n" + "\n".join(problems)
+        )
+
 
 @pytest.fixture
 def clean_engine_run(tmp_path):

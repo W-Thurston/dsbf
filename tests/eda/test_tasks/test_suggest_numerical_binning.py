@@ -1,10 +1,13 @@
 # tests/eda/test_tasks/test_suggest_numerical_binning.py
 
 import pandas as pd
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.suggest_numerical_binning import SuggestNumericalBinning
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_log_transform_suggested_for_skewed_column(tmp_path) -> None:

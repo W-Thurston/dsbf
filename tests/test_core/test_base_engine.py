@@ -3,7 +3,11 @@
 import json
 import os
 
+import pytest
+
 from dsbf.core.base_engine import BaseEngine
+
+pytestmark = pytest.mark.unit
 
 
 class DummyEngine(BaseEngine):

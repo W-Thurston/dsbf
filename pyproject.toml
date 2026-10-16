@@ -49,7 +49,8 @@ dsbf = "dsbf.interfaces.cli:app"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0,<9",
+    "pytest>=8.0.0,<10",
+    "httpx2>=2.13,<3",
     "pytest-order>=1.3.0,<2",
     "ruff>=0.11.10,<0.12",
     "pre-commit>=4.2.0,<5",
@@ -104,5 +105,15 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q"
+addopts = "-ra -q --strict-markers"
 testpaths = ["tests"]
+# Every test carries exactly one tier (unit, integration, golden or perf) and may add
+# the slow and network modifiers; tests/conftest.py fails collection otherwise.
+markers = [
+    "unit: fast, isolated test with no network and no full engine run",
+    "integration: exercises several components together, such as the engine or the API",
+    "slow: takes more than 5 s on a developer machine; excluded from the fast gate",
+    "network: needs network access, such as a seaborn dataset download",
+    "golden: compares a full run against a committed snapshot (reserved)",
+    "perf: performance benchmark (reserved)",
+]

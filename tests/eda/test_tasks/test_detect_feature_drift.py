@@ -4,10 +4,13 @@ from _collections_abc import Generator
 
 import numpy as np
 import polars as pl
+import pytest
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.eda.tasks.detect_feature_drift import DetectFeatureDrift
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+
+pytestmark = pytest.mark.unit
 
 
 def test_numeric_drift_detected(tmp_path):

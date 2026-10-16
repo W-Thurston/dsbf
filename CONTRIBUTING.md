@@ -28,12 +28,34 @@ uv sync
 uv run pre-commit install
 ```
 
-Run the test suite to confirm everything is working:
+Run the fast gate to confirm everything is working. It takes about 30 seconds:
+
+```bash
+uv run pytest -m "unit and not slow"
+```
+
+The full suite adds the engine and API tests, and needs network access (the engine
+tests load seaborn's titanic dataset). It takes about 5 minutes:
 
 ```bash
 uv run pytest
 uv run python tests/validation/run_validation.py
 ```
+
+### Test tiers
+
+Every test carries exactly one tier marker, and collection fails for a test without
+one. Set it for a whole module with `pytestmark = pytest.mark.unit`.
+
+| Marker | Meaning |
+|---|---|
+| `unit` | Fast and isolated: no network and no full engine run. |
+| `integration` | Exercises several components together, such as the engine or the API. |
+| `golden`, `perf` | Reserved for the snapshot and benchmark suites. |
+
+Two modifiers can be added to a test: `slow` (more than 5 s on a developer machine) and
+`network` (needs network access). The fast gate is `unit and not slow`. Select any
+tier with `-m`, for example `uv run pytest -m "integration and not network"`.
 
 ---
 
@@ -268,6 +290,7 @@ the diff shows what changed.
 3. **Before opening the PR:**
    ```bash
    uv run ruff check .
+   uv run pytest -m "unit and not slow"
    uv run pytest
    uv run python tests/validation/run_validation.py
    ```
@@ -276,7 +299,7 @@ the diff shows what changed.
    any relevant issues.
 
 5. **Checklist before merge:**
-   - [ ] Tests pass (`pytest`)
+   - [ ] Tests pass (`pytest -m "unit and not slow"` and `pytest`), and new tests carry a tier marker
    - [ ] Validation suite passes (`run_validation.py`)
    - [ ] Ruff clean
    - [ ] Docstrings on new public classes and methods
