@@ -291,9 +291,7 @@ tasks:
 #   time_series.enabled: true
 #   time_series.datetime_index_column: <your datetime column name>
 #
-# You can do this here, via the dashboard Settings → Time Series panel,
-# or by adding a user_config.yaml in your project root that overrides
-# only these fields.
+# Set them here, or in the config file passed to `dsbf run --config`.
 
 time_series:                     # Shared settings read by all time series tasks via get_shared_param
   enabled: false

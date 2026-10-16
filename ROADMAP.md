@@ -204,7 +204,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(tasks): guard against all-null, non-finite and delimiter-bearing columns`
 
 ### U0-10 · Escape user text in dashboard search highlighting
-- **Status:** done (2026-10-16) · **Notes:** `highlightHtml` in `dashboard/frontend/src/utils.js` splits the raw text on the query and escapes each piece, so names can't inject markup and a query like `amp` can't match inside an escaped entity. `DatasetListView.vue` and `RunListView.vue` use it, and their duplicate `highlight()` functions are gone. The grep found no other `v-html` that renders data. Checked in headless Chromium against a dataset named `<img src=x onerror=alert(1)>`: it renders as literal text (0 `<img>` elements, 0 dialogs) and highlighting still works. No frontend test runner exists yet, so the helper was checked with a throwaway script (10 cases), not a committed test. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-14
+- **Status:** done (2026-10-16) · **Notes:** `highlightHtml` in `dashboard/frontend/src/utils.js` splits the raw text on the query and escapes each piece, so names can't inject markup and a query like `amp` can't match inside an escaped entity. `DatasetListView.vue` and `RunListView.vue` use it, and their duplicate `highlight()` functions are gone. The grep found no other `v-html` that renders data. Checked in headless Chromium against a dataset named `<img src=x onerror=alert(1)>`: it renders as literal text (0 `<img>` elements, 0 dialogs) and highlighting still works. No frontend test runner exists yet, so the helper was checked with a throwaway script (10 cases), not a committed test. PR #53, merged as `016f587`. · **Size:** S · **Depends on:** U0-01 · **Resolves:** F-14
 - **Goal:** Dataset names and run keys can't inject HTML.
 - **Context:** F-14. `highlight()` is duplicated in `DatasetListView.vue:86` and `RunListView.vue:105` and rendered with `v-html`.
 - **Assumptions to confirm:** No other `v-html` usages render data (grep `v-html` in `src/`).
@@ -216,7 +216,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 - **Commit:** `fix(dashboard): escape names before highlighting search matches`
 
 ### U0-11 · Repository hygiene and README accuracy
-- **Status:** todo · **Size:** M · **Depends on:** U0-07 · **Resolves:** F-27, F-28
+- **Status:** done (2026-10-16) · **Notes:** Deleted the stray root files, `.flake8`, `check_recommendation_contexts.py`, `display_registered_tasks.py`, `dsbf/layouts/` and the commented `render_dashboard` in `cli.py`; the handoff doc is now `docs/architecture.md`, checked against the code; the local `feature/time-series-tab` branch is deleted (its work landed through #6 and #12). The README's examples were all executed from a scratch directory: the old ones failed (`--verbosity`, `dsbf.api.profile_file`, `dsbf.api.ProfileEngine`), the depth table was rebuilt from the registry, and the plugin example needed `domain=` plus a `task_selection` entry to run. The `time_series:` comment in the default config no longer promises a Settings panel. **Deviations:** none in scope. The `layout_name` key stays (live metadata with tests; part of the dead-config cleanup). Follow-ups: `run_validation.py` without `--report` can validate a stale run of another dataset (see U0-13); the `dsbf profile` depth default and the dead config keys go to U5-00. PR number and merge SHA: filled in by the next `/start-unit`. · **Size:** M · **Depends on:** U0-07 · **Resolves:** F-27, F-28
 - **Goal:** The root holds only intentional files, dead code is removed, and the README matches reality.
 - **Context:** F-27 and F-28. The untracked root files are referenced only by `dsbf_directory_structure.md` and the review docs.
 - **Assumptions to confirm (ask the user per file):**
@@ -267,6 +267,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
   3. Add the workflow.
   4. Document how to review and update the snapshots.
 - **Acceptance:** Two consecutive runs produce byte-identical snapshots. The golden CI job is green. The snapshots are committed.
+- **Note from U0-11:** `tests/validation/run_validation.py` (without `--report`) takes the newest `report.json` under `dsbf/outputs/` whatever its dataset: on 2026-10-16 it checked `near_clean` against a stale 9,217-row run and failed with "Expected 3000 rows, got 9217". The golden runner should select its report by dataset (or run the profiler itself), and the README's validation section should then drop its warning.
 - **Commit:** `test: add golden-run baselines for archetypes, titanic and kitchen5k`
 
 ### U0-14 · Performance benchmark harness and baseline
@@ -463,6 +464,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ### U2-05 · Column profile II: histograms, top-k, text and datetime
 - **Status:** todo · **Size:** M · **Depends on:** U2-04 · **Resolves:** F-12
+- **Note from U0-11:** the percentile-binned histogram parked in `d4d949f` is already on `main` (PR #49 merged the ECharts components), so the F-12 defect is live in the dashboard until this unit lands. `origin/wip/echarts-charts` no longer exists; the local `wip/echarts-charts` branch can be deleted.
 - **Goal:**
   - equal-width histogram bins, with the rule recorded;
   - top-k values with counts;
@@ -605,7 +607,7 @@ planning unit that turns the placeholders into full units, using what earlier ph
 
 ## Phase 5: Policy, sinks, CLI v2. First release for embedded use (placeholder)
 
-- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units)
+- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign.
 - Placeholders: policy evaluator (report-only default) · JSON/NDJSON sinks · Parquet sinks with a consumer schema guide · static HTML report · CLI v2 (`profile`, `check`, `plan`, `schema export`, run health summary) · pipeline and consumer docs · install smoke test from a temp dir · release `1.0.0a1`
 
 ## Phase 6: Store, service and dashboard v2. Standalone local (placeholder)
