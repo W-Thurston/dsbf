@@ -45,8 +45,8 @@
             class="run-row"
             @click="$router.push(`/datasets/${name}/runs/${run.run_key}`)"
           >
-            <td class="run-key" v-html="highlight(run.run_key, query)" />
-            <td v-html="highlight(formatDate(run.ran_at), query)" />
+            <td class="run-key" v-html="highlightHtml(run.run_key, query)" />
+            <td v-html="highlightHtml(formatDate(run.ran_at), query)" />
             <td><span class="badge badge-blue">{{ run.profiling_depth }}</span></td>
             <td><span class="badge badge-gray">{{ run.inferred_stage ?? '-' }}</span></td>
             <td>{{ run.row_count?.toLocaleString() ?? '-' }}</td>
@@ -69,7 +69,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { formatDate, qualityClass } from '../utils.js'
+import { formatDate, qualityClass, highlightHtml } from '../utils.js'
 import { listRuns } from '../api.js'
 
 const props = defineProps({ name: String })
@@ -101,12 +101,6 @@ const filtered = computed(() => {
     )
   })
 })
-
-function highlight(text, q) {
-  if (!q.trim() || !text) return text ?? ''
-  const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return String(text).replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
-}
 </script>
 
 <style scoped>

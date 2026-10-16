@@ -31,7 +31,7 @@
           :to="`/datasets/${ds.name}`"
           class="dataset-card card"
         >
-          <div class="ds-name" v-html="highlight(ds.name, query)" />
+          <div class="ds-name" v-html="highlightHtml(ds.name, query)" />
           <div class="ds-meta">
             <span class="meta-item">
               <span class="meta-label">Runs</span>
@@ -61,6 +61,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { listDatasets } from '../api.js'
+import { highlightHtml } from '../utils.js'
 
 const datasets = ref([])
 const loading  = ref(true)
@@ -82,12 +83,6 @@ const filtered = computed(() => {
   if (!q) return datasets.value
   return datasets.value.filter(ds => ds.name.toLowerCase().includes(q))
 })
-
-function highlight(text, q) {
-  if (!q.trim()) return text
-  const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
-}
 
 function formatDate(iso) {
   if (!iso) return '-'
