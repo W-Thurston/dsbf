@@ -22,7 +22,7 @@ dependencies = [
     "pyyaml>=6.0.1,<7",
     "pandas>=2.3.0,<3",
     "seaborn>=0.13.2,<0.14",
-    "scikit-learn>=1.7.0,<2",
+    "scikit-learn>=1.7.0,<1.8",
     "polars>=1.30.0,<2",
     "pyarrow>=20,<27",
     "networkx>=3.5,<4",
@@ -34,10 +34,10 @@ dependencies = [
     "psutil>=7.0.0,<8",
     "plotly>=6.2.0,<7",
     "rich>=14.0.0,<15",
-    "typer>=0.16.0,<0.17",
+    "typer>=0.16.0,<0.28",
     "watchfiles>=1.1.0,<2",
-    "fastapi>=0.135.1,<0.136",
-    "uvicorn>=0.41.0,<0.42",
+    "fastapi>=0.135.1,<0.144",
+    "uvicorn>=0.41.0,<0.55",
 ]
 
 [project.urls]
@@ -52,7 +52,7 @@ dev = [
     "pytest>=8.0.0,<10",
     "httpx2>=2.13,<3",
     "pytest-order>=1.3.0,<2",
-    "ruff>=0.11.10,<0.12",
+    "ruff>=0.11.10,<0.18",
     "pre-commit>=4.2.0,<5",
     "ipykernel>=6.29.5,<7",
     "pyrefly>=1.1.1,<2",
