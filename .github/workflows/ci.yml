@@ -87,6 +87,32 @@ jobs:
       - name: Run fast gate
         run: uv run --no-sync pytest -m "unit and not slow" --tb=short -q
 
+  # The source adapters take pandas 3 frames (new string dtype, copy-on-write), but the
+  # legacy tasks still need pandas 2, so the base pin stays `<3` and this leg overlays
+  # pandas 3 on the locked environment for the adapter tests only. The variable makes
+  # one test fail if the overlay didn't take.
+  pandas3:
+    name: Source adapters on pandas 3
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run adapter tests on pandas 3
+        env:
+          DSBF_TEST_PANDAS_MAJOR: "3"
+        run: uv run --no-sync --with "pandas>=3,<4" pytest tests/test_data -m unit --tb=short -q
+
   # The full suite adds the integration, slow and network tests (the engine runs
   # on seaborn's titanic dataset, which needs network access).
   full:

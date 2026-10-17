@@ -99,6 +99,7 @@ maintainer more than it saves.
 | `dsbf[ml]` | Isolation forest, mutual information, ML-readiness extras | scikit-learn |
 | `dsbf[timeseries]` | ACF/PACF, stationarity, decomposition | statsmodels |
 | `dsbf[text]` | Fuzzy duplicates, string anomaly scoring | rapidfuzz |
+| `dsbf[excel]` | Excel file sources (`.xlsx`, `.xls`) | fastexcel |
 | `dsbf[pandas]` | pandas input/output convenience (pandas DataFrames are accepted via Arrow even without it) | pandas |
 | `dsbf[sql]` | Warehouse and database sources with pushdown (Tier 3) | ibis-framework (+ backend extras) |
 | `dsbf[server]` | Store, service, bundled dashboard | fastapi, uvicorn, sqlalchemy, alembic |

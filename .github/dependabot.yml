@@ -13,8 +13,6 @@ updates:
     ignore:
       - dependency-name: pandas
         versions: [">=3"]
-      - dependency-name: polars
-        versions: [">=2"]
       - dependency-name: statsmodels
         versions: [">=0.15"]
       - dependency-name: scikit-learn

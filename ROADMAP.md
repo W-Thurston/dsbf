@@ -34,8 +34,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 | Held back (`pyproject.toml` cap) | Why | Revisit in |
 |---|---|---|
-| `polars <2` (PR #46, closed 2026-10-16) | 2.0 changes dataframe-layer behaviour; ADR 0003 makes Polars the data layer in Phase 2 | U2-01 |
-| `pandas <3` (PR #47, closed 2026-10-16) | 3.0 fails the 3.12 and 3.13 test jobs (string dtype, copy-on-write); the legacy tasks run on pandas until they migrate | U2-01 (pandas 3 as an input type); U4-E (the base cap) |
+| `pandas <3` (PR #47, closed 2026-10-16) | 3.0 fails the 3.12 and 3.13 test jobs (string dtype, copy-on-write); the legacy tasks run on pandas until they migrate | U4-E (the base cap; pandas 3 frames already load as an input type, U2-01) |
 | `statsmodels <0.15` | 0.15's `variance_inflation_factor` includes the intercept: VIFs drop and four columns on the `clean` archetype stop being flagged | U4-B (VIF redesign, F-32) |
 | `scikit-learn <1.8` | 1.8 changes `GaussianMixture` log-likelihood on discrete columns (titanic `pclass` BIC 1016 → 1763), so `detect_bimodal_distribution` reports other BIC values and finding titles | U4-B (bimodality is an analysis check) |
 | `scipy <1.18` (found in U1-05, no PR) | 1.18 makes `kstest(x, "norm", args=(mu, sigma))` raise `TypeError: ndtr() takes from 1 to 2 positional arguments but 3 were given`, so `run_ks` and two normality tests fail on a fresh `pip install`; DSBF imported scipy without declaring it, so only the lock kept it on 1.16.3 | the unit that migrates the normality tests (Phase 4; U4-00 assigns it), or sooner if a unit touches `normality_tests.py` |
@@ -91,7 +90,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - `identifier` and `unknown` were added to the profile variants because the legacy `infer_types` emits them (U1-08). `pyarrow` stayed in the base install, as the design lists it (U1-05).
   - `Policy` is not in the published schema, because its loose spellings normalise on load; it ships with its loader (carried into U5-00). The dashboard was not viewed in a browser, and Dependabot's vue-router 5 and plotly.js 4 are held back (rows above, revisited in U6-00).
   - Phase 2 is already broken into full units, so it has no `U2-00`; U2-01 is next.
-- **PRs:** #66 (U1-01, `bfc43e1`), #67 (U1-02, `b99633a`), #68 (U1-03, `c82fe45`), #71 (U1-04, `77d1992`), #72 (U1-05, `9f9d2c8`), #74 (U1-06, `837aea9`), #75 (U1-07, `07c2f53`), #76 (U1-08, `4b76948`), #77 (U1-09, `4af82d8`), #78 (U1-10, `3f39519`), and U1-11 (number and SHA recorded when the next unit starts).
+- **PRs:** #66 (U1-01, `bfc43e1`), #67 (U1-02, `b99633a`), #68 (U1-03, `c82fe45`), #71 (U1-04, `77d1992`), #72 (U1-05, `9f9d2c8`), #74 (U1-06, `837aea9`), #75 (U1-07, `07c2f53`), #76 (U1-08, `4b76948`), #77 (U1-09, `4af82d8`), #78 (U1-10, `3f39519`), and #79 (U1-11, `3b76aa7`).
 
 ---
 
@@ -104,16 +103,14 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Success criteria:** Profile parity with legacy outputs is documented, and the profile pass runs in under 2 s at 52k × 60 on CI hardware.
 
 ### U2-01 · Source adapters for in-memory data and files (tier 1)
-- **Status:** todo · **Size:** M · **Depends on:** U1-08
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-08
 - **Goal:** `dsbf.data.load(source)` accepts pandas, Polars or Arrow objects, or CSV/Parquet/Excel/JSON/NDJSON paths, and returns a Polars-backed `Dataset`. Unreadable input raises a typed error with a hint.
-- **Note from U0-16:** upgrade to Polars 2.0 here (the `polars <2` cap; PR #46 was closed as deferred): this unit makes Polars the data layer, so read the 2.0 release notes first and run the adapters on it. Also add pandas 3.x as an input type: a test-matrix leg that loads pandas 3 frames (new string dtype, copy-on-write) through the adapter. That does not lift the `pandas <3` cap for the base install; the legacy tasks still need pandas 2.x until U4-E. Add a parquet source with a `datetime64` column to the table-driven test: `dsbf profile` on one fails today (see the U1-06 note).
-- **Note from U1-05:** pyarrow is still a base dependency (the design keeps it there), though nothing but pandas' parquet engine imports it. Confirm whether the Polars parquet path needs it before settling which install carries it.
-- **Assumptions to confirm:** The Excel reader dependency (`fastexcel` vs `openpyxl`); whether pandas input converts zero-copy for common dtypes.
-- **Acceptance:** A table-driven test covers each source type, including the adversarial frame and tz-aware datetimes.
+- **Done:** `dsbf.data` (`load`, `Dataset`, `SourceError` and its three subclasses) loads all of them; Polars is 2.0.0 (cap lifted, golden 10 of 10 unchanged); the Excel reader is `fastexcel` in a new `dsbf[excel]` extra; pandas 3 frames load, with a `pandas3` CI job running the adapter tests on them. Deviations: the `excel` extra and its ADR 0009 / REFACTOR_PLAN §3.1 rows were not in the unit; pyarrow stays in the base install (Polars' parquet, CSV and Excel readers don't need it, only pandas and Arrow input do; its home stays with U4-00). Dependabot #73 was left open (outside this unit's area). On 13 real datasets the loaded shape, column names and null counts match `pd.read_csv`; kitchen50k loads in 1.16 s (pandas 0.76 s).
 - **Commit:** `feat(data): add tier-1 source adapters`
 
 ### U2-02 · Dataset fingerprint, sampling provenance and value cache
 - **Status:** todo · **Size:** M · **Depends on:** U2-01 · **Resolves:** F-09
+- **Note from U2-01:** `Dataset.frame` is a view of the caller's pandas frame on pandas 2.x (zero-copy), so an in-place edit after `load` shows through. The fingerprint is taken at load and does not notice it; decide whether to document that or copy on load when the fingerprint is stored.
 - **Goal:**
   - `Dataset.fingerprint`;
   - `Dataset.sample(...)` with a recorded `SamplingInfo` (head, seeded random, stratified-or-error);
@@ -125,6 +122,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U2-03 · Sample-based semantic type inference
 - **Status:** todo · **Size:** M · **Depends on:** U2-02 · **Resolves:** F-37
 - **Goal:** Semantic types are inferred from a sample, with confirmation on the full column only where needed. The results agree with `infer_types` on the golden datasets, or the differences are documented.
+- **Note from U2-01:** `load` leaves date-like CSV text as `String` (nothing parses dates at read time), so this unit is where it becomes a datetime. A CSV column with no values is `String` in Polars and `float64` in pandas (kitchen5k's `constant_null`, `mixed_null_types`, `empty_vs_nan`), so decide what an all-null column's semantic type is. Polars decodes a non-UTF-8 CSV lossily, so a UTF-16 file reads with garbled names and no error; consider flagging U+FFFD in names and values.
 - **Context:** F-37. `_is_datetime_like` took 8.6 s of `infer_types`' 9.0 s on kitchen5k and grew 10× at 50k rows.
 - **Acceptance:** Parity is checked against U0-13 baselines, and the differences are listed in the PR. Inference time is under 0.5 s on kitchen50k.
 - **Commit:** `feat(profile): add sample-based semantic type inference`
@@ -157,6 +155,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U2-07 · Profile parity report against legacy outputs
 - **Status:** todo · **Size:** M · **Depends on:** U2-06
+- **Note from U2-01:** load-level differences from `pd.read_csv` / `pd.read_excel` to list as accepted: an all-null column is `String`, not `float64`; Polars keeps an empty CSV header as `''` where pandas writes `Unnamed: 6`; the Excel reader names an empty header `__UNNAMED__6`; an Excel column of all-midnight datetimes reads as `Date`.
 - **Goal:** An automated comparison between the new profile and the legacy `summarize_*` and `infer_types` outputs on every golden dataset, plus a committed `docs/parity/profile.md` listing accepted differences with reasons.
 - **Acceptance:** The parity test passes with only the listed differences.
 - **Commit:** `test(profile): add legacy parity comparison and accepted differences`
@@ -269,6 +268,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U2-01:** the legacy `dsbf profile` still fails on a parquet with a `datetime64` column (`TypeError: Object of type Timestamp is not JSON serializable`, in the legacy report writer). It goes away when results are written from the `Run` contract; add a datetime64 parquet to this unit's end-to-end test to confirm.
 - **Note from U1-01:** `dsbf version` runs `git describe --tags` (`utils/versioning.py`), so outside a checkout it prints `dev` plus a `fatal: not a git repository` line, even from an installed wheel. Read the version from `importlib.metadata`.
 - **Goal:** The public `dsbf.profile(source, packs=…, checks=…, target=…, time_index=…, sample=…)` returns an in-memory `Run` with no filesystem writes. Version comes from `importlib.metadata`. `run.health.summary()` matches REFACTOR_PLAN §7.1.
 - **Acceptance:**
@@ -302,6 +302,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ## Phase 7: Scale and sources (placeholder)
 
 - **U7-00 · Plan Phase 7**. Carry in from U0-15: re-check ADR 0004, that the profile interface can be expressed as an Ibis aggregation (with the approximate-statistics caveats), before committing to the pushdown design; amend or supersede the ADR if it can't.
+- **Carry in from U2-01:** `dsbf.data.load` reads one local file, the first Excel sheet only, and rejects directories, globs and URLs (`UnsupportedSourceError`). Sheet choice, globs and `s3://`-style paths belong to T2.
 - Placeholders: larger-than-memory files and object storage (T2) · Ibis sources with DuckDB/Postgres, then Snowflake/BigQuery (T3) · recurring datasets, history and profile-based drift (T4) · scheduling recipes
 
 ## Phase 8: Team and cloud (placeholder)

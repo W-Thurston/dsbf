@@ -20,6 +20,7 @@ DSBF stays **one distribution** with extras, in a **`src/dsbf/`** layout.
 | `dsbf[ml]` | Isolation forest, mutual information, ML-readiness extras (scikit-learn) |
 | `dsbf[timeseries]` | ACF/PACF, stationarity, decomposition (statsmodels) |
 | `dsbf[text]` | Fuzzy duplicates, string anomaly scoring (rapidfuzz) |
+| `dsbf[excel]` | Excel file sources (fastexcel) |
 | `dsbf[pandas]` | pandas input and output convenience |
 | `dsbf[sql]` | Database and warehouse sources (Ibis) |
 | `dsbf[server]` | Store, service, bundled dashboard (FastAPI, SQLAlchemy, Alembic) |
