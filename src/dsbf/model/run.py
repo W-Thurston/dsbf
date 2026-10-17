@@ -3,6 +3,7 @@
 
 import re
 from collections.abc import Iterable
+from functools import cached_property
 from typing import Self
 from uuid import UUID
 
@@ -45,14 +46,19 @@ class Run(Contract):
     results: dict[str, CheckResult] = Field(
         description="One result per planned check, keyed by check id."
     )
-    findings: tuple[Finding, ...] = Field(
-        description="Every result's findings, highest severity first."
-    )
     health: RunHealth
     policy: PolicyOutcome | None = Field(
         default=None,
         description="What the user's policy decided; absent when none was applied.",
     )
+
+    @cached_property
+    def findings(self) -> tuple[Finding, ...]:
+        """Every result's findings, highest severity first.
+
+        Derived from ``results`` rather than stored, so a run carries each finding once.
+        """
+        return order_findings(f for r in self.results.values() for f in r.findings)
 
     @field_validator("schema_version")
     @classmethod
@@ -68,7 +74,7 @@ class Run(Contract):
 
     @classmethod
     def build(cls, *, results: Iterable[CheckResult], **fields: object) -> Self:
-        """Make a run, deriving its findings and health from the check results."""
+        """Make a run, deriving its health from the check results."""
         by_id: dict[str, CheckResult] = {}
         for result in results:
             if result.check_id in by_id:
@@ -76,7 +82,6 @@ class Run(Contract):
             by_id[result.check_id] = result
         return cls(
             results=by_id,
-            findings=order_findings(f for r in by_id.values() for f in r.findings),
             health=RunHealth.from_results(by_id),
             **fields,  # type: ignore[arg-type]
         )
@@ -120,11 +125,6 @@ class Run(Contract):
                     f"{planned.check_id} was planned at version "
                     f"{planned.check_version} but ran at {version}"
                 )
-        expected = order_findings(f for r in self.results.values() for f in r.findings)
-        if self.findings != expected:
-            raise ValueError(
-                "findings are not the results' findings, highest severity first"
-            )
         if len({f.id for f in self.findings}) != len(self.findings):
             raise ValueError("finding ids are unique within a run")
         if self.health != RunHealth.from_results(self.results):

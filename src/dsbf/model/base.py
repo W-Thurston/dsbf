@@ -17,6 +17,10 @@ class Contract(BaseModel):
 
     Instances are immutable, so nothing can change a value after it has been
     validated, and unknown fields are errors, so a misspelt name is caught.
+    A model is always written out in full, so its serialisation schema lists
+    defaulted fields as required.
     """
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", json_schema_serialization_defaults_required=True
+    )

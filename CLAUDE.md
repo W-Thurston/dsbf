@@ -54,7 +54,7 @@ Read this section before planning or modifying the repository.
    Green tests don't replace real-data verification.
 9. **Preserve generated-file ownership.** Regenerate checked-in derived files through their owning command, never by hand:
    - lockfiles: `uv lock` / `pnpm install`;
-   - JSON Schema and TypeScript types: `dsbf schema export`, once it exists;
+   - JSON Schema and TypeScript types: `dsbf schema export --types frontend/src/generated/run.d.ts` (writes `schema/run.schema.json` too; add `--check` to verify);
    - golden snapshots: the golden suite's update option;
    - `src/dsbf/static_metadata/task_metadata.json`: `dsbf tasks export --output src/dsbf/static_metadata/task_metadata.json`;
    - performance baselines: the perf harness.

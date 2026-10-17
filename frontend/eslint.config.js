@@ -4,7 +4,8 @@ import globals from 'globals'
 import prettier from 'eslint-config-prettier'
 
 export default [
-  { ignores: ['dist/', 'node_modules/'] },
+  // src/generated is written by `dsbf schema export`.
+  { ignores: ['dist/', 'node_modules/', 'src/generated/'] },
   js.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
   {

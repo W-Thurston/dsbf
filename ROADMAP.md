@@ -40,6 +40,8 @@ unit takes an upgrade, it raises the cap and deletes the row.
 | `scikit-learn <1.8` | 1.8 changes `GaussianMixture` log-likelihood on discrete columns (titanic `pclass` BIC 1016 → 1763), so `detect_bimodal_distribution` reports other BIC values and finding titles | U4-B (bimodality is an analysis check) |
 | `scipy <1.18` (found in U1-05, no PR) | 1.18 makes `kstest(x, "norm", args=(mu, sigma))` raise `TypeError: ndtr() takes from 1 to 2 positional arguments but 3 were given`, so `run_ks` and two normality tests fail on a fresh `pip install`; DSBF imported scipy without declaring it, so only the lock kept it on 1.16.3 | the unit that migrates the normality tests (Phase 4; U4-00 assigns it), or sooner if a unit touches `normality_tests.py` |
 | `plotly <7` (PR #62, closed 2026-10-16) | 7 removes the `mapbox` layout property that `custom_plotly_templates.py` sets, so it fails at import; the backend plotting that uses plotly is deleted anyway | U4-E (plotly is deleted; drop the cap and the ignore entry) |
+| `vue-router <5` (PR #69, ignored from 2026-10-17) | 5 is a major bump of the router the current dashboard is built on; checking it needs the dashboard viewed in a browser, and the dashboard is rebuilt in Phase 6 | U6-00 |
+| `plotly.js-dist-min <4` (PR #70, ignored from 2026-10-17) | 4 is a major bump of the library behind the legacy charts; checking it needs the dashboard viewed in a browser, and the charts are rebuilt in Phase 6 | U6-00 |
 
 `.github/dependabot.yml` carries an `ignore` entry for each row, so Dependabot doesn't re-raise the held-back version. Removing a cap removes its entry.
 
@@ -70,151 +72,26 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ## Phase 1: Contracts
 
-- **Capability:** The `src/` layout, a top-level frontend on pnpm, runtime paths under `DSBF_HOME`, optional extras, and the versioned result contracts (`dsbf.model`) with JSON Schema and TypeScript export.
-- **Motivation:** All three usage modes depend on stable, published contracts (REFACTOR_PLAN §4). Embedded users consume the schema without the rest of DSBF.
-- **Boundaries:** Packaging, paths and models only. No profiling or engine code. The legacy engine keeps working throughout.
-- **Sequence and dependencies:** Depends on Phase 0. Layout and toolchain first, then contracts from the leaves (evidence) to the root (`Run`), then export.
-- **Success criteria:** A hand-built `Run` validates, round-trips, and exports as JSON Schema and TypeScript, and the breaking-change gate is active in CI.
+**Done (2026-10-17), 11 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U1-xx" lines.
 
-### U1-01 · Move the Python package to a `src/` layout
-- **Status:** done (2026-10-16) · **Size:** M · **Depends on:** U0-15 · **Resolves:** groundwork (REFACTOR_PLAN §3.1)
-- **Goal:** `dsbf/` lives at `src/dsbf/` with no behaviour change.
-- **Assumptions to confirm:**
-  - Code that relies on the repo layout: `Path(__file__).parents[2]` in `storage/schema.py`, `api/main.py` and `api/db.py`, plus test paths.
-  - The build backend's package discovery config.
-  - CI caching keys.
-- **Note from U0-05:** `pyproject.toml` has `[tool.uv.build-backend] module-root = ""` plus `source-exclude` and `wheel-exclude` entries for `dsbf/outputs/**`, `dsbf/dsbf.db` and the frontend directories (`uv_build` ignores `.gitignore`). Drop `module-root` (the `src/` default applies) and re-point the excludes. Rebuild with `uv build` and compare the wheel's file list with `git ls-files src`.
-- **Scope:** In: the move, imports, packaging config, path fixes, tests. Out: the frontend (U1-02) and runtime paths (U1-04).
-- **Acceptance:** All tests and golden runs pass unchanged. `uv build` produces a wheel that installs in a clean venv, and `dsbf version` works from a temp dir.
-- **Commit:** `refactor: move package to src layout`
-- **Done notes:** the package, its packaged data and the frontend source now sit under `src/dsbf/`. The default database (`<repo>/dsbf/dsbf.db`), `dsbf/outputs/` and the stored relative figure paths are unchanged, so existing runs keep working; U1-04 moves them. Widened beyond the listed assumptions: the metadata export path, two tests, `migrate_runs.py`, and `[tool.pyrefly] search-path = ["src", "."]` with a regenerated baseline (888 entries before and after). The wheel's file list equals `git ls-files src`. Merged as PR #66 (`bfc43e1`).
-
-### U1-02 · Move the frontend to a top-level `frontend/`
-- **Status:** done (2026-10-16) · **Size:** S · **Depends on:** U1-01
-- **Goal:** The dashboard source no longer sits inside the Python package.
-- **Assumptions to confirm:** The paths that reference `dsbf/dashboard/frontend`: Dependabot directories, `.nvmrc`, docs, and `.gitignore`.
-- **Note from U1-01:** the frontend now sits at `src/dsbf/dashboard/frontend`, and `pyproject.toml` excludes `node_modules` and `dist` there (`source-exclude` relative to the project root, `wheel-exclude` relative to `src/dsbf`). The root `.gitignore` entries for `dist/` and `.vite/` also name that path.
-- **Note from U0-05:** the wheel and sdist still ship the frontend source (`dsbf/dashboard/frontend`), as they did under Poetry, with only `node_modules/` and `dist/` excluded in `pyproject.toml`. Once the frontend leaves the package, remove those two exclude entries and check with `uv build` that the wheel holds no frontend files.
-- **Scope:** In: the move and path updates; `dsbf/dashboard/__init__.py` cleanup. Out: bundling the built frontend into the wheel (Phase 6).
-- **Acceptance:** `npm ci && npm run build` works in `frontend/`. The dev proxy still reaches the API. Dependabot config points at the new path.
-- **Commit:** `refactor(dashboard): move frontend to top-level directory`
-- **Done notes:** the frontend sits at `frontend/` (renames, history kept). `src/dsbf/dashboard/` is deleted: it held an empty `__init__.py` and a stray empty `package-lock.json`, and nothing imported it. The `source-exclude` and `wheel-exclude` keys are gone from `pyproject.toml`; the wheel still equals `git ls-files src` and the sdist holds no frontend files. Docs, `.gitignore` and 18 source header comments name the new path. Deviation: `.github/dependabot.yml` never had an npm entry, so there was no path to repoint; U1-03 adds the entry. The `.nvmrc` stays at the root. Merged as PR #67 (`b99633a`).
-
-### U1-03 · Frontend toolchain: pnpm, lint and unit tests
-- **Status:** done (2026-10-16) · **Size:** M · **Depends on:** U1-02 · **Resolves:** F-29 (tooling part)
-- **Goal:** `frontend/` uses pnpm with `lint`, `build` and `test:run` scripts. ESLint (with `eslint-plugin-vue`) and Vitest are configured, and CI runs all three.
-- **Context:** The frontend has only `dev`, `build` and `preview` scripts, plus a Vite 8 beta pin with `overrides` (F-29). The escaped search highlighter is a natural first unit test.
-- **Assumptions to confirm:**
-  - The pnpm version through the `packageManager` field and corepack.
-  - A stable Vite release that can replace the beta pin.
-  - **Ask the user:** include Prettier, or rely on ESLint stylistic rules?
-- **Scope:** In: `pnpm-lock.yaml` (delete `package-lock.json`), scripts, ESLint and Vitest config with a few utility tests, a CI job, and a Dependabot `npm` entry for `/frontend` (the config has none today; U1-02 found nothing to repoint). Out: refactoring components beyond lint autofixes. Remaining violations are suppressed per rule and recorded as follow-ups.
-- **Acceptance:** `pnpm lint && pnpm build && pnpm test:run` pass locally and in CI.
-- **Commit:** `build(dashboard): move frontend to pnpm with lint and unit tests`
-- **Done notes:** `frontend/` uses pnpm 12.14.0 (`packageManager`, `pnpm-lock.yaml`) and stable Vite 8.3.4; ESLint 10 with `eslint-plugin-vue`, Prettier (the user's choice over ESLint stylistic rules) and Vitest 5 are configured, with 31 unit tests for `utils.js` and `actionMeta.js`. `pnpm lint` runs ESLint and then the Prettier check. A `Frontend` CI job runs lint, build and tests, and Dependabot has an `npm` entry for `/frontend`. The Prettier pass reflowed 49 files; compiled templates match `HEAD` apart from formatting, attribute order and `:colA` → `:col-a`. Deviations: 20 existing findings (16 unused variables, 1 side effect in a computed property in `TimeSeriesTab.vue`, 3 props without defaults) are warnings, not errors, and `vue/no-v-html` is off because `highlightHtml` escapes its input. The dashboard was not viewed in a browser. Merged as PR #68 (`c82fe45`).
-- **Note for U1-11:** the generated TypeScript in `frontend/src/generated/` must be listed in `frontend/.prettierignore` and in the `ignores` of `frontend/eslint.config.js`, or `pnpm lint` fails on it.
-
-### U1-04 · Runtime paths under `DSBF_HOME`
-- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-16 and F-17 for the legacy engine
-- **Goal:** Outputs, the database, and run records go to one configurable home, so nothing depends on the CWD or writes into the package.
-- **Context:**
-  - `base_engine.py:93` and `:99` (outputs, `dsbf_run.json`);
-  - `storage/schema.py:26` (DB inside the package);
-  - `task_registry.py:276` (metadata export on every run);
-  - API path resolution relative to the repo root.
-- **Assumptions to confirm:**
-  - The default home: `platformdirs.user_data_dir("dsbf")`, or `./.dsbf` per project. **Ask the user.**
-  - Absolute paths are stored in the DB from now on. Old rows stay as they are.
-- **Note from U1-01:** the source paths in the notes below now sit under `src/dsbf/`. The three repo-root lookups (`storage/schema.py`, `api/main.py`, `api/db.py`) use `Path(__file__).resolve().parents[3]`, which is wrong for an installed wheel, as it was before. The metadata export writes the CWD-relative `src/dsbf/static_metadata/task_metadata.json`. `tests/test_hermetic_runtime.py` and `tests/test_utils/test_reco_engine.py` assert that CWD-relative `src/dsbf/...` paths don't exist.
-- **Note from U0-06:** `run_column_correlations` and `read_run_sample` in `dsbf/api/main.py` call the db helpers without the module's `_DB_PATH` override, so they ignore it. Route every handler through one resolved path. `tests/test_api/test_endpoints.py` sets both `_DB_PATH` and `DSBF_DB_PATH` to work around it; drop the environment variable there once the handlers agree.
-- **Note from U0-07:** the test session now forces `DSBF_DB_PATH` and runs from a temporary CWD, so the output and record locations you move here stay hermetic. Four tests in `tests/eda/test_engine/test_profile_engine.py` still set the dead `engine.output_path` key, and `test_metadata_structure_and_keys` rebuilds the default `dsbf/outputs/<timestamp>` path by hand. Use `engine.output_dir` there once the location moves.
-- **Note from U0-16:** the dashboard gets a 404 for figure files (`/api/figures/<id>/file`) of a run profiled outside the repo root, because the database holds the relative `dsbf/outputs/...` path and the API resolves it against the repo root. Check the acceptance with a run started from a temporary directory.
-- **Scope:** In: a `dsbf.paths` module; outputs, DB and record paths; metadata export becomes opt-in (`dsbf tasks export`); `record_run` removed or capped; API path resolution. Out: a new storage design (Phase 6).
-- **Acceptance:** Running from any directory writes only under the home. The dashboard shows figures for a run started outside the repo. Tests pass.
-- **Commit:** `feat: resolve runtime paths from DSBF_HOME`
-- **Done notes:** `dsbf.paths` resolves the home (`DSBF_HOME`, else the per-user data directory via `platformdirs`, chosen by the user on 2026-10-17 so one build serves a laptop and a cloud job that mounts a volume). Outputs, the default database (`<home>/dsbf.db`; `DSBF_DB_PATH` still overrides it), figure paths and dataset paths are absolute; every API handler uses one database path; `record_run` and `dsbf_run.json` are gone; `dsbf tasks export` replaces the automatic metadata export. Verified on a real run from a scratch directory: 357 of 357 figures served by the API from another directory. Golden 10 of 10 unchanged. Deviations: `platformdirs` became a direct dependency, and the old `.gitignore`, pre-commit and ruff entries stay to hide local leftovers. Object-storage or server-database homes remain Phase 6 (ADR 0008). Merged as PR #71 (`77d1992`).
-
-### U1-05 · Declare optional-dependency extras
-- **Status:** done (2026-10-17) · **Size:** S · **Depends on:** U1-01
-- **Goal:** `pyproject.toml` defines `ml`, `timeseries`, `text`, `pandas`, `sql`, `server` and `all` as in REFACTOR_PLAN §3.1. The base install doesn't change yet; legacy tasks still need everything.
-- **Note from U0-04:** no DSBF code imports `pyarrow`; pandas uses it as its parquet engine (`pd.read_parquet` in `dsbf/api/db.py` and `dsbf/eda/profile_engine.py`) and polars doesn't need it. Put it in the extra that covers parquet input rather than the base install. The constraint is currently `>=20,<24` after the 23.0.1 bump.
-- **Assumptions to confirm:** `[project.optional-dependencies]` resolves with `uv`, and `pip install dsbf[all]` from the built wheel resolves.
-- **Acceptance:** `pip install "<wheel>[all]"` in a clean venv passes the test suite.
-- **Note from U0-15:** ADR 0009 fixes the extras split (`ml` scikit-learn, `timeseries` statsmodels, `text` rapidfuzz, `pandas`, `sql` Ibis, `server` FastAPI, SQLAlchemy, Alembic). Heavy libraries are imported lazily, and each extra needs a test that the core runs without it.
-- **Commit:** `build: declare optional dependency extras`
-- **Done notes:** `pyproject.toml` declares `ml`, `timeseries`, `text`, `pandas`, `sql`, `server` and `all` (the union, as `dsbf[...]`); the base install is unchanged, so each extra repeats a base constraint or adds a package nothing imports yet (ibis-framework, rapidfuzz, sqlalchemy, alembic). `tests/test_packaging.py` guards the set of extras and keeps repeated specifiers identical. The wheel with `[all]` in a clean venv passes the suite (1006 passed). Deviations: the first clean install failed 3 normality tests because DSBF never declared scipy and a fresh install gets 1.18, which breaks `kstest(..., args=...)`; scipy is now declared as `>=1.16,<1.18` with a Dependabot ignore and a held-back row. pyarrow stays in the base, as the design lists it, not in an extra as the U0-04 note wanted. Merged as PR #72 (`9f9d2c8`).
-
-### U1-06 · Contracts I: subjects, severities, dimensions and evidence
-- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-10, F-36 (schema side)
-- **Note from U0-14:** on the adversarial run `GET /api/runs/{run_key}/associations` and `/sample` return 500 (`Out of range float values are not JSON compliant: nan`), because all-NaN and `inf` columns reach the JSON encoder. `tests/perf/baseline.json` records the 500s; once the contracts or API stop emitting non-finite floats, update the baseline so the benchmark guards the 200s.
-- **Note from U0-13:** the legacy `report.json` writes bare `NaN` (invalid JSON) in sample rows (`sample_head`, `sample_tail`); the golden normaliser spells non-finite floats as strings. The validators here must make that impossible in the new contracts.
-- **Note from U0-09:** `data_quality_scorer` still splits leakage pair keys with `split("|", 1)` and mis-attributes a pair when the first column name contains `|` (U0-09 only stopped the crash). Pairs become structured records here; include a `|` pair case in the tests.
-- **Note from U0-16:** `dsbf profile` on a parquet file with a `datetime64` column fails with `TypeError: Object of type Timestamp is not JSON serializable` in the legacy `report.json` writer (`dsbf/utils/report_utils.py:49`). It fails with pyarrow 23 as well. The contracts' JSON encoding must handle timestamps, with a test.
-- **Goal:** `dsbf.model` provides `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, as in REFACTOR_PLAN §4.2.
-- **Assumptions to confirm:**
-  - pydantic v2 is already a transitive dependency; make it direct.
-  - The `Dimension` enum values (the five quality dimensions plus distribution, relationship and temporal).
-- **Scope:** In: models, validators (finite floats only; NaN/inf → `None` plus a flag), unit tests including column names with `|`, brackets, unicode and empty strings. Out: Finding and Run (U1-07, U1-08).
-- **Acceptance:** Round-trip tests pass. A non-finite float can't produce invalid JSON.
-- **Commit:** `feat(model): add subject, evidence and severity contracts`
-- **Done notes:** `dsbf.model` (`src/dsbf/model/`) holds `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, and imports only pydantic (now a direct dependency, `pydantic>=2.12,<3`). Every contract derives from `Contract` (frozen, unknown fields rejected), and sequences are tuples, not the sketch's lists. `Evidence` nulls NaN, infinity and `NaT`, names them in `non_finite_metrics`, and turns NumPy scalars and dates into plain values and ISO strings; this also repairs a stored `NaN` token on read. `Subject` keeps columns as an ordered tuple, so the `a|b` pair collision cannot happen. `Severity` and `Confidence` are ordered string enums. Deviations: `Metric` also admits `bool`, because pydantic turned `True` into `1.0`; structural floats (interval bounds, timings) are rejected, not nulled, when non-finite. Checked on the adversarial frame: 5 of 5 non-finite metrics flagged, all output strict JSON, and the legacy `report.json` for the same run does not parse strictly (269 `NaN`, 19 `Infinity`). Merged as PR #74 (`837aea9`).
-
-### U1-07 · Contracts II: findings, notes, check results and run health
-- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-20 (status model)
-- **Note from U1-06:** `dsbf.model` conventions to follow: models derive from `dsbf.model.base.Contract` (frozen, `extra="forbid"`), sequences are `tuple[...]`, structural floats use `FiniteFloat`, and data-derived metric values go through `Evidence` (nulled and flagged, never rejected). `Subject` keeps a pair's columns in the order given, so a symmetric check must pick a canonical order before `Finding.id` hashes it. `Severity` and `Confidence` compare by rank (`Severity.WARN >= Severity.NOTICE`); ordering `Run.findings` by severity can use that.
-- **Goal:** `Finding` (with a stable id), `Guidance`, `Action`, `Note`, `CheckResult` (statuses `ok | not_applicable | skipped | unavailable | error | timeout`) and `RunHealth`.
-- **Assumptions to confirm:**
-  - The `Finding.id` hash inputs: check id, subject, code.
-  - Mapping today's guidance blurbs onto `Guidance`/`Action` loses nothing. Compare with `BaseTask.add_guidance`.
-- **Acceptance:**
-  - Unit tests pass.
-  - A test builds findings from a real legacy `TaskResult.guidance` sample without data loss.
-  - `RunHealth` renders the plain-text summary shown in REFACTOR_PLAN §7.1.
-- **Commit:** `feat(model): add finding, note, check result and run health contracts`
-- **Done notes:** `dsbf.model` gained `Finding` (id from `Finding.build`, checked on every validation), `Guidance`, `Action`, `Note`, `CheckStatus`, `CheckResult` (a non-`ok` status needs a note and has no findings), `StatusCounts`, `HealthIssue` and `RunHealth` (derived by `from_results`; `render` reproduces the §7.1 summary exactly). Deviations: real titanic guidance showed the sketch was lossy, so a legacy `good` level is `Severity.INFO` plus the tag `good`, an `Action` keeps its own `columns` and extra `params`, `Evidence.metrics` admits one level of list or mapping, and each blurb becomes one `Finding` with a phase-only `Guidance`. All 589 titanic blurbs map to findings and back with no loss. `pydantic` moved to 2.14.1. Merged as PR #75 (`07c2f53`).
-
-### U1-08 · Contracts III: profiles and the run manifest
-- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-07
-- **Note from U1-07:** 589 titanic findings serialise to 682 KB (about 1.2 KB each), so the size budget below covers the profile and manifest only; measure findings separately and say so in the acceptance.
-- **Goal:** `ColumnProfile` (variants by semantic type), `DatasetProfile`, `DatasetManifest`, `PlanManifest` and `Run`, with `schema_version`.
-- **Assumptions to confirm:** The profile fields cover everything listed in REFACTOR_PLAN §5.3 that the dashboard needs today. Check against current tab usage.
-- **Acceptance:** A hand-built `Run` validates and round-trips through JSON. Its size for titanic-like content is under 200 KB without evidence artifacts.
-- **Commit:** `feat(model): add profile and run manifest contracts`
-- **Done notes:** `dsbf.model` gained `ColumnProfile` (seven variants chosen by `semantic_type`, with `identifier` and `unknown` added to the §5.3 list because the legacy `infer_types` emits them), `DatasetProfile`, `DatasetManifest`, `PlanManifest` and `Run` (`SCHEMA_VERSION = "0.1.0"`). `Run.build` derives `findings` and `health`, and its validator checks that the parts agree; `Run.render_health` supplies the header for `RunHealth.render`. Histograms are equal-width with the rule recorded (F-12), and undefined statistics are nulled and named in `non_finite_stats`. On a titanic profile computed in the tests, profile plus manifests are about 10 KB (budget 200 KB); findings are about 1.1 KB each, so a full 589-finding run is about 650 KB, doubled by `Run.findings` repeating each result's findings. Deviations: `Run.policy` waits for U1-10; mode and mode proportion are derived from top-k rather than stored; character-class and pattern statistics are left to U2-05. Merged as PR #76 (`4b76948`).
-
-### U1-09 · Configuration and parameter base models
-- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-22 (loader part)
-- **Goal:** A `CheckParams` base class, and a layered config loader (defaults < project `dsbf.yaml` < env vars < CLI < keyword arguments) with deep merge and precise errors.
-- **Assumptions to confirm:** The env var naming (`DSBF__SECTION__KEY`), and whether `pydantic-settings` is acceptable.
-- **Acceptance:** Tests cover merge order, unknown keys (error naming the key and allowed keys), and type errors.
-- **Commit:** `feat(config): add layered configuration and parameter base models`
-- **Done notes:** `dsbf.model.CheckParams` is a frozen `Contract` whose fields all need defaults (checked when the class is defined). `dsbf.config.load_config(model, defaults=, project_file=, env=, cli=, overrides=)` merges the five layers (mappings merge, everything else replaces, inputs untouched) and validates; `ConfigError` lists every issue with its dotted path, the layer that supplied the value and, for an unknown key, the allowed keys. Env names are `DSBF__SECTION__KEY`, lowercased; a value starting `[` or `{`, or `null`, is read as JSON. Deviations: `pydantic-settings` was not adopted (it can't name the layer behind a bad key, and would add a base dependency); the loader is generic over any model because the root config model isn't designed yet; the legacy CLI and `EDA(...)` are not wired to it. Merged as PR #77 (`4af82d8`).
-
-### U1-10 · Policy rule schema
-- **Status:** done (2026-10-17) · **Size:** S · **Depends on:** U1-07
-- **Note from U1-06:** `Severity` and `Confidence` are ordered `StrEnum`s, so a `>=error` matcher can compare members directly. `Dimension` is a plain `StrEnum`.
-- **Note from U1-08:** `Run` has no `policy` field yet. Add `policy: PolicyOutcome | None = None` to `dsbf.model.run.Run` (an additive change) and cover it in `tests/test_model/test_run.py`.
-- **Goal:** Typed models for `policy.yaml` (`when` matchers, `then` actions `annotate | warn | fail | notify`) and `PolicyOutcome`. There's no evaluator yet (Phase 5).
-- **Assumptions to confirm:** The REFACTOR_PLAN §7.2 example covers the matcher operators users need.
-- **Acceptance:** The §7.2 example parses. Invalid rules produce precise errors.
-- **Commit:** `feat(model): add policy rule schema`
-- **Done notes:** `dsbf.model` gained `Policy`, `Rule`, `Matcher`, `PolicyAction`, `ActionKind`, `Operator`, the `Severity`, `Confidence` and `Metric` comparisons, `RuleOutcome` and `PolicyOutcome`; `Run.policy` is optional and `Run` checks that a policy outcome names only its own findings and checks. A `when` needs at least one condition, and `health.status` may only be narrowed by `check`. Deviations: the assumption changed (additive): all six comparison operators and `check`, `confidence`, `tag` and `column` matchers were added because the §7.2 example can't scope a rule to a check or column; `then` also takes a list. No loader or evaluator (Phase 5).
-
-### U1-11 · Schema export, breaking-change gate and TypeScript types
-- **Status:** todo · **Size:** M · **Depends on:** U1-08, U1-09, U1-10, U1-03
-- **Note from U1-04:** this unit edits `frontend/`, so apply the Dependency upgrades rule there. Dependabot PRs #69 (vue-router 4.6.4 → 5.4.0) and #70 (plotly.js-dist-min 3.7.0 → 4.1.2) were open on 2026-10-17. Both are major bumps with no unit yet; take them with the dashboard build and view the dashboard in a browser, or close them with a cap and a row in the held-back table.
-- **Note from U1-06:** the models in `dsbf.model` set `additionalProperties: false`, and `Dimension`, `Severity` and `Confidence` export as string `enum`s. The ordering of the last two is not in the schema, so a TypeScript consumer needs its own rank table. `Timing.started_at` is an ISO 8601 string with an offset.
-- **Note from U1-10:** `Run.policy` adds `PolicyOutcome`, and `Policy` is a file format of its own, so decide whether the schema export publishes it. `Matcher` has a field whose key is `health.status` (Python name `health_status`), and `Rule.then`, `Matcher.severity`, `confidence` and `metric` accept loose spellings (`fail`, `">=error"`) that normalise to `{kind, target}` and `{op, value}`, so the exported schema describes only the normalised form: check how the TypeScript generator handles the dotted key.
-- **Note from U1-08:** `Run` serialises every finding twice, under `results[*].findings` and again in `Run.findings` (the §4.2 sketch). A full titanic run is about 1.3 MB for that reason. Decide before the schema is published whether `Run.findings` should be derived on read instead of serialised. Removing it later would be a breaking change. `ColumnProfile` is a discriminated union (`oneOf` with a `semantic_type` discriminator), so check how the TypeScript generator renders it. `Run.schema_version` is validated against the current major.
-- **Goal:** `dsbf schema export`. The JSON Schema is committed under `schema/`. CI fails on an unannounced breaking change. TS types are generated into `frontend/src/generated/`.
-- **Assumptions to confirm:**
-  - The tool choice for TS generation (for example `json-schema-to-typescript`).
-  - How a "breaking change" is detected: removed or renamed fields and narrowed types.
-- **Acceptance:**
-  - Deleting a field in a test branch fails CI.
-  - Regenerating the types is a no-op on a clean tree.
-  - The Phase 1 exit check (a hand-built `Run` validates, round-trips and exports) passes in a test.
-- **Commit:** `feat(model): export JSON Schema and TypeScript types with a breaking-change gate`
+- **Capability delivered:** the `src/` layout, a top-level `frontend/` on pnpm with ESLint, Prettier and Vitest in CI, runtime paths under `DSBF_HOME`, the optional-dependency extras, and the versioned result contracts in `dsbf.model` (subjects, evidence, findings, check results, run health, profiles, manifests, `Run`, policy rules) with a layered config loader (`dsbf.config`). `dsbf schema export` publishes `schema/run.schema.json` and `frontend/src/generated/run.d.ts`, and a CI `contracts` job fails on a stale export or on a schema change its version number does not announce.
+- **Success criteria, measured:**
+  - Every Phase 1 unit is `done`: 11 of 11.
+  - A hand-built `Run` validates, round-trips through JSON, validates against the exported schema with `jsonschema` and compiles against the generated types under `tsc --strict` (U1-11). The `ColumnProfile` union narrows exhaustively.
+  - Size: profile plus manifests for titanic are about 10 KB against a 200 KB budget (U1-08); a 61-check, 610-finding run is 338 KB, down from 644 KB before `Run.findings` became derived (U1-11).
+  - Breaking-change gate, exercised on a real field removal: stale export exit 1, unannounced removal exit 1, with `SCHEMA_VERSION` raised exit 0 (U1-11).
+  - Packaging: the wheel's file list equals `git ls-files src` (U1-01); the wheel with `[all]` in a clean venv passes the suite, 1006 tests (U1-05).
+  - Paths: a run started from a scratch directory writes only under the home, and 357 of 357 figures are served by the API from another directory; golden 10 of 10 unchanged (U1-04).
+  - Non-finite values: 5 of 5 on the adversarial frame are nulled and flagged, and all output is strict JSON, where the legacy `report.json` has 269 `NaN` and 19 `Infinity` (U1-06).
+  - Frontend: `pnpm lint && pnpm build && pnpm test:run` pass with 31 unit tests and 20 lint warnings recorded as follow-ups (U1-03).
+- **Key decisions:** pydantic v2 contracts that are frozen, reject unknown fields and use tuples ([ADR 0005](docs/adr/0005-pydantic-contracts.md)); undefined numbers become `None` plus a flag, never an error; `Finding.id` hashes check, subject and code; the home is `DSBF_HOME`, else the per-user data directory, chosen by the user on 2026-10-17 so one build serves a laptop and a cloud job ([ADR 0008](docs/adr/0008-sqlalchemy-alembic-fsspec-storage.md)); extras follow [ADR 0009](docs/adr/0009-single-distribution-with-extras.md) while the base install is unchanged; Prettier was chosen over ESLint stylistic rules (U1-03); the config loader is hand-written, because `pydantic-settings` cannot name the layer behind a bad key; the published schema describes a dumped run (serialization mode, defaults required) and treats any change to a type constraint as breaking, with the version rule in `CONTRIBUTING.md`; `Run.findings` is derived from `results`, not serialised.
+- **Deviations from the phase block:**
+  - The phase promised "packaging, paths and models only". U1-04 also made the metadata export opt-in (`dsbf tasks export`) and removed `record_run`; U1-05 declared scipy, which a clean install showed was imported but never declared, and capped it below 1.18; U1-09 added the config loader and U1-10 the policy schema, which the phase block did not list by name.
+  - The policy matcher set grew beyond the REFACTOR_PLAN §7.2 example (all six comparison operators; `check`, `confidence`, `tag` and `column` matchers; `then` accepts a list) because the example cannot scope a rule to a check or column (U1-10).
+  - `identifier` and `unknown` were added to the profile variants because the legacy `infer_types` emits them (U1-08). `pyarrow` stayed in the base install, as the design lists it (U1-05).
+  - `Policy` is not in the published schema, because its loose spellings normalise on load; it ships with its loader (carried into U5-00). The dashboard was not viewed in a browser, and Dependabot's vue-router 5 and plotly.js 4 are held back (rows above, revisited in U6-00).
+  - Phase 2 is already broken into full units, so it has no `U2-00`; U2-01 is next.
+- **PRs:** #66 (U1-01, `bfc43e1`), #67 (U1-02, `b99633a`), #68 (U1-03, `c82fe45`), #71 (U1-04, `77d1992`), #72 (U1-05, `9f9d2c8`), #74 (U1-06, `837aea9`), #75 (U1-07, `07c2f53`), #76 (U1-08, `4b76948`), #77 (U1-09, `4af82d8`), #78 (U1-10, `3f39519`), and U1-11 (number and SHA recorded when the next unit starts).
 
 ---
 
@@ -414,12 +291,12 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ## Phase 5: Policy, sinks, CLI v2. First release for embedded use (placeholder)
 
-- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U1-09: CLI v2 builds its `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser (U1-09 left it out); `dsbf run -c` still uses the YAML as the whole config (F-22, first bullet) and goes away with the legacy CLI. Carry in from U0-13 and U1-04: `tests/validation/run_validation.py` without `--report` looks for the newest `report.json` under `dsbf/outputs/`, which DSBF stopped writing to in U1-04 (runs now go under `$DSBF_HOME/outputs/`), so it finds nothing new, and used to take whatever dataset's report was newest (it checked `near_clean` against a stale 9,217-row run on 2026-10-16), and the README keeps a warning about it; make it profile into its own output directory, as the golden runner does, then drop the warning. Its `clean` checklist also says 10 columns where the dataset has 9. Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign. Carry in from U1-04: a configured `output_dir` is used as given, so a relative one still stores relative figure paths (only the default location is absolute); resolve it to absolute in the config redesign. Carry in from U1-10: (1) the policy loader (`--policy`) turns the validation failures of `yaml.safe_load` + `Policy.model_validate` into a `ConfigError`-style report with the rule name; (2) the evaluator decides what `new_since: previous_run` does without a previous run; (3) a range on one setting (`>0.1` and `<0.5`) needs a list of comparisons per `metric` key, `severity` or `confidence`: add it if users ask.
+- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U1-09: CLI v2 builds its `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser (U1-09 left it out); `dsbf run -c` still uses the YAML as the whole config (F-22, first bullet) and goes away with the legacy CLI. Carry in from U0-13 and U1-04: `tests/validation/run_validation.py` without `--report` looks for the newest `report.json` under `dsbf/outputs/`, which DSBF stopped writing to in U1-04 (runs now go under `$DSBF_HOME/outputs/`), so it finds nothing new, and used to take whatever dataset's report was newest (it checked `near_clean` against a stale 9,217-row run on 2026-10-16), and the README keeps a warning about it; make it profile into its own output directory, as the golden runner does, then drop the warning. Its `clean` checklist also says 10 columns where the dataset has 9. Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign. Carry in from U1-04: a configured `output_dir` is used as given, so a relative one still stores relative figure paths (only the default location is absolute); resolve it to absolute in the config redesign. Carry in from U1-10: (1) the policy loader (`--policy`) turns the validation failures of `yaml.safe_load` + `Policy.model_validate` into a `ConfigError`-style report with the rule name; (2) the evaluator decides what `new_since: previous_run` does without a previous run; (3) a range on one setting (`>0.1` and `<0.5`) needs a list of comparisons per `metric` key, `severity` or `confidence`: add it if users ask. Carry in from U1-11: publish the `Policy` schema (`schema/policy.schema.json`, with the loose spellings documented) together with its loader, because the model's own schema describes only the normalised form.
 - Placeholders: policy evaluator (report-only default) · JSON/NDJSON sinks · Parquet sinks with a consumer schema guide · static HTML report · CLI v2 (`profile`, `check`, `plan`, `schema export`, run health summary) · pipeline and consumer docs · install smoke test from a temp dir · release `1.0.0a1`
 
 ## Phase 6: Store, service and dashboard v2. Standalone local (placeholder)
 
-- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units)
+- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units). Carry in from U1-11: (1) the dashboard is JavaScript, so it can use `frontend/src/generated/run.d.ts` only through JSDoc `import()` types or after a move to TypeScript; (2) a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry; (3) revisit the `vue-router <5` and `plotly.js-dist-min <4` caps in the held-back table.
 - Placeholders: run repository on SQLite with Alembic · artifact store and per-run data snapshot · `dsbf runs …` · API v2 · local job runner · generated TS client · dashboard shell and run health · findings explorer · column view (reuse `wip/echarts-charts` components with real histogram bins) (U0-16 saw the light theme draw chart titles and card headings such as "Value Counts" almost white on a light background; same on echarts 5) · relationships · quality · ML readiness · time series · run compare and history · settings → rerun · frontend component and end-to-end tests (F-29) · clear the 20 frontend lint warnings from U1-03 and raise `no-unused-vars`, `vue/no-side-effects-in-computed-properties` and `vue/require-default-prop` to `error` (16 dead variables in 12 files, `acfSelectedColData` in `TimeSeriesTab.vue` assigns inside a `computed`, route props in `RunDetailView.vue` and `RunListView.vue`); revisit `vue/no-v-html` if another source appears · code-split the dashboard bundle (over 500 kB, Plotly and ECharts load eagerly) · bundle the dashboard into the wheel with `dsbf dashboard` · remove API v1 and the old store (F-15, F-25) · release `1.0.0`
 
 ## Phase 7: Scale and sources (placeholder)
