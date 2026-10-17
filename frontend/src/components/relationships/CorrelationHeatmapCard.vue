@@ -11,7 +11,6 @@
 -->
 <template>
   <div class="card heatmap-card">
-
     <div class="heatmap-header">
       <span class="heatmap-title">
         Correlation Matrix
@@ -31,14 +30,12 @@
       <div class="placeholder-text">
         <strong>D3 heatmap visualization coming in the next refactor.</strong>
         <span v-if="numericColCount">
-          A {{ numericColCount }}×{{ numericColCount }} Pearson r matrix has been computed and is ready to render.
+          A {{ numericColCount }}×{{ numericColCount }} Pearson r matrix has been computed and is
+          ready to render.
         </span>
-        <span v-else>
-          Correlation matrix not available - re-run at standard depth or higher.
-        </span>
+        <span v-else> Correlation matrix not available - re-run at standard depth or higher. </span>
       </div>
     </div>
-
   </div>
 </template>
 

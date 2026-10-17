@@ -1,5 +1,14 @@
-# Vue 3 + Vite
+# DSBF dashboard
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Vue 3 + Vite single-page app that reads from the DSBF API. It uses pnpm; run `corepack enable`
+once so the version in `package.json` (`packageManager`) is fetched.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+```bash
+pnpm install
+pnpm dev         # http://localhost:5173, proxies /api to the API on :8000
+pnpm lint        # ESLint, then a Prettier check
+pnpm build
+pnpm test:run    # Vitest
+```
+
+See [`docs/architecture.md`](../docs/architecture.md) for how the dashboard fits with the rest of DSBF.

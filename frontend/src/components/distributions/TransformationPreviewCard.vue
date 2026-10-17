@@ -27,8 +27,8 @@
     </div>
 
     <div v-if="state === 'not_run'" class="tx-not-run">
-      Transformation preview did not run for this column. This analysis only runs
-      for columns that exceed the skewness threshold.
+      Transformation preview did not run for this column. This analysis only runs for columns that
+      exceed the skewness threshold.
     </div>
 
     <template v-else>
@@ -40,13 +40,13 @@
           class="tx-item"
           :class="{
             'tx-item--recommended': tx.recommended,
-            'tx-item--skipped':     tx.skipped,
+            'tx-item--skipped': tx.skipped,
           }"
         >
           <!-- Header row: name + badge -->
           <div class="tx-item-header">
             <span class="tx-name">{{ tx.display }}</span>
-            <span v-if="tx.recommended"  class="tx-badge-recommended">recommended</span>
+            <span v-if="tx.recommended" class="tx-badge-recommended">recommended</span>
             <span v-else-if="tx.skipped" class="tx-badge-skipped">not applicable</span>
           </div>
 
@@ -73,7 +73,8 @@
               target="_blank"
               rel="noopener noreferrer"
               class="tx-ref"
-            >↗ {{ meta(tx.key).ref.label }}</a>
+              >↗ {{ meta(tx.key).ref.label }}</a
+            >
 
             <!-- Computed outcome: before → after for key stats -->
             <div class="tx-outcome">
@@ -83,22 +84,16 @@
                 <span class="tx-outcome-col-label">After</span>
                 <span class="tx-outcome-col-label"></span>
               </div>
-              <div
-                v-for="stat in outcomeStats(tx)"
-                :key="stat.key"
-                class="tx-outcome-row"
-              >
+              <div v-for="stat in outcomeStats(tx)" :key="stat.key" class="tx-outcome-row">
                 <span class="tx-outcome-stat-label">{{ stat.label }}</span>
                 <span class="tx-outcome-stat-before">{{ stat.before }}</span>
-                <span
-                  class="tx-outcome-stat-after"
-                  :class="stat.cls"
-                >{{ stat.after }}</span>
+                <span class="tx-outcome-stat-after" :class="stat.cls">{{ stat.after }}</span>
                 <span
                   v-if="stat.pct != null"
                   class="tx-reduction"
                   :class="stat.pct > 0 ? 'tx-reduction--good' : 'tx-reduction--bad'"
-                >{{ stat.pct > 0 ? '↓' : '↑' }}{{ Math.abs(stat.pct).toFixed(0) }}%</span>
+                  >{{ stat.pct > 0 ? '↓' : '↑' }}{{ Math.abs(stat.pct).toFixed(0) }}%</span
+                >
                 <span v-else class="tx-reduction" />
               </div>
             </div>
@@ -122,8 +117,8 @@ import TooltipIcon from '../TooltipIcon.vue'
 import { TRANSFORM_META, enrichSkipReason } from '../../utils/actionMeta.js'
 
 const props = defineProps({
-  column:   { type: String, required: true },
-  tasks:    { type: Object, default: () => ({}) },
+  column: { type: String, required: true },
+  tasks: { type: Object, default: () => ({}) },
   embedded: { type: Boolean, default: false },
 })
 
@@ -132,7 +127,7 @@ function fmtN(v) {
   const n = Number(v)
   if (!isFinite(n)) return '-'
   if (Math.abs(n) >= 10000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
-  if (Math.abs(n) >= 10)    return n.toFixed(2)
+  if (Math.abs(n) >= 10) return n.toFixed(2)
   return n.toPrecision(4).replace(/\.?0+$/, '')
 }
 
@@ -141,44 +136,44 @@ function meta(key) {
 }
 
 function isImproved(tx) {
-  return tx.after_stats?.skewness != null &&
+  return (
+    tx.after_stats?.skewness != null &&
     Math.abs(tx.after_stats.skewness) < Math.abs(colData.value?.original_skewness ?? 0)
+  )
 }
 
 // Build the before/after stat rows shown in the outcome grid
 const OUTCOME_STATS = [
   { key: 'skewness', label: 'Skewness', isPrimary: true },
-  { key: 'mean',     label: 'Mean',     isPrimary: false },
-  { key: 'std',      label: 'Std Dev',  isPrimary: false },
-  { key: 'p5',       label: 'p5',       isPrimary: false },
-  { key: 'p95',      label: 'p95',      isPrimary: false },
+  { key: 'mean', label: 'Mean', isPrimary: false },
+  { key: 'std', label: 'Std Dev', isPrimary: false },
+  { key: 'p5', label: 'p5', isPrimary: false },
+  { key: 'p95', label: 'p95', isPrimary: false },
 ]
 
 function outcomeStats(tx) {
   if (!tx.after_stats || !colData.value) return []
   const before = colData.value.before_stats ?? {}
-  return OUTCOME_STATS.map(s => {
+  return OUTCOME_STATS.map((s) => {
     const bVal = s.key === 'skewness' ? colData.value.original_skewness : before[s.key]
     const aVal = tx.after_stats[s.key]
     const improved = s.isPrimary && aVal != null && Math.abs(aVal) < Math.abs(bVal ?? 0)
-    const worse    = s.isPrimary && aVal != null && Math.abs(aVal) >= Math.abs(bVal ?? 0)
+    const worse = s.isPrimary && aVal != null && Math.abs(aVal) >= Math.abs(bVal ?? 0)
     const pct = s.isPrimary && tx.skew_reduction_pct != null ? tx.skew_reduction_pct : null
     return {
-      key:    s.key,
-      label:  s.label,
+      key: s.key,
+      label: s.label,
       before: fmtN(bVal),
-      after:  fmtN(aVal),
-      cls:    improved ? 'tx-improved' : worse ? 'tx-worse' : '',
+      after: fmtN(aVal),
+      cls: improved ? 'tx-improved' : worse ? 'tx-worse' : '',
       pct,
     }
-  }).filter(s => s.before !== '-' || s.after !== '-')
+  }).filter((s) => s.before !== '-' || s.after !== '-')
 }
 
-const colData = computed(() =>
-  props.tasks?.transformation_preview?.data?.[props.column] ?? null
-)
+const colData = computed(() => props.tasks?.transformation_preview?.data?.[props.column] ?? null)
 
-const state = computed(() => colData.value ? 'ready' : 'not_run')
+const state = computed(() => (colData.value ? 'ready' : 'not_run'))
 
 const transforms = computed(() => {
   if (!colData.value?.transforms) return []
@@ -188,24 +183,36 @@ const transforms = computed(() => {
     const actuallyBetter = afterSkew != null && afterSkew < origSkew
     return {
       key,
-      display:            tx.display      ?? key,
-      suitable_for:       tx.suitable_for ?? '',
-      skipped:            tx.skipped      ?? false,
-      skip_reason:        tx.skip_reason  ?? '',
-      after_stats:        tx.after_stats  ?? null,
+      display: tx.display ?? key,
+      suitable_for: tx.suitable_for ?? '',
+      skipped: tx.skipped ?? false,
+      skip_reason: tx.skip_reason ?? '',
+      after_stats: tx.after_stats ?? null,
       skew_reduction_pct: tx.skew_reduction_pct ?? null,
-      recommended:        (tx.recommended ?? false) && actuallyBetter,
+      recommended: (tx.recommended ?? false) && actuallyBetter,
     }
   })
 })
 </script>
 
 <style scoped>
-.tx-card { display: flex; flex-direction: column; gap: 14px; }
-.tx-not-run { font-size: 13px; color: #64748b; line-height: 1.6; }
+.tx-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tx-not-run {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+}
 
 /* ── Transform list ────────────────────────────────────────────────────────── */
-.tx-list { display: flex; flex-direction: column; gap: 8px; }
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .tx-item {
   border: 1px solid #1e293b;
@@ -216,31 +223,58 @@ const transforms = computed(() => {
   gap: 8px;
   transition: border-color 0.15s;
 }
-.tx-item--recommended { border-color: #4ade80; background: rgba(74,222,128,0.03); }
-.tx-item--skipped     { opacity: 0.55; }
+.tx-item--recommended {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.03);
+}
+.tx-item--skipped {
+  opacity: 0.55;
+}
 
-.tx-item-header { display: flex; align-items: center; gap: 8px; }
+.tx-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .tx-name {
-  font-size: 13px; font-weight: 600; color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
   font-family: ui-monospace, monospace;
 }
 .tx-badge-recommended {
-  font-size: 10px; padding: 1px 7px; border-radius: 8px;
-  background: #0f2718; color: #4ade80; border: 1px solid #4ade80;
-  font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: #0f2718;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 .tx-badge-skipped {
-  font-size: 10px; padding: 1px 7px; border-radius: 8px;
-  background: #1e293b; color: #64748b; border: 1px solid #334155;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #64748b;
+  border: 1px solid #334155;
 }
 
 .tx-skip-body {
-  font-size: 12px; color: #64748b; line-height: 1.55; margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.55;
+  margin: 0;
 }
 
 .tx-what {
-  font-size: 12px; color: #94a3b8; line-height: 1.55; margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
 }
 
 /* ── Meta rows (trade-off, after this) ───────────────────────────────────── */
@@ -261,12 +295,19 @@ const transforms = computed(() => {
   flex-shrink: 0;
   width: 64px;
 }
-.tx-meta-text { color: #94a3b8; }
+.tx-meta-text {
+  color: #94a3b8;
+}
 
 .tx-ref {
-  font-size: 11px; color: #60a5fa; text-decoration: none; align-self: flex-start;
+  font-size: 11px;
+  color: #60a5fa;
+  text-decoration: none;
+  align-self: flex-start;
 }
-.tx-ref:hover { text-decoration: underline; }
+.tx-ref:hover {
+  text-decoration: underline;
+}
 
 /* ── Computed outcome grid ───────────────────────────────────────────────── */
 .tx-outcome {
@@ -292,7 +333,9 @@ const transforms = computed(() => {
 .tx-outcome-row {
   border-bottom: 1px solid #0f172a;
 }
-.tx-outcome-row:last-child { border-bottom: none; }
+.tx-outcome-row:last-child {
+  border-bottom: none;
+}
 
 .tx-outcome-col-label {
   font-size: 9px;
@@ -302,7 +345,9 @@ const transforms = computed(() => {
   color: #64748b;
 }
 .tx-outcome-col-label:nth-child(2),
-.tx-outcome-col-label:nth-child(3) { text-align: right; }
+.tx-outcome-col-label:nth-child(3) {
+  text-align: right;
+}
 
 .tx-outcome-stat-label {
   font-size: 10px;
@@ -322,8 +367,12 @@ const transforms = computed(() => {
   font-weight: 600;
   text-align: right;
 }
-.tx-improved { color: #4ade80; }
-.tx-worse    { color: #f87171; }
+.tx-improved {
+  color: #4ade80;
+}
+.tx-worse {
+  color: #f87171;
+}
 
 .tx-reduction {
   font-size: 11px;
@@ -331,16 +380,37 @@ const transforms = computed(() => {
   text-align: right;
   display: block;
 }
-.tx-reduction--good { color: #4ade80; }
-.tx-reduction--bad  { color: #f87171; }
+.tx-reduction--good {
+  color: #4ade80;
+}
+.tx-reduction--bad {
+  color: #f87171;
+}
 
 /* ── Footer ────────────────────────────────────────────────────────────────── */
-.tx-footer { font-size: 11px; color: #334155; font-style: italic; text-align: right; }
+.tx-footer {
+  font-size: 11px;
+  color: #334155;
+  font-style: italic;
+  text-align: right;
+}
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .tx-item           { border-color: #e2e8f0; }
-:global(.theme-light) .tx-item--recommended { background: #f0fdf4; border-color: #86efac; }
-:global(.theme-light) .tx-name           { color: #1e293b; }
-:global(.theme-light) .tx-outcome        { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .tx-footer         { color: #94a3b8; }
+:global(.theme-light) .tx-item {
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .tx-item--recommended {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+:global(.theme-light) .tx-name {
+  color: #1e293b;
+}
+:global(.theme-light) .tx-outcome {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .tx-footer {
+  color: #94a3b8;
+}
 </style>

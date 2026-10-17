@@ -30,7 +30,9 @@
           class="filter-chip"
           :class="{ active: activeFilter === f.key }"
           @click="activeFilter = f.key"
-        >{{ f.label }}</button>
+        >
+          {{ f.label }}
+        </button>
       </div>
 
       <div v-if="!rows.length" class="corr-empty corr-empty--filtered">
@@ -44,8 +46,8 @@
           :key="row.column"
           class="corr-row"
           :class="strengthClass(row.correlation)"
-          @click="$emit('selectColumn', row.column)"
           :title="`Navigate to ${row.column}`"
+          @click="$emit('selectColumn', row.column)"
         >
           <span class="corr-col-name">{{ row.column }}</span>
           <div class="corr-bar-wrap">
@@ -85,10 +87,10 @@
       <div v-if="leakagePairs.length" class="corr-leakage-note">
         <span class="corr-leakage-icon">⚠</span>
         <span>
-          <strong>{{ leakagePairs.map(p => p.other).join(', ') }}</strong>
-          {{ leakagePairs.length === 1 ? 'exceeds' : 'exceed' }} the leakage
-          threshold (r ≥ {{ leakageThreshold }}) - these columns may encode
-          the same information. Reviewed on the Quality tab under Leakage.
+          <strong>{{ leakagePairs.map((p) => p.other).join(', ') }}</strong>
+          {{ leakagePairs.length === 1 ? 'exceeds' : 'exceed' }} the leakage threshold (r ≥
+          {{ leakageThreshold }}) - these columns may encode the same information. Reviewed on the
+          Quality tab under Leakage.
         </span>
       </div>
     </div>
@@ -103,41 +105,41 @@ import { getColumnCorrelations } from '../../api.js'
 const props = defineProps({
   runKey: { type: String, required: true },
   column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  tasks: { type: Object, default: () => ({}) },
 })
 
 defineEmits(['selectColumn'])
 
-const loading          = ref(false)
-const unavailable      = ref(false)
+const loading = ref(false)
+const unavailable = ref(false)
 const unavailableReason = ref('')
-const allCorrelations  = ref([])
-const activeFilter     = ref('all')
-const showAll          = ref(false)
+const allCorrelations = ref([])
+const activeFilter = ref('all')
+const showAll = ref(false)
 
 const DEFAULT_MAX = 15
 
 const filters = [
-  { key: 'all',      label: 'All'          },
-  { key: 'strong',   label: 'Strong (≥0.7)' },
+  { key: 'all', label: 'All' },
+  { key: 'strong', label: 'Strong (≥0.7)' },
   { key: 'moderate', label: 'Moderate (≥0.4)' },
 ]
 
 async function load() {
   if (!props.runKey || !props.column) return
-  loading.value     = true
+  loading.value = true
   unavailable.value = false
   allCorrelations.value = []
   try {
     const result = await getColumnCorrelations(props.runKey, props.column, 0.1)
     if (result.unavailable) {
-      unavailable.value       = true
+      unavailable.value = true
       unavailableReason.value = result.reason ?? 'Correlation data unavailable.'
     } else {
       allCorrelations.value = result.correlations ?? []
     }
   } catch {
-    unavailable.value       = true
+    unavailable.value = true
     unavailableReason.value = 'Could not load correlations.'
   } finally {
     loading.value = false
@@ -147,27 +149,24 @@ async function load() {
 watch(() => [props.runKey, props.column], load, { immediate: true })
 
 const rows = computed(() => {
-  const threshold = activeFilter.value === 'strong'
-    ? 0.7
-    : activeFilter.value === 'moderate'
-    ? 0.4
-    : 0.1
-  return allCorrelations.value.filter(r => Math.abs(r.correlation) >= threshold)
+  const threshold =
+    activeFilter.value === 'strong' ? 0.7 : activeFilter.value === 'moderate' ? 0.4 : 0.1
+  return allCorrelations.value.filter((r) => Math.abs(r.correlation) >= threshold)
 })
 
-const truncated    = computed(() => !showAll.value && rows.value.length > DEFAULT_MAX)
-const visibleRows  = computed(() =>
-  truncated.value ? rows.value.slice(0, DEFAULT_MAX) : rows.value
+const truncated = computed(() => !showAll.value && rows.value.length > DEFAULT_MAX)
+const visibleRows = computed(() =>
+  truncated.value ? rows.value.slice(0, DEFAULT_MAX) : rows.value,
 )
 
-const leakageThreshold = computed(() =>
-  props.tasks?.detect_data_leakage?.metadata?.correlation_threshold ?? 0.99
+const leakageThreshold = computed(
+  () => props.tasks?.detect_data_leakage?.metadata?.correlation_threshold ?? 0.99,
 )
 
 const leakagePairs = computed(() =>
   allCorrelations.value
-    .filter(r => Math.abs(r.correlation) >= leakageThreshold.value)
-    .map(r => ({ other: r.column, correlation: r.correlation }))
+    .filter((r) => Math.abs(r.correlation) >= leakageThreshold.value)
+    .map((r) => ({ other: r.column, correlation: r.correlation })),
 )
 
 function strengthClass(val) {
@@ -181,7 +180,7 @@ function strengthClass(val) {
 function valueClass(val) {
   const abs = Math.abs(val)
   if (abs >= 0.9) return val < 0 ? 'val-neg-critical' : 'val-pos-critical'
-  if (abs >= 0.7) return val < 0 ? 'val-neg-strong'   : 'val-pos-strong'
+  if (abs >= 0.7) return val < 0 ? 'val-neg-strong' : 'val-pos-strong'
   return val < 0 ? 'val-neg' : 'val-pos'
 }
 </script>
@@ -217,7 +216,9 @@ function valueClass(val) {
   padding: 0;
   text-decoration: underline;
 }
-.reset-filter-btn:hover { color: #93c5fd; }
+.reset-filter-btn:hover {
+  color: #93c5fd;
+}
 
 .corr-unavailable {
   display: flex;
@@ -228,7 +229,9 @@ function valueClass(val) {
   padding: 12px 0;
   line-height: 1.5;
 }
-.unavail-icon { flex-shrink: 0; }
+.unavail-icon {
+  flex-shrink: 0;
+}
 
 /* Filters */
 .corr-filters {
@@ -248,8 +251,15 @@ function valueClass(val) {
   cursor: pointer;
   transition: all 0.15s;
 }
-.filter-chip:hover  { background: #1e293b; color: #94a3b8; }
-.filter-chip.active { background: #1e3a5f; border-color: #60a5fa; color: #60a5fa; }
+.filter-chip:hover {
+  background: #1e293b;
+  color: #94a3b8;
+}
+.filter-chip.active {
+  background: #1e3a5f;
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
 
 /* Correlation rows */
 .corr-list {
@@ -268,7 +278,9 @@ function valueClass(val) {
   cursor: pointer;
   transition: background 0.1s;
 }
-.corr-row:hover { background: #1e293b; }
+.corr-row:hover {
+  background: #1e293b;
+}
 
 .corr-col-name {
   font-size: 11px;
@@ -278,7 +290,9 @@ function valueClass(val) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.corr-row:hover .corr-col-name { color: #e2e8f0; }
+.corr-row:hover .corr-col-name {
+  color: #e2e8f0;
+}
 
 /* Bidirectional bar */
 .corr-bar-wrap {
@@ -340,8 +354,13 @@ function valueClass(val) {
   color: #fde68a;
   line-height: 1.5;
 }
-.corr-leakage-icon { flex-shrink: 0; font-size: 13px; }
-.corr-leakage-note strong { color: #fff; }
+.corr-leakage-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.corr-leakage-note strong {
+  color: #fff;
+}
 
 .corr-value {
   font-size: 11px;
@@ -350,12 +369,24 @@ function valueClass(val) {
   text-align: right;
   white-space: nowrap;
 }
-.val-pos-critical { color: #f87171; }
-.val-pos-strong   { color: #fb923c; }
-.val-pos          { color: #94a3b8; }
-.val-neg-critical { color: #60a5fa; }
-.val-neg-strong   { color: #818cf8; }
-.val-neg          { color: #94a3b8; }
+.val-pos-critical {
+  color: #f87171;
+}
+.val-pos-strong {
+  color: #fb923c;
+}
+.val-pos {
+  color: #94a3b8;
+}
+.val-neg-critical {
+  color: #60a5fa;
+}
+.val-neg-strong {
+  color: #818cf8;
+}
+.val-neg {
+  color: #94a3b8;
+}
 
 .corr-truncated {
   margin-top: 10px;
@@ -374,5 +405,7 @@ function valueClass(val) {
   cursor: pointer;
   padding: 0;
 }
-.show-more-btn:hover { text-decoration: underline; }
+.show-more-btn:hover {
+  text-decoration: underline;
+}
 </style>

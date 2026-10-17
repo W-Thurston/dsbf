@@ -25,32 +25,31 @@
 
 <template>
   <div class="ts-tab">
-
     <!-- ── Disabled empty state ──────────────────────────────────────────── -->
     <div v-if="tsState === 'disabled'" class="card ts-disabled">
       <div class="ts-disabled-icon">📈</div>
       <div class="ts-disabled-title">Time Series Analysis Not Enabled</div>
       <div class="ts-disabled-body">
-        DSBF does not guess which datetime column represents the time axis -
-        the risk of running ACF/PACF or stationarity tests on the wrong column
-        is too high.
+        DSBF does not guess which datetime column represents the time axis - the risk of running
+        ACF/PACF or stationarity tests on the wrong column is too high.
       </div>
       <div class="ts-disabled-instructions">
         <div class="ts-inst-label">To enable, add the following to your config:</div>
-        <pre class="ts-code-block">tasks:
+        <pre class="ts-code-block">
+tasks:
   time_series:
     enabled: true
     datetime_index_column: your_date_column  # required</pre>
         <div class="ts-inst-label ts-inst-optional">
           Optional - leave blank to analyse all continuous columns:
         </div>
-        <pre class="ts-code-block">    value_columns: []     # empty = all continuous columns
+        <pre class="ts-code-block">
+    value_columns: []     # empty = all continuous columns
     frequency: null       # null = inferred from data</pre>
       </div>
       <div class="ts-disabled-note">
         You can also configure this via
-        <strong>Settings → Time Series</strong> in the dashboard
-        (coming soon), or by adding a
+        <strong>Settings → Time Series</strong> in the dashboard (coming soon), or by adding a
         <code>user_config.yaml</code> in your project root.
       </div>
     </div>
@@ -61,13 +60,14 @@
       <div class="ts-disabled-title">Time Series Index Column Not Set</div>
       <div class="ts-disabled-body">
         Time series is enabled but
-        <code>time_series.datetime_index_column</code> is not configured
-        or the column was not found in the dataset.
+        <code>time_series.datetime_index_column</code> is not configured or the column was not found
+        in the dataset.
       </div>
       <div v-if="tsDisabledMessage" class="ts-error-detail">
         {{ tsDisabledMessage }}
       </div>
-      <pre class="ts-code-block">tasks:
+      <pre class="ts-code-block">
+tasks:
   time_series:
     enabled: true
     datetime_index_column: your_date_column</pre>
@@ -75,14 +75,13 @@
 
     <!-- ── Ready ─────────────────────────────────────────────────────────── -->
     <template v-else>
-
       <!-- Header strip -->
       <div class="ts-header-strip card">
         <div class="ts-header-item">
           <span class="ts-header-label">Index Column</span>
           <span class="ts-header-value">{{ indexColumn }}</span>
         </div>
-        <div class="ts-header-item" v-if="frequency">
+        <div v-if="frequency" class="ts-header-item">
           <span class="ts-header-label">Frequency</span>
           <span class="ts-header-value">{{ frequency }}</span>
         </div>
@@ -104,11 +103,10 @@
 
         <Transition name="ts-expand">
           <div v-if="openSections.has('acf')" class="ts-section-body">
-
             <div v-if="acfState === 'not_run'" class="es-not-run">
               ACF/PACF analysis did not run. Check that
-              <code>time_series.enabled: true</code> and
-              <code>datetime_index_column</code> is set in config.
+              <code>time_series.enabled: true</code> and <code>datetime_index_column</code> is set
+              in config.
             </div>
             <div v-else-if="acfState === 'error'" class="es-error">
               <span>⚠</span> {{ acfError }}
@@ -125,16 +123,14 @@
                   class="ts-col-tab"
                   :class="{ 'ts-col-tab--active': acfSelectedCol === name }"
                   @click="acfSelectedCol = name"
-                >{{ name }}</button>
+                >
+                  {{ name }}
+                </button>
               </div>
 
               <!-- ACF / PACF bar charts for selected column -->
               <div v-if="acfSelectedColData" class="ts-acf-charts">
-                <div
-                  v-for="kind in ['acf', 'pacf']"
-                  :key="kind"
-                  class="ts-acf-chart-wrap"
-                >
+                <div v-for="kind in ['acf', 'pacf']" :key="kind" class="ts-acf-chart-wrap">
                   <div class="ts-acf-chart-label">{{ kind.toUpperCase() }}</div>
                   <svg
                     class="ts-acf-svg"
@@ -143,20 +139,26 @@
                   >
                     <!-- Zero baseline -->
                     <line
-                      :x1="acfPadL" :y1="acfZeroY"
-                      :x2="acfSvgW - acfPadR" :y2="acfZeroY"
+                      :x1="acfPadL"
+                      :y1="acfZeroY"
+                      :x2="acfSvgW - acfPadR"
+                      :y2="acfZeroY"
                       class="ts-acf-baseline"
                     />
                     <!-- Confidence band (upper) -->
                     <line
-                      :x1="acfPadL" :y1="acfConfY(kind, 'upper')"
-                      :x2="acfSvgW - acfPadR" :y2="acfConfY(kind, 'upper')"
+                      :x1="acfPadL"
+                      :y1="acfConfY(kind, 'upper')"
+                      :x2="acfSvgW - acfPadR"
+                      :y2="acfConfY(kind, 'upper')"
                       class="ts-acf-conf-line"
                     />
                     <!-- Confidence band (lower) -->
                     <line
-                      :x1="acfPadL" :y1="acfConfY(kind, 'lower')"
-                      :x2="acfSvgW - acfPadR" :y2="acfConfY(kind, 'lower')"
+                      :x1="acfPadL"
+                      :y1="acfConfY(kind, 'lower')"
+                      :x2="acfSvgW - acfPadR"
+                      :y2="acfConfY(kind, 'lower')"
                       class="ts-acf-conf-line"
                     />
                     <!-- Confidence band fill -->
@@ -178,27 +180,58 @@
                       :class="acfBarClass(kind, lag)"
                     />
                     <!-- Y axis labels -->
-                    <text :x="acfPadL - 4" :y="acfZeroY + 4" class="ts-acf-axis-label ts-acf-axis-label--right">0</text>
-                    <text :x="acfPadL - 4" :y="acfPadT + 4" class="ts-acf-axis-label ts-acf-axis-label--right">1</text>
-                    <text :x="acfPadL - 4" :y="acfSvgH - acfPadB + 4" class="ts-acf-axis-label ts-acf-axis-label--right">−1</text>
+                    <text
+                      :x="acfPadL - 4"
+                      :y="acfZeroY + 4"
+                      class="ts-acf-axis-label ts-acf-axis-label--right"
+                    >
+                      0
+                    </text>
+                    <text
+                      :x="acfPadL - 4"
+                      :y="acfPadT + 4"
+                      class="ts-acf-axis-label ts-acf-axis-label--right"
+                    >
+                      1
+                    </text>
+                    <text
+                      :x="acfPadL - 4"
+                      :y="acfSvgH - acfPadB + 4"
+                      class="ts-acf-axis-label ts-acf-axis-label--right"
+                    >
+                      −1
+                    </text>
                     <!-- X axis: first and last lag labels -->
                     <text
                       :x="acfBarX(0) + acfBarW / 2"
                       :y="acfSvgH - acfPadB + 12"
                       class="ts-acf-axis-label"
-                    >1</text>
+                    >
+                      1
+                    </text>
                     <text
                       :x="acfBarX(acfSelectedColData.lags.length - 1) + acfBarW / 2"
                       :y="acfSvgH - acfPadB + 12"
                       class="ts-acf-axis-label"
-                    >{{ acfSelectedColData.lags[acfSelectedColData.lags.length - 1] }}</text>
+                    >
+                      {{ acfSelectedColData.lags[acfSelectedColData.lags.length - 1] }}
+                    </text>
                   </svg>
                   <div class="ts-acf-sig-note">
-                    <span :class="acfSelectedColData[`${kind}_significant_lags`]?.length ? 'ts-flag' : 'ts-ok'">
+                    <span
+                      :class="
+                        acfSelectedColData[`${kind}_significant_lags`]?.length ? 'ts-flag' : 'ts-ok'
+                      "
+                    >
                       {{ acfSelectedColData[`${kind}_significant_lags`]?.length ?? 0 }}
                     </span>
-                    significant lag{{ (acfSelectedColData[`${kind}_significant_lags`]?.length ?? 0) !== 1 ? 's' : '' }}
-                    <span v-if="acfSelectedColData[`${kind}_significant_lags`]?.length" class="ts-muted">
+                    significant lag{{
+                      (acfSelectedColData[`${kind}_significant_lags`]?.length ?? 0) !== 1 ? 's' : ''
+                    }}
+                    <span
+                      v-if="acfSelectedColData[`${kind}_significant_lags`]?.length"
+                      class="ts-muted"
+                    >
                       ({{ acfSelectedColData[`${kind}_significant_lags`].join(', ') }})
                     </span>
                   </div>
@@ -219,8 +252,8 @@
                   :key="name"
                   class="ts-table-row"
                   :class="{ 'ts-table-row--active': acfSelectedCol === name }"
+                  style="cursor: pointer"
                   @click="acfSelectedCol = name"
-                  style="cursor:pointer"
                 >
                   <span class="ts-col-name">{{ name }}</span>
                   <span class="ts-muted">{{ col.n?.toLocaleString() }}</span>
@@ -245,12 +278,13 @@
             Stationarity Tests
             <span class="ts-section-subtitle">ADF (H₀: unit root) · KPSS (H₀: stationary)</span>
           </div>
-          <button class="ts-collapse-btn">{{ openSections.has('stationarity') ? '▲' : '▼' }}</button>
+          <button class="ts-collapse-btn">
+            {{ openSections.has('stationarity') ? '▲' : '▼' }}
+          </button>
         </div>
 
         <Transition name="ts-expand">
           <div v-if="openSections.has('stationarity')" class="ts-section-body">
-
             <div v-if="statState === 'not_run'" class="es-not-run">
               Stationarity tests did not run.
             </div>
@@ -261,7 +295,6 @@
               ✓ No value columns tested (all may have been too short).
             </div>
             <template v-else>
-
               <!-- Epistemic note -->
               <div class="ts-epistemic-note">
                 <span>ⓘ</span>
@@ -277,11 +310,7 @@
                   <span>ADF p</span>
                   <span>KPSS p</span>
                 </div>
-                <div
-                  v-for="(col, name) in statData"
-                  :key="name"
-                  class="ts-table-row"
-                >
+                <div v-for="(col, name) in statData" :key="name" class="ts-table-row">
                   <span class="ts-col-name">{{ name }}</span>
                   <span class="ts-muted">{{ col.n?.toLocaleString() }}</span>
                   <span>
@@ -312,7 +341,6 @@
                 </div>
               </div>
             </template>
-
           </div>
         </Transition>
       </div>
@@ -329,7 +357,6 @@
 
         <Transition name="ts-expand">
           <div v-if="openSections.has('stl')" class="ts-section-body">
-
             <div v-if="stlState === 'not_run'" class="es-not-run">
               STL decomposition did not run.
             </div>
@@ -341,36 +368,36 @@
                 <span class="ts-stl-empty-msg">{{ stlEmptyMessage }}</span>
               </template>
               <template v-else>
-                ✓ No columns decomposed - series may be too short for the
-                configured seasonal period, or no seasonal period could be inferred.
+                ✓ No columns decomposed - series may be too short for the configured seasonal
+                period, or no seasonal period could be inferred.
               </template>
               <span class="ts-empty-hint">
-                Set <code>tasks.decompose_time_series.seasonal_period</code> in config
-                to override auto-detection (e.g. <code>7</code> for daily/weekly,
-                <code>12</code> for monthly/annual).
+                Set <code>tasks.decompose_time_series.seasonal_period</code> in config to override
+                auto-detection (e.g. <code>7</code> for daily/weekly, <code>12</code> for
+                monthly/annual).
               </span>
             </div>
             <template v-else>
               <div class="ts-stl-meta">
-                Seasonal period: <strong>{{ stlPeriod }}</strong> ·
-                Robust: <strong>{{ stlRobust ? 'yes' : 'no' }}</strong>
+                Seasonal period: <strong>{{ stlPeriod }}</strong> · Robust:
+                <strong>{{ stlRobust ? 'yes' : 'no' }}</strong>
               </div>
 
               <!-- STL 4-panel sparklines per column -->
-              <div
-                v-for="(col, name) in stlData"
-                :key="name"
-                class="ts-stl-column"
-              >
+              <div v-for="(col, name) in stlData" :key="name" class="ts-stl-column">
                 <div class="ts-stl-col-header">
                   <span class="ts-col-name">{{ name }}</span>
                   <span class="ts-muted ts-stl-n">n={{ col.n?.toLocaleString() }}</span>
-                  <span class="ts-strength-pill ts-strength-pill--trend"
-                    :class="strengthClass(col.trend_strength)">
+                  <span
+                    class="ts-strength-pill ts-strength-pill--trend"
+                    :class="strengthClass(col.trend_strength)"
+                  >
                     Trend {{ strengthLabel(col.trend_strength) }}
                   </span>
-                  <span class="ts-strength-pill ts-strength-pill--seasonal"
-                    :class="strengthClass(col.seasonal_strength)">
+                  <span
+                    class="ts-strength-pill ts-strength-pill--seasonal"
+                    :class="strengthClass(col.seasonal_strength)"
+                  >
                     Seasonal {{ strengthLabel(col.seasonal_strength) }}
                   </span>
                 </div>
@@ -389,8 +416,10 @@
                       <!-- Zero line for seasonal/residual -->
                       <line
                         v-if="panel === 'seasonal' || panel === 'residual'"
-                        :x1="0" :y1="stlZeroY(col, panel)"
-                        :x2="stlSvgW" :y2="stlZeroY(col, panel)"
+                        :x1="0"
+                        :y1="stlZeroY(col, panel)"
+                        :x2="stlSvgW"
+                        :y2="stlZeroY(col, panel)"
                         class="ts-stl-zeroline"
                       />
                       <!-- Sparkline -->
@@ -416,11 +445,7 @@
                   <span>Trend strength</span>
                   <span>Seasonal strength</span>
                 </div>
-                <div
-                  v-for="(col, name) in stlData"
-                  :key="name"
-                  class="ts-table-row"
-                >
+                <div v-for="(col, name) in stlData" :key="name" class="ts-table-row">
                   <span class="ts-col-name">{{ name }}</span>
                   <span class="ts-muted">{{ col.n?.toLocaleString() }}</span>
                   <span>
@@ -430,10 +455,9 @@
                         :style="{ width: `${(col.trend_strength ?? 0) * 100}%` }"
                       />
                     </span>
-                    <span
-                      class="ts-strength-val"
-                      :class="strengthClass(col.trend_strength)"
-                    >{{ strengthLabel(col.trend_strength) }}</span>
+                    <span class="ts-strength-val" :class="strengthClass(col.trend_strength)">{{
+                      strengthLabel(col.trend_strength)
+                    }}</span>
                   </span>
                   <span>
                     <span class="ts-strength-bar-wrap">
@@ -442,19 +466,16 @@
                         :style="{ width: `${(col.seasonal_strength ?? 0) * 100}%` }"
                       />
                     </span>
-                    <span
-                      class="ts-strength-val"
-                      :class="strengthClass(col.seasonal_strength)"
-                    >{{ strengthLabel(col.seasonal_strength) }}</span>
+                    <span class="ts-strength-val" :class="strengthClass(col.seasonal_strength)">{{
+                      strengthLabel(col.seasonal_strength)
+                    }}</span>
                   </span>
                 </div>
               </div>
             </template>
-
           </div>
         </Transition>
       </div>
-
     </template>
   </div>
 </template>
@@ -469,7 +490,7 @@ const props = defineProps({
 
 // ── Section collapse ──────────────────────────────────────────────────────────
 const openSections = ref(new Set(['acf', 'stationarity', 'stl']))
-const showCaveats  = ref(false)
+const showCaveats = ref(false)
 
 function toggleSection(key) {
   const s = new Set(openSections.value)
@@ -486,9 +507,9 @@ function tsTaskSummary(name) {
 }
 
 const tsState = computed(() => {
-  const acfSummary  = tsTaskSummary('compute_acf_pacf')
+  const acfSummary = tsTaskSummary('compute_acf_pacf')
   const statSummary = tsTaskSummary('detect_stationarity')
-  const stlSummary  = tsTaskSummary('decompose_time_series')
+  const stlSummary = tsTaskSummary('decompose_time_series')
 
   // No TS tasks in the payload at all — tasks didn't run or weren't persisted
   if (!acfSummary && !statSummary && !stlSummary) return 'disabled'
@@ -496,7 +517,7 @@ const tsState = computed(() => {
   const summaries = [acfSummary, statSummary, stlSummary].filter(Boolean)
 
   // Check if ALL tasks reported disabled (TS globally off or no index column)
-  const allDisabled = summaries.every(s => s.time_series_enabled === false)
+  const allDisabled = summaries.every((s) => s.time_series_enabled === false)
   if (allDisabled) {
     const msg = summaries[0]?.message ?? ''
     const msgLower = msg.toLowerCase()
@@ -525,107 +546,113 @@ const tsDisabledMessage = computed(() => {
     tsTaskSummary('detect_stationarity'),
     tsTaskSummary('decompose_time_series'),
   ].filter(Boolean)
-  return summaries.find(s => s.time_series_enabled === false)?.message ?? null
+  return summaries.find((s) => s.time_series_enabled === false)?.message ?? null
 })
 
 // ── Shared metadata ───────────────────────────────────────────────────────────
-const indexColumn    = computed(() =>
-  props.tasks?.compute_acf_pacf?.metadata?.index_column ??
-  props.tasks?.detect_stationarity?.metadata?.index_column ??
-  props.tasks?.decompose_time_series?.metadata?.index_column ?? '-'
+const indexColumn = computed(
+  () =>
+    props.tasks?.compute_acf_pacf?.metadata?.index_column ??
+    props.tasks?.detect_stationarity?.metadata?.index_column ??
+    props.tasks?.decompose_time_series?.metadata?.index_column ??
+    '-',
 )
-const frequency      = computed(() =>
-  props.tasks?.compute_acf_pacf?.metadata?.frequency ??
-  props.tasks?.detect_stationarity?.metadata?.frequency ?? null
+const frequency = computed(
+  () =>
+    props.tasks?.compute_acf_pacf?.metadata?.frequency ??
+    props.tasks?.detect_stationarity?.metadata?.frequency ??
+    null,
 )
 const valueColumnCount = computed(() => {
-  const cols = Object.keys(acfData.value ?? {}).length ||
-               Object.keys(statData.value ?? {}).length ||
-               Object.keys(stlData.value ?? {}).length
+  const cols =
+    Object.keys(acfData.value ?? {}).length ||
+    Object.keys(statData.value ?? {}).length ||
+    Object.keys(stlData.value ?? {}).length
   return cols || '-'
 })
 
 // ── ACF / PACF ────────────────────────────────────────────────────────────────
 const acfResult = computed(() => props.tasks?.compute_acf_pacf ?? null)
-const acfState  = computed(() => {
-  if (!acfResult.value)                          return 'not_run'
-  if (acfResult.value.status === 'error')        return 'error'
+const acfState = computed(() => {
+  if (!acfResult.value) return 'not_run'
+  if (acfResult.value.status === 'error') return 'error'
   if (acfResult.value.summary?.time_series_enabled === false) return 'not_run'
   if (!Object.keys(acfResult.value.data ?? {}).length) return 'empty'
   return 'ready'
 })
-const acfError  = computed(() =>
-  acfResult.value?.error_metadata?.message ?? 'ACF/PACF task encountered an error.'
+const acfError = computed(
+  () => acfResult.value?.error_metadata?.message ?? 'ACF/PACF task encountered an error.',
 )
-const acfData   = computed(() => acfResult.value?.data ?? {})
+const acfData = computed(() => acfResult.value?.data ?? {})
 
 function acfPattern(col) {
-  const acfSig  = col.acf_significant_lags?.length ?? 0
+  const acfSig = col.acf_significant_lags?.length ?? 0
   const pacfSig = col.pacf_significant_lags?.length ?? 0
   if (!acfSig && !pacfSig) return 'No autocorrelation'
-  if (pacfSig && !acfSig)  return `AR(${Math.max(...col.pacf_significant_lags)})`
-  if (acfSig && !pacfSig)  return `MA(${Math.max(...col.acf_significant_lags)})`
+  if (pacfSig && !acfSig) return `AR(${Math.max(...col.pacf_significant_lags)})`
+  if (acfSig && !pacfSig) return `MA(${Math.max(...col.acf_significant_lags)})`
   return 'ARMA'
 }
 
 // ── Stationarity ──────────────────────────────────────────────────────────────
 const statResult = computed(() => props.tasks?.detect_stationarity ?? null)
-const statState  = computed(() => {
-  if (!statResult.value)                          return 'not_run'
-  if (statResult.value.status === 'error')        return 'error'
+const statState = computed(() => {
+  if (!statResult.value) return 'not_run'
+  if (statResult.value.status === 'error') return 'error'
   if (statResult.value.summary?.time_series_enabled === false) return 'not_run'
   if (!Object.keys(statResult.value.data ?? {}).length) return 'empty'
   return 'ready'
 })
-const statError  = computed(() =>
-  statResult.value?.error_metadata?.message ?? 'Stationarity task encountered an error.'
+const statError = computed(
+  () => statResult.value?.error_metadata?.message ?? 'Stationarity task encountered an error.',
 )
-const statData   = computed(() => statResult.value?.data ?? {})
-const statEpistemicNote = computed(() =>
-  statResult.value?.summary?.epistemic_note ??
-  'ADF and KPSS have opposite null hypotheses. Agreement between them ' +
-  'strengthens the conclusion; disagreement signals ambiguity.'
+const statData = computed(() => statResult.value?.data ?? {})
+const statEpistemicNote = computed(
+  () =>
+    statResult.value?.summary?.epistemic_note ??
+    'ADF and KPSS have opposite null hypotheses. Agreement between them ' +
+      'strengthens the conclusion; disagreement signals ambiguity.',
 )
 
 function assessmentLabel(assessment) {
   const labels = {
-    consistent_with_stationary:           'Consistent with stationary',
-    consistent_with_non_stationary:       'Consistent with non-stationary',
+    consistent_with_stationary: 'Consistent with stationary',
+    consistent_with_non_stationary: 'Consistent with non-stationary',
     ambiguous_trend_stationary_or_structural_break: 'Ambiguous',
-    inconclusive:                          'Inconclusive',
-    indeterminate:                         'Indeterminate',
+    inconclusive: 'Inconclusive',
+    indeterminate: 'Indeterminate',
   }
-  return labels[assessment] ?? (assessment?.replace(/_/g, ' ') ?? '-')
+  return labels[assessment] ?? assessment?.replace(/_/g, ' ') ?? '-'
 }
 
 function assessmentClass(assessment) {
   if (!assessment) return 'ts-badge--gray'
-  if (assessment === 'consistent_with_stationary')     return 'ts-badge--green'
+  if (assessment === 'consistent_with_stationary') return 'ts-badge--green'
   if (assessment === 'consistent_with_non_stationary') return 'ts-badge--red'
   return 'ts-badge--amber'
 }
 
 // ── STL Decomposition ─────────────────────────────────────────────────────────
 const stlResult = computed(() => props.tasks?.decompose_time_series ?? null)
-const stlState  = computed(() => {
-  if (!stlResult.value)                          return 'not_run'
-  if (stlResult.value.status === 'error')        return 'error'
+const stlState = computed(() => {
+  if (!stlResult.value) return 'not_run'
+  if (stlResult.value.status === 'error') return 'error'
   // time_series_enabled: false on STL specifically means it couldn't determine
   // the seasonal period — show as empty with a config hint, not 'not_run'
   if (stlResult.value.summary?.time_series_enabled === false) return 'empty'
   if (!Object.keys(stlResult.value.data ?? {}).length) return 'empty'
   return 'ready'
 })
-const stlError  = computed(() =>
-  stlResult.value?.error_metadata?.message ?? 'STL decomposition task encountered an error.'
+const stlError = computed(
+  () => stlResult.value?.error_metadata?.message ?? 'STL decomposition task encountered an error.',
 )
 // The message explaining why STL is empty (e.g. no seasonal period detected)
 const stlEmptyMessage = computed(() =>
   stlResult.value?.summary?.time_series_enabled === false
-    ? stlResult.value?.summary?.message ?? null
-    : null
+    ? (stlResult.value?.summary?.message ?? null)
+    : null,
 )
-const stlData   = computed(() => stlResult.value?.data ?? {})
+const stlData = computed(() => stlResult.value?.data ?? {})
 const stlPeriod = computed(() => stlResult.value?.summary?.seasonal_period ?? '-')
 const stlRobust = computed(() => stlResult.value?.summary?.robust ?? true)
 
@@ -699,7 +726,7 @@ function acfBarClass(kind, lag) {
 // ── STL sparkline chart ───────────────────────────────────────────────────────
 const stlSvgW = 200
 const stlSvgH = 48
-const stlPad  = 4
+const stlPad = 4
 
 function stlValues(col, panel) {
   return col[panel] ?? []
@@ -732,31 +759,37 @@ function stlPoints(col, panel) {
   const [mn, mx] = stlMinMax(col, panel)
   const w = stlSvgW - stlPad * 2
   const h = stlSvgH - stlPad * 2
-  return vals.map((v, i) => {
-    const x = stlPad + (i / (vals.length - 1)) * w
-    const y = stlPad + h * (1 - (v - mn) / (mx - mn))
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(' ')
+  return vals
+    .map((v, i) => {
+      const x = stlPad + (i / (vals.length - 1)) * w
+      const y = stlPad + h * (1 - (v - mn) / (mx - mn))
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(' ')
 }
 
 function strengthLabel(v) {
   if (v == null) return '-'
-  if (v >= 0.7)  return `Strong (${v.toFixed(2)})`
-  if (v >= 0.4)  return `Moderate (${v.toFixed(2)})`
-  if (v >= 0.1)  return `Weak (${v.toFixed(2)})`
+  if (v >= 0.7) return `Strong (${v.toFixed(2)})`
+  if (v >= 0.4) return `Moderate (${v.toFixed(2)})`
+  if (v >= 0.1) return `Weak (${v.toFixed(2)})`
   return `Negligible (${v.toFixed(2)})`
 }
 
 function strengthClass(v) {
   if (v == null || v < 0.1) return 'ts-strength--low'
-  if (v >= 0.7)              return 'ts-strength--high'
-  if (v >= 0.4)              return 'ts-strength--mid'
+  if (v >= 0.7) return 'ts-strength--high'
+  if (v >= 0.4) return 'ts-strength--mid'
   return 'ts-strength--low'
 }
 </script>
 
 <style scoped>
-.ts-tab { display: flex; flex-direction: column; gap: 16px; }
+.ts-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 /* ── Disabled / empty state card ─────────────────────────────────────────── */
 .ts-disabled {
@@ -771,9 +804,21 @@ function strengthClass(v) {
   width: 100%;
 }
 
-.ts-disabled-icon  { font-size: 40px; opacity: 0.5; }
-.ts-disabled-title { font-size: 18px; font-weight: 600; color: #e2e8f0; }
-.ts-disabled-body  { font-size: 13px; color: #64748b; line-height: 1.6; max-width: 520px; }
+.ts-disabled-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+.ts-disabled-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.ts-disabled-body {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  max-width: 520px;
+}
 
 .ts-disabled-instructions {
   width: 100%;
@@ -790,7 +835,9 @@ function strengthClass(v) {
   letter-spacing: 0.4px;
   color: #64748b;
 }
-.ts-inst-optional { margin-top: 8px; }
+.ts-inst-optional {
+  margin-top: 8px;
+}
 
 .ts-code-block {
   background: #0f172a;
@@ -812,8 +859,13 @@ function strengthClass(v) {
   color: #64748b;
   line-height: 1.5;
 }
-.ts-disabled-note strong { color: #94a3b8; }
-.ts-disabled-note code   { color: #93c5fd; font-size: 11px; }
+.ts-disabled-note strong {
+  color: #94a3b8;
+}
+.ts-disabled-note code {
+  color: #93c5fd;
+  font-size: 11px;
+}
 
 .ts-error-detail {
   width: 100%;
@@ -845,7 +897,11 @@ function strengthClass(v) {
   border-right: 1px solid #334155;
   margin-right: 24px;
 }
-.ts-header-item:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+.ts-header-item:last-child {
+  border-right: none;
+  margin-right: 0;
+  padding-right: 0;
+}
 
 .ts-header-label {
   font-size: 10px;
@@ -862,7 +918,10 @@ function strengthClass(v) {
 }
 
 /* ── Section cards ───────────────────────────────────────────────────────── */
-.ts-section { padding: 0; overflow: visible; }
+.ts-section {
+  padding: 0;
+  overflow: visible;
+}
 
 .ts-section-header {
   display: flex;
@@ -873,7 +932,9 @@ function strengthClass(v) {
   user-select: none;
   transition: background 0.12s;
 }
-.ts-section-header:hover { background: rgba(255,255,255,0.03); }
+.ts-section-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 
 .ts-section-title {
   display: flex;
@@ -899,7 +960,10 @@ function strengthClass(v) {
   cursor: pointer;
   transition: all 0.12s;
 }
-.ts-collapse-btn:hover { border-color: #60a5fa; color: #93c5fd; }
+.ts-collapse-btn:hover {
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
 
 /* ── Section body ────────────────────────────────────────────────────────── */
 .ts-section-body {
@@ -911,11 +975,40 @@ function strengthClass(v) {
 }
 
 /* ── Empty / error states ────────────────────────────────────────────────── */
-.es-not-run { color: #64748b; font-size: 13px; padding: 16px 0; text-align: center; }
-.es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
-.ts-empty-hint { font-size: 11px; color: #64748b; }
-.ts-empty-hint code { color: #93c5fd; font-size: 11px; }
-.es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
+.es-not-run {
+  color: #64748b;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+}
+.es-empty {
+  color: #4ade80;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.ts-empty-hint {
+  font-size: 11px;
+  color: #64748b;
+}
+.ts-empty-hint code {
+  color: #93c5fd;
+  font-size: 11px;
+}
+.es-error {
+  color: #f87171;
+  font-size: 13px;
+  padding: 12px;
+  background: #3d0f0f;
+  border-radius: 6px;
+  border-left: 3px solid #f87171;
+  display: flex;
+  gap: 8px;
+}
 
 /* ── ACF / PACF chart ────────────────────────────────────────────────────── */
 .ts-col-tabs {
@@ -935,8 +1028,15 @@ function strengthClass(v) {
   cursor: pointer;
   transition: all 0.12s;
 }
-.ts-col-tab:hover { border-color: #60a5fa; color: #93c5fd; }
-.ts-col-tab--active { background: #0f2035; border-color: #60a5fa; color: #93c5fd; }
+.ts-col-tab:hover {
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
+.ts-col-tab--active {
+  background: #0f2035;
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
 
 .ts-acf-charts {
   display: flex;
@@ -965,21 +1065,42 @@ function strengthClass(v) {
   border-radius: 4px;
   overflow: visible;
 }
-.ts-acf-baseline { stroke: #334155; stroke-width: 1; }
-.ts-acf-conf-line { stroke: #1e3a5f; stroke-width: 1; stroke-dasharray: 3 2; }
-.ts-acf-conf-fill { fill: #1e3a5f; opacity: 0.25; }
-.ts-acf-bar { fill: #3b5998; }
-.ts-acf-bar--sig { fill: #60a5fa; }
+.ts-acf-baseline {
+  stroke: #334155;
+  stroke-width: 1;
+}
+.ts-acf-conf-line {
+  stroke: #1e3a5f;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.ts-acf-conf-fill {
+  fill: #1e3a5f;
+  opacity: 0.25;
+}
+.ts-acf-bar {
+  fill: #3b5998;
+}
+.ts-acf-bar--sig {
+  fill: #60a5fa;
+}
 .ts-acf-axis-label {
   font-size: 8px;
   fill: #475569;
   text-anchor: middle;
   font-family: ui-monospace, monospace;
 }
-.ts-acf-axis-label--right { text-anchor: end; }
-.ts-acf-sig-note { font-size: 11px; color: #64748b; }
+.ts-acf-axis-label--right {
+  text-anchor: end;
+}
+.ts-acf-sig-note {
+  font-size: 11px;
+  color: #64748b;
+}
 
-.ts-table-row--active { background: rgba(96, 165, 250, 0.05); }
+.ts-table-row--active {
+  background: rgba(96, 165, 250, 0.05);
+}
 
 /* ── STL sparklines ──────────────────────────────────────────────────────── */
 .ts-stl-column {
@@ -989,7 +1110,9 @@ function strengthClass(v) {
   padding: 12px 0;
   border-bottom: 1px solid #1e293b;
 }
-.ts-stl-column:last-of-type { border-bottom: none; }
+.ts-stl-column:last-of-type {
+  border-bottom: none;
+}
 
 .ts-stl-col-header {
   display: flex;
@@ -997,7 +1120,9 @@ function strengthClass(v) {
   gap: 10px;
   flex-wrap: wrap;
 }
-.ts-stl-n { font-size: 11px; }
+.ts-stl-n {
+  font-size: 11px;
+}
 
 .ts-strength-pill {
   display: inline-block;
@@ -1007,8 +1132,16 @@ function strengthClass(v) {
   font-weight: 600;
   border: 1px solid;
 }
-.ts-strength-pill--trend   { border-color: #3b82f6; color: #60a5fa; background: #0f2035; }
-.ts-strength-pill--seasonal { border-color: #8b5cf6; color: #a78bfa; background: #1a1035; }
+.ts-strength-pill--trend {
+  border-color: #3b82f6;
+  color: #60a5fa;
+  background: #0f2035;
+}
+.ts-strength-pill--seasonal {
+  border-color: #8b5cf6;
+  color: #a78bfa;
+  background: #1a1035;
+}
 
 .ts-stl-panels {
   display: grid;
@@ -1035,12 +1168,27 @@ function strengthClass(v) {
   border-radius: 3px;
   overflow: hidden;
 }
-.ts-stl-zeroline { stroke: #334155; stroke-width: 1; stroke-dasharray: 2 2; }
-.ts-stl-line { stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-.ts-stl-line--observed { stroke: #e2e8f0; }
-.ts-stl-line--trend    { stroke: #60a5fa; }
-.ts-stl-line--seasonal { stroke: #a78bfa; }
-.ts-stl-line--residual { stroke: #94a3b8; }
+.ts-stl-zeroline {
+  stroke: #334155;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.ts-stl-line {
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.ts-stl-line--observed {
+  stroke: #e2e8f0;
+}
+.ts-stl-line--trend {
+  stroke: #60a5fa;
+}
+.ts-stl-line--seasonal {
+  stroke: #a78bfa;
+}
+.ts-stl-line--residual {
+  stroke: #94a3b8;
+}
 .ts-stl-panel-range {
   display: flex;
   justify-content: space-between;
@@ -1050,7 +1198,9 @@ function strengthClass(v) {
 }
 
 /* ── Data tables ─────────────────────────────────────────────────────────── */
-.ts-table { width: 100%; }
+.ts-table {
+  width: 100%;
+}
 
 .ts-table-row {
   display: grid;
@@ -1061,8 +1211,12 @@ function strengthClass(v) {
   border-bottom: 1px solid #0f172a;
   font-size: 13px;
 }
-.ts-table-row:last-child { border-bottom: none; }
-.ts-table-row:hover:not(.ts-table-header) { background: rgba(255,255,255,0.02); }
+.ts-table-row:last-child {
+  border-bottom: none;
+}
+.ts-table-row:hover:not(.ts-table-header) {
+  background: rgba(255, 255, 255, 0.02);
+}
 
 .ts-table-header {
   font-size: 10px;
@@ -1087,10 +1241,20 @@ function strengthClass(v) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ts-muted   { color: #64748b; font-size: 12px; }
-.ts-flag    { color: #fbbf24; font-weight: 600; }
-.ts-ok      { color: #4ade80; }
-.ts-pattern { font-size: 11px; }
+.ts-muted {
+  color: #64748b;
+  font-size: 12px;
+}
+.ts-flag {
+  color: #fbbf24;
+  font-weight: 600;
+}
+.ts-ok {
+  color: #4ade80;
+}
+.ts-pattern {
+  font-size: 11px;
+}
 
 /* ── Assessment badges ───────────────────────────────────────────────────── */
 .ts-assessment-badge {
@@ -1102,10 +1266,26 @@ function strengthClass(v) {
   border: 1px solid;
   white-space: nowrap;
 }
-.ts-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
-.ts-badge--red   { background: #3d0f0f; color: #f87171; border-color: #f87171; }
-.ts-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
-.ts-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #64748b; }
+.ts-badge--green {
+  background: #0f2718;
+  color: #4ade80;
+  border-color: #4ade80;
+}
+.ts-badge--red {
+  background: #3d0f0f;
+  color: #f87171;
+  border-color: #f87171;
+}
+.ts-badge--amber {
+  background: #3d2a00;
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+.ts-badge--gray {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #64748b;
+}
 
 /* ── Epistemic note ──────────────────────────────────────────────────────── */
 .ts-epistemic-note {
@@ -1129,7 +1309,9 @@ function strengthClass(v) {
   user-select: none;
   padding: 4px 0;
 }
-.ts-caveats-toggle:hover { color: #94a3b8; }
+.ts-caveats-toggle:hover {
+  color: #94a3b8;
+}
 
 .ts-caveats-block {
   display: flex;
@@ -1152,11 +1334,20 @@ function strengthClass(v) {
   flex-direction: column;
   gap: 3px;
 }
-.ts-caveat-list li { font-size: 11px; color: #64748b; line-height: 1.4; }
+.ts-caveat-list li {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
 
 /* ── STL strength bars ───────────────────────────────────────────────────── */
-.ts-stl-meta { font-size: 12px; color: #64748b; }
-.ts-stl-meta strong { color: #e2e8f0; }
+.ts-stl-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+.ts-stl-meta strong {
+  color: #e2e8f0;
+}
 
 .ts-strength-bar-wrap {
   display: inline-block;
@@ -1174,52 +1365,139 @@ function strengthClass(v) {
   border-radius: 3px;
   transition: width 0.3s;
 }
-.ts-strength-bar--trend   { background: #60a5fa; }
-.ts-strength-bar--seasonal { background: #a78bfa; }
+.ts-strength-bar--trend {
+  background: #60a5fa;
+}
+.ts-strength-bar--seasonal {
+  background: #a78bfa;
+}
 
-.ts-strength-val { font-size: 12px; }
-.ts-strength--high { color: #f87171; font-weight: 600; }
-.ts-strength--mid  { color: #fbbf24; }
-.ts-strength--low  { color: #4ade80; }
+.ts-strength-val {
+  font-size: 12px;
+}
+.ts-strength--high {
+  color: #f87171;
+  font-weight: 600;
+}
+.ts-strength--mid {
+  color: #fbbf24;
+}
+.ts-strength--low {
+  color: #4ade80;
+}
 
 /* ── Expand/collapse transition ──────────────────────────────────────────── */
 .ts-expand-enter-active,
 .ts-expand-leave-active {
-  transition: opacity 0.18s, max-height 0.22s ease;
+  transition:
+    opacity 0.18s,
+    max-height 0.22s ease;
   max-height: 2000px;
   overflow: hidden;
 }
 .ts-expand-enter-from,
-.ts-expand-leave-to { opacity: 0; max-height: 0; }
+.ts-expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .ts-code-block          { background: #f8fafc; border-color: #e2e8f0; color: #2563eb; }
-:global(.theme-light) .ts-section-header:hover { background: rgba(0,0,0,0.02); }
-:global(.theme-light) .ts-section-body        { border-top-color: #e2e8f0; }
-:global(.theme-light) .ts-table-row           { border-bottom-color: #f1f5f9; }
-:global(.theme-light) .ts-table-header        { border-bottom-color: #e2e8f0; color: #94a3b8; }
-:global(.theme-light) .ts-col-name            { color: #2563eb; }
-:global(.theme-light) .ts-epistemic-note      { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-:global(.theme-light) .ts-caveats-block       { background: #f8fafc; }
-:global(.theme-light) .ts-caveat-list li      { color: #94a3b8; }
-:global(.theme-light) .ts-strength-bar-wrap   { background: #e2e8f0; }
-:global(.theme-light) .ts-disabled-note       { color: #94a3b8; }
-:global(.theme-light) .ts-header-item         { border-right-color: #e2e8f0; }
-:global(.theme-light) .ts-header-value        { color: #1e293b; }
-:global(.theme-light) .es-not-run             { color: #94a3b8; }
-:global(.theme-light) .ts-col-tab             { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
-:global(.theme-light) .ts-col-tab--active     { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
-:global(.theme-light) .ts-acf-svg            { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .ts-acf-baseline       { stroke: #e2e8f0; }
-:global(.theme-light) .ts-acf-conf-line      { stroke: #bfdbfe; }
-:global(.theme-light) .ts-acf-conf-fill      { fill: #bfdbfe; }
-:global(.theme-light) .ts-acf-bar            { fill: #93c5fd; }
-:global(.theme-light) .ts-acf-bar--sig       { fill: #2563eb; }
-:global(.theme-light) .ts-acf-axis-label     { fill: #94a3b8; }
-:global(.theme-light) .ts-stl-svg            { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .ts-stl-zeroline       { stroke: #e2e8f0; }
-:global(.theme-light) .ts-stl-line--observed { stroke: #1e293b; }
-:global(.theme-light) .ts-stl-panel-range    { color: #94a3b8; }
-:global(.theme-light) .ts-stl-col-header .ts-col-name { color: #2563eb; }
-:global(.theme-light) .ts-stl-column        { border-bottom-color: #f1f5f9; }
+:global(.theme-light) .ts-code-block {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #2563eb;
+}
+:global(.theme-light) .ts-section-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+:global(.theme-light) .ts-section-body {
+  border-top-color: #e2e8f0;
+}
+:global(.theme-light) .ts-table-row {
+  border-bottom-color: #f1f5f9;
+}
+:global(.theme-light) .ts-table-header {
+  border-bottom-color: #e2e8f0;
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-col-name {
+  color: #2563eb;
+}
+:global(.theme-light) .ts-epistemic-note {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+:global(.theme-light) .ts-caveats-block {
+  background: #f8fafc;
+}
+:global(.theme-light) .ts-caveat-list li {
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-strength-bar-wrap {
+  background: #e2e8f0;
+}
+:global(.theme-light) .ts-disabled-note {
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-header-item {
+  border-right-color: #e2e8f0;
+}
+:global(.theme-light) .ts-header-value {
+  color: #1e293b;
+}
+:global(.theme-light) .es-not-run {
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-col-tab {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-col-tab--active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+:global(.theme-light) .ts-acf-svg {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .ts-acf-baseline {
+  stroke: #e2e8f0;
+}
+:global(.theme-light) .ts-acf-conf-line {
+  stroke: #bfdbfe;
+}
+:global(.theme-light) .ts-acf-conf-fill {
+  fill: #bfdbfe;
+}
+:global(.theme-light) .ts-acf-bar {
+  fill: #93c5fd;
+}
+:global(.theme-light) .ts-acf-bar--sig {
+  fill: #2563eb;
+}
+:global(.theme-light) .ts-acf-axis-label {
+  fill: #94a3b8;
+}
+:global(.theme-light) .ts-stl-svg {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .ts-stl-zeroline {
+  stroke: #e2e8f0;
+}
+:global(.theme-light) .ts-stl-line--observed {
+  stroke: #1e293b;
+}
+:global(.theme-light) .ts-stl-panel-range {
+  color: #94a3b8;
+}
+:global(.theme-light) .ts-stl-col-header .ts-col-name {
+  color: #2563eb;
+}
+:global(.theme-light) .ts-stl-column {
+  border-bottom-color: #f1f5f9;
+}
 </style>

@@ -13,11 +13,13 @@
  */
 export function formatDate(iso) {
   if (!iso) return '-'
-  const d    = new Date(iso)
+  const d = new Date(iso)
   const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  const yr   = String(d.getFullYear()).slice(2)
+  const yr = String(d.getFullYear()).slice(2)
   const time = d.toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   })
   return `${date} '${yr}, ${time}`
 }
@@ -29,8 +31,12 @@ export function formatDate(iso) {
 export function formatDateFull(iso) {
   if (!iso) return '-'
   return new Date(iso).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   })
 }
 
@@ -86,26 +92,22 @@ export function trunc(val, maxLen = 20) {
  */
 export function figureForColumn(figures, column, plotType, format, theme) {
   const candidates = figures.filter(
-    f => f.column_name === column
-      && f.plot_type   === plotType
-      && f.format      === format
+    (f) => f.column_name === column && f.plot_type === plotType && f.format === format,
   )
   return (
-    candidates.find(f => f.theme === theme)     ??
-    candidates.find(f => f.theme === 'default') ??
+    candidates.find((f) => f.theme === theme) ??
+    candidates.find((f) => f.theme === 'default') ??
     null
   )
 }
 
 export function figureFor(figures, plotType, format, theme) {
   const candidates = figures.filter(
-    f => f.plot_type   === plotType
-      && f.format      === format
-      && f.column_name === null
+    (f) => f.plot_type === plotType && f.format === format && f.column_name === null,
   )
   return (
-    candidates.find(f => f.theme === theme)     ??
-    candidates.find(f => f.theme === 'default') ??
+    candidates.find((f) => f.theme === theme) ??
+    candidates.find((f) => f.theme === 'default') ??
     null
   )
 }
@@ -115,7 +117,7 @@ export function figureFor(figures, plotType, format, theme) {
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 
 function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch])
+  return text.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch])
 }
 
 /**

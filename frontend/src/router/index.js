@@ -9,8 +9,8 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import DatasetListView from '../views/DatasetListView.vue'
-import RunListView     from '../views/RunListView.vue'
-import RunDetailView   from '../views/RunDetailView.vue'
+import RunListView from '../views/RunListView.vue'
+import RunDetailView from '../views/RunDetailView.vue'
 
 const routes = [
   {

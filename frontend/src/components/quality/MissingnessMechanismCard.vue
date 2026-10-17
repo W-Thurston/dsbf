@@ -29,7 +29,10 @@
           />
         </span>
         <span v-if="state === 'ready'" class="mm-subtitle">
-          {{ Object.keys(colResults).length }} column{{ Object.keys(colResults).length === 1 ? '' : 's' }} analysed
+          {{ Object.keys(colResults).length }} column{{
+            Object.keys(colResults).length === 1 ? '' : 's'
+          }}
+          analysed
         </span>
       </div>
       <button class="mm-toggle-btn">{{ open ? '▲' : '▼' }}</button>
@@ -37,17 +40,14 @@
 
     <Transition name="mm-expand">
       <div v-if="open" class="mm-body">
-
         <!-- Not run -->
         <div v-if="state === 'not_run'" class="es-not-run">
-          Missingness mechanism analysis did not run for this profiling depth.
-          Re-run at <strong>standard</strong> depth or higher to enable it.
+          Missingness mechanism analysis did not run for this profiling depth. Re-run at
+          <strong>standard</strong> depth or higher to enable it.
         </div>
 
         <!-- Error -->
-        <div v-else-if="state === 'error'" class="es-error">
-          <span>⚠</span> {{ errorMessage }}
-        </div>
+        <div v-else-if="state === 'error'" class="es-error"><span>⚠</span> {{ errorMessage }}</div>
 
         <!-- Empty - positive outcome -->
         <div v-else-if="state === 'empty'" class="es-empty">
@@ -65,11 +65,7 @@
             <span>{{ epistemicNote }}</span>
           </div>
 
-          <div
-            v-for="(colData, col) in colResults"
-            :key="col"
-            class="mm-col-block"
-          >
+          <div v-for="(colData, col) in colResults" :key="col" class="mm-col-block">
             <!-- Column header -->
             <div class="mm-col-header" @click="toggleCol(col)">
               <div class="mm-col-name">{{ col }}</div>
@@ -81,7 +77,10 @@
                 >
                   {{ assessmentLabel(colData.mechanism_assessment?.consistent_with) }}
                 </span>
-                <span class="mm-confidence" :class="confidenceClass(colData.mechanism_assessment?.confidence)">
+                <span
+                  class="mm-confidence"
+                  :class="confidenceClass(colData.mechanism_assessment?.confidence)"
+                >
                   {{ colData.mechanism_assessment?.confidence ?? 'unknown' }} confidence
                 </span>
               </div>
@@ -91,27 +90,30 @@
             <!-- Column detail - expanded -->
             <Transition name="mm-col-expand">
               <div v-if="openCols.has(col)" class="mm-col-detail">
-
                 <!-- Evidence summary -->
-                <div v-if="colData.mechanism_assessment?.evidence_summary?.length" class="mm-section">
+                <div
+                  v-if="colData.mechanism_assessment?.evidence_summary?.length"
+                  class="mm-section"
+                >
                   <div class="mm-section-label">Evidence</div>
                   <ul class="mm-evidence-list">
                     <li
                       v-for="(ev, i) in colData.mechanism_assessment.evidence_summary"
                       :key="i"
                       class="mm-evidence-item"
-                    >{{ ev }}</li>
+                    >
+                      {{ ev }}
+                    </li>
                   </ul>
                 </div>
 
                 <!-- Notable missingness correlations -->
-                <div
-                  v-if="notableCorrelations(colData).length"
-                  class="mm-section"
-                >
+                <div v-if="notableCorrelations(colData).length" class="mm-section">
                   <div class="mm-section-label">
                     Missingness correlated with
-                    <span class="mm-section-hint">(is_missing indicator vs observed column values)</span>
+                    <span class="mm-section-hint"
+                      >(is_missing indicator vs observed column values)</span
+                    >
                   </div>
                   <div class="mm-corr-grid">
                     <div
@@ -144,15 +146,15 @@
                       v-for="(cav, i) in colData.mechanism_assessment?.caveats ?? []"
                       :key="i"
                       class="mm-caveat-item"
-                    >{{ cav }}</li>
+                    >
+                      {{ cav }}
+                    </li>
                   </ul>
                 </div>
-
               </div>
             </Transition>
           </div>
         </template>
-
       </div>
     </Transition>
   </div>
@@ -166,7 +168,7 @@ const props = defineProps({
   tasks: { type: Object, default: () => ({}) },
 })
 
-const open    = ref(false)
+const open = ref(false)
 const openCols = ref(new Set())
 
 function toggleCol(col) {
@@ -177,41 +179,40 @@ function toggleCol(col) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-const taskResult  = computed(() => props.tasks?.missingness_mechanism_analysis ?? null)
-const taskStatus  = computed(() => taskResult.value?.status ?? null)
-const colResults  = computed(() => {
+const taskResult = computed(() => props.tasks?.missingness_mechanism_analysis ?? null)
+const taskStatus = computed(() => taskResult.value?.status ?? null)
+const colResults = computed(() => {
   const d = taskResult.value?.data ?? {}
   // Filter out non-column keys
-  return Object.fromEntries(
-    Object.entries(d).filter(([k]) => !k.startsWith('__'))
-  )
+  return Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith('__')))
 })
 
 const state = computed(() => {
-  if (!taskResult.value)                        return 'not_run'
-  if (taskStatus.value === 'error' ||
-      taskStatus.value === 'failure')           return 'error'
+  if (!taskResult.value) return 'not_run'
+  if (taskStatus.value === 'error' || taskStatus.value === 'failure') return 'error'
   if (Object.keys(colResults.value).length === 0) return 'empty'
   return 'ready'
 })
 
-const errorMessage = computed(() =>
-  taskResult.value?.error_metadata?.message ??
-  taskResult.value?.summary?.message ??
-  'This task encountered an error.'
+const errorMessage = computed(
+  () =>
+    taskResult.value?.error_metadata?.message ??
+    taskResult.value?.summary?.message ??
+    'This task encountered an error.',
 )
 
-const epistemicNote = computed(() =>
-  taskResult.value?.summary?.epistemic_note ??
-  'MCAR is the only mechanism with a statistical test. MAR is not directly ' +
-  'testable. MNAR is unverifiable from observed data alone. All assessments ' +
-  'are evidence-based hypotheses, not confirmations.'
+const epistemicNote = computed(
+  () =>
+    taskResult.value?.summary?.epistemic_note ??
+    'MCAR is the only mechanism with a statistical test. MAR is not directly ' +
+      'testable. MNAR is unverifiable from observed data alone. All assessments ' +
+      'are evidence-based hypotheses, not confirmations.',
 )
 
 const statusDotClass = computed(() => {
   if (state.value === 'empty' || state.value === 'not_run') return 'mm-dot--green'
   if (state.value === 'error') return 'mm-dot--amber'
-  return 'mm-dot--amber'  // columns analysed = missingness present = worth noting
+  return 'mm-dot--amber' // columns analysed = missingness present = worth noting
 })
 
 const minNullPct = computed(() => {
@@ -229,8 +230,8 @@ function notableCorrelations(colData) {
     .slice(0, 8)
     .map(([col, v]) => ({
       col,
-      r:        v.correlation,
-      p:        v.p_value,
+      r: v.correlation,
+      p: v.p_value,
       strength: v.strength,
     }))
 }
@@ -238,30 +239,32 @@ function notableCorrelations(colData) {
 function assessmentLabel(consistentWith) {
   if (!consistentWith?.length) return 'Indeterminate'
   const labels = {
-    mcar:          'Consistent with MCAR',
-    mar:           'Consistent with MAR',
+    mcar: 'Consistent with MCAR',
+    mar: 'Consistent with MAR',
     indeterminate: 'Indeterminate',
   }
-  return consistentWith.map(k => labels[k] ?? k.toUpperCase()).join(' / ')
+  return consistentWith.map((k) => labels[k] ?? k.toUpperCase()).join(' / ')
 }
 
 function assessmentClass(consistentWith) {
-  if (!consistentWith?.length || consistentWith.includes('indeterminate'))
-    return 'mm-badge--gray'
+  if (!consistentWith?.length || consistentWith.includes('indeterminate')) return 'mm-badge--gray'
   if (consistentWith.includes('mcar')) return 'mm-badge--green'
-  if (consistentWith.includes('mar'))  return 'mm-badge--amber'
+  if (consistentWith.includes('mar')) return 'mm-badge--amber'
   return 'mm-badge--gray'
 }
 
 function confidenceClass(confidence) {
   if (confidence === 'moderate') return 'mm-conf--amber'
-  if (confidence === 'low')      return 'mm-conf--gray'
+  if (confidence === 'low') return 'mm-conf--gray'
   return 'mm-conf--gray'
 }
 </script>
 
 <style scoped>
-.mm-card { padding: 0; overflow: visible; }
+.mm-card {
+  padding: 0;
+  overflow: visible;
+}
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .mm-header {
@@ -274,7 +277,9 @@ function confidenceClass(confidence) {
   transition: background 0.12s;
   gap: 12px;
 }
-.mm-header:hover { background: rgba(255,255,255,0.03); }
+.mm-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 
 .mm-header-left {
   display: flex;
@@ -287,17 +292,28 @@ function confidenceClass(confidence) {
   align-items: center;
   gap: 8px;
 }
-.mm-title-wrap .card-title { margin-bottom: 0; }
+.mm-title-wrap .card-title {
+  margin-bottom: 0;
+}
 .mm-status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.mm-dot--green { background: #4ade80; box-shadow: 0 0 5px #4ade8055; }
-.mm-dot--amber { background: #fbbf24; box-shadow: 0 0 5px #fbbf2455; }
+.mm-dot--green {
+  background: #4ade80;
+  box-shadow: 0 0 5px #4ade8055;
+}
+.mm-dot--amber {
+  background: #fbbf24;
+  box-shadow: 0 0 5px #fbbf2455;
+}
 
-.mm-subtitle { font-size: 12px; color: #64748b; }
+.mm-subtitle {
+  font-size: 12px;
+  color: #64748b;
+}
 
 .mm-toggle-btn {
   padding: 3px 8px;
@@ -310,7 +326,10 @@ function confidenceClass(confidence) {
   flex-shrink: 0;
   transition: all 0.12s;
 }
-.mm-toggle-btn:hover { border-color: #60a5fa; color: #93c5fd; }
+.mm-toggle-btn:hover {
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
 
 /* ── Body ────────────────────────────────────────────────────────────────── */
 .mm-body {
@@ -322,10 +341,36 @@ function confidenceClass(confidence) {
 }
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
-.es-not-run { color: #475569; font-size: 13px; padding: 16px 0; text-align: center; }
-.es-empty   { color: #4ade80; font-size: 13px; padding: 16px 0; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
-.mm-empty-note { font-size: 11px; color: #475569; }
-.es-error   { color: #f87171; font-size: 13px; padding: 12px; background: #3d0f0f; border-radius: 6px; border-left: 3px solid #f87171; display: flex; gap: 8px; }
+.es-not-run {
+  color: #475569;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+}
+.es-empty {
+  color: #4ade80;
+  font-size: 13px;
+  padding: 16px 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+.mm-empty-note {
+  font-size: 11px;
+  color: #475569;
+}
+.es-error {
+  color: #f87171;
+  font-size: 13px;
+  padding: 12px;
+  background: #3d0f0f;
+  border-radius: 6px;
+  border-left: 3px solid #f87171;
+  display: flex;
+  gap: 8px;
+}
 
 /* ── Epistemic banner ────────────────────────────────────────────────────── */
 .mm-epistemic-banner {
@@ -340,7 +385,11 @@ function confidenceClass(confidence) {
   color: #93c5fd;
   line-height: 1.5;
 }
-.mm-epistemic-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+.mm-epistemic-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  margin-top: 1px;
+}
 
 /* ── Column blocks ───────────────────────────────────────────────────────── */
 .mm-col-block {
@@ -358,7 +407,9 @@ function confidenceClass(confidence) {
   transition: background 0.12s;
   flex-wrap: wrap;
 }
-.mm-col-header:hover { background: rgba(255,255,255,0.03); }
+.mm-col-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 
 .mm-col-name {
   font-family: ui-monospace, 'Cascadia Code', monospace;
@@ -376,7 +427,10 @@ function confidenceClass(confidence) {
   flex-wrap: wrap;
 }
 
-.mm-null-pct { font-size: 12px; color: #64748b; }
+.mm-null-pct {
+  font-size: 12px;
+  color: #64748b;
+}
 
 .mm-assessment-badge {
   display: inline-block;
@@ -386,15 +440,37 @@ function confidenceClass(confidence) {
   font-weight: 600;
   border: 1px solid;
 }
-.mm-badge--green { background: #0f2718; color: #4ade80; border-color: #4ade80; }
-.mm-badge--amber { background: #3d2a00; color: #fbbf24; border-color: #fbbf24; }
-.mm-badge--gray  { background: #1e293b; color: #94a3b8; border-color: #475569; }
+.mm-badge--green {
+  background: #0f2718;
+  color: #4ade80;
+  border-color: #4ade80;
+}
+.mm-badge--amber {
+  background: #3d2a00;
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+.mm-badge--gray {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #475569;
+}
 
-.mm-confidence { font-size: 11px; }
-.mm-conf--amber { color: #fbbf24; }
-.mm-conf--gray  { color: #475569; }
+.mm-confidence {
+  font-size: 11px;
+}
+.mm-conf--amber {
+  color: #fbbf24;
+}
+.mm-conf--gray {
+  color: #475569;
+}
 
-.mm-col-toggle { font-size: 13px; color: #475569; margin-left: auto; }
+.mm-col-toggle {
+  font-size: 13px;
+  color: #475569;
+  margin-left: auto;
+}
 
 /* ── Column detail ───────────────────────────────────────────────────────── */
 .mm-col-detail {
@@ -405,7 +481,11 @@ function confidenceClass(confidence) {
   gap: 14px;
 }
 
-.mm-section { display: flex; flex-direction: column; gap: 6px; }
+.mm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .mm-section-label {
   font-size: 10px;
@@ -417,20 +497,39 @@ function confidenceClass(confidence) {
   align-items: center;
   gap: 6px;
 }
-.mm-section-hint { font-size: 10px; color: #334155; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.mm-section-hint {
+  font-size: 10px;
+  color: #334155;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
 
-.mm-evidence-list, .mm-caveat-list {
+.mm-evidence-list,
+.mm-caveat-list {
   margin: 0;
   padding-left: 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.mm-evidence-item { font-size: 12px; color: #94a3b8; line-height: 1.4; }
-.mm-caveat-item   { font-size: 12px; color: #64748b;  line-height: 1.4; }
+.mm-evidence-item {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+.mm-caveat-item {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
 
 /* ── Correlation bars ────────────────────────────────────────────────────── */
-.mm-corr-grid { display: flex; flex-direction: column; gap: 4px; }
+.mm-corr-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .mm-corr-row {
   display: grid;
@@ -461,14 +560,32 @@ function confidenceClass(confidence) {
   border-radius: 3px;
   transition: width 0.3s;
 }
-.mm-corr-bar--pos { background: #60a5fa; }
-.mm-corr-bar--neg { background: #f472b6; }
+.mm-corr-bar--pos {
+  background: #60a5fa;
+}
+.mm-corr-bar--neg {
+  background: #f472b6;
+}
 
-.mm-corr-val  { font-size: 11px; font-weight: 600; }
-.val-pos { color: #60a5fa; }
-.val-neg { color: #f472b6; }
-.mm-corr-p        { font-size: 11px; color: #475569; }
-.mm-corr-strength { font-size: 10px; color: #334155; text-transform: capitalize; }
+.mm-corr-val {
+  font-size: 11px;
+  font-weight: 600;
+}
+.val-pos {
+  color: #60a5fa;
+}
+.val-neg {
+  color: #f472b6;
+}
+.mm-corr-p {
+  font-size: 11px;
+  color: #475569;
+}
+.mm-corr-strength {
+  font-size: 10px;
+  color: #334155;
+  text-transform: capitalize;
+}
 
 /* ── Caveats ─────────────────────────────────────────────────────────────── */
 .mm-caveats {
@@ -476,14 +593,18 @@ function confidenceClass(confidence) {
   border-radius: 6px;
   padding: 10px 12px;
 }
-.mm-caveats-label { color: #fbbf24; }
+.mm-caveats-label {
+  color: #fbbf24;
+}
 
 /* ── Transitions ─────────────────────────────────────────────────────────── */
 .mm-expand-enter-active,
 .mm-expand-leave-active,
 .mm-col-expand-enter-active,
 .mm-col-expand-leave-active {
-  transition: opacity 0.18s, max-height 0.22s ease;
+  transition:
+    opacity 0.18s,
+    max-height 0.22s ease;
   max-height: 2000px;
   overflow: hidden;
 }
@@ -496,19 +617,52 @@ function confidenceClass(confidence) {
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .mm-header:hover   { background: rgba(0,0,0,0.02); }
-:global(.theme-light) .mm-body           { border-top-color: #e2e8f0; }
-:global(.theme-light) .mm-epistemic-banner { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-:global(.theme-light) .mm-col-block      { border-color: #e2e8f0; }
-:global(.theme-light) .mm-col-header:hover { background: rgba(0,0,0,0.02); }
-:global(.theme-light) .mm-col-detail     { border-top-color: #e2e8f0; }
-:global(.theme-light) .mm-col-name       { color: #2563eb; }
-:global(.theme-light) .mm-evidence-item  { color: #475569; }
-:global(.theme-light) .mm-caveat-item    { color: #64748b; }
-:global(.theme-light) .mm-caveats        { background: #fefce8; border: 1px solid #fde68a; }
-:global(.theme-light) .mm-caveats-label  { color: #d97706; }
-:global(.theme-light) .mm-corr-bar-wrap  { background: #e2e8f0; }
-:global(.theme-light) .mm-corr-col       { color: #64748b; }
-:global(.theme-light) .mm-corr-p         { color: #94a3b8; }
-:global(.theme-light) .es-not-run        { color: #94a3b8; }
+:global(.theme-light) .mm-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+:global(.theme-light) .mm-body {
+  border-top-color: #e2e8f0;
+}
+:global(.theme-light) .mm-epistemic-banner {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+:global(.theme-light) .mm-col-block {
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .mm-col-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+:global(.theme-light) .mm-col-detail {
+  border-top-color: #e2e8f0;
+}
+:global(.theme-light) .mm-col-name {
+  color: #2563eb;
+}
+:global(.theme-light) .mm-evidence-item {
+  color: #475569;
+}
+:global(.theme-light) .mm-caveat-item {
+  color: #64748b;
+}
+:global(.theme-light) .mm-caveats {
+  background: #fefce8;
+  border: 1px solid #fde68a;
+}
+:global(.theme-light) .mm-caveats-label {
+  color: #d97706;
+}
+:global(.theme-light) .mm-corr-bar-wrap {
+  background: #e2e8f0;
+}
+:global(.theme-light) .mm-corr-col {
+  color: #64748b;
+}
+:global(.theme-light) .mm-corr-p {
+  color: #94a3b8;
+}
+:global(.theme-light) .es-not-run {
+  color: #94a3b8;
+}
 </style>

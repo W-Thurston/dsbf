@@ -14,7 +14,7 @@
         :class="[`insight-${blurb.level}`, { 'is-open': openSet.has(i) }]"
       >
         <!-- Clickable title row - always visible -->
-        <button class="insight-trigger" @click="toggle(i)" :aria-expanded="openSet.has(i)">
+        <button class="insight-trigger" :aria-expanded="openSet.has(i)" @click="toggle(i)">
           <span class="insight-icon">{{ levelIcon(blurb.level) }}</span>
           <span class="insight-title">{{ blurb.title }}</span>
           <span class="insight-chevron" :class="{ rotated: openSet.has(i) }">›</span>
@@ -29,7 +29,8 @@
                 v-for="action in blurb.actions"
                 :key="action.method || action.action"
                 class="action-chip"
-              >{{ formatAction(action) }}</span>
+                >{{ formatAction(action) }}</span
+              >
             </div>
           </div>
         </Transition>
@@ -43,13 +44,18 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   column: { type: String, required: true },
-  phase:  { type: String, default: 'eda' },   // 'eda' | 'ml'
-  tasks:  { type: Object, default: () => ({}) },
+  phase: { type: String, default: 'eda' }, // 'eda' | 'ml'
+  tasks: { type: Object, default: () => ({}) },
 })
 
 // Track which blurb indices are open. Reset entirely when column changes.
 const openSet = ref(new Set())
-watch(() => props.column, () => { openSet.value = new Set() })
+watch(
+  () => props.column,
+  () => {
+    openSet.value = new Set()
+  },
+)
 
 function toggle(i) {
   const next = new Set(openSet.value)
@@ -64,9 +70,9 @@ function toggle(i) {
 const LEVEL_RANK = { error: 0, warn: 1, info: 2, good: 3 }
 
 const blurbs = computed(() => {
-  const col   = props.column
+  const col = props.column
   const phase = props.phase
-  const out   = []
+  const out = []
   for (const task of Object.values(props.tasks)) {
     const colGuidance = task?.guidance?.[col]
     if (!colGuidance) continue
@@ -117,10 +123,22 @@ function formatAction(action) {
   border-left: 3px solid;
   overflow: hidden;
 }
-.insight-error { background: #3d0f0f; border-color: #f87171; }
-.insight-warn  { background: #3d2510; border-color: #fb923c; }
-.insight-info  { background: #1e3a5f; border-color: #60a5fa; }
-.insight-good  { background: #14291f; border-color: #4ade80; }
+.insight-error {
+  background: #3d0f0f;
+  border-color: #f87171;
+}
+.insight-warn {
+  background: #3d2510;
+  border-color: #fb923c;
+}
+.insight-info {
+  background: #1e3a5f;
+  border-color: #60a5fa;
+}
+.insight-good {
+  background: #14291f;
+  border-color: #4ade80;
+}
 
 /* ── Clickable title row ──────────────────────────────────────────────────── */
 .insight-trigger {
@@ -134,27 +152,50 @@ function formatAction(action) {
   cursor: pointer;
   text-align: left;
   color: inherit;
-  border-radius: 0;     /* clipped by parent */
+  border-radius: 0; /* clipped by parent */
 }
 
 /* Darken slightly on hover to signal interactivity */
-.insight-error .insight-trigger:hover { background: rgba(248,113,113,0.07); }
-.insight-warn  .insight-trigger:hover { background: rgba(251,146,60, 0.07); }
-.insight-info  .insight-trigger:hover { background: rgba(96, 165,250,0.07); }
-.insight-good  .insight-trigger:hover { background: rgba(74, 222,128,0.07); }
+.insight-error .insight-trigger:hover {
+  background: rgba(248, 113, 113, 0.07);
+}
+.insight-warn .insight-trigger:hover {
+  background: rgba(251, 146, 60, 0.07);
+}
+.insight-info .insight-trigger:hover {
+  background: rgba(96, 165, 250, 0.07);
+}
+.insight-good .insight-trigger:hover {
+  background: rgba(74, 222, 128, 0.07);
+}
 
 /* Separator when expanded */
 .insight-item.is-open .insight-trigger {
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.insight-icon  { font-size: 13px; flex-shrink: 0; }
-.insight-title { font-size: 12px; font-weight: 600; flex: 1; }
+.insight-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.insight-title {
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+}
 
-.insight-error .insight-title { color: #fca5a5; }
-.insight-warn  .insight-title { color: #fed7aa; }
-.insight-info  .insight-title { color: #bfdbfe; }
-.insight-good  .insight-title { color: #bbf7d0; }
+.insight-error .insight-title {
+  color: #fca5a5;
+}
+.insight-warn .insight-title {
+  color: #fed7aa;
+}
+.insight-info .insight-title {
+  color: #bfdbfe;
+}
+.insight-good .insight-title {
+  color: #bbf7d0;
+}
 
 /* ── Chevron ──────────────────────────────────────────────────────────────── */
 .insight-chevron {
@@ -166,7 +207,9 @@ function formatAction(action) {
   transition: transform 0.18s ease;
   flex-shrink: 0;
 }
-.insight-chevron.rotated { transform: rotate(90deg); }
+.insight-chevron.rotated {
+  transform: rotate(90deg);
+}
 
 /* ── Expandable body ──────────────────────────────────────────────────────── */
 .insight-body-wrap {
@@ -199,11 +242,19 @@ function formatAction(action) {
 /* ── Per-blurb slide transition ───────────────────────────────────────────── */
 .blurb-slide-enter-active,
 .blurb-slide-leave-active {
-  transition: max-height 0.2s ease, opacity 0.15s ease;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease;
   overflow: hidden;
 }
 .blurb-slide-enter-from,
-.blurb-slide-leave-to  { max-height: 0;    opacity: 0; }
+.blurb-slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
 .blurb-slide-enter-to,
-.blurb-slide-leave-from { max-height: 300px; opacity: 1; }
+.blurb-slide-leave-from {
+  max-height: 300px;
+  opacity: 1;
+}
 </style>

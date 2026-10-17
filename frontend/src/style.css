@@ -1,14 +1,23 @@
 /* ── Global reset & base styles for DSBF dashboard ─────────────────────────── */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 14px;
   line-height: 1.5;
   font-weight: 400;
@@ -32,7 +41,9 @@ a {
   color: #60a5fa;
   text-decoration: none;
 }
-a:hover { color: #93c5fd; }
+a:hover {
+  color: #93c5fd;
+}
 
 button {
   font-family: inherit;
@@ -40,6 +51,11 @@ button {
 }
 
 /* Remove default margins from headings used in cards */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin: 0;
 }

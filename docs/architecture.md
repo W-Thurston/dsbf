@@ -122,14 +122,14 @@ uv run uvicorn dsbf.api.main:app --reload
 
 - **Vue 3 + Vite + Vue Router + Axios**, with **Plotly** (`plotly.js-dist-min`) and **ECharts** for charts (`package.json`).
 - **API client:** `frontend/src/api.js`, with `baseURL: '/api'`.
-- **Dev proxy:** `vite.config.js` proxies **`/api` → `http://localhost:8000`**, so you run **FastAPI on 8000** and **`npm run dev`** on 5173 without CORS friction.
+- **Dev proxy:** `vite.config.js` proxies **`/api` → `http://localhost:8000`**, so you run **FastAPI on 8000** and **`pnpm dev`** on 5173 without CORS friction.
 - **Views and tabs:** dataset and run lists, run detail, and the tabs **Overview, Distributions, Relationships, Quality, ML Readiness and Time Series** (`frontend/src/views/` and `components/`).
 
 **Operational recipe:**
 
 1. Run a profile (`dsbf profile ...` or `dsbf run --config ...`) so SQLite is populated.
 2. Start the API: `uv run uvicorn dsbf.api.main:app --reload`
-3. Start the UI: `cd frontend && npm install && npm run dev`
+3. Start the UI: `cd frontend && pnpm install && pnpm dev`
 
 ---
 
@@ -175,7 +175,7 @@ uv sync
 uv run dsbf quickstart titanic
 uv run uvicorn dsbf.api.main:app --reload
 # other terminal:
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm dev
 # Browser: the Vite URL (e.g. http://localhost:5173), API proxied to :8000
 uv run pytest
 ```

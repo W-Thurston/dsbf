@@ -2,7 +2,7 @@
   <div v-if="hasData" class="card text-length-card">
     <div class="card-title">String Length Summary</div>
     <div class="tl-grid">
-      <div class="tl-item" v-for="item in items" :key="item.label">
+      <div v-for="item in items" :key="item.label" class="tl-item">
         <span class="tl-label" :title="item.tooltip">{{ item.label }}</span>
         <span class="tl-value">{{ item.value }}</span>
       </div>
@@ -15,15 +15,11 @@ import { computed } from 'vue'
 
 const props = defineProps({
   column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  tasks: { type: Object, default: () => ({}) },
 })
 
-const textStats = computed(() =>
-  props.tasks.summarize_text_fields?.data?.[props.column] ?? null
-)
-const catStats = computed(() =>
-  props.tasks.categorical_length_stats?.data?.[props.column] ?? null
-)
+const textStats = computed(() => props.tasks.summarize_text_fields?.data?.[props.column] ?? null)
+const catStats = computed(() => props.tasks.categorical_length_stats?.data?.[props.column] ?? null)
 
 const hasData = computed(() => textStats.value != null || catStats.value != null)
 
@@ -39,17 +35,41 @@ const items = computed(() => {
 
   if (cs) {
     out.push(
-      { label: 'Min Length',  tooltip: 'Shortest string value (character count).', value: fmt(cs.min_length, 0) },
-      { label: 'Max Length',  tooltip: 'Longest string value (character count).', value: fmt(cs.max_length, 0) },
-      { label: 'Avg Length',  tooltip: 'Mean string length across all non-null rows.', value: fmt(cs.mean_length) },
+      {
+        label: 'Min Length',
+        tooltip: 'Shortest string value (character count).',
+        value: fmt(cs.min_length, 0),
+      },
+      {
+        label: 'Max Length',
+        tooltip: 'Longest string value (character count).',
+        value: fmt(cs.max_length, 0),
+      },
+      {
+        label: 'Avg Length',
+        tooltip: 'Mean string length across all non-null rows.',
+        value: fmt(cs.mean_length),
+      },
     )
   }
 
   if (ts) {
     out.push(
-      { label: 'Avg Words',   tooltip: 'Average number of whitespace-delimited words per value.', value: fmt(ts.avg_word_count) },
-      { label: 'Avg Word Len',tooltip: 'Average length of individual words.', value: fmt(ts.avg_word_length) },
-      { label: 'Has Symbols', tooltip: 'Whether any values contain non-alphanumeric characters.', value: ts.contains_symbols ? 'Yes' : 'No' },
+      {
+        label: 'Avg Words',
+        tooltip: 'Average number of whitespace-delimited words per value.',
+        value: fmt(ts.avg_word_count),
+      },
+      {
+        label: 'Avg Word Len',
+        tooltip: 'Average length of individual words.',
+        value: fmt(ts.avg_word_length),
+      },
+      {
+        label: 'Has Symbols',
+        tooltip: 'Whether any values contain non-alphanumeric characters.',
+        value: ts.contains_symbols ? 'Yes' : 'No',
+      },
     )
   }
 
@@ -58,7 +78,9 @@ const items = computed(() => {
 </script>
 
 <style scoped>
-.text-length-card { margin-top: 0; }
+.text-length-card {
+  margin-top: 0;
+}
 
 .tl-grid {
   display: flex;
@@ -79,7 +101,9 @@ const items = computed(() => {
   border-right: 1px solid #1e293b;
   gap: 4px;
 }
-.tl-item:last-child { border-right: none; }
+.tl-item:last-child {
+  border-right: none;
+}
 
 .tl-label {
   font-size: 10px;

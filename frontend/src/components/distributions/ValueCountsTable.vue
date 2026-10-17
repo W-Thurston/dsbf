@@ -11,7 +11,12 @@
             <th class="th-val">Value</th>
             <th class="th-num">Count</th>
             <th class="th-num">% of column</th>
-            <th class="th-bar" title="Bar width shows frequency relative to the most common value in this column">Relative Freq</th>
+            <th
+              class="th-bar"
+              title="Bar width shows frequency relative to the most common value in this column"
+            >
+              Relative Freq
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -45,8 +50,8 @@ import { computed } from 'vue'
 import { trunc } from '../../utils.js'
 
 const props = defineProps({
-  column:  { type: String, required: true },
-  tasks:   { type: Object, default: () => ({}) },
+  column: { type: String, required: true },
+  tasks: { type: Object, default: () => ({}) },
   maxRows: { type: Number, default: 20 },
 })
 
@@ -55,16 +60,14 @@ const totalUnique = computed(() => props.tasks.summarize_unique?.data?.[props.co
 // True total rows for whole-column percentage.
 // summarize_value_counts only stores top_k values, so summing its entries
 // would undercount. Use num_rows from dataset shape instead.
-const numRows = computed(() =>
-  props.tasks.summarize_dataset_shape?.data?.num_rows ?? null
-)
+const numRows = computed(() => props.tasks.summarize_dataset_shape?.data?.num_rows ?? null)
 
 const dominanceNote = computed(() => {
   const dom = props.tasks.detect_single_dominant_value?.data?.[props.column]
   if (!dom) return null
   const level = dom.dominance_level
-  const pct   = dom.mode_proportion != null ? (dom.mode_proportion * 100).toFixed(1) : null
-  const mode  = dom.mode != null ? String(dom.mode) : null
+  const pct = dom.mode_proportion != null ? (dom.mode_proportion * 100).toFixed(1) : null
+  const mode = dom.mode != null ? String(dom.mode) : null
   if (level === 'high' && pct && mode) {
     return `"${mode}" accounts for ${pct}% of all values. This column is near-constant and may provide limited signal for analysis or modelling.`
   }
@@ -83,28 +86,34 @@ const rows = computed(() => {
     .sort((a, b) => b[1] - a[1])
 
   // Use true row count for whole-column percentages; fall back to entry sum
-  const denom   = numRows.value ?? entries.reduce((s, [, n]) => s + n, 0)
-  const topN    = entries.slice(0, props.maxRows)
+  const denom = numRows.value ?? entries.reduce((s, [, n]) => s + n, 0)
+  const topN = entries.slice(0, props.maxRows)
   const maxCount = topN[0]?.[1] ?? 1
 
   return topN.map(([val, count]) => ({
-    value:    String(val),
+    value: String(val),
     count,
-    pct:      denom > 0 ? `${((count / denom) * 100).toFixed(1)}%` : '-',
+    pct: denom > 0 ? `${((count / denom) * 100).toFixed(1)}%` : '-',
     barWidth: `${((count / maxCount) * 100).toFixed(1)}%`,
   }))
 })
 
-const truncated = computed(() =>
-  totalUnique.value != null && totalUnique.value > props.maxRows
-)
+const truncated = computed(() => totalUnique.value != null && totalUnique.value > props.maxRows)
 </script>
 
 <style scoped>
-.context-card { overflow: hidden; }
-.no-data { color: #64748b; font-size: 13px; padding: 12px 0; }
+.context-card {
+  overflow: hidden;
+}
+.no-data {
+  color: #64748b;
+  font-size: 13px;
+  padding: 12px 0;
+}
 
-.vc-wrap { overflow-x: auto; }
+.vc-wrap {
+  overflow-x: auto;
+}
 
 .vc-table {
   border-collapse: separate;
@@ -122,9 +131,19 @@ const truncated = computed(() =>
   border-bottom: 1px solid #1e293b;
   white-space: nowrap;
 }
-.th-val { text-align: left; }
-.th-num { text-align: right; min-width: 60px; }
-.th-bar { text-align: left; width: 120px; color: #334155; font-size: 9px; }
+.th-val {
+  text-align: left;
+}
+.th-num {
+  text-align: right;
+  min-width: 60px;
+}
+.th-bar {
+  text-align: left;
+  width: 120px;
+  color: #334155;
+  font-size: 9px;
+}
 
 .vc-table td {
   padding: 6px 10px;
@@ -132,7 +151,9 @@ const truncated = computed(() =>
   color: #94a3b8;
   white-space: nowrap;
 }
-.vc-table tr:hover td { background: #263548; }
+.vc-table tr:hover td {
+  background: #263548;
+}
 
 .val-cell {
   max-width: 200px;
@@ -141,9 +162,16 @@ const truncated = computed(() =>
   font-family: monospace;
   color: #e2e8f0 !important;
 }
-.num-cell { color: #94a3b8; text-align: right; min-width: 60px; }
+.num-cell {
+  color: #94a3b8;
+  text-align: right;
+  min-width: 60px;
+}
 
-.bar-cell { width: 120px; padding-right: 12px; }
+.bar-cell {
+  width: 120px;
+  padding-right: 12px;
+}
 .bar-track {
   height: 6px;
   background: #1e293b;
@@ -177,5 +205,9 @@ const truncated = computed(() =>
   color: #94a3b8;
   line-height: 1.5;
 }
-.dominant-icon { flex-shrink: 0; color: #60a5fa; font-size: 13px; }
+.dominant-icon {
+  flex-shrink: 0;
+  color: #60a5fa;
+  font-size: 13px;
+}
 </style>

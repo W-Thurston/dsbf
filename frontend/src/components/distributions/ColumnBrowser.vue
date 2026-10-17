@@ -13,14 +13,14 @@
     <div v-if="filterToWarnings" class="filter-banner">
       <span class="filter-banner-icon">⚠️</span>
       <span class="filter-banner-label">{{ filterLabel || 'Flagged columns only' }}</span>
-      <button class="filter-banner-clear" @click="$emit('clear-filter')" title="Show all columns">✕ Clear</button>
+      <button class="filter-banner-clear" title="Show all columns" @click="$emit('clear-filter')">
+        ✕ Clear
+      </button>
     </div>
 
     <!-- Legend -->
     <div class="browser-legend">
-      <span class="legend-item">
-        <span class="legend-warn" /> {{ alertLabel }}
-      </span>
+      <span class="legend-item"> <span class="legend-warn" /> {{ alertLabel }} </span>
       <span v-if="showNullBar" class="legend-item">
         <span class="legend-bar-wrap"><span class="legend-bar-fill" /></span> Null %
       </span>
@@ -62,13 +62,13 @@
 import { ref, computed } from 'vue'
 
 const props = defineProps({
-  tasks:          { type: Object,  default: () => ({}) },
-  selected:       { type: String,  default: null },
-  showNullBar:    { type: Boolean, default: true },
-  alertLabel:     { type: String,  default: 'Has alerts' },
-  warningSet:     { type: Object,  default: null },
+  tasks: { type: Object, default: () => ({}) },
+  selected: { type: String, default: null },
+  showNullBar: { type: Boolean, default: true },
+  alertLabel: { type: String, default: 'Has alerts' },
+  warningSet: { type: Object, default: null },
   filterToWarnings: { type: Boolean, default: false },
-  filterLabel:    { type: String,  default: '' },
+  filterLabel: { type: String, default: '' },
 })
 defineEmits(['select', 'clear-filter'])
 
@@ -77,71 +77,70 @@ const search = ref('')
 const INTENT_ORDER = ['continuous', 'categorical', 'boolean', 'datetime', 'text', 'unknown']
 
 const columns = computed(() => {
-  const types     = props.tasks.infer_types?.data                        ?? {}
-  const nullPcts  = props.tasks.summarize_nulls?.data?.null_percentages  ?? {}
-  const skewness  = props.tasks.detect_skewness?.data                    ?? {}
-  const hiCard    = props.tasks.detect_high_cardinality?.data            ?? {}
-  const constant  = new Set(props.tasks.detect_constant_columns?.data?.constant_columns ?? [])
-  const idCols    = props.tasks.detect_id_columns?.data                  ?? {}
-  const oob       = props.tasks.detect_out_of_bounds?.data               ?? {}
-  const zeroPcts  = props.tasks.detect_zeros?.data?.zero_percentages     ?? {}
-  const bimodal   = props.tasks.detect_bimodal_distribution?.data?.bimodal_flags ?? {}
-  const dom       = props.tasks.detect_single_dominant_value?.data       ?? {}
-  const numeric   = props.tasks.summarize_numeric?.data                  ?? {}
-  const vcData    = props.tasks.summarize_value_counts?.data             ?? {}
-  const rowCount  = props.tasks.summarize_dataset_shape?.data?.num_rows  ?? null
-  const unique    = props.tasks.summarize_unique?.data                   ?? {}
+  const types = props.tasks.infer_types?.data ?? {}
+  const nullPcts = props.tasks.summarize_nulls?.data?.null_percentages ?? {}
+  const skewness = props.tasks.detect_skewness?.data ?? {}
+  const hiCard = props.tasks.detect_high_cardinality?.data ?? {}
+  const constant = new Set(props.tasks.detect_constant_columns?.data?.constant_columns ?? [])
+  const idCols = props.tasks.detect_id_columns?.data ?? {}
+  const oob = props.tasks.detect_out_of_bounds?.data ?? {}
+  const zeroPcts = props.tasks.detect_zeros?.data?.zero_percentages ?? {}
+  const bimodal = props.tasks.detect_bimodal_distribution?.data?.bimodal_flags ?? {}
+  const dom = props.tasks.detect_single_dominant_value?.data ?? {}
+  const numeric = props.tasks.summarize_numeric?.data ?? {}
+  const vcData = props.tasks.summarize_value_counts?.data ?? {}
+  const rowCount = props.tasks.summarize_dataset_shape?.data?.num_rows ?? null
+  const unique = props.tasks.summarize_unique?.data ?? {}
 
   return Object.entries(types).map(([name, typeInfo]) => {
-    const nullPct  = nullPcts[name]  ?? 0
-    const skew     = skewness[name]  ?? null
-    const nm       = numeric[name]   ?? {}
-    const domCol   = dom[name]       ?? {}
-    const intent   = typeInfo.analysis_intent_dtype ?? 'unknown'
+    const nullPct = nullPcts[name] ?? 0
+    const skew = skewness[name] ?? null
+    const nm = numeric[name] ?? {}
+    const domCol = dom[name] ?? {}
+    const intent = typeInfo.analysis_intent_dtype ?? 'unknown'
 
     // Mirror every non-"good" branch in ColumnGuidanceCard
     let hasWarning = false
 
     // Universal
-    if (constant.has(name))     hasWarning = true
-    if (nullPct >= 0.05)        hasWarning = true
+    if (constant.has(name)) hasWarning = true
+    if (nullPct >= 0.05) hasWarning = true
 
     if (intent === 'continuous') {
-      if (name in idCols)                               hasWarning = true
-      if (skew !== null && Math.abs(skew) > 1)          hasWarning = true
-      if (nm.near_zero_variance === true)               hasWarning = true
-      if (name in oob)                                  hasWarning = true
-      if (bimodal[name] === true)                       hasWarning = true
-      if ((zeroPcts[name] ?? 0) > 0.3)                  hasWarning = true
+      if (name in idCols) hasWarning = true
+      if (skew !== null && Math.abs(skew) > 1) hasWarning = true
+      if (nm.near_zero_variance === true) hasWarning = true
+      if (name in oob) hasWarning = true
+      if (bimodal[name] === true) hasWarning = true
+      if ((zeroPcts[name] ?? 0) > 0.3) hasWarning = true
       // mean/median divergence
-      const mean = nm.mean ?? null, median = nm['50%'] ?? null, std = nm.std ?? null
+      const mean = nm.mean ?? null,
+        median = nm['50%'] ?? null,
+        std = nm.std ?? null
       if (mean != null && median != null && std != null && std > 0) {
-        if (Math.abs(mean - median) / std > 0.5)        hasWarning = true
+        if (Math.abs(mean - median) / std > 0.5) hasWarning = true
       }
     }
 
     if (intent === 'categorical' || intent === 'text') {
-      const cardRatio = (unique[name] != null && rowCount != null)
-        ? unique[name] / rowCount : null
+      const cardRatio = unique[name] != null && rowCount != null ? unique[name] / rowCount : null
       if (name in idCols || (cardRatio != null && cardRatio > 0.9)) hasWarning = true
-      if (name in hiCard)                               hasWarning = true
-      if ((domCol.mode_proportion ?? 0) >= 0.7)         hasWarning = true
+      if (name in hiCard) hasWarning = true
+      if ((domCol.mode_proportion ?? 0) >= 0.7) hasWarning = true
     }
 
     if (intent === 'boolean') {
-      const vc    = vcData[name] ?? {}
-      const vals  = Object.values(vc)
+      const vc = vcData[name] ?? {}
+      const vals = Object.values(vc)
       const total = vals.reduce((s, n) => s + n, 0)
-      const topN  = Math.max(...vals, 0)
-      if (total > 0 && topN / total > 0.75)             hasWarning = true
+      const topN = Math.max(...vals, 0)
+      if (total > 0 && topN / total > 0.75) hasWarning = true
     }
-    const finalWarning = props.warningSet != null
-      ? props.warningSet.has(name)
-      : hasWarning
+    const finalWarning = props.warningSet != null ? props.warningSet.has(name) : hasWarning
 
     return {
       name,
-      intent:     typeInfo.analysis_intent_dtype ?? 'unknown',
+      intent: typeInfo.analysis_intent_dtype ?? 'unknown',
       nullPct,
       hasWarning: finalWarning,
     }
@@ -149,12 +148,12 @@ const columns = computed(() => {
 })
 
 const filteredGroups = computed(() => {
-  const q    = search.value.toLowerCase()
-  let cols = q ? columns.value.filter(c => c.name.toLowerCase().includes(q)) : columns.value
+  const q = search.value.toLowerCase()
+  let cols = q ? columns.value.filter((c) => c.name.toLowerCase().includes(q)) : columns.value
 
   // Warning filter mode: only show flagged columns
   if (props.filterToWarnings) {
-    cols = cols.filter(c => c.hasWarning)
+    cols = cols.filter((c) => c.hasWarning)
   }
 
   const byIntent = {}
@@ -163,9 +162,10 @@ const filteredGroups = computed(() => {
     byIntent[col.intent].push(col)
   }
 
-  return INTENT_ORDER
-    .filter(intent => byIntent[intent]?.length)
-    .map(intent => ({ intent, columns: byIntent[intent] }))
+  return INTENT_ORDER.filter((intent) => byIntent[intent]?.length).map((intent) => ({
+    intent,
+    columns: byIntent[intent],
+  }))
 })
 </script>
 
@@ -177,7 +177,10 @@ const filteredGroups = computed(() => {
   min-height: 0;
 }
 
-.browser-search { padding: 0 0 10px 0; flex-shrink: 0; }
+.browser-search {
+  padding: 0 0 10px 0;
+  flex-shrink: 0;
+}
 
 /* ── Active filter banner ─────────────────────────────────────────────────── */
 .filter-banner {
@@ -192,7 +195,9 @@ const filteredGroups = computed(() => {
   flex-shrink: 0;
 }
 
-.filter-banner-icon  { font-size: 12px; }
+.filter-banner-icon {
+  font-size: 12px;
+}
 
 .filter-banner-label {
   flex: 1;
@@ -228,7 +233,9 @@ const filteredGroups = computed(() => {
   outline: none;
   box-sizing: border-box;
 }
-.browser-search-input:focus { border-color: #60a5fa; }
+.browser-search-input:focus {
+  border-color: #60a5fa;
+}
 
 .browser-list {
   flex: 1;
@@ -258,12 +265,36 @@ const filteredGroups = computed(() => {
   border-radius: 8px;
   border: 1px solid;
 }
-.intent-continuous  { background: #1e3a5f; color: #60a5fa; border-color: #60a5fa; }
-.intent-categorical { background: #14291f; color: #4ade80; border-color: #4ade80; }
-.intent-boolean     { background: #2d1b4e; color: #c084fc; border-color: #c084fc; }
-.intent-datetime    { background: #3d2510; color: #fb923c; border-color: #fb923c; }
-.intent-text        { background: #3d0f29; color: #f472b6; border-color: #f472b6; }
-.intent-unknown     { background: #1e293b; color: #94a3b8; border-color: #64748b; }
+.intent-continuous {
+  background: #1e3a5f;
+  color: #60a5fa;
+  border-color: #60a5fa;
+}
+.intent-categorical {
+  background: #14291f;
+  color: #4ade80;
+  border-color: #4ade80;
+}
+.intent-boolean {
+  background: #2d1b4e;
+  color: #c084fc;
+  border-color: #c084fc;
+}
+.intent-datetime {
+  background: #3d2510;
+  color: #fb923c;
+  border-color: #fb923c;
+}
+.intent-text {
+  background: #3d0f29;
+  color: #f472b6;
+  border-color: #f472b6;
+}
+.intent-unknown {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #64748b;
+}
 
 .group-count {
   font-size: 11px;
@@ -284,10 +315,19 @@ const filteredGroups = computed(() => {
   cursor: pointer;
   width: 100%;
   gap: 6px;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
-.col-row:hover  { background: #263548; color: #e2e8f0; }
-.col-row.active { background: #1e3a5f; color: #e2e8f0; border-color: #334d6e; }
+.col-row:hover {
+  background: #263548;
+  color: #e2e8f0;
+}
+.col-row.active {
+  background: #1e3a5f;
+  color: #e2e8f0;
+  border-color: #334d6e;
+}
 
 .col-name {
   flex: 1;

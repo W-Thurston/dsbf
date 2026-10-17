@@ -9,14 +9,14 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  text:      { type: String, required: true },
+  text: { type: String, required: true },
   /** 'left' | 'center' | 'right' - horizontal anchor */
-  align:     { type: String, default: 'center' },
+  align: { type: String, default: 'center' },
   /** 'up' | 'down' - whether the box appears above or below the icon */
   direction: { type: String, default: 'up' },
 })
 
-const alignClass     = computed(() => `tip-${props.align}`)
+const alignClass = computed(() => `tip-${props.align}`)
 const directionClass = computed(() => `tip-${props.direction}`)
 </script>
 
@@ -37,7 +37,9 @@ const directionClass = computed(() => `tip-${props.direction}`)
   transition: color 0.15s;
   user-select: none;
 }
-.tip-wrap:hover .tip-icon { color: #60a5fa; }
+.tip-wrap:hover .tip-icon {
+  color: #60a5fa;
+}
 
 /* ── Base tooltip box ───────────────────────────────────────────────────── */
 .tip-box {
@@ -55,16 +57,23 @@ const directionClass = computed(() => `tip-${props.direction}`)
   color: #cbd5e1;
   line-height: 1.45;
   z-index: 9999;
-  transition: opacity 0.15s, visibility 0.15s;
+  transition:
+    opacity 0.15s,
+    visibility 0.15s;
   white-space: normal;
   text-transform: none;
   letter-spacing: 0;
 }
 
-.tip-wrap:hover .tip-box { visibility: visible; opacity: 1; }
+.tip-wrap:hover .tip-box {
+  visibility: visible;
+  opacity: 1;
+}
 
 /* ── Direction: up (default) ────────────────────────────────────────────── */
-.tip-up { bottom: calc(100% + 6px); }
+.tip-up {
+  bottom: calc(100% + 6px);
+}
 
 .tip-up::after {
   content: '';
@@ -75,7 +84,9 @@ const directionClass = computed(() => `tip-${props.direction}`)
 }
 
 /* ── Direction: down (for use inside overflow containers like table headers) */
-.tip-down { top: calc(100% + 6px); }
+.tip-down {
+  top: calc(100% + 6px);
+}
 
 .tip-down::after {
   content: '';
@@ -86,15 +97,36 @@ const directionClass = computed(() => `tip-${props.direction}`)
 }
 
 /* ── Horizontal alignment ───────────────────────────────────────────────── */
-.tip-center { left: 50%; transform: translateX(-50%); }
-.tip-center.tip-up::after   { left: 50%; transform: translateX(-50%); }
-.tip-center.tip-down::after { left: 50%; transform: translateX(-50%); }
+.tip-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tip-center.tip-up::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.tip-center.tip-down::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
 
-.tip-left { left: 0; }
-.tip-left.tip-up::after   { left: 8px; }
-.tip-left.tip-down::after { left: 8px; }
+.tip-left {
+  left: 0;
+}
+.tip-left.tip-up::after {
+  left: 8px;
+}
+.tip-left.tip-down::after {
+  left: 8px;
+}
 
-.tip-right { right: 0; }
-.tip-right.tip-up::after   { right: 8px; }
-.tip-right.tip-down::after { right: 8px; }
+.tip-right {
+  right: 0;
+}
+.tip-right.tip-up::after {
+  right: 8px;
+}
+.tip-right.tip-down::after {
+  right: 8px;
+}
 </style>

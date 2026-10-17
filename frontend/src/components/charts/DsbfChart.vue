@@ -39,7 +39,6 @@
 
 <template>
   <div class="dsbf-chart-card card">
-
     <!-- ── Header ──────────────────────────────────────────────────────────── -->
     <div class="dc-header">
       <div class="dc-title-wrap">
@@ -66,16 +65,24 @@
         class="dc-col-tab"
         :class="{ 'dc-col-tab--active': modelValue === col.key }"
         @click="$emit('update:modelValue', col.key)"
-      >{{ col.label ?? col.key }}</button>
+      >
+        {{ col.label ?? col.key }}
+      </button>
     </div>
 
     <!-- ── Chart canvas / states ────────────────────────────────────────────── -->
-    <div class="dc-body" :class="{ 'dc-body--fill': fillParent }" :style="fillParent ? {} : { height }">
-
+    <div
+      class="dc-body"
+      :class="{ 'dc-body--fill': fillParent }"
+      :style="fillParent ? {} : { height }"
+    >
       <!-- Loading skeleton -->
       <div v-if="loading" class="dc-skeleton">
-        <div class="dc-skeleton-bar" v-for="n in 5" :key="n"
-          :style="{ height: `${[60,85,40,70,50][n-1]}%`, animationDelay: `${n*0.1}s` }"
+        <div
+          v-for="n in 5"
+          :key="n"
+          class="dc-skeleton-bar"
+          :style="{ height: `${[60, 85, 40, 70, 50][n - 1]}%`, animationDelay: `${n * 0.1}s` }"
         />
       </div>
 
@@ -96,7 +103,6 @@
         :update-options="{ notMerge: false, lazyUpdate: true }"
       />
     </div>
-
   </div>
 </template>
 
@@ -107,7 +113,7 @@ import VChart from 'vue-echarts'
 // vue-echarts requires explicit component registration of the ECharts modules
 // you use. Import only what's needed to keep the bundle small.
 import { use } from 'echarts/core'
-import { CanvasRenderer }      from 'echarts/renderers'
+import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart, LineChart, HeatmapChart, ScatterChart, BoxplotChart } from 'echarts/charts'
 import {
   GridComponent,
@@ -122,43 +128,50 @@ import {
 
 use([
   CanvasRenderer,
-  BarChart, LineChart, HeatmapChart, ScatterChart, BoxplotChart,
-  GridComponent, TooltipComponent, LegendComponent,
-  DataZoomComponent, ToolboxComponent, TitleComponent,
-  MarkLineComponent, MarkAreaComponent,
+  BarChart,
+  LineChart,
+  HeatmapChart,
+  ScatterChart,
+  BoxplotChart,
+  GridComponent,
+  TooltipComponent,
+  LegendComponent,
+  DataZoomComponent,
+  ToolboxComponent,
+  TitleComponent,
+  MarkLineComponent,
+  MarkAreaComponent,
 ])
 
 // ── Props & emits ─────────────────────────────────────────────────────────────
 const props = defineProps({
-  option:       { type: Object,  required: true },
-  title:        { type: String,  default: '' },
-  subtitle:     { type: String,  default: '' },
-  theme:        { type: String,  default: 'dark' },
-  height:       { type: String,  default: '300px' },
-  fillParent:   { type: Boolean, default: false },
-  loading:      { type: Boolean, default: false },
-  empty:        { type: Boolean, default: false },
-  emptyMessage: { type: String,  default: '' },
-  columns:      { type: Array,   default: null },
-  modelValue:   { type: String,  default: null },
-  exportName:   { type: String,  default: 'dsbf-chart' },
+  option: { type: Object, required: true },
+  title: { type: String, default: '' },
+  subtitle: { type: String, default: '' },
+  theme: { type: String, default: 'dark' },
+  height: { type: String, default: '300px' },
+  fillParent: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  empty: { type: Boolean, default: false },
+  emptyMessage: { type: String, default: '' },
+  columns: { type: Array, default: null },
+  modelValue: { type: String, default: null },
+  exportName: { type: String, default: 'dsbf-chart' },
 })
 
 defineEmits(['update:modelValue'])
 
 // ── Internals ─────────────────────────────────────────────────────────────────
-const chartRef     = ref(null)
-const echartsTheme = computed(() =>
-  props.theme === 'light' ? 'dsbf-light' : 'dsbf-dark'
-)
+const chartRef = ref(null)
+const echartsTheme = computed(() => (props.theme === 'light' ? 'dsbf-light' : 'dsbf-dark'))
 
 // ── Export helpers ────────────────────────────────────────────────────────────
 function exportPng() {
   const chart = chartRef.value?.chart
   if (!chart) return
   const url = chart.getDataURL({
-    type:        'png',
-    pixelRatio:  2,          // retina-quality for slides
+    type: 'png',
+    pixelRatio: 2, // retina-quality for slides
     backgroundColor: props.theme === 'light' ? '#ffffff' : '#0f172a',
     excludeComponents: ['toolbox'],
   })
@@ -171,8 +184,8 @@ function exportSvg() {
   // getDataURL with type 'svg' works with the Canvas renderer and produces
   // a data URI containing a clean SVG — no renderer switch needed.
   const url = chart.getDataURL({
-    type:        'svg',
-    pixelRatio:  2,
+    type: 'svg',
+    pixelRatio: 2,
     backgroundColor: props.theme === 'light' ? '#ffffff' : '#0f172a',
     excludeComponents: ['toolbox'],
   })
@@ -181,7 +194,7 @@ function exportSvg() {
 
 function download(url, filename) {
   const a = document.createElement('a')
-  a.href     = url
+  a.href = url
   a.download = filename
   a.click()
 }
@@ -263,7 +276,10 @@ function download(url, filename) {
   cursor: pointer;
   transition: all 0.12s;
 }
-.dc-col-tab:hover { border-color: #60a5fa; color: #93c5fd; }
+.dc-col-tab:hover {
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
 .dc-col-tab--active {
   background: #0f2035;
   border-color: #60a5fa;
@@ -305,8 +321,12 @@ function download(url, filename) {
 }
 
 @keyframes dc-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ── Empty state ───────────────────────────────────────────────────────────── */
@@ -321,16 +341,48 @@ function download(url, filename) {
   padding: 24px;
 }
 
-.dc-empty-icon { font-size: 28px; opacity: 0.4; }
-.dc-empty-msg  { font-size: 12px; text-align: center; line-height: 1.5; }
+.dc-empty-icon {
+  font-size: 28px;
+  opacity: 0.4;
+}
+.dc-empty-msg {
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
 
 /* ── Light theme ───────────────────────────────────────────────────────────── */
-:global(.theme-light) .dc-title        { color: #1e293b; }
-:global(.theme-light) .dc-action-btn   { background: #f8fafc; border-color: #e2e8f0; color: #94a3b8; }
-:global(.theme-light) .dc-action-btn:hover { border-color: #2563eb; color: #2563eb; }
-:global(.theme-light) .dc-col-tab      { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
-:global(.theme-light) .dc-col-tab:hover { border-color: #2563eb; color: #2563eb; }
-:global(.theme-light) .dc-col-tab--active { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
-:global(.theme-light) .dc-skeleton-bar { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; }
-:global(.theme-light) .dc-empty        { color: #94a3b8; }
+:global(.theme-light) .dc-title {
+  color: #1e293b;
+}
+:global(.theme-light) .dc-action-btn {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+:global(.theme-light) .dc-action-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+:global(.theme-light) .dc-col-tab {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+:global(.theme-light) .dc-col-tab:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+:global(.theme-light) .dc-col-tab--active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+:global(.theme-light) .dc-skeleton-bar {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+}
+:global(.theme-light) .dc-empty {
+  color: #94a3b8;
+}
 </style>

@@ -4,6 +4,11 @@ import vue from '@vitejs/plugin-vue'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  test: {
+    // The unit tests cover pure functions, so they need no DOM.
+    environment: 'node',
+    include: ['src/**/*.test.js'],
+  },
   server: {
     proxy: {
       // Proxy all /api requests to FastAPI during development

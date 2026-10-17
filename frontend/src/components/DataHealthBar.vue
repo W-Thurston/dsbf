@@ -28,9 +28,7 @@
     </template>
 
     <!-- Unavailable (scorer didn't run) -->
-    <div v-else-if="!available" class="dh-na">
-      Data health indicators unavailable for this run.
-    </div>
+    <div v-else-if="!available" class="dh-na">Data health indicators unavailable for this run.</div>
 
     <!-- Indicators -->
     <template v-else>
@@ -40,7 +38,7 @@
         class="dh-item"
         :class="[
           `dh-item--${dim.level}`,
-          { 'dh-item--active-tab': tabRelevance[activeTab]?.includes(dim.key) }
+          { 'dh-item--active-tab': tabRelevance[activeTab]?.includes(dim.key) },
         ]"
         @mouseenter="hovered = dim.key"
         @mouseleave="hovered = null"
@@ -51,7 +49,11 @@
         <!-- Label + count -->
         <span class="dh-label">{{ dim.label }}</span>
         <span class="dh-count" :class="`dh-count--${dim.level}`">
-          {{ dim.affectedCount === 0 ? 'All clear' : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}` }}
+          {{
+            dim.affectedCount === 0
+              ? 'All clear'
+              : `${dim.affectedCount} col${dim.affectedCount === 1 ? '' : 's'}`
+          }}
         </span>
 
         <!-- Tooltip -->
@@ -60,12 +62,11 @@
             <div class="dh-tooltip-title">{{ dim.label }}</div>
             <div class="dh-tooltip-body">{{ dim.description }}</div>
             <div v-if="dim.affectedCount > 0" class="dh-tooltip-stat">
-              {{ dim.affectedCount }} of {{ totalColumns }} columns affected
-              ({{ (dim.pctAffected * 100).toFixed(1) }}%)
+              {{ dim.affectedCount }} of {{ totalColumns }} columns affected ({{
+                (dim.pctAffected * 100).toFixed(1)
+              }}%)
             </div>
-            <div v-else class="dh-tooltip-stat dh-tooltip-stat--good">
-              Nothing flagged
-            </div>
+            <div v-else class="dh-tooltip-stat dh-tooltip-stat--good">Nothing flagged</div>
           </div>
         </Transition>
       </div>
@@ -78,28 +79,28 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { getDqStatus } from '../api.js'
 
 const props = defineProps({
-  runKey:    { type: String, required: true },
+  runKey: { type: String, required: true },
   activeTab: { type: String, default: '' },
 })
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-const loading      = ref(true)
-const available    = ref(false)
+const loading = ref(true)
+const available = ref(false)
 const totalColumns = ref(0)
-const categories   = ref({})
-const hovered      = ref(null)
+const categories = ref({})
+const hovered = ref(null)
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
 async function fetchStatus(runKey) {
-  loading.value   = true
+  loading.value = true
   available.value = false
   try {
     const data = await getDqStatus(runKey)
-    available.value    = data.available ?? false
+    available.value = data.available ?? false
     totalColumns.value = data.total_columns ?? 0
-    categories.value   = data.categories ?? {}
+    categories.value = data.categories ?? {}
   } catch {
     available.value = false
   } finally {
@@ -108,7 +109,12 @@ async function fetchStatus(runKey) {
 }
 
 onMounted(() => fetchStatus(props.runKey))
-watch(() => props.runKey, key => { if (key) fetchStatus(key) })
+watch(
+  () => props.runKey,
+  (key) => {
+    if (key) fetchStatus(key)
+  },
+)
 
 // ── Dimension config ──────────────────────────────────────────────────────────
 
@@ -153,13 +159,13 @@ const dimensions = computed(() =>
     const cat = categories.value[key] ?? {}
     return {
       key,
-      label:         meta.label,
-      description:   meta.description,
-      level:         cat.level         ?? 'green',
+      label: meta.label,
+      description: meta.description,
+      level: cat.level ?? 'green',
       affectedCount: cat.affected_count ?? 0,
-      pctAffected:   cat.pct_affected   ?? 0,
+      pctAffected: cat.pct_affected ?? 0,
     }
-  })
+  }),
 )
 
 // ── Tab relevance ─────────────────────────────────────────────────────────────
@@ -167,13 +173,13 @@ const dimensions = computed(() =>
 // Dimensions not in the active tab's list are dimmed slightly - not hidden.
 
 const tabRelevance = {
-  overview:      ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  overview: ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
   distributions: ['completeness', 'validity', 'usability'],
   relationships: ['redundancy', 'leakage'],
-  quality:       ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
-  time_series:   ['completeness', 'validity'],
-  ml_readiness:  ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
-  findings:      ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  quality: ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  time_series: ['completeness', 'validity'],
+  ml_readiness: ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
+  findings: ['completeness', 'validity', 'usability', 'redundancy', 'leakage'],
 }
 </script>
 
@@ -213,11 +219,15 @@ const tabRelevance = {
   flex: 1;
   padding: 12px 8px;
   border-right: 1px solid var(--border, #334155);
-  transition: background 0.15s, opacity 0.2s;
+  transition:
+    background 0.15s,
+    opacity 0.2s;
   cursor: default;
 }
 
-.dh-item:last-child { border-right: none; }
+.dh-item:last-child {
+  border-right: none;
+}
 
 /* Dim dimensions not relevant to the current tab - but only if a tab that
    defines relevance is active. Overview and quality show all at full opacity. */
@@ -226,7 +236,7 @@ const tabRelevance = {
 }
 
 .dh-item:hover {
-  background: var(--hover-bg, rgba(255,255,255,0.04));
+  background: var(--hover-bg, rgba(255, 255, 255, 0.04));
   opacity: 1 !important;
 }
 
@@ -238,11 +248,25 @@ const tabRelevance = {
   flex-shrink: 0;
 }
 
-.dh-dot--green   { background: #4ade80; box-shadow: 0 0 6px #4ade8066; }
-.dh-dot--blue    { background: #60a5fa; box-shadow: 0 0 6px #60a5fa66; }
-.dh-dot--amber   { background: #fbbf24; box-shadow: 0 0 6px #fbbf2466; }
-.dh-dot--red     { background: #f87171; box-shadow: 0 0 6px #f8717166; }
-.dh-dot--skeleton { background: #334155; }
+.dh-dot--green {
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade8066;
+}
+.dh-dot--blue {
+  background: #60a5fa;
+  box-shadow: 0 0 6px #60a5fa66;
+}
+.dh-dot--amber {
+  background: #fbbf24;
+  box-shadow: 0 0 6px #fbbf2466;
+}
+.dh-dot--red {
+  background: #f87171;
+  box-shadow: 0 0 6px #f8717166;
+}
+.dh-dot--skeleton {
+  background: #334155;
+}
 
 /* ── Label ─────────────────────────────────────────────────────────────────── */
 .dh-label {
@@ -261,10 +285,18 @@ const tabRelevance = {
   white-space: nowrap;
 }
 
-.dh-count--green { color: #4ade80; }
-.dh-count--blue  { color: #60a5fa; }
-.dh-count--amber { color: #fbbf24; }
-.dh-count--red   { color: #f87171; }
+.dh-count--green {
+  color: #4ade80;
+}
+.dh-count--blue {
+  color: #60a5fa;
+}
+.dh-count--amber {
+  color: #fbbf24;
+}
+.dh-count--red {
+  color: #f87171;
+}
 
 /* ── Skeleton ──────────────────────────────────────────────────────────────── */
 .dh-skeleton {
@@ -280,8 +312,13 @@ const tabRelevance = {
 }
 
 @keyframes dh-pulse {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 1;   }
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ── Tooltip ───────────────────────────────────────────────────────────────── */
@@ -296,7 +333,7 @@ const tabRelevance = {
   border: 1px solid #334155;
   border-radius: 8px;
   padding: 12px 14px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
@@ -333,11 +370,17 @@ const tabRelevance = {
   padding-top: 6px;
 }
 
-.dh-tooltip-stat--good { color: #4ade80; }
+.dh-tooltip-stat--good {
+  color: #4ade80;
+}
 
 /* ── Tooltip transition ────────────────────────────────────────────────────── */
 .dh-tooltip-enter-active,
-.dh-tooltip-leave-active { transition: opacity 0.12s, transform 0.12s; }
+.dh-tooltip-leave-active {
+  transition:
+    opacity 0.12s,
+    transform 0.12s;
+}
 .dh-tooltip-enter-from,
 .dh-tooltip-leave-to {
   opacity: 0;
@@ -361,15 +404,23 @@ const tabRelevance = {
   border-right-color: #e2e8f0;
 }
 :global(.theme-light) .dh-item:hover {
-  background: rgba(0,0,0,0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
-:global(.theme-light) .dh-label { color: #94a3b8; }
+:global(.theme-light) .dh-label {
+  color: #94a3b8;
+}
 :global(.theme-light) .dh-tooltip {
   background: #ffffff;
   border-color: #e2e8f0;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
-:global(.theme-light) .dh-tooltip-title { color: #1e293b; }
-:global(.theme-light) .dh-tooltip-body  { color: #64748b; }
-:global(.theme-light) .dh-tooltip-stat  { border-top-color: #e2e8f0; }
+:global(.theme-light) .dh-tooltip-title {
+  color: #1e293b;
+}
+:global(.theme-light) .dh-tooltip-body {
+  color: #64748b;
+}
+:global(.theme-light) .dh-tooltip-stat {
+  border-top-color: #e2e8f0;
+}
 </style>

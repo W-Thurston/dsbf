@@ -21,6 +21,13 @@ updates:
         versions: [">=1.8"]
       - dependency-name: plotly
         versions: [">=7"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule:

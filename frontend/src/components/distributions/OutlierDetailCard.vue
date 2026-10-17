@@ -19,7 +19,6 @@
 
 <template>
   <div class="outlier-card">
-
     <div v-if="state === 'not_run'" class="es-not-run">
       Outlier analysis did not run for this column.
     </div>
@@ -29,7 +28,6 @@
     </div>
 
     <template v-else>
-
       <!-- ── Interpretation banner ──────────────────────────────────────── -->
       <div class="interp-banner" :class="`interp-banner--${interpLevel}`">
         <span class="interp-icon">{{ interpIcon }}</span>
@@ -55,7 +53,8 @@
               IQR
               <TooltipIcon
                 text="Interquartile Range method. Flags values below Q1 − 1.5×IQR or above Q3 + 1.5×IQR. Simple and distribution-free, but sensitive to the spread of the middle 50% of data."
-                direction="up" align="left"
+                direction="up"
+                align="left"
               />
             </span>
             <span class="method-desc">1.5× fence</span>
@@ -64,7 +63,9 @@
             {{ data.iqr?.outlier_count?.toLocaleString() ?? '-' }}
           </span>
           <span class="method-pct col-right">
-            {{ data.iqr?.outlier_pct != null ? (data.iqr.outlier_pct * 100).toFixed(2) + '%' : '-' }}
+            {{
+              data.iqr?.outlier_pct != null ? (data.iqr.outlier_pct * 100).toFixed(2) + '%' : '-'
+            }}
           </span>
           <span class="method-note">
             <template v-if="data.iqr?.lower_fence != null">
@@ -80,7 +81,8 @@
               Z-score
               <TooltipIcon
                 text="Standard score method. Flags values whose distance from the mean exceeds a threshold (default |z| > 3). Assumes approximate normality - less reliable on highly skewed distributions."
-                direction="up" align="left"
+                direction="up"
+                align="left"
               />
             </span>
             <span class="method-desc">|z| &gt; {{ data.zscore?.threshold ?? 3 }}</span>
@@ -89,7 +91,11 @@
             {{ data.zscore?.outlier_count?.toLocaleString() ?? '-' }}
           </span>
           <span class="method-pct col-right">
-            {{ data.zscore?.outlier_pct != null ? (data.zscore.outlier_pct * 100).toFixed(2) + '%' : '-' }}
+            {{
+              data.zscore?.outlier_pct != null
+                ? (data.zscore.outlier_pct * 100).toFixed(2) + '%'
+                : '-'
+            }}
           </span>
           <span class="method-note">
             <template v-if="data.zscore?.max_zscore != null">
@@ -105,7 +111,8 @@
               MAD
               <TooltipIcon
                 text="Median Absolute Deviation method. A robust alternative to Z-score that uses the median instead of the mean. More reliable on skewed or non-normal distributions (Iglewicz & Hoaglin 1993)."
-                direction="up" align="left"
+                direction="up"
+                align="left"
               />
             </span>
             <span class="method-desc">modified z &gt; {{ data.mad?.threshold ?? 3.5 }}</span>
@@ -114,7 +121,9 @@
             {{ data.mad?.outlier_count?.toLocaleString() ?? '-' }}
           </span>
           <span class="method-pct col-right">
-            {{ data.mad?.outlier_pct != null ? (data.mad.outlier_pct * 100).toFixed(2) + '%' : '-' }}
+            {{
+              data.mad?.outlier_pct != null ? (data.mad.outlier_pct * 100).toFixed(2) + '%' : '-'
+            }}
           </span>
           <span class="method-note">
             <template v-if="data.mad?.max_modified_z_score != null">
@@ -130,25 +139,23 @@
               Isolation Forest
               <TooltipIcon
                 text="A tree-based algorithm that detects multivariate anomalies - rows unusual across multiple features simultaneously. Runs dataset-wide, not per column. The overlap count shows how many of this column's IQR outlier rows were also flagged by IF, strengthening those signals."
-                direction="up" align="left"
+                direction="up"
+                align="left"
               />
             </span>
             <span class="method-desc">multivariate · dataset-wide</span>
           </span>
           <span class="method-count col-right" :class="ifOverlap > 0 ? 'flagged-val' : 'clean-val'">
             {{ ifOverlap.toLocaleString() }}
-            <span class="method-note" style="display:inline;margin-left:4px;">overlap</span>
+            <span class="method-note" style="display: inline; margin-left: 4px">overlap</span>
           </span>
           <span class="method-pct col-right">
-            {{ ifData.n_flagged != null
-              ? `${ifData.n_flagged.toLocaleString()} total`
-              : '-' }}
+            {{ ifData.n_flagged != null ? `${ifData.n_flagged.toLocaleString()} total` : '-' }}
           </span>
           <span class="method-note">
             {{ ifOverlap }} of {{ data.iqr?.outlier_count ?? 0 }} IQR rows also in IF
           </span>
         </div>
-
       </div>
 
       <!-- ── Notable values ─────────────────────────────────────────────── -->
@@ -157,18 +164,14 @@
           Extreme values flagged
           <TooltipIcon
             text="The most extreme values identified by the MAD method. Reviewing these directly is the fastest way to determine whether outliers are data errors, rare-but-valid observations, or expected tail behavior."
-            direction="up" align="left"
+            direction="up"
+            align="left"
           />
         </div>
         <div class="notable-chips">
-          <span
-            v-for="(v, i) in notableValues"
-            :key="i"
-            class="notable-chip"
-          >{{ fmtN(v) }}</span>
+          <span v-for="(v, i) in notableValues" :key="i" class="notable-chip">{{ fmtN(v) }}</span>
         </div>
       </div>
-
     </template>
   </div>
 </template>
@@ -179,7 +182,7 @@ import TooltipIcon from '../TooltipIcon.vue'
 
 const props = defineProps({
   column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  tasks: { type: Object, default: () => ({}) },
 })
 
 function fmtN(v) {
@@ -187,22 +190,22 @@ function fmtN(v) {
   const n = Number(v)
   if (!isFinite(n)) return '-'
   if (Math.abs(n) >= 10000) return n.toLocaleString(undefined, { maximumFractionDigits: 1 })
-  if (Math.abs(n) >= 10)    return n.toFixed(2)
+  if (Math.abs(n) >= 10) return n.toFixed(2)
   return n.toPrecision(4).replace(/\.?0+$/, '')
 }
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
-const data   = computed(() => props.tasks?.detect_outliers?.data?.[props.column] ?? null)
-const ifData = computed(() =>
-  props.tasks?.detect_outliers?.data?.['__dataset__']?.isolation_forest ?? null
+const data = computed(() => props.tasks?.detect_outliers?.data?.[props.column] ?? null)
+const ifData = computed(
+  () => props.tasks?.detect_outliers?.data?.['__dataset__']?.isolation_forest ?? null,
 )
 
 // Overlap: IQR-flagged rows for this column that were also flagged by IF
 const ifOverlap = computed(() => {
   const iqrRows = new Set(data.value?.iqr?.outlier_row_indices ?? [])
   if (!iqrRows.size || !ifData.value) return 0
-  return (ifData.value.flagged_row_indices ?? []).filter(i => iqrRows.has(i)).length
+  return (ifData.value.flagged_row_indices ?? []).filter((i) => iqrRows.has(i)).length
 })
 
 const state = computed(() => {
@@ -212,7 +215,7 @@ const state = computed(() => {
 })
 
 const iqrFlagged = computed(() => (data.value?.iqr?.outlier_count ?? 0) > 0)
-const zFlagged   = computed(() => (data.value?.zscore?.outlier_count ?? 0) > 0)
+const zFlagged = computed(() => (data.value?.zscore?.outlier_count ?? 0) > 0)
 const madFlagged = computed(() => (data.value?.mad?.outlier_count ?? 0) > 0)
 
 // Deduplicated top outlier values from MAD (most robust method)
@@ -225,15 +228,15 @@ const notableValues = computed(() => {
 
 const interpLevel = computed(() => {
   if (!data.value) return 'none'
-  const count  = data.value.methods_flagging?.length ?? 0
-  const pct    = data.value.iqr?.outlier_pct ?? 0
+  const count = data.value.methods_flagging?.length ?? 0
+  const pct = data.value.iqr?.outlier_pct ?? 0
   if (data.value.consensus && pct >= 0.05) return 'high'
-  if (data.value.consensus)                return 'moderate'
+  if (data.value.consensus) return 'moderate'
   return 'low'
 })
 
-const interpIcon = computed(() =>
-  ({ high: '⚠', moderate: 'ℹ', low: 'ℹ', none: '' }[interpLevel.value])
+const interpIcon = computed(
+  () => ({ high: '⚠', moderate: 'ℹ', low: 'ℹ', none: '' })[interpLevel.value],
 )
 
 const interpTitle = computed(() => {
@@ -251,30 +254,47 @@ const interpTitle = computed(() => {
 
 const interpDesc = computed(() => {
   const consensus = data.value?.consensus ?? false
-  const pct       = (data.value?.iqr?.outlier_pct ?? 0) * 100
-  const skew      = props.tasks?.detect_skewness?.data?.[props.column]
-  const hasSkew   = skew != null && Math.abs(skew) > 1
+  const pct = (data.value?.iqr?.outlier_pct ?? 0) * 100
+  const skew = props.tasks?.detect_skewness?.data?.[props.column]
+  const hasSkew = skew != null && Math.abs(skew) > 1
 
   if (!consensus) {
-    return 'Only one method flagged values. This is common for columns with naturally heavy or asymmetric tails. ' +
-           (hasSkew ? 'The column is already flagged as skewed, so extreme tail values are expected.' :
-            'Review the extreme values below to decide if any warrant attention.')
+    return (
+      'Only one method flagged values. This is common for columns with naturally heavy or asymmetric tails. ' +
+      (hasSkew
+        ? 'The column is already flagged as skewed, so extreme tail values are expected.'
+        : 'Review the extreme values below to decide if any warrant attention.')
+    )
   }
   if (pct < 1) {
-    return 'A small proportion of rows are flagged by multiple methods. ' +
-           'These may be genuine rare events, measurement errors, or data entry issues. ' +
-           'Review the extreme values below to assess which is more likely.'
+    return (
+      'A small proportion of rows are flagged by multiple methods. ' +
+      'These may be genuine rare events, measurement errors, or data entry issues. ' +
+      'Review the extreme values below to assess which is more likely.'
+    )
   }
-  return `${pct.toFixed(1)}% of rows are flagged as outliers by multiple methods. ` +
-         'This is a substantial proportion - consider whether the column has a naturally extreme distribution, ' +
-         'or whether data quality issues may be inflating the tails.'
+  return (
+    `${pct.toFixed(1)}% of rows are flagged as outliers by multiple methods. ` +
+    'This is a substantial proportion - consider whether the column has a naturally extreme distribution, ' +
+    'or whether data quality issues may be inflating the tails.'
+  )
 })
 </script>
 
 <style scoped>
 /* ── Empty states ────────────────────────────────────────────────────────── */
-.es-not-run { color: #64748b; font-size: 13px; padding: 8px 0; text-align: center; }
-.es-empty   { color: #4ade80; font-size: 13px; padding: 8px 0; text-align: center; }
+.es-not-run {
+  color: #64748b;
+  font-size: 13px;
+  padding: 8px 0;
+  text-align: center;
+}
+.es-empty {
+  color: #4ade80;
+  font-size: 13px;
+  padding: 8px 0;
+  text-align: center;
+}
 
 /* ── Interpretation banner ───────────────────────────────────────────────── */
 .interp-banner {
@@ -286,31 +306,63 @@ const interpDesc = computed(() => {
   margin-bottom: 14px;
   align-items: flex-start;
 }
-.interp-banner--high     { background: #3d2a00; border-color: #fbbf24; }
-.interp-banner--moderate { background: #1e293b; border-color: #334155; }
-.interp-banner--low      { background: #1e293b; border-color: #334155; }
+.interp-banner--high {
+  background: #3d2a00;
+  border-color: #fbbf24;
+}
+.interp-banner--moderate {
+  background: #1e293b;
+  border-color: #334155;
+}
+.interp-banner--low {
+  background: #1e293b;
+  border-color: #334155;
+}
 
-.interp-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-.interp-body { display: flex; flex-direction: column; gap: 4px; }
+.interp-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.interp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .interp-title {
   font-size: 13px;
   font-weight: 600;
 }
-.interp-banner--high     .interp-title { color: #fde68a; }
-.interp-banner--moderate .interp-title { color: #94a3b8; }
-.interp-banner--low      .interp-title { color: #94a3b8; }
+.interp-banner--high .interp-title {
+  color: #fde68a;
+}
+.interp-banner--moderate .interp-title {
+  color: #94a3b8;
+}
+.interp-banner--low .interp-title {
+  color: #94a3b8;
+}
 
 .interp-desc {
   font-size: 12px;
   line-height: 1.55;
 }
-.interp-banner--high     .interp-desc { color: #fbbf24; }
-.interp-banner--moderate .interp-desc { color: #64748b; }
-.interp-banner--low      .interp-desc { color: #64748b; }
+.interp-banner--high .interp-desc {
+  color: #fbbf24;
+}
+.interp-banner--moderate .interp-desc {
+  color: #64748b;
+}
+.interp-banner--low .interp-desc {
+  color: #64748b;
+}
 
 /* ── Methods grid ────────────────────────────────────────────────────────── */
-.methods-grid { display: flex; flex-direction: column; }
+.methods-grid {
+  display: flex;
+  flex-direction: column;
+}
 
 .method-row {
   display: grid;
@@ -321,8 +373,12 @@ const interpDesc = computed(() => {
   border-bottom: 1px solid #1e293b;
   font-size: 13px;
 }
-.method-row:last-child { border-bottom: none; }
-.method-row:hover:not(.method-row--header) { background: rgba(255,255,255,0.02); }
+.method-row:last-child {
+  border-bottom: none;
+}
+.method-row:hover:not(.method-row--header) {
+  background: rgba(255, 255, 255, 0.02);
+}
 
 .method-row--header {
   font-size: 10px;
@@ -333,7 +389,9 @@ const interpDesc = computed(() => {
   border-bottom: 1px solid #334155;
   padding-bottom: 8px;
 }
-.col-right { text-align: right; }
+.col-right {
+  text-align: right;
+}
 
 .method-name {
   display: flex;
@@ -356,11 +414,25 @@ const interpDesc = computed(() => {
   font-family: inherit;
 }
 
-.method-count { font-size: 13px; font-weight: 600; }
-.flagged-val  { color: #fbbf24; }
-.clean-val    { color: #4ade80; }
-.method-pct   { font-size: 12px; color: #64748b; }
-.method-note  { font-size: 11px; color: #64748b; font-family: ui-monospace, monospace; }
+.method-count {
+  font-size: 13px;
+  font-weight: 600;
+}
+.flagged-val {
+  color: #fbbf24;
+}
+.clean-val {
+  color: #4ade80;
+}
+.method-pct {
+  font-size: 12px;
+  color: #64748b;
+}
+.method-note {
+  font-size: 11px;
+  color: #64748b;
+  font-family: ui-monospace, monospace;
+}
 
 /* ── Notable values ──────────────────────────────────────────────────────── */
 .notable-section {
@@ -396,13 +468,36 @@ const interpDesc = computed(() => {
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .interp-banner--high     { background: #fffbeb; border-color: #fcd34d; }
-:global(.theme-light) .interp-banner--moderate { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .interp-banner--low      { background: #f8fafc; border-color: #e2e8f0; }
-:global(.theme-light) .interp-banner--high  .interp-title { color: #92400e; }
-:global(.theme-light) .interp-banner--high  .interp-desc  { color: #b45309; }
-:global(.theme-light) .method-row   { border-bottom-color: #f1f5f9; }
-:global(.theme-light) .method-row--header { border-bottom-color: #e2e8f0; }
-:global(.theme-light) .method-name  { color: #1e293b; }
-:global(.theme-light) .notable-chip { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+:global(.theme-light) .interp-banner--high {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+:global(.theme-light) .interp-banner--moderate {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .interp-banner--low {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+:global(.theme-light) .interp-banner--high .interp-title {
+  color: #92400e;
+}
+:global(.theme-light) .interp-banner--high .interp-desc {
+  color: #b45309;
+}
+:global(.theme-light) .method-row {
+  border-bottom-color: #f1f5f9;
+}
+:global(.theme-light) .method-row--header {
+  border-bottom-color: #e2e8f0;
+}
+:global(.theme-light) .method-name {
+  color: #1e293b;
+}
+:global(.theme-light) .notable-chip {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
 </style>

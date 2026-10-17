@@ -26,7 +26,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  tasks: { type: Object, default: () => ({}) },
 })
 
 function fmt(v) {
@@ -41,24 +41,26 @@ const nm = computed(() => props.tasks.summarize_numeric?.data?.[props.column] ??
 const percentiles = computed(() => {
   const d = nm.value
   return [
-    { label: 'Min',  value: fmt(d.min),    cls: '' },
-    { label: 'p1',   value: fmt(d['1%']),  cls: '' },
-    { label: 'p5',   value: fmt(d['5%']),  cls: '' },
-    { label: 'p25',  value: fmt(d['25%']), cls: '' },
-    { label: 'p50',  value: fmt(d['50%']), cls: 'pct-median' },
-    { label: 'p75',  value: fmt(d['75%']), cls: '' },
-    { label: 'p95',  value: fmt(d['95%']), cls: '' },
-    { label: 'p99',  value: fmt(d['99%']), cls: '' },
-    { label: 'Max',  value: fmt(d.max),    cls: '' },
+    { label: 'Min', value: fmt(d.min), cls: '' },
+    { label: 'p1', value: fmt(d['1%']), cls: '' },
+    { label: 'p5', value: fmt(d['5%']), cls: '' },
+    { label: 'p25', value: fmt(d['25%']), cls: '' },
+    { label: 'p50', value: fmt(d['50%']), cls: 'pct-median' },
+    { label: 'p75', value: fmt(d['75%']), cls: '' },
+    { label: 'p95', value: fmt(d['95%']), cls: '' },
+    { label: 'p99', value: fmt(d['99%']), cls: '' },
+    { label: 'Max', value: fmt(d.max), cls: '' },
   ]
 })
 
 const outlierNote = computed(() => {
-  const d   = nm.value
-  const p25 = d['25%'], p75 = d['75%'], p99 = d['99%']
+  const d = nm.value
+  const p25 = d['25%'],
+    p75 = d['75%'],
+    p99 = d['99%']
   const max = d.max
   if (p25 == null || p75 == null || p99 == null || max == null) return null
-  const iqr     = p75 - p25
+  const iqr = p75 - p25
   const upperFence = p75 + 3 * iqr
   if (max > upperFence) {
     return `Max value (${fmt(max)}) exceeds the 3xIQR upper fence (${fmt(upperFence)}), indicating potential outliers beyond p99.`
@@ -68,7 +70,9 @@ const outlierNote = computed(() => {
 </script>
 
 <style scoped>
-.context-card { overflow-x: auto; }
+.context-card {
+  overflow-x: auto;
+}
 
 .pct-table {
   border-collapse: separate;
@@ -96,7 +100,10 @@ const outlierNote = computed(() => {
   white-space: nowrap;
 }
 
-.pct-median { color: #60a5fa !important; font-weight: 600; }
+.pct-median {
+  color: #60a5fa !important;
+  font-weight: 600;
+}
 
 .outlier-note {
   margin-top: 10px;
@@ -111,5 +118,7 @@ const outlierNote = computed(() => {
   align-items: flex-start;
   line-height: 1.4;
 }
-.outlier-icon { flex-shrink: 0; }
+.outlier-icon {
+  flex-shrink: 0;
+}
 </style>

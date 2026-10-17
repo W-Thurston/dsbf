@@ -2,7 +2,10 @@
   <div class="card lineage-card">
     <div class="card-title">
       Dataset Lineage
-      <TooltipIcon text="Source file information - where the data came from and its on-disk properties at the time of this run." align="right" />
+      <TooltipIcon
+        text="Source file information - where the data came from and its on-disk properties at the time of this run."
+        align="right"
+      />
     </div>
     <div v-if="!run" class="es-not-run">Lineage information not available.</div>
     <template v-else>
@@ -10,7 +13,7 @@
         ⓘ Source path not recorded for this run. Re-run the profiler to capture full lineage.
       </div>
       <div class="lineage-grid">
-        <div class="lineage-item" v-for="item in lineageItems" :key="item.label">
+        <div v-for="item in lineageItems" :key="item.label" class="lineage-item">
           <span class="lineage-label">
             {{ item.label }}
             <TooltipIcon :text="item.tooltip" align="center" />
@@ -32,17 +35,20 @@ const props = defineProps({
 
 function formatBytes(bytes) {
   if (bytes == null) return '-'
-  if (bytes < 1024)        return `${bytes} B`
-  if (bytes < 1024 ** 2)   return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 ** 3)   return `${(bytes / 1024 ** 2).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`
 }
 
 function formatModified(ts) {
   if (ts == null) return '-'
   return new Date(ts * 1000).toLocaleString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -58,7 +64,7 @@ const isBuiltin = computed(() => {
 
 const lineageItems = computed(() => {
   if (!props.run) return []
-  const sp    = props.run.source_path ?? null
+  const sp = props.run.source_path ?? null
   const fname = fileName(sp)
   const hasPath = !!sp
 
@@ -68,67 +74,79 @@ const lineageItems = computed(() => {
     const srcLabels = { seaborn: 'Seaborn', sklearn: 'Scikit-learn', openml: 'OpenML' }
     return [
       {
-        label:   'Dataset',
+        label: 'Dataset',
         tooltip: 'The logical dataset name this run belongs to in DSBF.',
-        value:   props.run.dataset_name ?? '-',
+        value: props.run.dataset_name ?? '-',
       },
       {
-        label:   'File Name',
-        tooltip: 'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
-        value:   'N/A (built-in)',
+        label: 'File Name',
+        tooltip:
+          'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
+        value: 'N/A (built-in)',
       },
       {
-        label:   'File Path',
-        tooltip: 'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
-        value:   'N/A (built-in)',
+        label: 'File Path',
+        tooltip:
+          'Not applicable - this dataset is loaded from a Python library, not a file on disk.',
+        value: 'N/A (built-in)',
       },
       {
-        label:   'File Size',
+        label: 'File Size',
         tooltip: 'Not applicable - no file on disk.',
-        value:   'N/A (built-in)',
+        value: 'N/A (built-in)',
       },
       {
-        label:   'Last Modified',
+        label: 'Last Modified',
         tooltip: 'Not applicable - no file on disk.',
-        value:   'N/A (built-in)',
+        value: 'N/A (built-in)',
       },
     ]
   }
 
   return [
     {
-      label:   'Dataset',
+      label: 'Dataset',
       tooltip: 'The logical dataset name this run belongs to in DSBF.',
-      value:   props.run.dataset_name ?? '-',
+      value: props.run.dataset_name ?? '-',
     },
     {
-      label:   'File Name',
+      label: 'File Name',
       tooltip: 'The name of the source file that was profiled.',
-      value:   hasPath ? (fname.length > 32 ? fname.slice(0, 32) + '…' : fname) : '-',
-      full:    hasPath ? fname : null,
+      value: hasPath ? (fname.length > 32 ? fname.slice(0, 32) + '…' : fname) : '-',
+      full: hasPath ? fname : null,
     },
     {
-      label:   'File Path',
+      label: 'File Path',
       tooltip: 'Full path to the source file on disk at the time this run was executed.',
-      value:   sp ? (sp.length > 44 ? '…' + sp.slice(-44) : sp) : '-',
-      full:    sp,
+      value: sp ? (sp.length > 44 ? '…' + sp.slice(-44) : sp) : '-',
+      full: sp,
     },
     {
-      label:   'File Size',
-      tooltip: 'Size of the source file on disk. Compare with Memory in the strip above - a large ratio indicates the file format is verbose (e.g. CSV with long strings). Only available when the source path is recorded.',
-      value:   props.run.source_file_size_bytes != null ? formatBytes(props.run.source_file_size_bytes) : '-',
+      label: 'File Size',
+      tooltip:
+        'Size of the source file on disk. Compare with Memory in the strip above - a large ratio indicates the file format is verbose (e.g. CSV with long strings). Only available when the source path is recorded.',
+      value:
+        props.run.source_file_size_bytes != null
+          ? formatBytes(props.run.source_file_size_bytes)
+          : '-',
     },
     {
-      label:   'Last Modified',
-      tooltip: 'When the source file was last written to on disk. Only available when the source path is recorded and the file still exists.',
-      value:   props.run.source_last_modified != null ? formatModified(props.run.source_last_modified) : '-',
+      label: 'Last Modified',
+      tooltip:
+        'When the source file was last written to on disk. Only available when the source path is recorded and the file still exists.',
+      value:
+        props.run.source_last_modified != null
+          ? formatModified(props.run.source_last_modified)
+          : '-',
     },
   ]
 })
 </script>
 
 <style scoped>
-.lineage-card { height: 100%; }
+.lineage-card {
+  height: 100%;
+}
 
 .es-not-run {
   color: #64748b;
@@ -162,7 +180,10 @@ const lineageItems = computed(() => {
   padding-bottom: 10px;
   border-bottom: 1px solid #0f172a;
 }
-.lineage-item:last-child { border-bottom: none; padding-bottom: 0; }
+.lineage-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
 
 .lineage-label {
   font-size: 12px;

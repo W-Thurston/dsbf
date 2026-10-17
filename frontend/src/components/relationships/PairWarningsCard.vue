@@ -15,7 +15,6 @@
 -->
 <template>
   <div class="pair-warnings-card card">
-
     <div class="card-title">
       Relationship Warnings
       <TooltipIcon
@@ -26,9 +25,7 @@
     </div>
 
     <!-- Clean state -->
-    <div v-if="!items.length" class="warnings-clean">
-      ✓ No relationship warnings for this pair.
-    </div>
+    <div v-if="!items.length" class="warnings-clean">✓ No relationship warnings for this pair.</div>
 
     <!-- Warnings list -->
     <div v-else class="warning-list">
@@ -46,7 +43,6 @@
         <p class="warn-body">{{ item.body }}</p>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -55,8 +51,8 @@ import { computed } from 'vue'
 import TooltipIcon from '../TooltipIcon.vue'
 
 const props = defineProps({
-  colA:  { type: String, required: true },
-  colB:  { type: String, required: true },
+  colA: { type: String, required: true },
+  colB: { type: String, required: true },
   tasks: { type: Object, default: () => ({}) },
 })
 
@@ -64,7 +60,7 @@ const items = computed(() => {
   const out = []
 
   // ── Collinearity (VIF) ────────────────────────────────────────────────────
-  const vif          = props.tasks.detect_collinear_features?.data?.vif_scores ?? {}
+  const vif = props.tasks.detect_collinear_features?.data?.vif_scores ?? {}
   const vifThreshold = props.tasks.detect_collinear_features?.metadata?.vif_threshold ?? 10
 
   for (const col of [props.colA, props.colB]) {
@@ -72,11 +68,11 @@ const items = computed(() => {
       const score = vif[col]
       if (score > vifThreshold) {
         out.push({
-          code:  `vif_${col}`,
+          code: `vif_${col}`,
           level: score > 30 ? 'critical' : 'warning',
-          icon:  '🔗',
+          icon: '🔗',
           title: `High Collinearity - ${col}`,
-          body:  `VIF = ${score.toFixed(1)}. This column's variance is largely explained by other columns in the dataset - it does not carry fully independent information. The threshold is ${vifThreshold}.`,
+          body: `VIF = ${score.toFixed(1)}. This column's variance is largely explained by other columns in the dataset - it does not carry fully independent information. The threshold is ${vifThreshold}.`,
         })
       }
     }
@@ -84,19 +80,19 @@ const items = computed(() => {
 
   // ── Leakage ───────────────────────────────────────────────────────────────
   const leakagePairs = props.tasks.detect_data_leakage?.data?.leakage_pairs ?? {}
-  const threshold    = props.tasks.detect_data_leakage?.metadata?.correlation_threshold ?? 0.99
-  const pairKey1     = `${props.colA}|${props.colB}`
-  const pairKey2     = `${props.colB}|${props.colA}`
+  const threshold = props.tasks.detect_data_leakage?.metadata?.correlation_threshold ?? 0.99
+  const pairKey1 = `${props.colA}|${props.colB}`
+  const pairKey2 = `${props.colB}|${props.colA}`
 
   if (pairKey1 in leakagePairs || pairKey2 in leakagePairs) {
     const corr = leakagePairs[pairKey1] ?? leakagePairs[pairKey2]
     const rStr = typeof corr === 'number' ? ` (r = ${Math.abs(corr).toFixed(4)})` : ''
     out.push({
-      code:  'leakage',
+      code: 'leakage',
       level: 'critical',
-      icon:  '⚠',
+      icon: '⚠',
       title: 'Near-Perfect Correlation',
-      body:  `These two columns are correlated at r ≥ ${threshold}${rStr}. They appear to encode the same or nearly the same information - one may be derived from the other, or both may share a common source.`,
+      body: `These two columns are correlated at r ≥ ${threshold}${rStr}. They appear to encode the same or nearly the same information - one may be derived from the other, or both may share a common source.`,
     })
   }
 
@@ -128,19 +124,51 @@ const items = computed(() => {
   padding: 4px 0;
 }
 
-.warning-list { display: flex; flex-direction: column; gap: 10px; }
+.warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .warning-item {
   border-radius: 8px;
   padding: 12px 14px;
   border-left: 3px solid;
 }
-.warn-critical { background: #2d1515; border-color: #f87171; }
-.warn-warning  { background: #2d1f0a; border-color: #fbbf24; }
+.warn-critical {
+  background: #2d1515;
+  border-color: #f87171;
+}
+.warn-warning {
+  background: #2d1f0a;
+  border-color: #fbbf24;
+}
 
-.warn-header   { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.warn-icon     { font-size: 15px; }
-.warn-title    { font-size: 13px; font-weight: 600; color: #e2e8f0; flex: 1; }
-.warn-level    { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #94a3b8; }
-.warn-body     { font-size: 12px; color: #94a3b8; line-height: 1.55; margin: 0; }
+.warn-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.warn-icon {
+  font-size: 15px;
+}
+.warn-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  flex: 1;
+}
+.warn-level {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #94a3b8;
+}
+.warn-body {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
 </style>

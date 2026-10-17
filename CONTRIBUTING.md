@@ -154,8 +154,24 @@ All Python files must have:
 - Docstrings on every public class and method
 - Type annotations on all function signatures
 
-**Vue / JavaScript:** follow the patterns established in the existing components.
-Tailwind utility classes where applicable; custom CSS in scoped `<style>` blocks.
+**Vue / JavaScript:** ESLint (with `eslint-plugin-vue`) lints and Prettier formats. Prettier
+owns layout (no semicolons, single quotes, 100 columns), so don't hand-align code. Follow the
+patterns established in the existing components, and put custom CSS in scoped `<style>`
+blocks. The frontend uses pnpm, pinned through the `packageManager` field in
+`frontend/package.json`; `corepack enable` once and the right version is fetched.
+
+```bash
+cd frontend
+pnpm install
+pnpm lint        # ESLint, then a Prettier check
+pnpm format      # rewrite files with Prettier
+pnpm build
+pnpm test:run    # Vitest; `pnpm test` watches
+```
+
+CI runs the same three commands in the Frontend job. A few existing ESLint findings
+(unused variables, a computed property with a side effect, props without defaults) are
+warnings rather than errors until they are fixed.
 
 ---
 

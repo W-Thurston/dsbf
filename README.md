@@ -137,7 +137,7 @@ results = EDA(df).run()
 uv run uvicorn dsbf.api.main:app --reload
 
 # In a separate terminal, start the Vue dev server
-cd frontend && npm install && npm run dev
+cd frontend && pnpm install && pnpm dev
 ```
 
 ---
