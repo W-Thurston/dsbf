@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/charts/DistributionHistogramChart.vue -->
+<!-- frontend/src/components/charts/DistributionHistogramChart.vue -->
 
 <template>
   <DsbfChart

@@ -1,4 +1,4 @@
-// dsbf/dashboard/frontend/src/chartTheme.js
+// frontend/src/chartTheme.js
 //
 // ECharts theme objects for DSBF dark and light modes.
 // Colors are taken verbatim from style.css and App.vue to guarantee

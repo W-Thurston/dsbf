@@ -1,5 +1,5 @@
 /**
- * dsbf/dashboard/frontend/src/utils/actionMeta.js
+ * frontend/src/utils/actionMeta.js
  *
  * Central knowledge base for ML Readiness action metadata.
  * Imported by MlReadinessTab and TransformationPreviewCard.

@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/charts/DsbfChart.vue
+<!-- frontend/src/components/charts/DsbfChart.vue
 
   Universal chart wrapper for all DSBF ECharts visualizations.
 

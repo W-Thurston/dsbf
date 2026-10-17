@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/quality/MissingnessMechanismCard.vue
+<!-- frontend/src/components/quality/MissingnessMechanismCard.vue
 
   Shows missingness mechanism analysis results (MCAR / MAR / MNAR) per column.
   Rendered after the Completeness dimension section in QualityTab.

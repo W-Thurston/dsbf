@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/views/tabs/MlReadinessTab.vue
+<!-- frontend/src/views/tabs/MlReadinessTab.vue
 
   ML Readiness tab - surfaces the ml_readiness_scorer output.
 

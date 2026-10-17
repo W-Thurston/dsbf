@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/distributions/OutlierDetailCard.vue
+<!-- frontend/src/components/distributions/OutlierDetailCard.vue
 
   Per-column outlier breakdown from detect_outliers (unified task).
 

@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/views/tabs/TimeSeriesTab.vue
+<!-- frontend/src/views/tabs/TimeSeriesTab.vue
 
   Time Series tab. Always visible in the tab bar.
 

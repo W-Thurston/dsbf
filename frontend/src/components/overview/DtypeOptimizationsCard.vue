@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/overview/DtypeOptimizationsCard.vue
+<!-- frontend/src/components/overview/DtypeOptimizationsCard.vue
 
   Collapsible card showing dtype downcast suggestions from suggest_dtype_optimizations.
   Each row shows: column | current dtype → suggested dtype | estimated saving.

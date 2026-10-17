@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/relationships/PairWarningsCard.vue
+<!-- frontend/src/components/relationships/PairWarningsCard.vue
 
   Shows collinearity (VIF) and leakage warnings for a selected column pair.
   Language is observational - describes what the data shows, not what to do about it.

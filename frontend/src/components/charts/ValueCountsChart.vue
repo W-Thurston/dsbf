@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/charts/ValueCountsChart.vue
+<!-- frontend/src/components/charts/ValueCountsChart.vue
 
   Horizontal bar chart of value counts for categorical/boolean columns.
   Percentages are always of the WHOLE column (num_rows), not of the subset

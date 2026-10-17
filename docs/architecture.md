@@ -23,7 +23,7 @@ This describes the current (pre-refactor) code: how the pieces fit together and 
 | `src/dsbf/api/` | **FastAPI** app (`main.py`) and read-only DB helpers (`db.py`) |
 | `src/dsbf/interfaces/` | Typer **CLI** (`cli.py`) and the Python facade `EDA` (`api.py`) |
 | `src/dsbf/custom_plugins/` | Example location for user task directories (see `task_groups` in the config) |
-| `src/dsbf/dashboard/` | An empty `__init__.py` plus `frontend/`, the Vue 3 + Vite app |
+| `frontend/` | The Vue 3 + Vite dashboard app, outside the Python package |
 | `tests/` | Pytest suite, split into tiers by marker (`unit`, `integration`, `slow`, `network`) |
 | `dsbf/outputs/` | Generated run folders (gitignored) |
 
@@ -118,7 +118,7 @@ uv run uvicorn dsbf.api.main:app --reload
 
 ## 7. Dashboard
 
-**Location:** `src/dsbf/dashboard/frontend/`
+**Location:** `frontend/`
 
 - **Vue 3 + Vite + Vue Router + Axios**, with **Plotly** (`plotly.js-dist-min`) and **ECharts** for charts (`package.json`).
 - **API client:** `frontend/src/api.js`, with `baseURL: '/api'`.
@@ -129,7 +129,7 @@ uv run uvicorn dsbf.api.main:app --reload
 
 1. Run a profile (`dsbf profile ...` or `dsbf run --config ...`) so SQLite is populated.
 2. Start the API: `uv run uvicorn dsbf.api.main:app --reload`
-3. Start the UI: `cd src/dsbf/dashboard/frontend && npm install && npm run dev`
+3. Start the UI: `cd frontend && npm install && npm run dev`
 
 ---
 
@@ -175,7 +175,7 @@ uv sync
 uv run dsbf quickstart titanic
 uv run uvicorn dsbf.api.main:app --reload
 # other terminal:
-cd src/dsbf/dashboard/frontend && npm install && npm run dev
+cd frontend && npm install && npm run dev
 # Browser: the Vite URL (e.g. http://localhost:5173), API proxied to :8000
 uv run pytest
 ```

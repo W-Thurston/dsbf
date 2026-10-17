@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/charts/BoxPlotChart.vue -->
+<!-- frontend/src/components/charts/BoxPlotChart.vue -->
 
 <template>
   <DsbfChart

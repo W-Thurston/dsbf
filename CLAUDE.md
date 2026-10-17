@@ -107,5 +107,5 @@ Branch: unit/<ID>-<slug> · Started: <YYYY-MM-DD>
 
 Each gotcha names the unit that removes it. Delete the line at that unit's close-out.
 
-- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `src/dsbf/dashboard/frontend` and only has `npm run build`.
+- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `frontend/` and only has `npm run build`.
 - Every run rewrites `src/dsbf/static_metadata/task_metadata.json` (until U1-04).

@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/quality/FuzzyDuplicateCard.vue
+<!-- frontend/src/components/quality/FuzzyDuplicateCard.vue
 
   Shows near-duplicate row pairs from fuzzy_duplicate_detection.
   Rendered after the Redundancy dimension section in QualityTab.
