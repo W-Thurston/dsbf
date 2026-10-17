@@ -44,6 +44,26 @@ def test_importing_the_contracts_pulls_in_no_analysis_library():
         "StatusCounts",
         "HealthIssue",
         "RunHealth",
+        "ColumnCounts",
+        "Quantile",
+        "NumericStats",
+        "Histogram",
+        "ValueCount",
+        "LengthStats",
+        "NumericProfile",
+        "CategoricalProfile",
+        "BooleanProfile",
+        "DatetimeProfile",
+        "TextProfile",
+        "IdentifierProfile",
+        "UnknownProfile",
+        "DatasetProfile",
+        "SourceRef",
+        "DatasetManifest",
+        "PackRef",
+        "PlannedCheck",
+        "PlanManifest",
+        "Run",
     ],
 )
 def test_each_model_exports_json_schema(name):
@@ -64,3 +84,12 @@ def test_the_vocabularies_export_as_enums():
     ]:
         schema = TypeAdapter(getattr(model, name)).json_schema()
         assert len(schema["enum"]) == expected
+
+
+def test_the_column_profile_union_exports_a_discriminator():
+    from pydantic import TypeAdapter
+
+    schema = TypeAdapter(model.ColumnProfile).json_schema()
+
+    assert schema["discriminator"]["propertyName"] == "semantic_type"
+    assert len(schema["oneOf"]) == 7

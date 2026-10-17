@@ -232,15 +232,23 @@ class RunHealth(BaseModel):  # derived from the results by RunHealth.from_result
 
 class Run(BaseModel):
     schema_version: str
-    run_id: str  # UUID-based (F-15)
+    run_id: UUID  # UUID-based (F-15)
+    started_at: AwareDatetime
+    finished_at: AwareDatetime
     dataset: DatasetManifest  # identity, fingerprint, source, shape, sampling
     plan: PlanManifest  # checks, versions, params, packs, dsbf version (F-18)
     profile: DatasetProfile
     results: dict[str, CheckResult]
     findings: tuple[Finding, ...]  # flattened, ordered by severity
     health: RunHealth  # counts and reasons by status: the "never read logs" summary
-    policy: PolicyOutcome | None
+    policy: PolicyOutcome | None  # arrives with the policy schema
+    # Run.build derives findings and health from the results and checks the parts agree
 ```
+
+`ColumnProfile` is a union discriminated by `semantic_type` (`numeric | categorical | boolean |
+datetime | text | identifier | unknown`); `identifier` and `unknown` mirror what the legacy
+`infer_types` emits. `DatasetProfile.n_rows` counts the rows profiled, so for a sampled dataset it
+equals `DatasetManifest.sampling.sampled_rows`.
 
 ### 4.3 Versioning rules
 
