@@ -106,17 +106,13 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-08
 - **Goal:** `dsbf.data.load(source)` accepts pandas, Polars or Arrow objects, or CSV/Parquet/Excel/JSON/NDJSON paths, and returns a Polars-backed `Dataset`. Unreadable input raises a typed error with a hint.
 - **Done:** `dsbf.data` (`load`, `Dataset`, `SourceError` and its three subclasses) loads all of them; Polars is 2.0.0 (cap lifted, golden 10 of 10 unchanged); the Excel reader is `fastexcel` in a new `dsbf[excel]` extra; pandas 3 frames load, with a `pandas3` CI job running the adapter tests on them. Deviations: the `excel` extra and its ADR 0009 / REFACTOR_PLAN §3.1 rows were not in the unit; pyarrow stays in the base install (Polars' parquet, CSV and Excel readers don't need it, only pandas and Arrow input do; its home stays with U4-00). Dependabot #73 was left open (outside this unit's area). On 13 real datasets the loaded shape, column names and null counts match `pd.read_csv`; kitchen50k loads in 1.16 s (pandas 0.76 s).
+- **PR:** #80 (`876a17c`)
 - **Commit:** `feat(data): add tier-1 source adapters`
 
 ### U2-02 · Dataset fingerprint, sampling provenance and value cache
-- **Status:** todo · **Size:** M · **Depends on:** U2-01 · **Resolves:** F-09
-- **Note from U2-01:** `Dataset.frame` is a view of the caller's pandas frame on pandas 2.x (zero-copy), so an in-place edit after `load` shows through. The fingerprint is taken at load and does not notice it; decide whether to document that or copy on load when the fingerprint is stored.
-- **Goal:**
-  - `Dataset.fingerprint`;
-  - `Dataset.sample(...)` with a recorded `SamplingInfo` (head, seeded random, stratified-or-error);
-  - `Dataset.values(col, dropna=True)`, which returns cached NumPy arrays within a memory bound.
-- **Assumptions to confirm:** The hashing approach and its cost at 50k and 1M rows; the cache memory bound default.
-- **Acceptance:** The fingerprint is stable across loads and changes when one cell changes. Sampling is reproducible by seed. Cache eviction is tested.
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U2-01 · **Resolves:** F-09
+- **Goal:** `Dataset.fingerprint`, `Dataset.sample(...)` with a recorded `SamplingInfo` (head, seeded random, stratified-or-error), and `Dataset.values(col, dropna=True)` over a byte-bounded cache.
+- **Done:** `fingerprint` hashes each column (name, dtype, values) with `Series.hash`: 0.06 s on kitchen50k, 0.90 s at 1M × 60, with a pinned value so a Polars upgrade that changes the hash fails a test. A sample keeps its source's fingerprint (`Dataset.source_fingerprint`) and records `SamplingInfo`; stratified sampling is proportional by largest remainder, seeded, exact in row count, and null is its own group. `values` returns read-only arrays in an LRU bounded at 256 MiB by default. Deviations: the `SamplingInfo` contract now requires a seed for stratified samples as well as random ones (a validator change; the published schema is unchanged). The U2-01 pandas note is resolved by documentation, not a copy: `Dataset` states that its frame is read-only after load, because a copy would cost 0.13 s and 400 MB at 1M × 50 and undo the zero-copy load. The legacy `data_sampling` still has its F-09 crash; its removal is noted under U3-12. `load(dataset, name=...)` returns a copy that rebuilds its fingerprint and cache on demand.
 - **Commit:** `feat(data): add dataset fingerprint, sampling provenance and value cache`
 
 ### U2-03 · Sample-based semantic type inference
@@ -268,6 +264,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U2-02:** `Dataset.sample(rows, strategy=, seed=, stratify_by=)` is the sampling to build `sample=…` on. The legacy `data_sampling` still has the F-09 crash and the `stratified` alias for head; remove it when the legacy engine path is replaced. A stratified or random sample records its seed in `SamplingInfo`.
 - **Note from U2-01:** the legacy `dsbf profile` still fails on a parquet with a `datetime64` column (`TypeError: Object of type Timestamp is not JSON serializable`, in the legacy report writer). It goes away when results are written from the `Run` contract; add a datetime64 parquet to this unit's end-to-end test to confirm.
 - **Note from U1-01:** `dsbf version` runs `git describe --tags` (`utils/versioning.py`), so outside a checkout it prints `dev` plus a `fatal: not a git repository` line, even from an installed wheel. Read the version from `importlib.metadata`.
 - **Goal:** The public `dsbf.profile(source, packs=…, checks=…, target=…, time_index=…, sample=…)` returns an in-memory `Run` with no filesystem writes. Version comes from `importlib.metadata`. `run.health.summary()` matches REFACTOR_PLAN §7.1.

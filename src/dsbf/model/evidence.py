@@ -52,10 +52,10 @@ class SamplingInfo(Contract):
     def _check_strategy(self) -> Self:
         if self.sampled_rows > self.original_rows:
             raise ValueError("a sample has at most as many rows as the data")
-        if self.strategy == "random" and self.seed is None:
-            raise ValueError("a random sample records its seed")
-        if self.strategy != "random" and self.seed is not None:
-            raise ValueError("only a random sample has a seed")
+        if self.strategy != "head" and self.seed is None:
+            raise ValueError("a random or stratified sample records its seed")
+        if self.strategy == "head" and self.seed is not None:
+            raise ValueError("a head sample has no seed")
         if self.strategy == "stratified" and not self.stratify_by:
             raise ValueError("a stratified sample names its stratification columns")
         if self.strategy != "stratified" and self.stratify_by:

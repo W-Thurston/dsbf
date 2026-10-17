@@ -71,6 +71,7 @@ class TestSamplingInfo:
             strategy="stratified",
             original_rows=100,
             sampled_rows=10,
+            seed=3,
             stratify_by=("a|b", ""),
         )
 
@@ -86,7 +87,8 @@ class TestSamplingInfo:
         [
             {"strategy": "random"},
             {"strategy": "head", "seed": 1},
-            {"strategy": "stratified"},
+            {"strategy": "stratified", "seed": 1},
+            {"strategy": "stratified", "stratify_by": ("a",)},
             {"strategy": "head", "stratify_by": ("a",)},
             {"strategy": "head", "sampled_rows": 101},
             {"strategy": "head", "original_rows": -1, "sampled_rows": 0},
