@@ -173,8 +173,8 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0
       plotly.js-dist-min:
-        specifier: ^3.4.0
-        version: 3.7.0
+        specifier: ^4.1.2
+        version: 4.1.2
       vue:
         specifier: ^3.5.44
         version: 3.5.44
@@ -950,8 +950,8 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
-  plotly.js-dist-min@3.7.0:
-    resolution: {integrity: sha512-IRWNnBJZmKss3URDnicBK2nvt/VTSi/MD1GnUscAYFjwSuN6g/CTde5R1UC0RYtblehj8rkT4BL8r05e/c8j5Q==}
+  plotly.js-dist-min@4.1.2:
+    resolution: {integrity: sha512-VSmS9KVNun16S8qFYYp9LlL/XBby4ueeGqB+K9AqRCVsup8dSpGULap4UyR1f2mz4pV3qjWp1sR5chwLgIKPoQ==}
 
   postcss-selector-parser@7.1.6:
     resolution: {integrity: sha512-7qASPzhKF2l2KLboRZux8CCTRMdGiV08vWmyKzPz22qZ7ZjQBOeY7rNzNoCLSUiftJ7HUq0GERHmxw/t0dCdMw==}
@@ -1824,7 +1824,7 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  plotly.js-dist-min@3.7.0: {}
+  plotly.js-dist-min@4.1.2: {}
 
   postcss-selector-parser@7.1.6:
     dependencies:
