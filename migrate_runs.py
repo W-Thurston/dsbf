@@ -29,11 +29,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Make sure the repo root is on sys.path so dsbf imports work when running
-# this script directly from the repo root.
-_REPO_ROOT = Path(__file__).resolve().parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+# Make sure src/ is on sys.path so dsbf imports work when running this script
+# directly from the repo root.
+_SRC_ROOT = Path(__file__).resolve().parent / "src"
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
 
 from dsbf.storage.schema import init_db  # noqa: E402
 from dsbf.storage.writer import persist_run_from_dict  # noqa: E402

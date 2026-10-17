@@ -507,7 +507,7 @@ def get_figure_file(figure_id: int) -> FileResponse:
         raise HTTPException(status_code=404, detail=f"Figure {figure_id} not found.")
 
     # Paths in the database are relative to the repo root
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[3]
     file_path = repo_root / file_path_str
 
     if not file_path.exists():

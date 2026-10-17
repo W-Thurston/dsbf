@@ -14,16 +14,16 @@ This describes the current (pre-refactor) code: how the pieces fit together and 
 
 | Area | Role |
 |------|------|
-| `dsbf/eda/` | Profiling engine, task graph, stage inference, task registry and loader |
-| `dsbf/eda/tasks/` | Individual analysis tasks (time series, ML readiness, associations, quality, and more) |
-| `dsbf/core/` | `BaseEngine`, `BaseTask`, `AnalysisContext` |
-| `dsbf/config/` | Default config (`default_config.yaml`), constants, Plotly and dashboard theme helpers |
-| `dsbf/utils/` | Data load, sampling, report rendering, task filtering, logging, recommendations |
-| `dsbf/storage/` | SQLite schema (`schema.py`) and run persistence (`writer.py`) |
-| `dsbf/api/` | **FastAPI** app (`main.py`) and read-only DB helpers (`db.py`) |
-| `dsbf/interfaces/` | Typer **CLI** (`cli.py`) and the Python facade `EDA` (`api.py`) |
-| `dsbf/custom_plugins/` | Example location for user task directories (see `task_groups` in the config) |
-| `dsbf/dashboard/` | An empty `__init__.py` plus `frontend/`, the Vue 3 + Vite app |
+| `src/dsbf/eda/` | Profiling engine, task graph, stage inference, task registry and loader |
+| `src/dsbf/eda/tasks/` | Individual analysis tasks (time series, ML readiness, associations, quality, and more) |
+| `src/dsbf/core/` | `BaseEngine`, `BaseTask`, `AnalysisContext` |
+| `src/dsbf/config/` | Default config (`default_config.yaml`), constants, Plotly and dashboard theme helpers |
+| `src/dsbf/utils/` | Data load, sampling, report rendering, task filtering, logging, recommendations |
+| `src/dsbf/storage/` | SQLite schema (`schema.py`) and run persistence (`writer.py`) |
+| `src/dsbf/api/` | **FastAPI** app (`main.py`) and read-only DB helpers (`db.py`) |
+| `src/dsbf/interfaces/` | Typer **CLI** (`cli.py`) and the Python facade `EDA` (`api.py`) |
+| `src/dsbf/custom_plugins/` | Example location for user task directories (see `task_groups` in the config) |
+| `src/dsbf/dashboard/` | An empty `__init__.py` plus `frontend/`, the Vue 3 + Vite app |
 | `tests/` | Pytest suite, split into tiers by marker (`unit`, `integration`, `slow`, `network`) |
 | `dsbf/outputs/` | Generated run folders (gitignored) |
 
@@ -33,7 +33,7 @@ This describes the current (pre-refactor) code: how the pieces fit together and 
 
 ## 3. Core execution flow
 
-### `ProfileEngine` (`dsbf/eda/profile_engine.py`)
+### `ProfileEngine` (`src/dsbf/eda/profile_engine.py`)
 
 1. Load config (caller-provided or default).
 2. Load data via `_load_data()`:
@@ -52,10 +52,10 @@ This describes the current (pre-refactor) code: how the pieces fit together and 
 13. **`storage.writer.persist_run(self)`**: SQLite upsert (failures are logged, not fatal).
 14. `record_run()` and completion log.
 
-### Tasks (`dsbf/eda/tasks/*.py`, `dsbf/core/base_task.py`)
+### Tasks (`src/dsbf/eda/tasks/*.py`, `src/dsbf/core/base_task.py`)
 
-- All tasks subclass **`BaseTask`**; outputs are **`TaskResult`** (`dsbf/eda/task_result.py`).
-- Registration and metadata live in **`dsbf/eda/task_registry.py`** (domains, depth, dependencies, semantic types, and more).
+- All tasks subclass **`BaseTask`**; outputs are **`TaskResult`** (`src/dsbf/eda/task_result.py`).
+- Registration and metadata live in **`src/dsbf/eda/task_registry.py`** (domains, depth, dependencies, semantic types, and more).
 - The codebase has grown beyond classic EDA: examples include the **time-series** tasks, **`compute_pairwise_associations`**, **`ml_readiness_scorer`** and **`data_quality_scorer`**. The API and frontend rely on some of these for the Relationships, Quality and ML Readiness views.
 
 ---
@@ -76,9 +76,9 @@ Under **`dsbf/outputs/<run_key>/`**. The folder name is a `%Y%m%d_%H%M%S` timest
 
 ## 5. SQLite storage
 
-- **Schema and connection:** `dsbf/storage/schema.py`.
+- **Schema and connection:** `src/dsbf/storage/schema.py`.
   - The database path is `DSBF_DB_PATH` if set, else the `db_path` argument, else **`<repo_root>/dsbf/dsbf.db`**.
-- **Writes:** `dsbf/storage/writer.py`, **`persist_run(engine)`** after each successful profile:
+- **Writes:** `src/dsbf/storage/writer.py`, **`persist_run(engine)`** after each successful profile:
   - datasets, runs, per-task rows and the figure index;
   - `dataset_path` is handled apart from built-in datasets (CLI `quickstart` clears the path so the database doesn't keep a stale file path).
 
@@ -88,7 +88,7 @@ The **FastAPI layer does not re-run profiling**. It **reads the database** and *
 
 ## 6. HTTP API (FastAPI)
 
-**App:** `dsbf/api/main.py` (`app`). The top-of-file docstring lists the routes.
+**App:** `src/dsbf/api/main.py` (`app`). The top-of-file docstring lists the routes.
 
 **Run locally** (from the repository root):
 
@@ -112,13 +112,13 @@ uv run uvicorn dsbf.api.main:app --reload
 - **Relationships:** `/associations`, `/associations/{column}`, `/correlations/{column}`, `/column-data`
 - **Figures:** `/api/figures/{id}/file` is a `FileResponse`; figure paths in the database are relative to the repository root.
 
-**DB access:** `dsbf/api/db.py` holds pure read helpers on top of `get_connection`, returning plain dicts and lists.
+**DB access:** `src/dsbf/api/db.py` holds pure read helpers on top of `get_connection`, returning plain dicts and lists.
 
 ---
 
 ## 7. Dashboard
 
-**Location:** `dsbf/dashboard/frontend/`
+**Location:** `src/dsbf/dashboard/frontend/`
 
 - **Vue 3 + Vite + Vue Router + Axios**, with **Plotly** (`plotly.js-dist-min`) and **ECharts** for charts (`package.json`).
 - **API client:** `frontend/src/api.js`, with `baseURL: '/api'`.
@@ -129,7 +129,7 @@ uv run uvicorn dsbf.api.main:app --reload
 
 1. Run a profile (`dsbf profile ...` or `dsbf run --config ...`) so SQLite is populated.
 2. Start the API: `uv run uvicorn dsbf.api.main:app --reload`
-3. Start the UI: `cd dsbf/dashboard/frontend && npm install && npm run dev`
+3. Start the UI: `cd src/dsbf/dashboard/frontend && npm install && npm run dev`
 
 ---
 
@@ -175,7 +175,7 @@ uv sync
 uv run dsbf quickstart titanic
 uv run uvicorn dsbf.api.main:app --reload
 # other terminal:
-cd dsbf/dashboard/frontend && npm install && npm run dev
+cd src/dsbf/dashboard/frontend && npm install && npm run dev
 # Browser: the Vite URL (e.g. http://localhost:5173), API proxied to :8000
 uv run pytest
 ```

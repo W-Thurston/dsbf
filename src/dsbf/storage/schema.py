@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 # Default database location
-_REPO_ROOT: Path = Path(__file__).resolve().parents[2]
+_REPO_ROOT: Path = Path(__file__).resolve().parents[3]
 DEFAULT_DB_PATH: Path = _REPO_ROOT / "dsbf" / "dsbf.db"
 
 

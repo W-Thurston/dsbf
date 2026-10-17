@@ -9,6 +9,9 @@ gives:
 - what it **measured** in an instrumented practice run on 2026-10-15,
 - known issues (IDs refer to [`REVIEW_FINDINGS.md`](REVIEW_FINDINGS.md)).
 
+> Source paths below (`dsbf/eda/...`) were measured before the `src/` layout move on 2026-10-16;
+> they now sit under `src/dsbf/`.
+
 ## The practice run
 
 The instrumented run wrapped every stage that `ProfileEngine.run()` calls with a wall-time and RSS
@@ -144,7 +147,7 @@ the console had **452** (F-19, verified).
 ## 3e. Load task groups and plugins
 
 **What happens:** `load_task_group()` imports each group in `task_groups` (a module name or a
-plugin directory). It then **writes `dsbf/static_metadata/task_metadata.json`** (relative to CWD)
+plugin directory). It then **writes `src/dsbf/static_metadata/task_metadata.json`** (relative to CWD)
 unless `DSBF_AUTO_EXPORT_METADATA=0`.
 
 **Measured:** 1 ms, since the tasks were already imported in stage 0.
