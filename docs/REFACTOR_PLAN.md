@@ -239,12 +239,13 @@ class Run(BaseModel):
     plan: PlanManifest  # checks, versions, params, packs, dsbf version (F-18)
     profile: DatasetProfile
     results: dict[str, CheckResult]
-    findings: tuple[Finding, ...]  # flattened, ordered by severity
     health: RunHealth  # counts and reasons by status: the "never read logs" summary
     policy: PolicyOutcome | None = (
         None  # what the user's policy decided, if one was applied
     )
-    # Run.build derives findings and health from the results and checks the parts agree
+    # Run.findings is a property, not a field: every result's findings flattened and
+    # ordered by severity, so a serialised run carries each finding once (under results).
+    # Run.build derives health from the results and checks the parts agree
 ```
 
 `ColumnProfile` is a union discriminated by `semantic_type` (`numeric | categorical | boolean |

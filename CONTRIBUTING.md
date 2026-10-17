@@ -172,6 +172,26 @@ CI runs the same three commands in the Frontend job. A few existing ESLint findi
 (unused variables, a computed property with a side effect, props without defaults) are
 warnings rather than errors until they are fixed.
 
+
+### Result schema
+
+The result models in `dsbf.model` are published as `schema/run.schema.json`, with
+TypeScript types in `frontend/src/generated/run.d.ts`. Both are generated, so change the
+models and regenerate; never edit them by hand:
+
+```bash
+uv run dsbf schema export --types frontend/src/generated/run.d.ts
+uv run dsbf schema check --base origin/main   # is the change announced by its version?
+```
+
+The Contracts job in CI fails if either file is out of date (`schema export ... --check`)
+or if the schema changed against the pull request's base branch without raising
+`SCHEMA_VERSION` in `src/dsbf/model/run.py`. Anything that can make a stored run invalid,
+or give a reader a value it wasn't told about (a removed field, a changed type, a new enum
+member, a new field without a default), is breaking and needs a higher minor version while
+the schema is 0.x and a higher major version from 1.0. A new field with a default needs a
+higher minor version.
+
 ---
 
 ## Writing a new task

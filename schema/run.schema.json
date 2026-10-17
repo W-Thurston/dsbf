@@ -1,0 +1,2448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Action": {
+      "additionalProperties": false,
+      "description": "A step a person or an agent can take, in a form a program can read.",
+      "properties": {
+        "action": {
+          "description": "The verb, for example `transform`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "columns": {
+          "default": [],
+          "description": "The columns the step applies to; empty for the dataset.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example `log1p`."
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the step applies, in words."
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the step does, in words."
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Anything else the step needs, for example `from_dtype`.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "action",
+        "columns",
+        "method",
+        "condition",
+        "detail",
+        "params"
+      ],
+      "title": "Action",
+      "type": "object"
+    },
+    "ActionKind": {
+      "description": "What a rule does when it matches.",
+      "enum": [
+        "annotate",
+        "warn",
+        "fail",
+        "notify"
+      ],
+      "title": "ActionKind",
+      "type": "string"
+    },
+    "AssumptionCheck": {
+      "additionalProperties": false,
+      "description": "Whether a statistical assumption behind a result held.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "satisfied": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the assumption could not be assessed."
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "satisfied",
+        "method",
+        "detail"
+      ],
+      "title": "AssumptionCheck",
+      "type": "object"
+    },
+    "BooleanProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "boolean",
+          "default": "boolean",
+          "type": "string"
+        },
+        "true_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "false_count": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type",
+        "true_count",
+        "false_count"
+      ],
+      "title": "BooleanProfile",
+      "type": "object"
+    },
+    "CategoricalProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "categorical",
+          "default": "categorical",
+          "type": "string"
+        },
+        "top_values": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ValueCount"
+          },
+          "type": "array"
+        },
+        "lengths": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "empty_strings": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type",
+        "top_values",
+        "lengths",
+        "empty_strings"
+      ],
+      "title": "CategoricalProfile",
+      "type": "object"
+    },
+    "CheckResult": {
+      "additionalProperties": false,
+      "description": "What running one check produced.",
+      "properties": {
+        "check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "notes": {
+          "default": [],
+          "description": "Always present when the status is not `ok`.",
+          "items": {
+            "$ref": "#/$defs/Note"
+          },
+          "type": "array"
+        },
+        "findings": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "type": "array"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The check's own output; bulky parts live elsewhere."
+        },
+        "non_finite_outputs": {
+          "default": [],
+          "description": "Keys of `output` holding a NaN, infinite or NaT value, now null.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "timing": {
+          "$ref": "#/$defs/Timing"
+        },
+        "params": {
+          "additionalProperties": true,
+          "description": "The resolved parameters, for reproducibility.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "check_id",
+        "check_version",
+        "status",
+        "notes",
+        "findings",
+        "output",
+        "non_finite_outputs",
+        "timing",
+        "params"
+      ],
+      "title": "CheckResult",
+      "type": "object"
+    },
+    "CheckStatus": {
+      "description": "How one check's execution ended. Every status but `ok` comes with a note.",
+      "enum": [
+        "ok",
+        "not_applicable",
+        "unavailable",
+        "skipped",
+        "error",
+        "timeout"
+      ],
+      "title": "CheckStatus",
+      "type": "string"
+    },
+    "ColumnCounts": {
+      "additionalProperties": false,
+      "description": "How many rows a column has, how many are null, and how many values differ.",
+      "properties": {
+        "rows": {
+          "description": "Rows profiled, after any sampling.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "nulls": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "distinct": {
+          "description": "Distinct non-null values.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "distinct_exact": {
+          "default": true,
+          "description": "False when `distinct` is an estimate.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rows",
+        "nulls",
+        "distinct",
+        "distinct_exact"
+      ],
+      "title": "ColumnCounts",
+      "type": "object"
+    },
+    "Confidence": {
+      "description": "How firmly a check stands behind a finding; each check caps its own.",
+      "enum": [
+        "low",
+        "moderate",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "ConfidenceComparison": {
+      "additionalProperties": false,
+      "description": "Compare a finding's confidence, for example ``>=moderate``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "$ref": "#/$defs/Confidence"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "title": "ConfidenceComparison",
+      "type": "object"
+    },
+    "DatasetManifest": {
+      "additionalProperties": false,
+      "description": "The identity of the data a run looked at.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "modality": {
+          "const": "tabular",
+          "default": "tabular",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceRef"
+        },
+        "fingerprint": {
+          "description": "A content hash: equal data, equal fingerprint.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "n_rows": {
+          "description": "Rows in the source, before any sampling.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "n_columns": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sampling": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SamplingInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Absent when the whole dataset was used."
+        }
+      },
+      "required": [
+        "name",
+        "modality",
+        "source",
+        "fingerprint",
+        "n_rows",
+        "n_columns",
+        "sampling"
+      ],
+      "title": "DatasetManifest",
+      "type": "object"
+    },
+    "DatasetProfile": {
+      "additionalProperties": false,
+      "description": "The profile of a whole dataset: its shape and one profile per column.",
+      "properties": {
+        "n_rows": {
+          "description": "Rows profiled, after any sampling.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "approx_memory_bytes": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "duplicate_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows equal to an earlier row; None if not computed."
+        },
+        "rows_with_any_null": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "columns": {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "boolean": "#/$defs/BooleanProfile",
+                "categorical": "#/$defs/CategoricalProfile",
+                "datetime": "#/$defs/DatetimeProfile",
+                "identifier": "#/$defs/IdentifierProfile",
+                "numeric": "#/$defs/NumericProfile",
+                "text": "#/$defs/TextProfile",
+                "unknown": "#/$defs/UnknownProfile"
+              },
+              "propertyName": "semantic_type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/NumericProfile"
+              },
+              {
+                "$ref": "#/$defs/CategoricalProfile"
+              },
+              {
+                "$ref": "#/$defs/BooleanProfile"
+              },
+              {
+                "$ref": "#/$defs/DatetimeProfile"
+              },
+              {
+                "$ref": "#/$defs/TextProfile"
+              },
+              {
+                "$ref": "#/$defs/IdentifierProfile"
+              },
+              {
+                "$ref": "#/$defs/UnknownProfile"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "n_rows",
+        "approx_memory_bytes",
+        "duplicate_rows",
+        "rows_with_any_null",
+        "columns"
+      ],
+      "title": "DatasetProfile",
+      "type": "object"
+    },
+    "DatetimeProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "datetime",
+          "default": "datetime",
+          "type": "string"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "max": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "timezone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "inferred_frequency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "An offset alias such as `D`, when the spacing is regular."
+        },
+        "n_gaps": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "largest_gap_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type",
+        "min",
+        "max",
+        "timezone",
+        "inferred_frequency",
+        "n_gaps",
+        "largest_gap_seconds"
+      ],
+      "title": "DatetimeProfile",
+      "type": "object"
+    },
+    "Dimension": {
+      "description": "The aspect of the data a finding speaks to.\n\nThe first five are the quality dimensions; the rest describe the shape of\nthe data.",
+      "enum": [
+        "completeness",
+        "validity",
+        "usability",
+        "redundancy",
+        "leakage",
+        "distribution",
+        "relationship",
+        "temporal"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "The numbers behind a finding: what was measured, on how much data, and how.",
+      "properties": {
+        "metrics": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "non_finite_metrics": {
+          "default": [],
+          "description": "Metrics whose value was NaN, infinite or NaT, so they are null in `metrics`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "n_used": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "n_total": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "method": {
+          "description": "For example `spearman_r` or `vif`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "assumptions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssumptionCheck"
+          },
+          "type": "array"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "sampled": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SamplingInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "details_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pointer to bulky evidence, fetched on demand."
+        }
+      },
+      "required": [
+        "metrics",
+        "non_finite_metrics",
+        "n_used",
+        "n_total",
+        "method",
+        "assumptions",
+        "interval",
+        "sampled",
+        "details_ref"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "One statement about the data: what, where, how much, and why to believe it.",
+      "properties": {
+        "id": {
+          "description": "Stable across runs for the same check, subject and code.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "code": {
+          "description": "Machine-readable kind, for example `high_null_rate`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "dimension": {
+          "$ref": "#/$defs/Dimension"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "description": "Self-contained, with the observed values.",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "guidance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Guidance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "check_id",
+        "check_version",
+        "code",
+        "subject",
+        "dimension",
+        "severity",
+        "confidence",
+        "title",
+        "message",
+        "evidence",
+        "guidance",
+        "tags"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "Guidance": {
+      "additionalProperties": false,
+      "description": "What to do about a finding, from one point of view.",
+      "properties": {
+        "phase": {
+          "description": "`eda` describes the data as it is; `ml` says what to do before modelling.",
+          "enum": [
+            "eda",
+            "ml"
+          ],
+          "type": "string"
+        },
+        "actions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "phase",
+        "actions"
+      ],
+      "title": "Guidance",
+      "type": "object"
+    },
+    "HealthIssue": {
+      "additionalProperties": false,
+      "description": "One check that did not complete normally, and why.",
+      "properties": {
+        "check_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/CheckStatus"
+        },
+        "message": {
+          "type": "string"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "blocked_by": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "check_id",
+        "status",
+        "message",
+        "hint",
+        "blocked_by"
+      ],
+      "title": "HealthIssue",
+      "type": "object"
+    },
+    "Histogram": {
+      "additionalProperties": false,
+      "description": "Equal-width bins over a numeric column, with the rule that chose them.",
+      "properties": {
+        "edges": {
+          "description": "One more edge than bins.",
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "counts": {
+          "description": "Values per bin; the last is closed.",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "rule": {
+          "description": "How the number of bins was chosen.",
+          "enum": [
+            "fd",
+            "sturges",
+            "scott",
+            "sqrt",
+            "fixed"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "edges",
+        "counts",
+        "rule"
+      ],
+      "title": "Histogram",
+      "type": "object"
+    },
+    "IdentifierProfile": {
+      "additionalProperties": false,
+      "description": "A column that names rows (for example a key); only the common fields apply.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "identifier",
+          "default": "identifier",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type"
+      ],
+      "title": "IdentifierProfile",
+      "type": "object"
+    },
+    "Interval": {
+      "additionalProperties": false,
+      "description": "A confidence interval for a statistic.",
+      "properties": {
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "level": {
+          "description": "Coverage, for example 0.95.",
+          "exclusiveMaximum": 1,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "low",
+        "high",
+        "level",
+        "method"
+      ],
+      "title": "Interval",
+      "type": "object"
+    },
+    "LengthStats": {
+      "additionalProperties": false,
+      "description": "Lengths, in characters, of a column's non-null strings.",
+      "properties": {
+        "min": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mean": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "mean"
+      ],
+      "title": "LengthStats",
+      "type": "object"
+    },
+    "Matcher": {
+      "additionalProperties": false,
+      "description": "The ``when`` of a rule: every key given must hold, and at least one is needed.\n\nFinding keys select findings; ``health.status`` selects checks that ended in that\nstatus and may be narrowed with ``check`` only. A bare value means equality;\n``severity``, ``confidence`` and ``metric`` values may carry an operator\n(``\">=error\"``, ``\">0.3\"``), which must be quoted in YAML.",
+      "properties": {
+        "dimension": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dimension"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "code": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A finding's machine-readable kind, for example `high_null_rate`."
+        },
+        "check": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The id of the check concerned."
+        },
+        "column": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A column the finding's subject names; a pair matches on either."
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A tag the finding carries."
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SeverityComparison"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConfidenceComparison"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/MetricComparison"
+              },
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence metric name to comparison; every entry must hold."
+        },
+        "new_since": {
+          "anyOf": [
+            {
+              "const": "previous_run",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only findings absent from the previous run; needs one to compare."
+        },
+        "health.status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only checks that ended in this status."
+        }
+      },
+      "required": [
+        "dimension",
+        "code",
+        "check",
+        "column",
+        "tag",
+        "severity",
+        "confidence",
+        "metric",
+        "new_since",
+        "health.status"
+      ],
+      "title": "Matcher",
+      "type": "object"
+    },
+    "MetricComparison": {
+      "additionalProperties": false,
+      "description": "Compare one number in a finding's evidence, for example ``>0.3``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "title": "MetricComparison",
+      "type": "object"
+    },
+    "Note": {
+      "additionalProperties": false,
+      "description": "An operational message: why a check was skipped, failed or degraded.",
+      "properties": {
+        "code": {
+          "description": "Machine-readable, for example `dependency_failed`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "message": {
+          "description": "What happened, in a sentence.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "default": "info"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the reader can do about it."
+        },
+        "blocked_by": {
+          "default": [],
+          "description": "The checks whose outcome caused a skip.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "exception_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Technical detail, for example a traceback summary."
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "severity",
+        "hint",
+        "blocked_by",
+        "exception_type",
+        "detail"
+      ],
+      "title": "Note",
+      "type": "object"
+    },
+    "NumericProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "numeric",
+          "default": "numeric",
+          "type": "string"
+        },
+        "zeros": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "non_finite": {
+          "default": 0,
+          "description": "NaN and infinite values, counted apart from nulls.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "stats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/NumericStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when there is no finite value to summarise."
+        },
+        "histogram": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Histogram"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type",
+        "zeros",
+        "non_finite",
+        "stats",
+        "histogram"
+      ],
+      "title": "NumericProfile",
+      "type": "object"
+    },
+    "NumericStats": {
+      "additionalProperties": false,
+      "description": "Summary statistics of a numeric column's finite, non-null values.",
+      "properties": {
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "std": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "skewness": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kurtosis": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "non_finite_stats": {
+          "default": [],
+          "description": "Statistics that were NaN or infinite, so they are null here.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "quantiles": {
+          "default": [],
+          "description": "In increasing order of `p`.",
+          "items": {
+            "$ref": "#/$defs/Quantile"
+          },
+          "type": "array"
+        },
+        "quantile_method": {
+          "anyOf": [
+            {
+              "enum": [
+                "exact",
+                "tdigest"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "mean",
+        "std",
+        "skewness",
+        "kurtosis",
+        "non_finite_stats",
+        "quantiles",
+        "quantile_method"
+      ],
+      "title": "NumericStats",
+      "type": "object"
+    },
+    "Operator": {
+      "description": "How a comparison relates the observed value to the one in the rule.",
+      "enum": [
+        "==",
+        "!=",
+        ">=",
+        ">",
+        "<=",
+        "<"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PackRef": {
+      "additionalProperties": false,
+      "description": "A pack of checks, at the version the plan used.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "PackRef",
+      "type": "object"
+    },
+    "PlanManifest": {
+      "additionalProperties": false,
+      "description": "The checks a run was asked to perform, and what produced the plan.",
+      "properties": {
+        "dsbf_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "depth": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The depth preset, if any."
+        },
+        "packs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PackRef"
+          },
+          "type": "array"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PlannedCheck"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "dsbf_version",
+        "depth",
+        "packs",
+        "checks"
+      ],
+      "title": "PlanManifest",
+      "type": "object"
+    },
+    "PlannedCheck": {
+      "additionalProperties": false,
+      "description": "One check the plan includes, with the parameters it will run under.",
+      "properties": {
+        "check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "pack": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "params": {
+          "additionalProperties": true,
+          "description": "The resolved parameters.",
+          "type": "object"
+        },
+        "depends_on": {
+          "default": [],
+          "description": "The planned checks whose results this one needs.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "check_id",
+        "check_version",
+        "pack",
+        "params",
+        "depends_on"
+      ],
+      "title": "PlannedCheck",
+      "type": "object"
+    },
+    "PolicyAction": {
+      "additionalProperties": false,
+      "description": "One step a matched rule takes. Only `fail` affects the exit code.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ActionKind"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where `notify` sends it, as `scheme:destination`."
+        }
+      },
+      "required": [
+        "kind",
+        "target"
+      ],
+      "title": "PolicyAction",
+      "type": "object"
+    },
+    "PolicyOutcome": {
+      "additionalProperties": false,
+      "description": "Why a pipeline was or was not failed: every rule and what it matched.",
+      "properties": {
+        "rules": {
+          "description": "One entry per policy rule, in policy order, fired or not.",
+          "items": {
+            "$ref": "#/$defs/RuleOutcome"
+          },
+          "type": "array"
+        },
+        "failed": {
+          "description": "A triggered rule has a `fail` action.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rules",
+        "failed"
+      ],
+      "title": "PolicyOutcome",
+      "type": "object"
+    },
+    "Quantile": {
+      "additionalProperties": false,
+      "description": "The value below which a share ``p`` of the non-null values fall.",
+      "properties": {
+        "p": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "p",
+        "value"
+      ],
+      "title": "Quantile",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "description": "When findings or checks match, take these actions.",
+      "properties": {
+        "name": {
+          "description": "Unique within the policy.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "when": {
+          "$ref": "#/$defs/Matcher"
+        },
+        "then": {
+          "default": [
+            {
+              "kind": "annotate",
+              "target": null
+            }
+          ],
+          "description": "One action or a list. Written `fail`, `{notify: scheme:destination}` or a list of those; stored as `{kind, target}` entries.",
+          "items": {
+            "$ref": "#/$defs/PolicyAction"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "when",
+        "then"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "RuleOutcome": {
+      "additionalProperties": false,
+      "description": "What one rule matched in a run.",
+      "properties": {
+        "rule": {
+          "$ref": "#/$defs/Rule"
+        },
+        "finding_ids": {
+          "default": [],
+          "description": "The findings a finding rule matched.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "check_ids": {
+          "default": [],
+          "description": "The checks a health rule matched.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "rule",
+        "finding_ids",
+        "check_ids"
+      ],
+      "title": "RuleOutcome",
+      "type": "object"
+    },
+    "RunHealth": {
+      "additionalProperties": false,
+      "description": "Counts and reasons by status, so a failure is never found by reading logs.",
+      "properties": {
+        "counts": {
+          "$ref": "#/$defs/StatusCounts"
+        },
+        "issues": {
+          "default": [],
+          "description": "Checks that errored, timed out, were skipped or were unavailable.",
+          "items": {
+            "$ref": "#/$defs/HealthIssue"
+          },
+          "type": "array"
+        },
+        "findings_at_warn_or_above": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "counts",
+        "issues",
+        "findings_at_warn_or_above"
+      ],
+      "title": "RunHealth",
+      "type": "object"
+    },
+    "SamplingInfo": {
+      "additionalProperties": false,
+      "description": "How a sample was drawn from the data. No sampling is the absence of this.",
+      "properties": {
+        "strategy": {
+          "enum": [
+            "head",
+            "random",
+            "stratified"
+          ],
+          "type": "string"
+        },
+        "original_rows": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sampled_rows": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stratify_by": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "strategy",
+        "original_rows",
+        "sampled_rows",
+        "seed",
+        "stratify_by"
+      ],
+      "title": "SamplingInfo",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How much a finding matters, from informational to blocking.",
+      "enum": [
+        "info",
+        "notice",
+        "warn",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SeverityComparison": {
+      "additionalProperties": false,
+      "description": "Compare a finding's severity, for example ``>=error``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "op",
+        "value"
+      ],
+      "title": "SeverityComparison",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "description": "Where the data came from. An in-memory frame has no location or format.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "dataframe",
+            "file",
+            "glob",
+            "sql",
+            "table"
+          ],
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A path, glob, URL or table name."
+        },
+        "format": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example `csv`."
+        }
+      },
+      "required": [
+        "kind",
+        "location",
+        "format"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    },
+    "StatusCounts": {
+      "additionalProperties": false,
+      "description": "How many checks ended in each status.",
+      "properties": {
+        "ok": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "not_applicable": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "unavailable": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "skipped": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "error": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "timeout": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ok",
+        "not_applicable",
+        "unavailable",
+        "skipped",
+        "error",
+        "timeout"
+      ],
+      "title": "StatusCounts",
+      "type": "object"
+    },
+    "Subject": {
+      "additionalProperties": false,
+      "description": "The thing a finding or result refers to.\n\nColumns are kept as an ordered tuple of opaque strings, never joined into a\nsingle key, so names containing ``|``, brackets, unicode or nothing at all\nstay unambiguous.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "dataset",
+            "column",
+            "column_pair",
+            "column_group",
+            "row_set"
+          ],
+          "type": "string"
+        },
+        "columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "columns"
+      ],
+      "title": "Subject",
+      "type": "object"
+    },
+    "TextProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "text",
+          "default": "text",
+          "type": "string"
+        },
+        "top_values": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ValueCount"
+          },
+          "type": "array"
+        },
+        "lengths": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LengthStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "avg_word_length": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "empty_strings": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type",
+        "top_values",
+        "lengths",
+        "avg_word_length",
+        "empty_strings"
+      ],
+      "title": "TextProfile",
+      "type": "object"
+    },
+    "Timing": {
+      "additionalProperties": false,
+      "description": "Wall and CPU time and memory for one check, as measured by the executor.",
+      "properties": {
+        "wall_seconds": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "cpu_seconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "peak_memory_bytes": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Peak memory by sampling; approximate."
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "wall_seconds",
+        "cpu_seconds",
+        "peak_memory_bytes",
+        "started_at"
+      ],
+      "title": "Timing",
+      "type": "object"
+    },
+    "UnknownProfile": {
+      "additionalProperties": false,
+      "description": "A column whose meaning could not be inferred.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "description": "Zero-based place in the dataset.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "physical_dtype": {
+          "description": "The storage type, as a string.",
+          "type": "string"
+        },
+        "semantic_confidence": {
+          "$ref": "#/$defs/Confidence",
+          "default": "high",
+          "description": "How firmly the semantic type is held."
+        },
+        "semantic_sample_rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows the semantic type was inferred from."
+        },
+        "counts": {
+          "$ref": "#/$defs/ColumnCounts"
+        },
+        "semantic_type": {
+          "const": "unknown",
+          "default": "unknown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "position",
+        "physical_dtype",
+        "semantic_confidence",
+        "semantic_sample_rows",
+        "counts",
+        "semantic_type"
+      ],
+      "title": "UnknownProfile",
+      "type": "object"
+    },
+    "ValueCount": {
+      "additionalProperties": false,
+      "description": "One value and how many rows hold it.",
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "count": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "value",
+        "count"
+      ],
+      "title": "ValueCount",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Everything one execution produced, in one serialisable object.",
+  "properties": {
+    "schema_version": {
+      "default": "0.1.0",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "type": "string"
+    },
+    "started_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "finished_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "dataset": {
+      "$ref": "#/$defs/DatasetManifest"
+    },
+    "plan": {
+      "$ref": "#/$defs/PlanManifest"
+    },
+    "profile": {
+      "$ref": "#/$defs/DatasetProfile"
+    },
+    "results": {
+      "additionalProperties": {
+        "$ref": "#/$defs/CheckResult"
+      },
+      "description": "One result per planned check, keyed by check id.",
+      "type": "object"
+    },
+    "health": {
+      "$ref": "#/$defs/RunHealth"
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyOutcome"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the user's policy decided; absent when none was applied."
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "started_at",
+    "finished_at",
+    "dataset",
+    "plan",
+    "profile",
+    "results",
+    "health",
+    "policy"
+  ],
+  "title": "Run",
+  "type": "object"
+}

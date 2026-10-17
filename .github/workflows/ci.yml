@@ -156,3 +156,46 @@ jobs:
 
       - name: Unit tests
         run: pnpm test:run
+
+  # The published contracts: the checked-in JSON Schema and TypeScript types must be
+  # what the models export, and a pull request must not break the schema on its base
+  # branch without raising SCHEMA_VERSION (dsbf/model/run.py). Full history, so the
+  # base branch is there to compare with.
+  contracts:
+    name: Contracts
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+          pnpm --dir frontend install --frozen-lockfile
+
+      - name: Schema and types are up to date
+        run: uv run --no-sync dsbf schema export --types frontend/src/generated/run.d.ts --check
+
+      - name: Schema change is announced by its version
+        if: github.event_name == 'pull_request'
+        run: uv run --no-sync dsbf schema check --base origin/${{ github.base_ref }}

@@ -90,6 +90,19 @@ def test_the_run_derives_its_findings_and_health_from_the_results():
     assert run.health.counts.error == 1
 
 
+def test_findings_are_derived_not_serialised():
+    finding = make_finding(code="only")
+    run = make_run([make_result(findings=(finding,))])
+
+    data = run.model_dump(mode="json")
+
+    assert "findings" not in data
+    assert data["results"]["summarize_nulls"]["findings"][0]["code"] == "only"
+    assert run.findings == (finding,)
+    assert round_trip(run) == run
+    assert round_trip(run).findings == run.findings
+
+
 def test_equal_severities_are_ordered_by_check_then_id():
     first = make_finding(check_id="a_check", code="z")
     second = make_finding(check_id="b_check", code="a")
@@ -154,11 +167,11 @@ def test_a_minor_schema_version_is_readable():
     assert make_run(schema_version="0.9.3").schema_version == "0.9.3"
 
 
-def test_findings_and_health_cannot_be_edited_out_of_step_with_the_results():
+def test_health_cannot_be_edited_out_of_step_with_the_results():
     run = make_run()
     data = run.model_dump(mode="json")
 
-    with pytest.raises(ValidationError, match="highest severity first"):
+    with pytest.raises(ValidationError, match="findings"):
         Run.model_validate({**data, "findings": []})
     with pytest.raises(ValidationError, match="health does not match"):
         Run.model_validate(
