@@ -1,16 +1,16 @@
 # dsbf/model/evidence.py
 """The numbers behind a finding, and where they came from."""
 
-import math
-from datetime import date, datetime
 from typing import Any, Literal, Self
 
 from pydantic import Field, model_validator
 
-from dsbf.model.base import Contract, FiniteFloat
+from dsbf.model.base import Contract, FiniteFloat, Scalar
+from dsbf.model.scrub import json_safe
 
-# What a metric may hold. `bool` comes first so a flag isn't read as a number.
-Metric = bool | int | FiniteFloat | str | None
+# What a metric may hold: a scalar, or one level of list or mapping of scalars
+# (for example the methods that flagged a column, or a count per type).
+Metric = Scalar | tuple[Scalar, ...] | dict[str, Scalar]
 
 
 class Interval(Contract):
@@ -63,22 +63,6 @@ class SamplingInfo(Contract):
         return self
 
 
-def _normalise_metric(value: Any) -> tuple[Any, bool]:
-    """Return the JSON-safe form of a metric and whether it was undefined."""
-    item = getattr(value, "item", None)
-    if callable(item) and not isinstance(value, (bool, int, float, str, datetime)):
-        value = item()  # NumPy scalar -> Python scalar
-    if isinstance(value, datetime):
-        if value != value:  # NaT
-            return None, True
-        return value.isoformat(), False
-    if isinstance(value, date):
-        return value.isoformat(), False
-    if isinstance(value, float) and not math.isfinite(value):
-        return None, True
-    return value, False
-
-
 class Evidence(Contract):
     """The numbers behind a finding: what was measured, on how much data, and how."""
 
@@ -106,14 +90,15 @@ class Evidence(Contract):
         """Make metric values JSON-safe, flagging the undefined ones (never raising).
 
         NumPy scalars become Python scalars, dates become ISO 8601 strings, and
-        NaN, infinity and NaT become null with the metric's name recorded.
+        NaN, infinity and NaT (also inside a list or mapping) become null with the
+        metric's name recorded.
         """
         if not isinstance(data, dict) or not isinstance(data.get("metrics"), dict):
             return data
         metrics: dict[Any, Any] = {}
         undefined = set(data.get("non_finite_metrics") or ())
         for name, value in data["metrics"].items():
-            metrics[name], is_undefined = _normalise_metric(value)
+            metrics[name], is_undefined = json_safe(value)
             if is_undefined:
                 undefined.add(name)
         return {

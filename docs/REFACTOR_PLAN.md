@@ -150,8 +150,9 @@ class Subject(BaseModel):  # replaces "col1|col2" string keys (F-10)
 
 class Evidence(BaseModel):
     metrics: dict[
-        str, bool | int | float | str | None
-    ]  # finite floats only; NaN/inf/NaT → None, named in non_finite_metrics (F-36)
+        str, Scalar | tuple[Scalar, ...] | dict[str, Scalar]
+    ]  # Scalar = bool | int | float | str | None; finite floats only (also inside a
+    # list or mapping); NaN/inf/NaT → None, named in non_finite_metrics (F-36)
     non_finite_metrics: tuple[str, ...] = ()
     n_used: int
     n_total: int
@@ -164,39 +165,69 @@ class Evidence(BaseModel):
     details_ref: str | None = None  # pointer to bulky evidence, fetched lazily (F-35)
 
 
+class Action(BaseModel):  # a step, readable by a program (today's guidance actions)
+    action: str  # the verb, e.g. "transform"
+    columns: tuple[
+        str, ...
+    ] = ()  # the columns it applies to; may differ from the finding's
+    method: str | None = None
+    condition: str | None = None
+    detail: str | None = None
+    params: dict[str, Scalar] = {}  # anything else, e.g. from_dtype
+
+
+class Guidance(BaseModel):
+    phase: Literal["eda", "ml"]  # "eda" describes the data; "ml" says what to do first
+    actions: tuple[Action, ...] = ()
+
+
 class Finding(BaseModel):
-    id: str  # stable hash(check_id, subject, code) → diffable across runs
+    id: str  # stable hash(check_id, subject kind and columns, code) → diffable across runs
     check_id: str
     check_version: str
     code: str  # e.g. "high_null_rate", "near_duplicate_rows"
     subject: Subject
-    dimension: Dimension  # completeness | validity | usability | redundancy | leakage | distribution | relationship | temporal | ...
-    severity: Literal["info", "notice", "warn", "error"]
-    confidence: Literal[
-        "low", "moderate", "high"
-    ]  # capped per check (hedged-language principle)
+    dimension: Dimension  # completeness | validity | usability | redundancy | leakage | distribution | relationship | temporal
+    severity: Severity  # info < notice < warn < error
+    confidence: Confidence  # low < moderate < high; capped per check (hedged-language principle)
     title: str
     message: str  # self-contained, includes the observed values
     evidence: Evidence
-    guidance: (
-        Guidance | None
-    )  # eda / ml blurbs + structured actions (today's add_guidance)
-    tags: list[str] = []
+    guidance: Guidance | None  # one phase of advice (today's add_guidance); a positive
+    # legacy "good" level is Severity.INFO plus the tag "good"
+    tags: tuple[str, ...] = ()
+
+
+class Note(BaseModel):  # an operational message
+    code: str
+    message: str
+    severity: Severity = Severity.INFO
+    hint: str | None = None  # what the reader can do
+    blocked_by: tuple[str, ...] = ()  # the checks that caused a skip
+    exception_type: str | None = None
+    detail: str | None = None
 
 
 class CheckResult(BaseModel):
     check_id: str
     check_version: str
-    status: Literal[
-        "ok", "not_applicable", "skipped", "unavailable", "error", "timeout"
-    ]
-    notes: list[Note] = []  # always explains non-ok statuses (R2, F-20)
-    findings: list[Finding] = []
+    status: CheckStatus  # ok | not_applicable | unavailable | skipped | error | timeout
+    notes: tuple[Note, ...] = ()  # required when status != ok (R2, F-20)
+    findings: tuple[Finding, ...] = ()  # only when status == ok
     output: dict | None = (
         None  # typed per check via output model; bulky parts → artifacts
     )
+    non_finite_outputs: tuple[str, ...] = ()  # keys of output that held NaN/inf/NaT
     timing: Timing
-    params: dict  # resolved parameters, recorded for reproducibility
+    params: dict  # resolved parameters, recorded for reproducibility (finite only)
+
+
+class RunHealth(BaseModel):  # derived from the results by RunHealth.from_results
+    counts: StatusCounts  # one integer per status
+    issues: tuple[
+        HealthIssue, ...
+    ]  # error, timeout, skipped, unavailable; with reasons
+    findings_at_warn_or_above: int
 
 
 class Run(BaseModel):
@@ -206,7 +237,7 @@ class Run(BaseModel):
     plan: PlanManifest  # checks, versions, params, packs, dsbf version (F-18)
     profile: DatasetProfile
     results: dict[str, CheckResult]
-    findings: list[Finding]  # flattened, ordered by severity
+    findings: tuple[Finding, ...]  # flattened, ordered by severity
     health: RunHealth  # counts and reasons by status: the "never read logs" summary
     policy: PolicyOutcome | None
 ```

@@ -135,9 +135,36 @@ def test_metrics_are_json_serialisable_for_every_supported_value():
     json.dumps(result.model_dump(mode="json"), allow_nan=False)
 
 
-def test_a_metric_that_is_not_a_scalar_is_rejected():
+def test_a_metric_may_be_a_list_or_a_mapping_of_scalars():
+    result = evidence(
+        metrics={
+            "methods_flagging": ["iqr", "zscore"],
+            "type_counts": {"float": 688, "str": 203},
+        }
+    )
+
+    assert result.metrics["methods_flagging"] == ("iqr", "zscore")
+    assert result.metrics["type_counts"] == {"float": 688, "str": 203}
+    assert Evidence.model_validate_json(result.model_dump_json()) == result
+
+
+def test_an_undefined_number_inside_a_list_or_mapping_is_nulled_and_named():
+    result = evidence(
+        metrics={"values": [1.0, float("nan")], "by_group": {"a": float("inf"), "b": 2}}
+    )
+
+    assert result.metrics["values"] == (1.0, None)
+    assert result.metrics["by_group"] == {"a": None, "b": 2}
+    assert result.non_finite_metrics == ("by_group", "values")
+    strict_loads(result.model_dump_json())
+
+
+@pytest.mark.parametrize(
+    "value", [[[1]], {"a": {"b": 1}}, [{"a": 1}], {"a": [1]}, object(), {1: 2}]
+)
+def test_a_metric_that_is_nested_deeper_or_not_json_is_rejected(value):
     with pytest.raises(ValidationError):
-        evidence(metrics={"values": [1, 2, 3]})
+        evidence(metrics={"value": value})
 
 
 def test_the_metric_name_may_be_awkward():

@@ -29,7 +29,22 @@ def test_importing_the_contracts_pulls_in_no_analysis_library():
 
 @pytest.mark.parametrize(
     "name",
-    ["Subject", "Evidence", "Interval", "AssumptionCheck", "SamplingInfo", "Timing"],
+    [
+        "Subject",
+        "Evidence",
+        "Interval",
+        "AssumptionCheck",
+        "SamplingInfo",
+        "Timing",
+        "Action",
+        "Guidance",
+        "Finding",
+        "Note",
+        "CheckResult",
+        "StatusCounts",
+        "HealthIssue",
+        "RunHealth",
+    ],
 )
 def test_each_model_exports_json_schema(name):
     schema = getattr(model, name).model_json_schema()
@@ -41,6 +56,11 @@ def test_each_model_exports_json_schema(name):
 def test_the_vocabularies_export_as_enums():
     from pydantic import TypeAdapter
 
-    for name, expected in [("Severity", 4), ("Confidence", 3), ("Dimension", 8)]:
+    for name, expected in [
+        ("Severity", 4),
+        ("Confidence", 3),
+        ("Dimension", 8),
+        ("CheckStatus", 6),
+    ]:
         schema = TypeAdapter(getattr(model, name)).json_schema()
         assert len(schema["enum"]) == expected
