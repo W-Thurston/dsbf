@@ -137,7 +137,7 @@ results = EDA(df).run()
 uv run uvicorn dsbf.api.main:app --reload
 
 # In a separate terminal, start the Vue dev server
-cd dsbf/dashboard/frontend && npm install && npm run dev
+cd src/dsbf/dashboard/frontend && npm install && npm run dev
 ```
 
 ---
@@ -184,7 +184,7 @@ Each run writes to a timestamped directory under `dsbf/outputs/` (relative to th
 
 ## Configuration
 
-`dsbf/config/default_config.yaml` holds every option. A few of them, with their default values:
+`src/dsbf/config/default_config.yaml` holds every option. A few of them, with their default values:
 
 ```yaml
 metadata:
@@ -253,7 +253,7 @@ task_selection:
   include_domains: [core, my_domain]
 ```
 
-The built-in `core` group is loaded from `dsbf/custom_plugins/core`. `dsbf/custom_plugins/example_plugin_domain/` holds a minimal example.
+The built-in `core` group is loaded from `src/dsbf/custom_plugins/core`. `src/dsbf/custom_plugins/example_plugin_domain/` holds a minimal example.
 
 ---
 

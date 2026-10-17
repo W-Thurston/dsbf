@@ -47,8 +47,8 @@ tests/datasets/
 
 # ── Frontend build artefacts ──────────────────────────────────────────────────
 node_modules/
-dsbf/dashboard/frontend/dist/
-dsbf/dashboard/frontend/.vite/
+src/dsbf/dashboard/frontend/dist/
+src/dsbf/dashboard/frontend/.vite/
 .npm/
 
 # ── OS / editor ───────────────────────────────────────────────────────────────

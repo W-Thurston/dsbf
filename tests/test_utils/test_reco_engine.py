@@ -41,7 +41,7 @@ def test_packaged_library_loads_from_any_working_directory(
     elsewhere = tmp_path / "elsewhere"
     elsewhere.mkdir()
     monkeypatch.chdir(elsewhere)
-    assert not Path("dsbf/static_metadata").exists()
+    assert not Path("src/dsbf/static_metadata").exists()
 
     tip = reco_engine.get_recommendation_tip(
         "detect_high_cardinality", {"n_unique": 99}

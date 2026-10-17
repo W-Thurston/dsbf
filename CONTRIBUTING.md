@@ -92,7 +92,7 @@ from `Path(dsbf.__file__)` or `tmp_path`.
 ## Project structure
 
 ```
-dsbf/
+src/dsbf/
 ├── core/               # BaseTask, TaskResult, execution graph
 ├── eda/
 │   ├── tasks/          # All EDA task implementations (one file per task)
@@ -101,7 +101,9 @@ dsbf/
 ├── config/
 │   ├── default_config.yaml
 │   └── task_metadata.yaml
-└── outputs/            # Generated at runtime — gitignored
+└── dashboard/frontend/ # Vue 3 + Vite app
+
+dsbf/outputs/           # Generated at runtime — gitignored
 
 tests/
 ├── generators/         # Dataset generators for the validation suite
@@ -158,10 +160,10 @@ Tailwind utility classes where applicable; custom CSS in scoped `<style>` blocks
 
 ## Writing a new task
 
-Every task is a Python class in `dsbf/eda/tasks/`. Here is the minimal template:
+Every task is a Python class in `src/dsbf/eda/tasks/`. Here is the minimal template:
 
 ```python
-# dsbf/eda/tasks/my_new_task.py
+# src/dsbf/eda/tasks/my_new_task.py
 
 from dsbf.core.base_task import BaseTask
 from dsbf.eda.task_registry import register_task
@@ -232,7 +234,7 @@ output, not an error. The all-categorical and single-column validation datasets
 specifically test this.
 
 **Register in `task_metadata.yaml`** — after writing the task, add an entry to
-`dsbf/config/task_metadata.yaml` so it appears in the task registry.
+`src/dsbf/config/task_metadata.yaml` so it appears in the task registry.
 
 **Write a unit test** — add `tests/unit/test_my_new_task.py` covering at minimum:
 the happy path, the zero-eligible-columns case, and any numerical edge cases.

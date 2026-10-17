@@ -63,7 +63,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - "Dependabot backlog merged" took three units: U0-04, U0-16 and U0-17. U0-16 was widened on 2026-10-16 from the security alerts to the whole backlog, so Phase 1 starts with no open PR. It took #34, #38, #42, #43 and #45, and closed #46 (polars 2) and #47 (pandas 3) as deferred. Dependabot then raised four more PRs as soon as #59 merged, so U0-17 took #60 (pandas 2.3.3, polars 1.44.2; its pyrefly baseline lost one entry the new typings fixed), #61 (ipykernel 7) and #63 (rich 15), all on green CI with golden 10 of 10, and closed #62 (plotly 7, which fails at import and is deleted with the legacy plotting in U4-E).
   - The golden suite showed that two upgrades in #43 change results, so they stay behind caps: `statsmodels <0.15` (VIF includes the intercept) and `scikit-learn <1.8` (`GaussianMixture` log-likelihood on discrete columns). With `pandas <3`, `polars <2` and `plotly <7` they are listed under "Dependency upgrades" at the top of this file, each with the unit that revisits it, and mirrored by `ignore` entries in `.github/dependabot.yml`.
   - The README's examples were all rebuilt (U0-11) because most no longer ran.
-- **PRs:** #29, #31, #32, #40, #41, #48, #50, #51, #52, #53, #54, #55, #56, #57, #58, #59 (U0-16, merged as `751ad9d`), and the U0-17 PR (number and merge SHA are filled in by the next `/start-unit`). Dependency PRs merged along the way: #23, #26, #24, #28, #27, #20, #22 and #36 (U0-04); #38, #42, #45, #34 and #43 (U0-16); #61, #63 and #60 (U0-17).
+- **PRs:** #29, #31, #32, #40, #41, #48, #50, #51, #52, #53, #54, #55, #56, #57, #58, #59 (U0-16, merged as `751ad9d`), and #64 (U0-17, merged as `de863ab`). Dependency PRs merged along the way: #23, #26, #24, #28, #27, #20, #22 and #36 (U0-04); #38, #42, #45, #34 and #43 (U0-16); #61, #63 and #60 (U0-17).
 
 ---
 
@@ -76,7 +76,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Success criteria:** A hand-built `Run` validates, round-trips, and exports as JSON Schema and TypeScript, and the breaking-change gate is active in CI.
 
 ### U1-01 · Move the Python package to a `src/` layout
-- **Status:** todo · **Size:** M · **Depends on:** U0-15 · **Resolves:** groundwork (REFACTOR_PLAN §3.1)
+- **Status:** done (2026-10-16) · **Size:** M · **Depends on:** U0-15 · **Resolves:** groundwork (REFACTOR_PLAN §3.1)
 - **Goal:** `dsbf/` lives at `src/dsbf/` with no behaviour change.
 - **Assumptions to confirm:**
   - Code that relies on the repo layout: `Path(__file__).parents[2]` in `storage/schema.py`, `api/main.py` and `api/db.py`, plus test paths.
@@ -86,11 +86,13 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Scope:** In: the move, imports, packaging config, path fixes, tests. Out: the frontend (U1-02) and runtime paths (U1-04).
 - **Acceptance:** All tests and golden runs pass unchanged. `uv build` produces a wheel that installs in a clean venv, and `dsbf version` works from a temp dir.
 - **Commit:** `refactor: move package to src layout`
+- **Done notes:** the package, its packaged data and the frontend source now sit under `src/dsbf/`. The default database (`<repo>/dsbf/dsbf.db`), `dsbf/outputs/` and the stored relative figure paths are unchanged, so existing runs keep working; U1-04 moves them. Widened beyond the listed assumptions: the metadata export path, two tests, `migrate_runs.py`, and `[tool.pyrefly] search-path = ["src", "."]` with a regenerated baseline (888 entries before and after). The wheel's file list equals `git ls-files src`. PR number and merge SHA are filled in by the next `/start-unit`.
 
 ### U1-02 · Move the frontend to a top-level `frontend/`
 - **Status:** todo · **Size:** S · **Depends on:** U1-01
 - **Goal:** The dashboard source no longer sits inside the Python package.
 - **Assumptions to confirm:** The paths that reference `dsbf/dashboard/frontend`: Dependabot directories, `.nvmrc`, docs, and `.gitignore`.
+- **Note from U1-01:** the frontend now sits at `src/dsbf/dashboard/frontend`, and `pyproject.toml` excludes `node_modules` and `dist` there (`source-exclude` relative to the project root, `wheel-exclude` relative to `src/dsbf`). The root `.gitignore` entries for `dist/` and `.vite/` also name that path.
 - **Note from U0-05:** the wheel and sdist still ship the frontend source (`dsbf/dashboard/frontend`), as they did under Poetry, with only `node_modules/` and `dist/` excluded in `pyproject.toml`. Once the frontend leaves the package, remove those two exclude entries and check with `uv build` that the wheel holds no frontend files.
 - **Scope:** In: the move and path updates; `dsbf/dashboard/__init__.py` cleanup. Out: bundling the built frontend into the wheel (Phase 6).
 - **Acceptance:** `npm ci && npm run build` works in `frontend/`. The dev proxy still reaches the API. Dependabot config points at the new path.
@@ -119,6 +121,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Assumptions to confirm:**
   - The default home: `platformdirs.user_data_dir("dsbf")`, or `./.dsbf` per project. **Ask the user.**
   - Absolute paths are stored in the DB from now on. Old rows stay as they are.
+- **Note from U1-01:** the source paths in the notes below now sit under `src/dsbf/`. The three repo-root lookups (`storage/schema.py`, `api/main.py`, `api/db.py`) use `Path(__file__).resolve().parents[3]`, which is wrong for an installed wheel, as it was before. The metadata export writes the CWD-relative `src/dsbf/static_metadata/task_metadata.json`. `tests/test_hermetic_runtime.py` and `tests/test_utils/test_reco_engine.py` assert that CWD-relative `src/dsbf/...` paths don't exist.
 - **Note from U0-06:** `run_column_correlations` and `read_run_sample` in `dsbf/api/main.py` call the db helpers without the module's `_DB_PATH` override, so they ignore it. Route every handler through one resolved path. `tests/test_api/test_endpoints.py` sets both `_DB_PATH` and `DSBF_DB_PATH` to work around it; drop the environment variable there once the handlers agree.
 - **Note from U0-07:** the test session now forces `DSBF_DB_PATH` and runs from a temporary CWD, so the output and record locations you move here stay hermetic. Four tests in `tests/eda/test_engine/test_profile_engine.py` still set the dead `engine.output_path` key, and `test_metadata_structure_and_keys` rebuilds the default `dsbf/outputs/<timestamp>` path by hand. Use `engine.output_dir` there once the location moves.
 - **Note from U0-16:** the dashboard gets a 404 for figure files (`/api/figures/<id>/file`) of a run profiled outside the repo root, because the database holds the relative `dsbf/outputs/...` path and the API resolves it against the repo root. Check the acceptance with a run started from a temporary directory.
@@ -363,6 +366,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U1-01:** `dsbf version` runs `git describe --tags` (`utils/versioning.py`), so outside a checkout it prints `dev` plus a `fatal: not a git repository` line, even from an installed wheel. Read the version from `importlib.metadata`.
 - **Goal:** The public `dsbf.profile(source, packs=…, checks=…, target=…, time_index=…, sample=…)` returns an in-memory `Run` with no filesystem writes. Version comes from `importlib.metadata`. `run.health.summary()` matches REFACTOR_PLAN §7.1.
 - **Acceptance:**
   - A test asserts no files are created during `dsbf.profile()`.

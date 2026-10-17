@@ -58,7 +58,7 @@ Read this section before planning or modifying the repository.
    - golden snapshots: the golden suite's update option;
    - performance baselines: the perf harness.
 
-   `dsbf/static_metadata/task_metadata.json` is rewritten by every run. Restore it rather than committing incidental changes.
+   `src/dsbf/static_metadata/task_metadata.json` is rewritten by every run. Restore it rather than committing incidental changes.
 10. **Close each unit completely.** Follow `.claude/commands/closeout.md` (run it as `/closeout`).
 11. **Don't preserve development-era compatibility without a current need.** DSBF has never had a published release or external users (it isn't on PyPI, and the repo has no forks, as of 2026-10-15). Development-era schemas, configs, commands, tests, generated contracts and historical behaviour can be replaced when the active design requires it, unless a current contract explicitly requires compatibility. Compatibility guarantees begin with the published 1.x result schema.
 12. **Use explicit dates and repository history.** Trust explicit user-provided dates, commit timestamps and repository history. When dates conflict or are ambiguous, state the exact date being used (`YYYY-MM-DD`) rather than relative wording.
@@ -107,5 +107,5 @@ Branch: unit/<ID>-<slug> · Started: <YYYY-MM-DD>
 
 Each gotcha names the unit that removes it. Delete the line at that unit's close-out.
 
-- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `dsbf/dashboard/frontend` and only has `npm run build`.
-- Every run rewrites `dsbf/static_metadata/task_metadata.json` (until U1-04).
+- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `src/dsbf/dashboard/frontend` and only has `npm run build`.
+- Every run rewrites `src/dsbf/static_metadata/task_metadata.json` (until U1-04).

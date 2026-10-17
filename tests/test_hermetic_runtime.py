@@ -13,7 +13,7 @@ from dsbf.storage.schema import DEFAULT_DB_PATH, _resolve_db_path
 
 pytestmark = pytest.mark.unit
 
-REPO_ROOT = Path(dsbf.__file__).resolve().parents[1]
+REPO_ROOT = Path(dsbf.__file__).resolve().parents[2]
 
 
 class _NoopEngine(BaseEngine):
@@ -50,5 +50,5 @@ def test_default_outputs_land_under_the_temporary_directory(
 
 
 def test_default_config_loads_without_the_repo_as_cwd():
-    assert not Path("dsbf/config/default_config.yaml").exists()
+    assert not Path("src/dsbf/config/default_config.yaml").exists()
     assert "tasks" in load_default_config()

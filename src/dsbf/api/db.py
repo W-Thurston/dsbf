@@ -152,7 +152,7 @@ def get_run(run_key: str, db_path=None) -> dict | None:
     if sp:
         p = Path(sp)
         if not p.is_absolute():
-            repo_root = Path(__file__).resolve().parents[2]
+            repo_root = Path(__file__).resolve().parents[3]
             p = repo_root / p
         if p.exists():
             resolved = p
@@ -184,7 +184,7 @@ def _load_dataframe(
     if source_path:
         p = Path(source_path)
         if not p.is_absolute():
-            repo_root = Path(__file__).resolve().parents[2]
+            repo_root = Path(__file__).resolve().parents[3]
             p = repo_root / p
         if not p.exists():
             return None
