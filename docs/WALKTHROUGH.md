@@ -63,7 +63,6 @@ dsbf profile data.csv                                   (dsbf/interfaces/cli.py)
         ├─ 3l  report.json          render_user_report()
         ├─ 3m  metadata_report.json write_metadata_report()
         ├─ 3n  SQLite               persist_run()
-        └─ 3o  dsbf_run.json        record_run()
 
 uvicorn dsbf.api.main:app   ──►  4. FastAPI reads SQLite + files
 npm run dev                 ──►  5. Vue dashboard calls /api/...
@@ -100,7 +99,7 @@ user's YAML **instead of** the defaults (no merge).
 ## 2. Construct the engine
 
 **What happens:** `BaseEngine.__init__` (`dsbf/core/base_engine.py`):
-- picks the output dir (`dsbf/outputs/<YYYYmmdd_HHMMSS>`, relative to CWD) and creates it;
+- picks the output dir (`<DSBF_HOME>/outputs/<YYYYmmdd_HHMMSS>`, absolute; the home defaults to the per-user data directory) and creates it;
 - sets up the `dsbf` logger with a Rich console handler and a `run.log` file handler;
 - runs `git describe` and `git rev-parse` subprocesses for version and SHA metadata.
 
@@ -147,8 +146,7 @@ the console had **452** (F-19, verified).
 ## 3e. Load task groups and plugins
 
 **What happens:** `load_task_group()` imports each group in `task_groups` (a module name or a
-plugin directory). It then **writes `src/dsbf/static_metadata/task_metadata.json`** (relative to CWD)
-unless `DSBF_AUTO_EXPORT_METADATA=0`.
+plugin directory). It no longer writes `task_metadata.json`; `dsbf tasks export` does, on request.
 
 **Measured:** 1 ms, since the tasks were already imported in stage 0.
 
@@ -281,10 +279,9 @@ removed "latest run" from `/api/datasets` (F-15, verified).
 **Issues:** it drops `error_metadata`, `reliability_warnings`, `recommendations` and `metadata`
 (F-20). `json.dumps` writes `NaN`/`Infinity` tokens that the API later can't return (F-36).
 
-## 3o. `dsbf_run.json`
+## 3o. `dsbf_run.json` (removed)
 
-**What happens:** appends `run_metadata` to `./dsbf_run.json` in the current directory, unbounded.
-With a custom output dir, `timestamp` is the folder name (for example `"titanic"`) (F-17).
+`record_run()` used to append `run_metadata` to `./dsbf_run.json`, unbounded (F-17). It is gone: the `runs` table holds the same information.
 
 ---
 

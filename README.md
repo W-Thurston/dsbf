@@ -163,7 +163,7 @@ Each depth includes the ones above it. Of the 67 registered tasks, 17 run at `ba
 
 ## Output artifacts
 
-Each run writes to a timestamped directory under `dsbf/outputs/` (relative to the working directory) and records the run in a SQLite database. The database is `dsbf/dsbf.db` inside the repository unless `DSBF_DB_PATH` points elsewhere.
+Each run writes to a timestamped directory under `<home>/outputs/` and records the run in a SQLite database at `<home>/dsbf.db`, whatever the working directory. The home is `$DSBF_HOME` if set, otherwise the per-user data directory (`~/.local/share/dsbf` on Linux). `DSBF_DB_PATH` overrides the database location alone. Outputs and database paths are stored absolute.
 
 | File | Description |
 |---|---|
@@ -279,10 +279,10 @@ uv run python tests/generators/dsbf_test_dataset_generator.py --only near_clean
 # Profile one, then validate its report (pass the report path printed by the run)
 uv run dsbf profile tests/datasets/near_clean.csv --name near_clean
 uv run python tests/validation/run_validation.py --datasets near_clean \
-    --skip-generate --report dsbf/outputs/<timestamp>/report.json
+    --skip-generate --report "$DSBF_HOME/outputs/<timestamp>/report.json"
 ```
 
-Without `--report`, the script picks the most recently written report in `dsbf/outputs/`, which may belong to a different dataset.
+Without `--report`, the script picks the most recently written report under `dsbf/outputs/` (a location DSBF no longer writes to), which may belong to a different dataset.
 
 ---
 

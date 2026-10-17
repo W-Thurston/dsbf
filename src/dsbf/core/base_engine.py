@@ -9,13 +9,13 @@ and metadata.
 """
 
 import abc
-import json
 import os
 import platform
 import subprocess
 from datetime import datetime
 from typing import Any
 
+from dsbf.paths import default_outputs_dir
 from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -92,31 +92,9 @@ class BaseEngine(abc.ABC):
 
     def _create_output_dir(self):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = os.path.join("dsbf/outputs", timestamp)
-        os.makedirs(output_path, exist_ok=True)
-        return output_path
-
-    def record_run(self):
-        record_path = os.path.join("dsbf_run.json")
-
-        # Load existing history
-        if os.path.exists(record_path):
-            try:
-                with open(record_path) as f:
-                    history = json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError):
-                history = []
-        else:
-            history = []
-
-        # Append current run (avoid duplicates by timestamp)
-        timestamps = {r.get("timestamp") for r in history}
-        if self.run_metadata.get("timestamp") not in timestamps:
-            history.append(self.run_metadata)
-
-        # Save updated history
-        with open(record_path, "w") as f:
-            json.dump(history, f, indent=2)
+        output_path = default_outputs_dir() / timestamp
+        output_path.mkdir(parents=True, exist_ok=True)
+        return str(output_path)
 
     @abc.abstractmethod
     def run(self):

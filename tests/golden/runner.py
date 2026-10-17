@@ -43,7 +43,7 @@ def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
         **os.environ,
         "PYTHONHASHSEED": HASH_SEED,
         "DSBF_DB_PATH": str(workdir / "dsbf.db"),
-        "DSBF_AUTO_EXPORT_METADATA": "0",
+        "DSBF_HOME": str(workdir / "home"),
     }
     command = [
         sys.executable,

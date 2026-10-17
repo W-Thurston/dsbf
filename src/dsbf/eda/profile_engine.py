@@ -153,7 +153,6 @@ class ProfileEngine(BaseEngine):
                 f"[WARNING] Could not persist run to database: {exc}", level="warn"
             )
 
-        self.record_run()
         self._log(f"[DONE] Results saved to: {self.output_dir}", level="stage")
 
     def _load_data(self) -> pd.DataFrame | pl.DataFrame:

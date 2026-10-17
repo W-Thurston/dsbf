@@ -1,5 +1,6 @@
 # dsbf/interfaces/cli.py
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -8,9 +9,13 @@ import yaml
 
 from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
+from dsbf.eda.task_registry import load_task_group
+from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version
 
 app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
+tasks_app = typer.Typer(help="Inspect the registered tasks.")
+app.add_typer(tasks_app, name="tasks")
 
 
 def _load_config(config_path: str) -> dict:
@@ -95,6 +100,24 @@ def quickstart(
     cfg["metadata"]["dataset_path"] = None
     engine = ProfileEngine(cfg)
     engine.run()
+
+
+@tasks_app.command("export")
+def export_tasks(
+    output: Path | None = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Write the JSON to this file instead of printing it.",
+    ),
+) -> None:
+    """Export the static metadata of every registered task as JSON."""
+    load_task_group("core")
+    if output is None:
+        typer.echo(json.dumps(build_task_metadata(), indent=2))
+    else:
+        write_task_metadata(str(output))
+        typer.echo(f"Task metadata written to {output}")
 
 
 @app.command()

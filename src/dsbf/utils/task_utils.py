@@ -18,6 +18,7 @@ __all__ = [
     "is_diagnostic_task",
     "validate_task_result",
     "filter_tasks",
+    "build_task_metadata",
     "write_task_metadata",
 ]
 
@@ -112,12 +113,12 @@ def filter_tasks(criteria: dict[str, str | list[str]]) -> list[str]:
     return [name for name, spec in TASK_REGISTRY.items() if matches(spec)]
 
 
-def write_task_metadata(output_path: str = "dsbf/docs/task_metadata.json") -> None:
+def build_task_metadata() -> dict[str, dict[str, Any]]:
     """
-    Export all static task metadata to a JSON file (for documentation or UI use).
+    Collect the static metadata of every registered task, keyed by task name.
 
-    Args:
-        output_path (str): Path to save the metadata file.
+    Returns:
+        dict[str, dict[str, Any]]: Metadata for documentation or UI use.
     """
     metadata_dict = {}
     for name, spec in TASK_REGISTRY.items():
@@ -133,9 +134,19 @@ def write_task_metadata(output_path: str = "dsbf/docs/task_metadata.json") -> No
             "ml_impact_score": getattr(spec.cls, "ml_impact_score", None),  # Optional
             "experimental": spec.experimental,
         }
+    return metadata_dict
 
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+def write_task_metadata(output_path: str) -> None:
+    """
+    Export all static task metadata to a JSON file (for documentation or UI use).
+
+    Args:
+        output_path (str): Path to save the metadata file.
+    """
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     with open(output_path, "w") as f:
-        json.dump(metadata_dict, f, indent=2)
+        json.dump(build_task_metadata(), f, indent=2)
+        f.write("\n")
 
     logger.info(f"[Metadata Export] Task metadata written to: {output_path}")

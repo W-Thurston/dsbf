@@ -278,7 +278,12 @@ def persist_run(engine, db_path=None) -> int:
     is_builtin = (raw_path is None) and (
         dataset_source in ("seaborn", "sklearn", "openml")
     )
-    source_path = None if is_builtin else raw_path
+    # Stored absolute, so the API can reopen the file from any working directory.
+    source_path = (
+        None
+        if is_builtin or raw_path is None
+        else os.path.abspath(os.path.expanduser(raw_path))
+    )
 
     # Shape stats - result may be a TaskResult object or plain dict
     _shape_result = results.get("summarize_dataset_shape") or {}

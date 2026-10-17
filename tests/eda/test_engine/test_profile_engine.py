@@ -38,7 +38,6 @@ def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     sample_path.write_text("a,b\n1,2\n3,4")
     config["metadata"]["dataset"] = str(sample_path)
 
-    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
@@ -50,12 +49,10 @@ def test_profile_engine_runs_with_file(clean_engine_run, tmp_path):
     if not os.path.exists(dag_path):
         pytest.skip("DAG image not generated; possibly skipped due to environment.")
 
-    assert os.path.exists("dsbf_run.json")
-
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 @pytest.mark.network
-def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
+def test_profile_engine_runs_with_builtin_dataset(clean_engine_run):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -73,19 +70,17 @@ def test_profile_engine_runs_with_builtin_dataset(clean_engine_run, tmp_path):
         },
     }
 
-    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
     outputs = os.listdir(engine.output_dir)
     assert "report.json" in outputs
     assert "dag.png" in os.listdir(os.path.join(engine.output_dir, "figs/"))
-    assert os.path.exists("dsbf_run.json")
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 @pytest.mark.network
-def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
+def test_profile_engine_runs_with_polars(clean_engine_run):
     try:
         __import__("polars")
     except ImportError:
@@ -108,19 +103,17 @@ def test_profile_engine_runs_with_polars(clean_engine_run, tmp_path):
         },
     }
 
-    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
     outputs = os.listdir(engine.output_dir)
     assert "report.json" in outputs
     assert "dag.png" in os.listdir(os.path.join(engine.output_dir, "figs/"))
-    assert os.path.exists("dsbf_run.json")
 
 
 @pytest.mark.filterwarnings("ignore::PendingDeprecationWarning")
 @pytest.mark.network
-def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
+def test_metadata_structure_and_keys(clean_engine_run):
     config = {
         "metadata": {
             "dataset_name": "titanic",
@@ -138,17 +131,10 @@ def test_metadata_structure_and_keys(clean_engine_run, tmp_path):
         },
     }
 
-    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 
-    # Load most recent run from dsbf_run.json
-    with open("dsbf_run.json") as f:
-        run_history = json.load(f)
-    latest_run = run_history[-1]
-    output_dir = os.path.join("dsbf", "outputs", latest_run["timestamp"])
-
-    with open(os.path.join(output_dir, "metadata_report.json")) as f:
+    with open(os.path.join(engine.output_dir, "metadata_report.json")) as f:
         metadata = json.load(f)
 
     assert metadata["engine"] == "ProfileEngine"
@@ -181,7 +167,6 @@ def test_task_output_within_profile_engine(clean_engine_run, tmp_path):
         },
     }
 
-    config["engine"]["output_path"] = str(tmp_path)
     engine = ProfileEngine(config)
     engine.run()
 

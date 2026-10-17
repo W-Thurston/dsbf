@@ -3,9 +3,9 @@
 SQLite connection management and schema initialisation.
 
 The database location is resolved in this order:
-    1. DSBF_DB_PATH environment variable
-    2. db_path argument passed to get_connection() / init_db()
-    3. Default: <repo_root>/dsbf/dsbf.db
+    1. db_path argument passed to get_connection() / init_db()
+    2. DSBF_DB_PATH environment variable
+    3. Default: <DSBF_HOME>/dsbf.db (see dsbf.paths)
 
 Usage
 -----
@@ -21,9 +21,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-# Default database location
-_REPO_ROOT: Path = Path(__file__).resolve().parents[3]
-DEFAULT_DB_PATH: Path = _REPO_ROOT / "dsbf" / "dsbf.db"
+from dsbf.paths import default_db_path
 
 
 def _resolve_db_path(db_path: str | Path | None = None) -> Path:
@@ -43,7 +41,7 @@ def _resolve_db_path(db_path: str | Path | None = None) -> Path:
     env: str | None = os.environ.get("DSBF_DB_PATH")
     if env:
         return Path(env)
-    return DEFAULT_DB_PATH
+    return default_db_path()
 
 
 # Schema DDL
