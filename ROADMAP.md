@@ -86,10 +86,10 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Scope:** In: the move, imports, packaging config, path fixes, tests. Out: the frontend (U1-02) and runtime paths (U1-04).
 - **Acceptance:** All tests and golden runs pass unchanged. `uv build` produces a wheel that installs in a clean venv, and `dsbf version` works from a temp dir.
 - **Commit:** `refactor: move package to src layout`
-- **Done notes:** the package, its packaged data and the frontend source now sit under `src/dsbf/`. The default database (`<repo>/dsbf/dsbf.db`), `dsbf/outputs/` and the stored relative figure paths are unchanged, so existing runs keep working; U1-04 moves them. Widened beyond the listed assumptions: the metadata export path, two tests, `migrate_runs.py`, and `[tool.pyrefly] search-path = ["src", "."]` with a regenerated baseline (888 entries before and after). The wheel's file list equals `git ls-files src`. PR number and merge SHA are filled in by the next `/start-unit`.
+- **Done notes:** the package, its packaged data and the frontend source now sit under `src/dsbf/`. The default database (`<repo>/dsbf/dsbf.db`), `dsbf/outputs/` and the stored relative figure paths are unchanged, so existing runs keep working; U1-04 moves them. Widened beyond the listed assumptions: the metadata export path, two tests, `migrate_runs.py`, and `[tool.pyrefly] search-path = ["src", "."]` with a regenerated baseline (888 entries before and after). The wheel's file list equals `git ls-files src`. Merged as PR #66 (`bfc43e1`).
 
 ### U1-02 · Move the frontend to a top-level `frontend/`
-- **Status:** todo · **Size:** S · **Depends on:** U1-01
+- **Status:** done (2026-10-16) · **Size:** S · **Depends on:** U1-01
 - **Goal:** The dashboard source no longer sits inside the Python package.
 - **Assumptions to confirm:** The paths that reference `dsbf/dashboard/frontend`: Dependabot directories, `.nvmrc`, docs, and `.gitignore`.
 - **Note from U1-01:** the frontend now sits at `src/dsbf/dashboard/frontend`, and `pyproject.toml` excludes `node_modules` and `dist` there (`source-exclude` relative to the project root, `wheel-exclude` relative to `src/dsbf`). The root `.gitignore` entries for `dist/` and `.vite/` also name that path.
@@ -97,6 +97,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Scope:** In: the move and path updates; `dsbf/dashboard/__init__.py` cleanup. Out: bundling the built frontend into the wheel (Phase 6).
 - **Acceptance:** `npm ci && npm run build` works in `frontend/`. The dev proxy still reaches the API. Dependabot config points at the new path.
 - **Commit:** `refactor(dashboard): move frontend to top-level directory`
+- **Done notes:** the frontend sits at `frontend/` (renames, history kept). `src/dsbf/dashboard/` is deleted: it held an empty `__init__.py` and a stray empty `package-lock.json`, and nothing imported it. The `source-exclude` and `wheel-exclude` keys are gone from `pyproject.toml`; the wheel still equals `git ls-files src` and the sdist holds no frontend files. Docs, `.gitignore` and 18 source header comments name the new path. Deviation: `.github/dependabot.yml` never had an npm entry, so there was no path to repoint; U1-03 adds the entry. The `.nvmrc` stays at the root. PR number and merge SHA are filled in by the next `/start-unit`.
 
 ### U1-03 · Frontend toolchain: pnpm, lint and unit tests
 - **Status:** todo · **Size:** M · **Depends on:** U1-02 · **Resolves:** F-29 (tooling part)
@@ -106,7 +107,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - The pnpm version through the `packageManager` field and corepack.
   - A stable Vite release that can replace the beta pin.
   - **Ask the user:** include Prettier, or rely on ESLint stylistic rules?
-- **Scope:** In: `pnpm-lock.yaml` (delete `package-lock.json`), scripts, ESLint and Vitest config with a few utility tests, a CI job, and the Dependabot ecosystem update. Out: refactoring components beyond lint autofixes. Remaining violations are suppressed per rule and recorded as follow-ups.
+- **Scope:** In: `pnpm-lock.yaml` (delete `package-lock.json`), scripts, ESLint and Vitest config with a few utility tests, a CI job, and a Dependabot `npm` entry for `/frontend` (the config has none today; U1-02 found nothing to repoint). Out: refactoring components beyond lint autofixes. Remaining violations are suppressed per rule and recorded as follow-ups.
 - **Acceptance:** `pnpm lint && pnpm build && pnpm test:run` pass locally and in CI.
 - **Commit:** `build(dashboard): move frontend to pnpm with lint and unit tests`
 

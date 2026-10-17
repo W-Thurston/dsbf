@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/distributions/QQPlotCard.vue
+<!-- frontend/src/components/distributions/QQPlotCard.vue
 
   Renders a Q-Q (quantile-quantile) plot for normality assessment using
   pre-computed quantile pairs from normality_qq_plots.

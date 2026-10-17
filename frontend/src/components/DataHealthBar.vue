@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/DataHealthBar.vue
+<!-- frontend/src/components/DataHealthBar.vue
 
   Persistent data-health status bar displayed above the tab bar on every page.
   Shows five dimension indicators (Completeness, Validity, Usability,

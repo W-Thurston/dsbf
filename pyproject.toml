@@ -62,19 +62,6 @@ dev = [
 requires = ["uv_build>=0.11,<0.14"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-# uv_build ignores .gitignore, so keep frontend build artefacts out of the sdist and
-# wheel. The package sits under src/, so run output and the local database in the
-# repository's dsbf/ directory are outside it.
-source-exclude = [
-    "src/dsbf/dashboard/frontend/node_modules/**",
-    "src/dsbf/dashboard/frontend/dist/**",
-]
-wheel-exclude = [
-    "dashboard/frontend/node_modules/**",
-    "dashboard/frontend/dist/**",
-]
-
 [tool.ruff]
 line-length = 88
 target-version = "py312"

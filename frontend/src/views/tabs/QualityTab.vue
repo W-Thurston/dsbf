@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/views/tabs/QualityTab.vue
+<!-- frontend/src/views/tabs/QualityTab.vue
 
   The Quality tab - aggregated data-health findings across all five
   dimensions. Three sections:

@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/distributions/TransformationPreviewCard.vue
+<!-- frontend/src/components/distributions/TransformationPreviewCard.vue
 
   Shows transformation options for skewed continuous columns.
   Layout matches the action-row format: what / trade-off / after this / link,

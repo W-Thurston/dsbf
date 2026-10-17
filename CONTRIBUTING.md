@@ -98,10 +98,11 @@ src/dsbf/
 │   ├── tasks/          # All EDA task implementations (one file per task)
 │   └── task_registry.py
 ├── utils/              # Shared utilities (backend, reco_engine, etc.)
-├── config/
-│   ├── default_config.yaml
-│   └── task_metadata.yaml
-└── dashboard/frontend/ # Vue 3 + Vite app
+└── config/
+    ├── default_config.yaml
+    └── task_metadata.yaml
+
+frontend/               # Vue 3 + Vite dashboard app
 
 dsbf/outputs/           # Generated at runtime — gitignored
 
@@ -114,7 +115,7 @@ tests/
 │   └── run_validation.py
 └── unit/               # Pytest unit tests
 
-dashboard/
+frontend/
 ├── src/
 │   ├── views/          # Tab components (OverviewTab, QualityTab, etc.)
 │   └── components/     # Shared components

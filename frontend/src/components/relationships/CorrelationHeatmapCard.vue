@@ -1,4 +1,4 @@
-<!-- dsbf/dashboard/frontend/src/components/relationships/CorrelationHeatmapCard.vue
+<!-- frontend/src/components/relationships/CorrelationHeatmapCard.vue
 
   Placeholder for the Pearson correlation matrix heatmap.
   The full D3 visualization is deferred to the D3 refactor.

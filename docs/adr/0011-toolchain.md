@@ -33,7 +33,7 @@ matters most when new code is written against typed contracts ([ADR 0005](0005-p
 ## Consequences
 
 - The uv, markers and pyrefly parts have landed in Phase 0. The frontend part is not done yet: until
-  Phase 1 the frontend lives in `dsbf/dashboard/frontend` with npm.
+  Phase 1 the frontend lives in `frontend/` with npm.
 - Python 3.14 is out of the CI matrix until the locked dependencies publish cp314 wheels.
 - The pyrefly baseline shrinks as legacy modules are migrated and deleted, and `--error-stale-baseline`
   makes the gate fail if it doesn't.
