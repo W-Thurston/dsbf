@@ -171,15 +171,16 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - A test builds findings from a real legacy `TaskResult.guidance` sample without data loss.
   - `RunHealth` renders the plain-text summary shown in REFACTOR_PLAN §7.1.
 - **Commit:** `feat(model): add finding, note, check result and run health contracts`
-- **Done notes:** `dsbf.model` gained `Finding` (id from `Finding.build`, checked on every validation), `Guidance`, `Action`, `Note`, `CheckStatus`, `CheckResult` (a non-`ok` status needs a note and has no findings), `StatusCounts`, `HealthIssue` and `RunHealth` (derived by `from_results`; `render` reproduces the §7.1 summary exactly). Deviations: real titanic guidance showed the sketch was lossy, so a legacy `good` level is `Severity.INFO` plus the tag `good`, an `Action` keeps its own `columns` and extra `params`, `Evidence.metrics` admits one level of list or mapping, and each blurb becomes one `Finding` with a phase-only `Guidance`. All 589 titanic blurbs map to findings and back with no loss. `pydantic` moved to 2.14.1.
+- **Done notes:** `dsbf.model` gained `Finding` (id from `Finding.build`, checked on every validation), `Guidance`, `Action`, `Note`, `CheckStatus`, `CheckResult` (a non-`ok` status needs a note and has no findings), `StatusCounts`, `HealthIssue` and `RunHealth` (derived by `from_results`; `render` reproduces the §7.1 summary exactly). Deviations: real titanic guidance showed the sketch was lossy, so a legacy `good` level is `Severity.INFO` plus the tag `good`, an `Action` keeps its own `columns` and extra `params`, `Evidence.metrics` admits one level of list or mapping, and each blurb becomes one `Finding` with a phase-only `Guidance`. All 589 titanic blurbs map to findings and back with no loss. `pydantic` moved to 2.14.1. Merged as PR #75 (`07c2f53`).
 
 ### U1-08 · Contracts III: profiles and the run manifest
-- **Status:** todo · **Size:** M · **Depends on:** U1-07
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-07
 - **Note from U1-07:** 589 titanic findings serialise to 682 KB (about 1.2 KB each), so the size budget below covers the profile and manifest only; measure findings separately and say so in the acceptance.
 - **Goal:** `ColumnProfile` (variants by semantic type), `DatasetProfile`, `DatasetManifest`, `PlanManifest` and `Run`, with `schema_version`.
 - **Assumptions to confirm:** The profile fields cover everything listed in REFACTOR_PLAN §5.3 that the dashboard needs today. Check against current tab usage.
 - **Acceptance:** A hand-built `Run` validates and round-trips through JSON. Its size for titanic-like content is under 200 KB without evidence artifacts.
 - **Commit:** `feat(model): add profile and run manifest contracts`
+- **Done notes:** `dsbf.model` gained `ColumnProfile` (seven variants chosen by `semantic_type`, with `identifier` and `unknown` added to the §5.3 list because the legacy `infer_types` emits them), `DatasetProfile`, `DatasetManifest`, `PlanManifest` and `Run` (`SCHEMA_VERSION = "0.1.0"`). `Run.build` derives `findings` and `health`, and its validator checks that the parts agree; `Run.render_health` supplies the header for `RunHealth.render`. Histograms are equal-width with the rule recorded (F-12), and undefined statistics are nulled and named in `non_finite_stats`. On a titanic profile computed in the tests, profile plus manifests are about 10 KB (budget 200 KB); findings are about 1.1 KB each, so a full 589-finding run is about 650 KB, doubled by `Run.findings` repeating each result's findings. Deviations: `Run.policy` waits for U1-10; mode and mode proportion are derived from top-k rather than stored; character-class and pattern statistics are left to U2-05.
 
 ### U1-09 · Configuration and parameter base models
 - **Status:** todo · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-22 (loader part)
@@ -191,6 +192,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U1-10 · Policy rule schema
 - **Status:** todo · **Size:** S · **Depends on:** U1-07
 - **Note from U1-06:** `Severity` and `Confidence` are ordered `StrEnum`s, so a `>=error` matcher can compare members directly. `Dimension` is a plain `StrEnum`.
+- **Note from U1-08:** `Run` has no `policy` field yet. Add `policy: PolicyOutcome | None = None` to `dsbf.model.run.Run` (an additive change) and cover it in `tests/test_model/test_run.py`.
 - **Goal:** Typed models for `policy.yaml` (`when` matchers, `then` actions `annotate | warn | fail | notify`) and `PolicyOutcome`. There's no evaluator yet (Phase 5).
 - **Assumptions to confirm:** The REFACTOR_PLAN §7.2 example covers the matcher operators users need.
 - **Acceptance:** The §7.2 example parses. Invalid rules produce precise errors.
@@ -200,6 +202,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Status:** todo · **Size:** M · **Depends on:** U1-08, U1-09, U1-10, U1-03
 - **Note from U1-04:** this unit edits `frontend/`, so apply the Dependency upgrades rule there. Dependabot PRs #69 (vue-router 4.6.4 → 5.4.0) and #70 (plotly.js-dist-min 3.7.0 → 4.1.2) were open on 2026-10-17. Both are major bumps with no unit yet; take them with the dashboard build and view the dashboard in a browser, or close them with a cap and a row in the held-back table.
 - **Note from U1-06:** the models in `dsbf.model` set `additionalProperties: false`, and `Dimension`, `Severity` and `Confidence` export as string `enum`s. The ordering of the last two is not in the schema, so a TypeScript consumer needs its own rank table. `Timing.started_at` is an ISO 8601 string with an offset.
+- **Note from U1-08:** `Run` serialises every finding twice, under `results[*].findings` and again in `Run.findings` (the §4.2 sketch). A full titanic run is about 1.3 MB for that reason. Decide before the schema is published whether `Run.findings` should be derived on read instead of serialised. Removing it later would be a breaking change. `ColumnProfile` is a discriminated union (`oneOf` with a `semantic_type` discriminator), so check how the TypeScript generator renders it. `Run.schema_version` is validated against the current major.
 - **Goal:** `dsbf schema export`. The JSON Schema is committed under `schema/`. CI fails on an unannounced breaking change. TS types are generated into `frontend/src/generated/`.
 - **Assumptions to confirm:**
   - The tool choice for TS generation (for example `json-schema-to-typescript`).
@@ -256,6 +259,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U2-05 · Column profile II: histograms, top-k, text and datetime
 - **Status:** todo · **Size:** M · **Depends on:** U2-04 · **Resolves:** F-12
 - **Note from U0-11:** the percentile-binned histogram parked in `d4d949f` is already on `main` (PR #49 merged the ECharts components), so the F-12 defect is live in the dashboard until this unit lands. `origin/wip/echarts-charts` no longer exists; the local `wip/echarts-charts` branch can be deleted.
+- **Note from U1-08:** the contracts exist in `dsbf.model.profile`: `Histogram` (equal-width, `rule` is `fd | sturges | scott | sqrt | fixed`), `ValueCount`, `LengthStats` and `DatetimeProfile`. Character-class and pattern-signature statistics (REFACTOR_PLAN §5.3) are not in `TextProfile` yet; add them as optional fields, which is additive. `tests/test_model/titanic_profile.py` computes a reference profile with pandas, usable as an oracle for the parity report.
 - **Goal:**
   - equal-width histogram bins, with the rule recorded;
   - top-k values with counts;
