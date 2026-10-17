@@ -40,6 +40,7 @@ def test_importing_the_contracts_pulls_in_no_analysis_library():
         "Guidance",
         "Finding",
         "Note",
+        "CheckParams",
         "CheckResult",
         "StatusCounts",
         "HealthIssue",
