@@ -157,10 +157,10 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Scope:** In: models, validators (finite floats only; NaN/inf → `None` plus a flag), unit tests including column names with `|`, brackets, unicode and empty strings. Out: Finding and Run (U1-07, U1-08).
 - **Acceptance:** Round-trip tests pass. A non-finite float can't produce invalid JSON.
 - **Commit:** `feat(model): add subject, evidence and severity contracts`
-- **Done notes:** `dsbf.model` (`src/dsbf/model/`) holds `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, and imports only pydantic (now a direct dependency, `pydantic>=2.12,<3`). Every contract derives from `Contract` (frozen, unknown fields rejected), and sequences are tuples, not the sketch's lists. `Evidence` nulls NaN, infinity and `NaT`, names them in `non_finite_metrics`, and turns NumPy scalars and dates into plain values and ISO strings; this also repairs a stored `NaN` token on read. `Subject` keeps columns as an ordered tuple, so the `a|b` pair collision cannot happen. `Severity` and `Confidence` are ordered string enums. Deviations: `Metric` also admits `bool`, because pydantic turned `True` into `1.0`; structural floats (interval bounds, timings) are rejected, not nulled, when non-finite. Checked on the adversarial frame: 5 of 5 non-finite metrics flagged, all output strict JSON, and the legacy `report.json` for the same run does not parse strictly (269 `NaN`, 19 `Infinity`).
+- **Done notes:** `dsbf.model` (`src/dsbf/model/`) holds `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, and imports only pydantic (now a direct dependency, `pydantic>=2.12,<3`). Every contract derives from `Contract` (frozen, unknown fields rejected), and sequences are tuples, not the sketch's lists. `Evidence` nulls NaN, infinity and `NaT`, names them in `non_finite_metrics`, and turns NumPy scalars and dates into plain values and ISO strings; this also repairs a stored `NaN` token on read. `Subject` keeps columns as an ordered tuple, so the `a|b` pair collision cannot happen. `Severity` and `Confidence` are ordered string enums. Deviations: `Metric` also admits `bool`, because pydantic turned `True` into `1.0`; structural floats (interval bounds, timings) are rejected, not nulled, when non-finite. Checked on the adversarial frame: 5 of 5 non-finite metrics flagged, all output strict JSON, and the legacy `report.json` for the same run does not parse strictly (269 `NaN`, 19 `Infinity`). Merged as PR #74 (`837aea9`).
 
 ### U1-07 · Contracts II: findings, notes, check results and run health
-- **Status:** todo · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-20 (status model)
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-20 (status model)
 - **Note from U1-06:** `dsbf.model` conventions to follow: models derive from `dsbf.model.base.Contract` (frozen, `extra="forbid"`), sequences are `tuple[...]`, structural floats use `FiniteFloat`, and data-derived metric values go through `Evidence` (nulled and flagged, never rejected). `Subject` keeps a pair's columns in the order given, so a symmetric check must pick a canonical order before `Finding.id` hashes it. `Severity` and `Confidence` compare by rank (`Severity.WARN >= Severity.NOTICE`); ordering `Run.findings` by severity can use that.
 - **Goal:** `Finding` (with a stable id), `Guidance`, `Action`, `Note`, `CheckResult` (statuses `ok | not_applicable | skipped | unavailable | error | timeout`) and `RunHealth`.
 - **Assumptions to confirm:**
@@ -171,9 +171,11 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - A test builds findings from a real legacy `TaskResult.guidance` sample without data loss.
   - `RunHealth` renders the plain-text summary shown in REFACTOR_PLAN §7.1.
 - **Commit:** `feat(model): add finding, note, check result and run health contracts`
+- **Done notes:** `dsbf.model` gained `Finding` (id from `Finding.build`, checked on every validation), `Guidance`, `Action`, `Note`, `CheckStatus`, `CheckResult` (a non-`ok` status needs a note and has no findings), `StatusCounts`, `HealthIssue` and `RunHealth` (derived by `from_results`; `render` reproduces the §7.1 summary exactly). Deviations: real titanic guidance showed the sketch was lossy, so a legacy `good` level is `Severity.INFO` plus the tag `good`, an `Action` keeps its own `columns` and extra `params`, `Evidence.metrics` admits one level of list or mapping, and each blurb becomes one `Finding` with a phase-only `Guidance`. All 589 titanic blurbs map to findings and back with no loss. `pydantic` moved to 2.14.1.
 
 ### U1-08 · Contracts III: profiles and the run manifest
 - **Status:** todo · **Size:** M · **Depends on:** U1-07
+- **Note from U1-07:** 589 titanic findings serialise to 682 KB (about 1.2 KB each), so the size budget below covers the profile and manifest only; measure findings separately and say so in the acceptance.
 - **Goal:** `ColumnProfile` (variants by semantic type), `DatasetProfile`, `DatasetManifest`, `PlanManifest` and `Run`, with `schema_version`.
 - **Assumptions to confirm:** The profile fields cover everything listed in REFACTOR_PLAN §5.3 that the dashboard needs today. Check against current tab usage.
 - **Acceptance:** A hand-built `Run` validates and round-trips through JSON. Its size for titanic-like content is under 200 KB without evidence artifacts.
@@ -297,6 +299,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U3-01 · Check interface and check context
 - **Status:** todo · **Size:** M · **Depends on:** U2-08, U1-09
 - **Goal:** The `@check` decorator and metadata (id, version, kind, params, `applies_to`, `requires`, `after`, cost, extras, packs, dimensions). `CheckContext` provides filtered `columns`, `values()`, `profile`, `finding()`, `note()` and `output()`.
+- **Note from U1-07:** `CheckResult.output` is an open `dict[str, Any]` (made JSON-safe, undefined numbers nulled and named in `non_finite_outputs`). Typed per-check output models belong here.
 - **Assumptions to confirm:** The decorator vs. class-based API (REFACTOR_PLAN §6.2 shows the decorator); naming per ADR D10.
 - **Acceptance:** Three toy checks (rule, analysis, synthesis) run in a test harness and produce valid `CheckResult`s. A check never sees columns outside `applies_to`.
 - **Commit:** `feat(engine): add check interface and check context`
@@ -366,6 +369,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-10 · Legacy task adapter
 - **Status:** todo · **Size:** M · **Depends on:** U3-08, U3-09
+- **Note from U1-07:** blurbs carry no `code`, `dimension`, `confidence` or (always) `n_used`; the adapter supplies them. A `code` must be unique within a check and subject and must not depend on blurb order (the contract test's `<phase>_<index>` shifts when a task reorders blurbs). Map `good` to `Severity.INFO` plus the tag `good`, `__dataset__` to `Subject.dataset()`, and legacy `column`/`columns` on an action to `Action.columns`. `tests/test_model/test_legacy_guidance.py` holds the reference mapping.
 - **Goal:** `LegacyTaskCheck` wraps any `BaseTask`. It provides a legacy `AnalysisContext` shim (data, config, `semantic_types` from the new profile) and maps `TaskResult` statuses onto the new statuses.
 - **Assumptions to confirm:** Which `context.metadata` keys legacy tasks read from each other (grep `get_metadata`, `context.results`).
 - **Acceptance:** Five representative legacy tasks (a rule-like task, a pandas-heavy one, a plotting one, a synthesis scorer, and a time-series one) run through the new engine with their outputs unchanged.
@@ -374,6 +378,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U3-11 · All legacy tasks through the new engine with findings
 - **Status:** todo · **Size:** M · **Depends on:** U3-10
 - **Note from U1-06:** `tests/perf/baseline.json` still records the HTTP 500s on the adversarial run (`/associations` and `/sample` emit `NaN`; the U0-14 note is kept under U1-06). The legacy writer and API don't use `dsbf.model` yet. Once legacy results are routed through `Evidence` (nulled and flagged), or the API stops emitting non-finite floats, regenerate the baseline with the perf harness so the benchmark guards the 200s.
+- **Note from U1-07:** use the mapping and the rules in the U3-10 note; the tests there convert a real titanic sample without loss.
 - **Goal:** Every registered legacy task runs on the new engine. Guidance blurbs convert into `Finding`s with evidence where it can be derived.
 - **Acceptance:** Golden runs (U0-13) reproduce through the adapter, with differences listed in the PR. The adversarial frame produces a complete `Run` with no unhandled errors.
 - **Commit:** `feat(engine): run all legacy tasks through the new engine`

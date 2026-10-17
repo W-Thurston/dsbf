@@ -8,6 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 # A float that cannot be NaN or infinite, so it always serialises to valid JSON.
 FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
 
+# A JSON scalar. `bool` comes first so a flag isn't read as a number.
+Scalar = bool | int | FiniteFloat | str | None
+
 
 class Contract(BaseModel):
     """Base for every contract model.

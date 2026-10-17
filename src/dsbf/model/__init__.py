@@ -5,7 +5,8 @@ Importing this package pulls in pydantic and nothing else, so embedded users and
 the schema export don't pay for the analysis libraries.
 """
 
-from dsbf.model.base import Contract, FiniteFloat
+from dsbf.model.base import Contract, FiniteFloat, Scalar
+from dsbf.model.check import CheckResult, Note
 from dsbf.model.evidence import (
     AssumptionCheck,
     Evidence,
@@ -13,21 +14,34 @@ from dsbf.model.evidence import (
     Metric,
     SamplingInfo,
 )
+from dsbf.model.finding import Action, Finding, Guidance, GuidancePhase
+from dsbf.model.health import HealthIssue, RunHealth, StatusCounts
 from dsbf.model.subject import Subject, SubjectKind
 from dsbf.model.timing import Timing
-from dsbf.model.vocabulary import Confidence, Dimension, Severity
+from dsbf.model.vocabulary import CheckStatus, Confidence, Dimension, Severity
 
 __all__ = [
+    "Action",
     "AssumptionCheck",
+    "CheckResult",
+    "CheckStatus",
     "Confidence",
     "Contract",
     "Dimension",
     "Evidence",
     "FiniteFloat",
+    "Finding",
+    "Guidance",
+    "GuidancePhase",
+    "HealthIssue",
     "Interval",
     "Metric",
+    "Note",
+    "RunHealth",
     "SamplingInfo",
+    "Scalar",
     "Severity",
+    "StatusCounts",
     "Subject",
     "SubjectKind",
     "Timing",

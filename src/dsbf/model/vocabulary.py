@@ -65,3 +65,14 @@ class Dimension(StrEnum):
     DISTRIBUTION = "distribution"
     RELATIONSHIP = "relationship"
     TEMPORAL = "temporal"
+
+
+class CheckStatus(StrEnum):
+    """How one check's execution ended. Every status but `ok` comes with a note."""
+
+    OK = "ok"
+    NOT_APPLICABLE = "not_applicable"
+    UNAVAILABLE = "unavailable"
+    SKIPPED = "skipped"
+    ERROR = "error"
+    TIMEOUT = "timeout"
