@@ -90,6 +90,8 @@ cd dsbf
 uv sync
 ```
 
+**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries everything the legacy tasks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install.
+
 **Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard) · Graphviz (the `dot` executable, for the task-graph image)
 
 ---

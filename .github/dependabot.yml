@@ -21,6 +21,8 @@ updates:
         versions: [">=1.8"]
       - dependency-name: plotly
         versions: [">=7"]
+      - dependency-name: scipy
+        versions: [">=1.18"]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
