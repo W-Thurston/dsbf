@@ -11,6 +11,9 @@ from dsbf.model import (
     CategoricalProfile,
     CheckStatus,
     NumericProfile,
+    PolicyOutcome,
+    Rule,
+    RuleOutcome,
     Run,
     RunHealth,
     SamplingInfo,
@@ -225,3 +228,51 @@ def test_the_real_dataset_profile_describes_the_data():
     assert [(v.value, v.count) for v in survived.top_values] == [(0, 549), (1, 342)]
     assert profile.duplicate_rows == 107
     assert json.loads(profile.model_dump_json())["columns"][0]["name"] == "survived"
+
+
+def policy_run(*, finding_ids=None, check_ids=("fuzzy_duplicates",), **when):
+    """A run with a finding and an errored check, judged by a two-rule policy."""
+    finding = make_finding()
+    results = [
+        make_result(findings=(finding,)),
+        make_result(CheckStatus.ERROR, check_id="fuzzy_duplicates"),
+    ]
+    gate = Rule(name="gate", when={"severity": ">=warn"}, then="fail")
+    errored = Rule(name="errored", when={"health.status": "error"})
+    outcome = PolicyOutcome.build(
+        [
+            RuleOutcome(rule=gate, finding_ids=finding_ids or (finding.id,)),
+            RuleOutcome(rule=errored, check_ids=check_ids),
+        ]
+    )
+    return make_run(results, policy=outcome)
+
+
+def test_a_run_without_a_policy_has_no_outcome():
+    assert make_run().policy is None
+
+
+def test_a_policy_outcome_round_trips_inside_the_run():
+    run = policy_run()
+
+    restored = Run.model_validate(strict_loads(run.model_dump_json()))
+
+    assert restored == run
+    assert restored.policy is not None
+    assert restored.policy.failed
+    assert restored.policy.exit_code == 1
+
+
+def test_a_policy_cannot_name_a_finding_the_run_does_not_have():
+    with pytest.raises(ValidationError, match=r"rule 'gate' matched unknown findings"):
+        policy_run(finding_ids=("0123456789abcdef",))
+
+
+def test_a_policy_cannot_name_a_check_the_run_does_not_have():
+    with pytest.raises(ValidationError, match="rule 'errored' matched unknown check"):
+        policy_run(check_ids=("missing",))
+
+
+def test_a_health_rule_only_matches_checks_with_its_status():
+    with pytest.raises(ValidationError, match=r"whose status is ok, not error"):
+        policy_run(check_ids=("summarize_nulls",))

@@ -65,6 +65,15 @@ def test_importing_the_contracts_pulls_in_no_analysis_library():
         "PlannedCheck",
         "PlanManifest",
         "Run",
+        "Matcher",
+        "PolicyAction",
+        "Rule",
+        "Policy",
+        "RuleOutcome",
+        "PolicyOutcome",
+        "SeverityComparison",
+        "ConfidenceComparison",
+        "MetricComparison",
     ],
 )
 def test_each_model_exports_json_schema(name):
@@ -82,6 +91,8 @@ def test_the_vocabularies_export_as_enums():
         ("Confidence", 3),
         ("Dimension", 8),
         ("CheckStatus", 6),
+        ("ActionKind", 4),
+        ("Operator", 6),
     ]:
         schema = TypeAdapter(getattr(model, name)).json_schema()
         assert len(schema["enum"]) == expected

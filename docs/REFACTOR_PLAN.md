@@ -241,7 +241,9 @@ class Run(BaseModel):
     results: dict[str, CheckResult]
     findings: tuple[Finding, ...]  # flattened, ordered by severity
     health: RunHealth  # counts and reasons by status: the "never read logs" summary
-    policy: PolicyOutcome | None  # arrives with the policy schema
+    policy: PolicyOutcome | None = (
+        None  # what the user's policy decided, if one was applied
+    )
     # Run.build derives findings and health from the results and checks the parts agree
 ```
 
@@ -436,6 +438,20 @@ rules:
 Actions are `annotate | warn | fail | notify`. `fail` affects only the exit code and policy outcome;
 the run still completes and writes all sinks. Policy outcomes are part of the Run, so a dashboard
 or downstream system sees *why* a pipeline was failed.
+
+The schema is `dsbf.model.policy` (`Policy`, `Rule`, `Matcher`, `PolicyAction`, `PolicyOutcome`):
+
+- A `when` holds at least one condition, and every condition given must hold. Finding conditions
+  are `dimension`, `code`, `check`, `column`, `tag`, `severity`, `confidence`, `metric` and
+  `new_since: previous_run`. `health.status` selects checks and may only be narrowed by `check`.
+- `severity`, `confidence` and each `metric` entry take one comparison: `==` (the default), `!=`,
+  `>=`, `>`, `<=` or `<`. Quote a value that starts with an operator in YAML. Severity and confidence
+  compare by rank, and metric operands are numbers (or text and booleans for `==` and `!=`).
+- `then` is one action or a list, and defaults to `annotate`. `notify` takes a `scheme:destination`
+  target; the other actions take none.
+- `Run.policy` lists every rule in order with the finding ids and check ids it matched, plus `failed`,
+  so the exit code (1 only when a triggered rule has a `fail` action) can be explained.
+- Not yet expressible: a range on one setting (`>0.1` and `<0.5`).
 
 ---
 

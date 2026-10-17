@@ -13,6 +13,7 @@ from dsbf.model.check import CheckResult
 from dsbf.model.finding import Finding
 from dsbf.model.health import RunHealth
 from dsbf.model.manifest import DatasetManifest, PlanManifest
+from dsbf.model.policy import PolicyOutcome
 from dsbf.model.profile import DatasetProfile
 from dsbf.model.vocabulary import Severity
 
@@ -48,6 +49,10 @@ class Run(Contract):
         description="Every result's findings, highest severity first."
     )
     health: RunHealth
+    policy: PolicyOutcome | None = Field(
+        default=None,
+        description="What the user's policy decided; absent when none was applied.",
+    )
 
     @field_validator("schema_version")
     @classmethod
@@ -82,6 +87,7 @@ class Run(Contract):
             raise ValueError("a run starts before it finishes")
         self._check_inputs()
         self._check_results()
+        self._check_policy()
         return self
 
     def _check_inputs(self) -> None:
@@ -123,6 +129,26 @@ class Run(Contract):
             raise ValueError("finding ids are unique within a run")
         if self.health != RunHealth.from_results(self.results):
             raise ValueError("health does not match the check results")
+
+    def _check_policy(self) -> None:
+        if self.policy is None:
+            return
+        finding_ids = {f.id for f in self.findings}
+        for outcome in self.policy.rules:
+            name = outcome.rule.name
+            unknown = [i for i in outcome.finding_ids if i not in finding_ids]
+            if unknown:
+                raise ValueError(f"rule {name!r} matched unknown findings {unknown}")
+            status = outcome.rule.when.health_status
+            for check_id in outcome.check_ids:
+                if check_id not in self.results:
+                    raise ValueError(f"rule {name!r} matched unknown check {check_id}")
+                actual = self.results[check_id].status
+                if actual != status:
+                    raise ValueError(
+                        f"rule {name!r} matched {check_id}, whose status is "
+                        f"{actual}, not {status}"
+                    )
 
     def render_health(self, pointer: str | None = None) -> str:
         """The plain-text health summary, headed by what the run looked at."""
