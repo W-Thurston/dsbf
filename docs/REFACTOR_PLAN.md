@@ -150,12 +150,15 @@ class Subject(BaseModel):  # replaces "col1|col2" string keys (F-10)
 
 class Evidence(BaseModel):
     metrics: dict[
-        str, float | int | str | None
-    ]  # finite floats only; NaN/inf → None + flag (F-36)
+        str, bool | int | float | str | None
+    ]  # finite floats only; NaN/inf/NaT → None, named in non_finite_metrics (F-36)
+    non_finite_metrics: tuple[str, ...] = ()
     n_used: int
     n_total: int
     method: str  # e.g. "spearman_r", "vif", "shapiro_wilk"
-    assumptions: list[AssumptionCheck] = []
+    assumptions: tuple[
+        AssumptionCheck, ...
+    ] = ()  # contracts are frozen; sequences are tuples
     interval: Interval | None = None  # CI where defined
     sampled: SamplingInfo | None = None  # provenance (F-09, F-15)
     details_ref: str | None = None  # pointer to bulky evidence, fetched lazily (F-35)
