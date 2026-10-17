@@ -142,10 +142,10 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Acceptance:** `pip install "<wheel>[all]"` in a clean venv passes the test suite.
 - **Note from U0-15:** ADR 0009 fixes the extras split (`ml` scikit-learn, `timeseries` statsmodels, `text` rapidfuzz, `pandas`, `sql` Ibis, `server` FastAPI, SQLAlchemy, Alembic). Heavy libraries are imported lazily, and each extra needs a test that the core runs without it.
 - **Commit:** `build: declare optional dependency extras`
-- **Done notes:** `pyproject.toml` declares `ml`, `timeseries`, `text`, `pandas`, `sql`, `server` and `all` (the union, as `dsbf[...]`); the base install is unchanged, so each extra repeats a base constraint or adds a package nothing imports yet (ibis-framework, rapidfuzz, sqlalchemy, alembic). `tests/test_packaging.py` guards the set of extras and keeps repeated specifiers identical. The wheel with `[all]` in a clean venv passes the suite (1006 passed). Deviations: the first clean install failed 3 normality tests because DSBF never declared scipy and a fresh install gets 1.18, which breaks `kstest(..., args=...)`; scipy is now declared as `>=1.16,<1.18` with a Dependabot ignore and a held-back row. pyarrow stays in the base, as the design lists it, not in an extra as the U0-04 note wanted.
+- **Done notes:** `pyproject.toml` declares `ml`, `timeseries`, `text`, `pandas`, `sql`, `server` and `all` (the union, as `dsbf[...]`); the base install is unchanged, so each extra repeats a base constraint or adds a package nothing imports yet (ibis-framework, rapidfuzz, sqlalchemy, alembic). `tests/test_packaging.py` guards the set of extras and keeps repeated specifiers identical. The wheel with `[all]` in a clean venv passes the suite (1006 passed). Deviations: the first clean install failed 3 normality tests because DSBF never declared scipy and a fresh install gets 1.18, which breaks `kstest(..., args=...)`; scipy is now declared as `>=1.16,<1.18` with a Dependabot ignore and a held-back row. pyarrow stays in the base, as the design lists it, not in an extra as the U0-04 note wanted. Merged as PR #72 (`9f9d2c8`).
 
 ### U1-06 · Contracts I: subjects, severities, dimensions and evidence
-- **Status:** todo · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-10, F-36 (schema side)
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U1-01 · **Resolves:** F-10, F-36 (schema side)
 - **Note from U0-14:** on the adversarial run `GET /api/runs/{run_key}/associations` and `/sample` return 500 (`Out of range float values are not JSON compliant: nan`), because all-NaN and `inf` columns reach the JSON encoder. `tests/perf/baseline.json` records the 500s; once the contracts or API stop emitting non-finite floats, update the baseline so the benchmark guards the 200s.
 - **Note from U0-13:** the legacy `report.json` writes bare `NaN` (invalid JSON) in sample rows (`sample_head`, `sample_tail`); the golden normaliser spells non-finite floats as strings. The validators here must make that impossible in the new contracts.
 - **Note from U0-09:** `data_quality_scorer` still splits leakage pair keys with `split("|", 1)` and mis-attributes a pair when the first column name contains `|` (U0-09 only stopped the crash). Pairs become structured records here; include a `|` pair case in the tests.
@@ -157,9 +157,11 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Scope:** In: models, validators (finite floats only; NaN/inf → `None` plus a flag), unit tests including column names with `|`, brackets, unicode and empty strings. Out: Finding and Run (U1-07, U1-08).
 - **Acceptance:** Round-trip tests pass. A non-finite float can't produce invalid JSON.
 - **Commit:** `feat(model): add subject, evidence and severity contracts`
+- **Done notes:** `dsbf.model` (`src/dsbf/model/`) holds `Subject`, `Severity`, `Confidence`, `Dimension`, `Evidence`, `Interval`, `AssumptionCheck`, `SamplingInfo` and `Timing`, and imports only pydantic (now a direct dependency, `pydantic>=2.12,<3`). Every contract derives from `Contract` (frozen, unknown fields rejected), and sequences are tuples, not the sketch's lists. `Evidence` nulls NaN, infinity and `NaT`, names them in `non_finite_metrics`, and turns NumPy scalars and dates into plain values and ISO strings; this also repairs a stored `NaN` token on read. `Subject` keeps columns as an ordered tuple, so the `a|b` pair collision cannot happen. `Severity` and `Confidence` are ordered string enums. Deviations: `Metric` also admits `bool`, because pydantic turned `True` into `1.0`; structural floats (interval bounds, timings) are rejected, not nulled, when non-finite. Checked on the adversarial frame: 5 of 5 non-finite metrics flagged, all output strict JSON, and the legacy `report.json` for the same run does not parse strictly (269 `NaN`, 19 `Infinity`).
 
 ### U1-07 · Contracts II: findings, notes, check results and run health
 - **Status:** todo · **Size:** M · **Depends on:** U1-06 · **Resolves:** F-20 (status model)
+- **Note from U1-06:** `dsbf.model` conventions to follow: models derive from `dsbf.model.base.Contract` (frozen, `extra="forbid"`), sequences are `tuple[...]`, structural floats use `FiniteFloat`, and data-derived metric values go through `Evidence` (nulled and flagged, never rejected). `Subject` keeps a pair's columns in the order given, so a symmetric check must pick a canonical order before `Finding.id` hashes it. `Severity` and `Confidence` compare by rank (`Severity.WARN >= Severity.NOTICE`); ordering `Run.findings` by severity can use that.
 - **Goal:** `Finding` (with a stable id), `Guidance`, `Action`, `Note`, `CheckResult` (statuses `ok | not_applicable | skipped | unavailable | error | timeout`) and `RunHealth`.
 - **Assumptions to confirm:**
   - The `Finding.id` hash inputs: check id, subject, code.
@@ -186,6 +188,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U1-10 · Policy rule schema
 - **Status:** todo · **Size:** S · **Depends on:** U1-07
+- **Note from U1-06:** `Severity` and `Confidence` are ordered `StrEnum`s, so a `>=error` matcher can compare members directly. `Dimension` is a plain `StrEnum`.
 - **Goal:** Typed models for `policy.yaml` (`when` matchers, `then` actions `annotate | warn | fail | notify`) and `PolicyOutcome`. There's no evaluator yet (Phase 5).
 - **Assumptions to confirm:** The REFACTOR_PLAN §7.2 example covers the matcher operators users need.
 - **Acceptance:** The §7.2 example parses. Invalid rules produce precise errors.
@@ -194,6 +197,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 ### U1-11 · Schema export, breaking-change gate and TypeScript types
 - **Status:** todo · **Size:** M · **Depends on:** U1-08, U1-09, U1-10, U1-03
 - **Note from U1-04:** this unit edits `frontend/`, so apply the Dependency upgrades rule there. Dependabot PRs #69 (vue-router 4.6.4 → 5.4.0) and #70 (plotly.js-dist-min 3.7.0 → 4.1.2) were open on 2026-10-17. Both are major bumps with no unit yet; take them with the dashboard build and view the dashboard in a browser, or close them with a cap and a row in the held-back table.
+- **Note from U1-06:** the models in `dsbf.model` set `additionalProperties: false`, and `Dimension`, `Severity` and `Confidence` export as string `enum`s. The ordering of the last two is not in the schema, so a TypeScript consumer needs its own rank table. `Timing.started_at` is an ISO 8601 string with an offset.
 - **Goal:** `dsbf schema export`. The JSON Schema is committed under `schema/`. CI fails on an unannounced breaking change. TS types are generated into `frontend/src/generated/`.
 - **Assumptions to confirm:**
   - The tool choice for TS generation (for example `json-schema-to-typescript`).
@@ -369,6 +373,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-11 · All legacy tasks through the new engine with findings
 - **Status:** todo · **Size:** M · **Depends on:** U3-10
+- **Note from U1-06:** `tests/perf/baseline.json` still records the HTTP 500s on the adversarial run (`/associations` and `/sample` emit `NaN`; the U0-14 note is kept under U1-06). The legacy writer and API don't use `dsbf.model` yet. Once legacy results are routed through `Evidence` (nulled and flagged), or the API stops emitting non-finite floats, regenerate the baseline with the perf harness so the benchmark guards the 200s.
 - **Goal:** Every registered legacy task runs on the new engine. Guidance blurbs convert into `Finding`s with evidence where it can be derived.
 - **Acceptance:** Golden runs (U0-13) reproduce through the adapter, with differences listed in the PR. The adversarial frame produces a complete `Run` with no unhandled errors.
 - **Commit:** `feat(engine): run all legacy tasks through the new engine`
