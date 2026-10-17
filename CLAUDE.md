@@ -56,9 +56,8 @@ Read this section before planning or modifying the repository.
    - lockfiles: `uv lock` / `pnpm install`;
    - JSON Schema and TypeScript types: `dsbf schema export`, once it exists;
    - golden snapshots: the golden suite's update option;
+   - `src/dsbf/static_metadata/task_metadata.json`: `dsbf tasks export --output src/dsbf/static_metadata/task_metadata.json`;
    - performance baselines: the perf harness.
-
-   `src/dsbf/static_metadata/task_metadata.json` is rewritten by every run. Restore it rather than committing incidental changes.
 10. **Close each unit completely.** Follow `.claude/commands/closeout.md` (run it as `/closeout`).
 11. **Don't preserve development-era compatibility without a current need.** DSBF has never had a published release or external users (it isn't on PyPI, and the repo has no forks, as of 2026-10-15). Development-era schemas, configs, commands, tests, generated contracts and historical behaviour can be replaced when the active design requires it, unless a current contract explicitly requires compatibility. Compatibility guarantees begin with the published 1.x result schema.
 12. **Use explicit dates and repository history.** Trust explicit user-provided dates, commit timestamps and repository history. When dates conflict or are ambiguous, state the exact date being used (`YYYY-MM-DD`) rather than relative wording.
@@ -107,4 +106,4 @@ Branch: unit/<ID>-<slug> · Started: <YYYY-MM-DD>
 
 Each gotcha names the unit that removes it. Delete the line at that unit's close-out.
 
-- Every run rewrites `src/dsbf/static_metadata/task_metadata.json` (until U1-04).
+None at present.

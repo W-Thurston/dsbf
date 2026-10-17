@@ -50,7 +50,7 @@ def run_once(
         **os.environ,
         "PYTHONHASHSEED": HASH_SEED,
         "DSBF_DB_PATH": str(workdir / "dsbf.db"),
-        "DSBF_AUTO_EXPORT_METADATA": "0",
+        "DSBF_HOME": str(workdir / "home"),
     }
     completed = subprocess.run(
         command,

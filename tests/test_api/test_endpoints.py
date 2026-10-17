@@ -15,6 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from dsbf.api import db, main
+from dsbf.storage.schema import get_connection
 from dsbf.storage.writer import persist_run_from_dict
 
 pytestmark = pytest.mark.integration
@@ -106,10 +107,7 @@ def client(tmp_path, monkeypatch) -> TestClient:
             db_path=db_path,
         )
 
-    # A few handlers call the db helpers without the module override, so point both
-    # the override and the environment variable at the seeded database.
     monkeypatch.setattr(main, "_DB_PATH", str(db_path))
-    monkeypatch.setenv("DSBF_DB_PATH", str(db_path))
     return TestClient(main.app)
 
 
@@ -252,6 +250,23 @@ def test_figures(client):
     response = client.get(f"/api/figures/{figures[0]['id']}/file")
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/png"
+    assert response.content == PNG_BYTES
+
+
+def test_figure_stored_with_a_cwd_relative_path_is_found_from_the_cwd(
+    client, tmp_path, monkeypatch
+):
+    figure_dir = tmp_path / "legacy" / "figs"
+    figure_dir.mkdir(parents=True)
+    (figure_dir / "old.png").write_bytes(PNG_BYTES)
+    with get_connection(tmp_path / "api.db") as conn:
+        conn.execute("UPDATE figures SET file_path = ?", ("legacy/figs/old.png",))
+    monkeypatch.chdir(tmp_path)
+    figures = client.get(f"/api/runs/{RUN_A}/figures").json()
+
+    response = client.get(f"/api/figures/{figures[0]['id']}/file")
+
+    assert response.status_code == 200
     assert response.content == PNG_BYTES
 
 

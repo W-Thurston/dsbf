@@ -50,7 +50,7 @@ This describes the current (pre-refactor) code: how the pieces fit together and 
 11. Optional DAG PNG if `metadata.visualize_dag`.
 12. Write `report.json` (unless `metadata.disable_report`) and `metadata_report.json`.
 13. **`storage.writer.persist_run(self)`**: SQLite upsert (failures are logged, not fatal).
-14. `record_run()` and completion log.
+14. Completion log.
 
 ### Tasks (`src/dsbf/eda/tasks/*.py`, `src/dsbf/core/base_task.py`)
 

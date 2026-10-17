@@ -76,7 +76,6 @@ def instrument() -> None:
     engine.__init__ = timed("ProfileEngine.__init__", engine.__init__)
     engine._load_data = timed("_load_data", engine._load_data)
     engine.build_graph = timed("build_graph", engine.build_graph)
-    engine.record_run = timed("record_run", engine.record_run)
     ExecutionGraph.run = timed("graph.run (all tasks)", ExecutionGraph.run)
 
 

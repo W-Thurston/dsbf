@@ -15,7 +15,7 @@ PRIMARY_TIERS = ("unit", "integration", "golden", "perf")
 
 # Runtime state the suite must never share with a developer's own runs. Each
 # variable is forced for the whole session, whatever the caller exported.
-_ISOLATED_ENV_KEYS = ("DSBF_DB_PATH", "DSBF_AUTO_EXPORT_METADATA")
+_ISOLATED_ENV_KEYS = ("DSBF_HOME", "DSBF_DB_PATH")
 _RUNTIME_ROOT_KEY = pytest.StashKey[Path]()
 _SAVED_ENV_KEY = pytest.StashKey[dict[str, str | None]]()
 
@@ -53,17 +53,17 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Point the database and metadata export at a throwaway root.
+    """Point the DSBF home and the database at a throwaway root.
 
-    This runs at configure time, not in a fixture, because modules such as
-    ``dsbf.api.main`` read ``DSBF_DB_PATH`` when they are imported during collection.
+    This runs at configure time, not in a fixture, so the paths are in place before
+    any test module is collected or imported.
     """
     root = Path(tempfile.mkdtemp(prefix="dsbf-tests-")).resolve()
     (root / "cwd").mkdir()
     config.stash[_RUNTIME_ROOT_KEY] = root
     config.stash[_SAVED_ENV_KEY] = {k: os.environ.get(k) for k in _ISOLATED_ENV_KEYS}
+    os.environ["DSBF_HOME"] = str(root / "home")
     os.environ["DSBF_DB_PATH"] = str(root / "dsbf.db")
-    os.environ["DSBF_AUTO_EXPORT_METADATA"] = "0"
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
@@ -82,8 +82,9 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 def isolated_working_directory(pytestconfig: pytest.Config) -> Iterator[Path]:
     """Run the whole session from a temporary directory.
 
-    DSBF writes ``dsbf/outputs/`` and ``dsbf_run.json`` relative to the CWD, so
-    this keeps those writes away from the repository and from the developer's runs.
+    DSBF writes under ``DSBF_HOME``, which the session points at a temporary root.
+    The temporary CWD keeps any stray relative write, and any code that wrongly
+    depends on the repository layout, from touching the repository.
     """
     cwd = pytestconfig.stash[_RUNTIME_ROOT_KEY] / "cwd"
     previous = Path.cwd()

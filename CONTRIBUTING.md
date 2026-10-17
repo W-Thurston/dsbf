@@ -79,11 +79,11 @@ the baseline is in [`tests/perf/README.md`](tests/perf/README.md).
 
 ### Test isolation
 
-The suite never touches your own runs. `tests/conftest.py` points `DSBF_DB_PATH` at a
-temporary database, turns off the metadata export (`DSBF_AUTO_EXPORT_METADATA=0`), and
-runs the whole session from a temporary working directory. Anything DSBF writes relative
-to the working directory (`dsbf/outputs/`, `dsbf_run.json`) lands there and is deleted
-afterwards. Both variables are forced, so values you export are ignored while tests run.
+The suite never touches your own runs. `tests/conftest.py` points `DSBF_HOME` and
+`DSBF_DB_PATH` at a temporary root and runs the whole session from a temporary working
+directory. Outputs and the database land under that root and are deleted afterwards, and
+a stray write relative to the working directory lands in the temporary directory. Both
+variables are forced, so values you export are ignored while tests run.
 Write tests that don't assume the working directory is the repository root: build paths
 from `Path(dsbf.__file__)` or `tmp_path`.
 
@@ -104,7 +104,6 @@ src/dsbf/
 
 frontend/               # Vue 3 + Vite dashboard app
 
-dsbf/outputs/           # Generated at runtime — gitignored
 
 tests/
 ├── generators/         # Dataset generators for the validation suite

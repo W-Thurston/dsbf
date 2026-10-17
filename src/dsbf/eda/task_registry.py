@@ -2,7 +2,6 @@
 
 import importlib
 import importlib.util
-import os
 import re
 import sys
 import traceback
@@ -271,12 +270,6 @@ def load_task_group(group: str) -> None:
     except Exception as e:
         logger.warning(f"[Plugin Load] Failed to load group '{group}': {e}")
         traceback.print_exc()
-
-    # Automatically export full metadata after loading tasks
-    if os.environ.get("DSBF_AUTO_EXPORT_METADATA", "1") == "1":
-        from dsbf.utils.task_utils import write_task_metadata
-
-        write_task_metadata("src/dsbf/static_metadata/task_metadata.json")
 
 
 def _import_local_python_file(path: Path) -> None:

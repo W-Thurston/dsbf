@@ -35,6 +35,7 @@ _SRC_ROOT = Path(__file__).resolve().parent / "src"
 if str(_SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(_SRC_ROOT))
 
+from dsbf.paths import default_outputs_dir  # noqa: E402
 from dsbf.storage.schema import init_db  # noqa: E402
 from dsbf.storage.writer import persist_run_from_dict  # noqa: E402
 
@@ -199,14 +200,15 @@ def main():
     parser.add_argument(
         "--outputs-dir",
         type=Path,
-        default=Path("dsbf/outputs"),
-        help="Path to the outputs directory (default: dsbf/outputs)",
+        default=None,
+        help="Path to the outputs directory (default: <DSBF_HOME>/outputs)",
     )
     parser.add_argument(
         "--db-path",
         type=Path,
         default=None,
-        help="Path to the database file (default: dsbf/dsbf.db or DSBF_DB_PATH env)",
+        help="Path to the database file "
+        "(default: DSBF_DB_PATH, else <DSBF_HOME>/dsbf.db)",
     )
     parser.add_argument(
         "--dry-run",
@@ -225,6 +227,8 @@ def main():
     )
     args = parser.parse_args()
 
+    if args.outputs_dir is None:
+        args.outputs_dir = default_outputs_dir()
     if not args.outputs_dir.is_dir():
         logger.error("Outputs directory not found: %s", args.outputs_dir)
         sys.exit(1)

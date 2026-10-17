@@ -28,7 +28,6 @@ Endpoints
 import json as _json
 import logging
 import os
-from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import FastAPI, HTTPException, Query
@@ -36,6 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from dsbf.api import db
+from dsbf.paths import resolve_stored_path
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +61,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Optional db_path override - falls back to schema.py resolution if not set
-_DB_PATH: str | None = os.environ.get("DSBF_DB_PATH") or None
+# Optional db_path override. When None, every call resolves the database through
+# storage.schema (DSBF_DB_PATH, then the default under DSBF_HOME).
+_DB_PATH: str | None = None
 
 
 ##########
@@ -187,11 +188,11 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
     rich entry dict - for Pearson/Spearman pairs this is entry["metric"]; the
     metric_type is also returned for the frontend to display appropriately.
     """
-    run: dict | None = db.get_run(run_key)
+    run: dict | None = db.get_run(run_key, _DB_PATH)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
 
-    task: dict | None = db.get_task(run_key, "compute_pairwise_associations")
+    task: dict | None = db.get_task(run_key, "compute_pairwise_associations", _DB_PATH)
     if not task or not task.get("data"):
         return {
             "column": column,
@@ -264,7 +265,7 @@ async def run_column_correlations(run_key: str, column: str, threshold: float = 
 
 @app.get("/api/runs/{run_key}/sample")
 def read_run_sample(run_key: str, n: int = 10):
-    result = db.get_run_sample(run_key, n=min(n, 50))
+    result = db.get_run_sample(run_key, n=min(n, 50), db_path=_DB_PATH)
     if result is None:
         # source_path not recorded or file no longer on disk - return empty
         # payload rather than 404 so the frontend can show a friendly message
@@ -506,9 +507,7 @@ def get_figure_file(figure_id: int) -> FileResponse:
     if not file_path_str:
         raise HTTPException(status_code=404, detail=f"Figure {figure_id} not found.")
 
-    # Paths in the database are relative to the repo root
-    repo_root = Path(__file__).resolve().parents[3]
-    file_path = repo_root / file_path_str
+    file_path = resolve_stored_path(file_path_str)
 
     if not file_path.exists():
         raise HTTPException(

@@ -6,6 +6,7 @@ from typing import Any
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
+from dsbf.paths import default_outputs_dir
 from dsbf.utils.logging_utils import setup_logger
 from dsbf.utils.task_utils import is_diagnostic_task
 
@@ -89,7 +90,7 @@ def write_metadata_report(
     }
 
     # Determine output path
-    output_dir = context.output_dir or "dsbf/outputs/latest"
+    output_dir = context.output_dir or str(default_outputs_dir() / "latest")
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, filename)
 

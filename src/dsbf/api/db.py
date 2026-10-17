@@ -17,6 +17,7 @@ from typing import Any
 
 import pandas as pd
 
+from dsbf.paths import resolve_stored_path
 from dsbf.storage.schema import get_connection
 
 logger = logging.getLogger(__name__)
@@ -147,13 +148,11 @@ def get_run(run_key: str, db_path=None) -> dict | None:
         d["dataset_name"] = cfg_meta["dataset_name"]
 
     sp = d.get("source_path")
-    # source_path may be relative to the repo root (same convention as figure paths)
+    # Runs stored before paths became absolute hold CWD-relative paths.
     resolved = None
     if sp:
         p = Path(sp)
-        if not p.is_absolute():
-            repo_root = Path(__file__).resolve().parents[3]
-            p = repo_root / p
+        p = resolve_stored_path(sp)
         if p.exists():
             resolved = p
 
@@ -182,10 +181,7 @@ def _load_dataframe(
     """
     # ── File-based load ───────────────────────────────────────────────────────
     if source_path:
-        p = Path(source_path)
-        if not p.is_absolute():
-            repo_root = Path(__file__).resolve().parents[3]
-            p = repo_root / p
+        p = resolve_stored_path(source_path)
         if not p.exists():
             return None
         ext = p.suffix.lower()
