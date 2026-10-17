@@ -24,6 +24,7 @@ from dsbf.model.manifest import (
     SourceKind,
     SourceRef,
 )
+from dsbf.model.params import CheckParams
 from dsbf.model.profile import (
     BooleanProfile,
     CategoricalProfile,
@@ -52,6 +53,7 @@ __all__ = [
     "AssumptionCheck",
     "BooleanProfile",
     "CategoricalProfile",
+    "CheckParams",
     "CheckResult",
     "CheckStatus",
     "ColumnCounts",
