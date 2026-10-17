@@ -12,7 +12,7 @@
           autocomplete="off"
           spellcheck="false"
         />
-        <button v-if="query" class="search-clear" @click="query = ''" title="Clear">✕</button>
+        <button v-if="query" class="search-clear" title="Clear" @click="query = ''">✕</button>
       </div>
     </div>
 
@@ -51,7 +51,7 @@
         </router-link>
       </div>
 
-      <div class="result-count" v-if="query">
+      <div v-if="query" class="result-count">
         {{ filtered.length }} of {{ datasets.length }} datasets
       </div>
     </template>
@@ -64,9 +64,9 @@ import { listDatasets } from '../api.js'
 import { highlightHtml } from '../utils.js'
 
 const datasets = ref([])
-const loading  = ref(true)
-const error    = ref(null)
-const query    = ref('')
+const loading = ref(true)
+const error = ref(null)
+const query = ref('')
 
 onMounted(async () => {
   try {
@@ -81,13 +81,15 @@ onMounted(async () => {
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return datasets.value
-  return datasets.value.filter(ds => ds.name.toLowerCase().includes(q))
+  return datasets.value.filter((ds) => ds.name.toLowerCase().includes(q))
 })
 
 function formatDate(iso) {
   if (!iso) return '-'
   return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   })
 }
 
@@ -148,7 +150,9 @@ function qualityClass(score) {
   border-color: #60a5fa;
 }
 
-.search-input::placeholder { color: #64748b; }
+.search-input::placeholder {
+  color: #64748b;
+}
 
 .search-clear {
   position: absolute;
@@ -161,7 +165,9 @@ function qualityClass(score) {
   padding: 2px 4px;
   line-height: 1;
 }
-.search-clear:hover { color: #e2e8f0; }
+.search-clear:hover {
+  color: #e2e8f0;
+}
 
 .dataset-grid {
   display: grid;
@@ -172,7 +178,9 @@ function qualityClass(score) {
 .dataset-card {
   display: block;
   color: inherit;
-  transition: border-color 0.15s, transform 0.15s;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
 }
 
 .dataset-card:hover {
@@ -220,7 +228,9 @@ function qualityClass(score) {
   text-align: center;
 }
 
-.empty-state strong { color: #94a3b8; }
+.empty-state strong {
+  color: #94a3b8;
+}
 
 .result-count {
   margin-top: 16px;
@@ -229,10 +239,18 @@ function qualityClass(score) {
   text-align: right;
 }
 
-.score-excellent { color: #4ade80; }
-.score-good      { color: #34d399; }
-.score-warn      { color: #fb923c; }
-.score-poor      { color: #f87171; }
+.score-excellent {
+  color: #4ade80;
+}
+.score-good {
+  color: #34d399;
+}
+.score-warn {
+  color: #fb923c;
+}
+.score-poor {
+  color: #f87171;
+}
 
 :deep(mark) {
   background: #facc15;

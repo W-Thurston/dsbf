@@ -47,7 +47,9 @@
               :key="col"
               :title="row[col] != null ? String(row[col]) : ''"
               :class="{ 'null-cell': row[col] == null }"
-            >{{ row[col] != null ? trunc(String(row[col]), 20) : 'null' }}</td>
+            >
+              {{ row[col] != null ? trunc(String(row[col]), 20) : 'null' }}
+            </td>
           </tr>
         </tbody>
       </table>
@@ -63,22 +65,22 @@ import { trunc } from '../../utils.js'
 
 const props = defineProps({
   runKey: { type: String, required: true },
-  run:    { type: Object, default: null },
+  run: { type: Object, default: null },
 })
 
 const loading = ref(true)
-const error   = ref(null)
+const error = ref(null)
 const columns = ref([])
-const rows    = ref([])
-const nRows   = ref(10)
+const rows = ref([])
+const nRows = ref(10)
 
 async function fetchSample() {
   if (!props.runKey) return
 
   // Reset stale data immediately so the previous run's sample doesn't linger
   columns.value = []
-  rows.value    = []
-  error.value   = null
+  rows.value = []
+  error.value = null
   loading.value = true
 
   // For built-in datasets (seaborn/sklearn) source_path is null but the backend
@@ -86,19 +88,19 @@ async function fetchSample() {
   // pre-date path tracking - identified by dataset_source being unknown and
   // source_path being null.
   if (props.run && props.run.run_key === props.runKey) {
-    const src    = props.run.source_path
+    const src = props.run.source_path
     const source = props.run.dataset_source ?? 'unknown'
     if (!src && source === 'unknown') {
       loading.value = false
-      error.value   = 'no_source_path'
+      error.value = 'no_source_path'
       return
     }
   }
   try {
-    const data    = await getRunSample(props.runKey, nRows.value)
+    const data = await getRunSample(props.runKey, nRows.value)
     if (data.error) throw new Error(data.error)
     columns.value = data.columns ?? []
-    rows.value    = data.rows    ?? []
+    rows.value = data.rows ?? []
   } catch (e) {
     error.value = `Could not load sample: ${e.message}`
   } finally {
@@ -107,13 +109,27 @@ async function fetchSample() {
 }
 
 onMounted(fetchSample)
-watch(() => props.runKey, () => fetchSample(), { immediate: false })
+watch(
+  () => props.runKey,
+  () => fetchSample(),
+  { immediate: false },
+)
 // Re-run check when run arrives in case we need to show the no_source_path message
-watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample() })
+watch(
+  () => props.run?.run_key,
+  (key) => {
+    if (key === props.runKey) fetchSample()
+  },
+)
 </script>
 
 <style scoped>
-.sample-card { overflow: hidden; height: 420px; display: flex; flex-direction: column; }
+.sample-card {
+  overflow: hidden;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
 
 .card-header {
   display: flex;
@@ -130,7 +146,10 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   gap: 6px;
 }
 
-.n-label { font-size: 12px; color: #64748b; }
+.n-label {
+  font-size: 12px;
+  color: #64748b;
+}
 
 .n-select {
   background: #0f172a;
@@ -142,9 +161,16 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   outline: none;
   cursor: pointer;
 }
-.n-select:focus { border-color: #60a5fa; }
+.n-select:focus {
+  border-color: #60a5fa;
+}
 
-.table-wrap { overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0; }
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
 
 .sample-table {
   border-collapse: separate;
@@ -185,7 +211,9 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   font-size: 12px;
 }
 
-.sample-table tr:hover td { background: #263548; }
+.sample-table tr:hover td {
+  background: #263548;
+}
 
 .row-idx {
   color: #334155 !important;
@@ -194,12 +222,26 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   user-select: none;
 }
 
-.null-cell { color: #64748b !important; font-style: italic; }
+.null-cell {
+  color: #64748b !important;
+  font-style: italic;
+}
 
-.loading { color: #94a3b8; font-size: 13px; padding: 24px 0; text-align: center; }
-.sample-error { color: #f87171; font-size: 13px; padding: 16px 0; }
+.loading {
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 24px 0;
+  text-align: center;
+}
+.sample-error {
+  color: #f87171;
+  font-size: 13px;
+  padding: 16px 0;
+}
 
-.muted { color: #64748b; }
+.muted {
+  color: #64748b;
+}
 
 .sample-unavailable {
   display: flex;
@@ -211,5 +253,8 @@ watch(() => props.run?.run_key, (key) => { if (key === props.runKey) fetchSample
   text-align: center;
   justify-content: center;
 }
-.unavail-icon { font-size: 16px; color: #334155; }
+.unavail-icon {
+  font-size: 16px;
+  color: #334155;
+}
 </style>

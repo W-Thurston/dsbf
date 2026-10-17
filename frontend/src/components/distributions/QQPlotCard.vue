@@ -41,31 +41,31 @@
     <template v-else>
       <div class="qq-meta">
         <span class="qq-meta-item">n = {{ colData.n?.toLocaleString() }}</span>
-        <span class="qq-meta-item" v-if="colData.mean_abs_deviation != null">
+        <span v-if="colData.mean_abs_deviation != null" class="qq-meta-item">
           Mean deviation from line: <strong>{{ colData.mean_abs_deviation.toFixed(4) }}</strong>
         </span>
         <span class="qq-normal-result" :class="normalClass">{{ normalLabel }}</span>
       </div>
 
-      <div class="qq-plot-wrap" ref="wrapEl">
-        <svg
-          :viewBox="`0 0 ${W} ${H}`"
-          class="qq-svg"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+      <div ref="wrapEl" class="qq-plot-wrap">
+        <svg :viewBox="`0 0 ${W} ${H}`" class="qq-svg" xmlns="http://www.w3.org/2000/svg">
           <!-- Axes -->
           <line :x1="PAD" :y1="PAD" :x2="PAD" :y2="H - PAD" class="qq-axis" />
           <line :x1="PAD" :y1="H - PAD" :x2="W - PAD" :y2="H - PAD" class="qq-axis" />
 
           <!-- Axis labels -->
-          <text :x="W / 2" :y="H - 4" class="qq-axis-label" text-anchor="middle">Theoretical quantiles</text>
+          <text :x="W / 2" :y="H - 4" class="qq-axis-label" text-anchor="middle">
+            Theoretical quantiles
+          </text>
           <text
             :x="10"
             :y="H / 2"
             class="qq-axis-label"
             text-anchor="middle"
             :transform="`rotate(-90, 10, ${H / 2})`"
-          >Sample quantiles</text>
+          >
+            Sample quantiles
+          </text>
 
           <!-- Reference line -->
           <line
@@ -97,22 +97,20 @@ import TooltipIcon from '../TooltipIcon.vue'
 
 const props = defineProps({
   column: { type: String, required: true },
-  tasks:  { type: Object, default: () => ({}) },
+  tasks: { type: Object, default: () => ({}) },
 })
 
 // SVG dimensions
-const W   = 420
-const H   = 320
+const W = 420
+const H = 320
 const PAD = 44
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
-const colData = computed(() =>
-  props.tasks?.normality_qq_plots?.data?.[props.column] ?? null
-)
+const colData = computed(() => props.tasks?.normality_qq_plots?.data?.[props.column] ?? null)
 
-const normalityResult = computed(() =>
-  props.tasks?.normality_tests?.data?.[props.column]?.result ?? null
+const normalityResult = computed(
+  () => props.tasks?.normality_tests?.data?.[props.column]?.result ?? null,
 )
 
 const state = computed(() => {
@@ -128,19 +126,26 @@ const points = computed(() => {
   const d = colData.value
   if (!d) return []
   const theoretical = d.theoretical ?? []
-  const empirical   = d.empirical   ?? []
+  const empirical = d.empirical ?? []
   return theoretical.map((x, i) => ({ x, y: empirical[i] ?? 0 }))
 })
-
 
 // ── Scales ────────────────────────────────────────────────────────────────────
 // Compute point bounds independently so refLine can reference them without
 // a circular dependency (refLine used to reference xMin which referenced refLine).
 
-const pointsXMin = computed(() => points.value.length ? Math.min(...points.value.map(p => p.x)) : -3)
-const pointsXMax = computed(() => points.value.length ? Math.max(...points.value.map(p => p.x)) :  3)
-const pointsYMin = computed(() => points.value.length ? Math.min(...points.value.map(p => p.y)) : -3)
-const pointsYMax = computed(() => points.value.length ? Math.max(...points.value.map(p => p.y)) :  3)
+const pointsXMin = computed(() =>
+  points.value.length ? Math.min(...points.value.map((p) => p.x)) : -3,
+)
+const pointsXMax = computed(() =>
+  points.value.length ? Math.max(...points.value.map((p) => p.x)) : 3,
+)
+const pointsYMin = computed(() =>
+  points.value.length ? Math.min(...points.value.map((p) => p.y)) : -3,
+)
+const pointsYMax = computed(() =>
+  points.value.length ? Math.max(...points.value.map((p) => p.y)) : 3,
+)
 
 const refLine = computed(() => {
   const d = colData.value
@@ -148,7 +153,7 @@ const refLine = computed(() => {
   if (d.reference_line) {
     const rl = d.reference_line
     const x1 = rl.start_x ?? pointsXMin.value
-    const x2 = rl.end_x   ?? pointsXMax.value
+    const x2 = rl.end_x ?? pointsXMax.value
     return {
       x1,
       y1: rl.slope * x1 + rl.intercept,
@@ -183,24 +188,38 @@ function scaleY(v) {
 
 const normalLabel = computed(() => {
   const r = normalityResult.value
-  if (r === 'normal')     return 'Consistent with normal'
+  if (r === 'normal') return 'Consistent with normal'
   if (r === 'non_normal') return 'Non-normal'
   return 'Normality not tested'
 })
 
 const normalClass = computed(() => {
   const r = normalityResult.value
-  if (r === 'normal')     return 'qq-normal--pass'
+  if (r === 'normal') return 'qq-normal--pass'
   if (r === 'non_normal') return 'qq-normal--fail'
   return 'qq-normal--unknown'
 })
 </script>
 
 <style scoped>
-.qq-card { display: flex; flex-direction: column; gap: 12px; }
+.qq-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-.es-not-run { color: #64748b; font-size: 13px; padding: 8px 0; text-align: center; }
-.es-empty   { color: #4ade80; font-size: 13px; padding: 8px 0; text-align: center; }
+.es-not-run {
+  color: #64748b;
+  font-size: 13px;
+  padding: 8px 0;
+  text-align: center;
+}
+.es-empty {
+  color: #4ade80;
+  font-size: 13px;
+  padding: 8px 0;
+  text-align: center;
+}
 
 /* ── Meta row ────────────────────────────────────────────────────────────── */
 .qq-meta {
@@ -210,8 +229,12 @@ const normalClass = computed(() => {
   flex-wrap: wrap;
   font-size: 12px;
 }
-.qq-meta-item { color: #64748b; }
-.qq-meta-item strong { color: #94a3b8; }
+.qq-meta-item {
+  color: #64748b;
+}
+.qq-meta-item strong {
+  color: #94a3b8;
+}
 
 .qq-normal-result {
   font-size: 11px;
@@ -220,9 +243,21 @@ const normalClass = computed(() => {
   border-radius: 9px;
   border: 1px solid;
 }
-.qq-normal--pass    { background: #0f2718; color: #4ade80; border-color: #4ade80; }
-.qq-normal--fail    { background: #3d2510; color: #fb923c; border-color: #fb923c; }
-.qq-normal--unknown { background: #1e293b; color: #94a3b8; border-color: #64748b; }
+.qq-normal--pass {
+  background: #0f2718;
+  color: #4ade80;
+  border-color: #4ade80;
+}
+.qq-normal--fail {
+  background: #3d2510;
+  color: #fb923c;
+  border-color: #fb923c;
+}
+.qq-normal--unknown {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #64748b;
+}
 
 /* ── SVG ─────────────────────────────────────────────────────────────────── */
 .qq-plot-wrap {
@@ -255,11 +290,21 @@ const normalClass = computed(() => {
   opacity: 0.65;
   transition: opacity 0.1s;
 }
-.qq-point:hover { opacity: 1; }
+.qq-point:hover {
+  opacity: 1;
+}
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .qq-axis       { stroke: #e2e8f0; }
-:global(.theme-light) .qq-axis-label { fill: #94a3b8; }
-:global(.theme-light) .qq-ref-line   { stroke: #2563eb; }
-:global(.theme-light) .qq-point      { fill: #d97706; }
+:global(.theme-light) .qq-axis {
+  stroke: #e2e8f0;
+}
+:global(.theme-light) .qq-axis-label {
+  fill: #94a3b8;
+}
+:global(.theme-light) .qq-ref-line {
+  stroke: #2563eb;
+}
+:global(.theme-light) .qq-point {
+  fill: #d97706;
+}
 </style>

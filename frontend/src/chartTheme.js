@@ -32,7 +32,7 @@ const PALETTE = [
 const DARK = {
   color: PALETTE,
 
-  backgroundColor: 'transparent',   // card background comes from .card CSS
+  backgroundColor: 'transparent', // card background comes from .card CSS
 
   textStyle: {
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
@@ -41,7 +41,7 @@ const DARK = {
   },
 
   title: {
-    textStyle:    { color: '#e2e8f0', fontSize: 13, fontWeight: 600 },
+    textStyle: { color: '#e2e8f0', fontSize: 13, fontWeight: 600 },
     subtextStyle: { color: '#64748b', fontSize: 11 },
   },
 
@@ -53,20 +53,20 @@ const DARK = {
 
   tooltip: {
     backgroundColor: '#1e293b',
-    borderColor:     '#334155',
-    borderWidth:     1,
-    textStyle:       { color: '#e2e8f0', fontSize: 12 },
-    extraCssText:    'box-shadow: 0 4px 12px rgba(0,0,0,0.4); border-radius: 6px;',
+    borderColor: '#334155',
+    borderWidth: 1,
+    textStyle: { color: '#e2e8f0', fontSize: 12 },
+    extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.4); border-radius: 6px;',
   },
 
   axisPointer: {
-    lineStyle:  { color: '#475569', width: 1 },
+    lineStyle: { color: '#475569', width: 1 },
     crossStyle: { color: '#475569' },
-    label:      { backgroundColor: '#1e293b', color: '#94a3b8', borderColor: '#334155' },
+    label: { backgroundColor: '#1e293b', color: '#94a3b8', borderColor: '#334155' },
   },
 
   toolbox: {
-    iconStyle:   { borderColor: '#64748b' },
+    iconStyle: { borderColor: '#64748b' },
     emphasis: {
       iconStyle: { borderColor: '#60a5fa' },
     },
@@ -74,16 +74,16 @@ const DARK = {
 
   dataZoom: [
     {
-      backgroundColor:   '#0f172a',
+      backgroundColor: '#0f172a',
       dataBackground: {
-        lineStyle:  { color: '#334155' },
-        areaStyle:  { color: '#1e293b' },
+        lineStyle: { color: '#334155' },
+        areaStyle: { color: '#1e293b' },
       },
-      fillerColor:        'rgba(96, 165, 250, 0.1)',
-      handleStyle:        { color: '#60a5fa', borderColor: '#3b82f6' },
-      moveHandleStyle:    { color: '#60a5fa' },
-      textStyle:          { color: '#64748b' },
-      borderColor:        '#334155',
+      fillerColor: 'rgba(96, 165, 250, 0.1)',
+      handleStyle: { color: '#60a5fa', borderColor: '#3b82f6' },
+      moveHandleStyle: { color: '#60a5fa' },
+      textStyle: { color: '#64748b' },
+      borderColor: '#334155',
     },
   ],
 
@@ -92,55 +92,55 @@ const DARK = {
   },
 
   timeline: {
-    lineStyle:    { color: '#334155' },
-    itemStyle:    { color: '#60a5fa' },
-    label:        { color: '#64748b' },
+    lineStyle: { color: '#334155' },
+    itemStyle: { color: '#60a5fa' },
+    label: { color: '#64748b' },
     controlStyle: { color: '#64748b', borderColor: '#64748b' },
   },
 
   // ── Axis shared defaults ──────────────────────────────────────────────────
   categoryAxis: {
-    axisLine:   { lineStyle: { color: '#1e293b' } },
-    axisTick:   { lineStyle: { color: '#1e293b' } },
-    axisLabel:  { color: '#64748b', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#1e293b', type: 'dashed' } },
-    splitArea:  { areaStyle: { color: ['rgba(255,255,255,0.01)', 'transparent'] } },
+    axisLine: { lineStyle: { color: '#1e293b' } },
+    axisTick: { lineStyle: { color: '#1e293b' } },
+    axisLabel: { color: '#64748b', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
+    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.01)', 'transparent'] } },
   },
 
   valueAxis: {
-    axisLine:   { lineStyle: { color: '#1e293b' } },
-    axisTick:   { lineStyle: { color: '#1e293b' } },
-    axisLabel:  { color: '#64748b', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#1e293b', type: 'dashed' } },
-    splitArea:  { areaStyle: { color: ['rgba(255,255,255,0.01)', 'transparent'] } },
+    axisLine: { lineStyle: { color: '#1e293b' } },
+    axisTick: { lineStyle: { color: '#1e293b' } },
+    axisLabel: { color: '#64748b', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
+    splitArea: { areaStyle: { color: ['rgba(255,255,255,0.01)', 'transparent'] } },
   },
 
   logAxis: {
-    axisLine:   { lineStyle: { color: '#1e293b' } },
-    axisTick:   { lineStyle: { color: '#1e293b' } },
-    axisLabel:  { color: '#64748b', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#1e293b', type: 'dashed' } },
+    axisLine: { lineStyle: { color: '#1e293b' } },
+    axisTick: { lineStyle: { color: '#1e293b' } },
+    axisLabel: { color: '#64748b', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
   },
 
   timeAxis: {
-    axisLine:   { lineStyle: { color: '#1e293b' } },
-    axisTick:   { lineStyle: { color: '#1e293b' } },
-    axisLabel:  { color: '#64748b', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#1e293b', type: 'dashed' } },
+    axisLine: { lineStyle: { color: '#1e293b' } },
+    axisTick: { lineStyle: { color: '#1e293b' } },
+    axisLabel: { color: '#64748b', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#1e293b', type: 'dashed' } },
   },
 
   // ── Series shared defaults ────────────────────────────────────────────────
   line: {
-    symbol:         'circle',
-    symbolSize:     4,
-    smooth:         false,
-    lineStyle:      { width: 2 },
-    itemStyle:      { borderWidth: 2 },
+    symbol: 'circle',
+    symbolSize: 4,
+    smooth: false,
+    lineStyle: { width: 2 },
+    itemStyle: { borderWidth: 2 },
   },
 
   bar: {
-    barMaxWidth:    32,
-    itemStyle:      { borderRadius: [2, 2, 0, 0] },
+    barMaxWidth: 32,
+    itemStyle: { borderRadius: [2, 2, 0, 0] },
   },
 
   scatter: {
@@ -167,31 +167,31 @@ const LIGHT = {
   textStyle: { ...DARK.textStyle, color: '#64748b' },
 
   title: {
-    textStyle:    { color: '#1e293b', fontSize: 13, fontWeight: 600 },
+    textStyle: { color: '#1e293b', fontSize: 13, fontWeight: 600 },
     subtextStyle: { color: '#94a3b8', fontSize: 11 },
   },
 
   legend: {
-    textStyle:    { color: '#64748b', fontSize: 11 },
+    textStyle: { color: '#64748b', fontSize: 11 },
     inactiveColor: '#e2e8f0',
   },
 
   tooltip: {
     backgroundColor: '#ffffff',
-    borderColor:     '#e2e8f0',
-    borderWidth:     1,
-    textStyle:       { color: '#1e293b', fontSize: 12 },
-    extraCssText:    'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 6px;',
+    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    textStyle: { color: '#1e293b', fontSize: 12 },
+    extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 6px;',
   },
 
   axisPointer: {
-    lineStyle:  { color: '#cbd5e1', width: 1 },
+    lineStyle: { color: '#cbd5e1', width: 1 },
     crossStyle: { color: '#cbd5e1' },
-    label:      { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' },
+    label: { backgroundColor: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' },
   },
 
   toolbox: {
-    iconStyle:   { borderColor: '#94a3b8' },
+    iconStyle: { borderColor: '#94a3b8' },
     emphasis: {
       iconStyle: { borderColor: '#2563eb' },
     },
@@ -199,47 +199,47 @@ const LIGHT = {
 
   dataZoom: [
     {
-      backgroundColor:   '#f8fafc',
+      backgroundColor: '#f8fafc',
       dataBackground: {
-        lineStyle:  { color: '#e2e8f0' },
-        areaStyle:  { color: '#f1f5f9' },
+        lineStyle: { color: '#e2e8f0' },
+        areaStyle: { color: '#f1f5f9' },
       },
-      fillerColor:     'rgba(37, 99, 235, 0.08)',
-      handleStyle:     { color: '#2563eb', borderColor: '#1d4ed8' },
+      fillerColor: 'rgba(37, 99, 235, 0.08)',
+      handleStyle: { color: '#2563eb', borderColor: '#1d4ed8' },
       moveHandleStyle: { color: '#2563eb' },
-      textStyle:       { color: '#94a3b8' },
-      borderColor:     '#e2e8f0',
+      textStyle: { color: '#94a3b8' },
+      borderColor: '#e2e8f0',
     },
   ],
 
   categoryAxis: {
-    axisLine:   { lineStyle: { color: '#e2e8f0' } },
-    axisTick:   { lineStyle: { color: '#e2e8f0' } },
-    axisLabel:  { color: '#94a3b8', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
-    splitArea:  { areaStyle: { color: ['rgba(0,0,0,0.01)', 'transparent'] } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#94a3b8', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
+    splitArea: { areaStyle: { color: ['rgba(0,0,0,0.01)', 'transparent'] } },
   },
 
   valueAxis: {
-    axisLine:   { lineStyle: { color: '#e2e8f0' } },
-    axisTick:   { lineStyle: { color: '#e2e8f0' } },
-    axisLabel:  { color: '#94a3b8', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
-    splitArea:  { areaStyle: { color: ['rgba(0,0,0,0.01)', 'transparent'] } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#94a3b8', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
+    splitArea: { areaStyle: { color: ['rgba(0,0,0,0.01)', 'transparent'] } },
   },
 
   logAxis: {
-    axisLine:   { lineStyle: { color: '#e2e8f0' } },
-    axisTick:   { lineStyle: { color: '#e2e8f0' } },
-    axisLabel:  { color: '#94a3b8', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#94a3b8', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
   },
 
   timeAxis: {
-    axisLine:   { lineStyle: { color: '#e2e8f0' } },
-    axisTick:   { lineStyle: { color: '#e2e8f0' } },
-    axisLabel:  { color: '#94a3b8', fontSize: 11 },
-    splitLine:  { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
+    axisLine: { lineStyle: { color: '#e2e8f0' } },
+    axisTick: { lineStyle: { color: '#e2e8f0' } },
+    axisLabel: { color: '#94a3b8', fontSize: 11 },
+    splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } },
   },
 
   grid: {
@@ -249,7 +249,7 @@ const LIGHT = {
 
 // ── Registration ──────────────────────────────────────────────────────────────
 export function registerDsbfThemes() {
-  echarts.registerTheme('dsbf-dark',  DARK)
+  echarts.registerTheme('dsbf-dark', DARK)
   echarts.registerTheme('dsbf-light', LIGHT)
 }
 

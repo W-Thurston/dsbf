@@ -2,7 +2,8 @@
   <div class="card plot-card">
     <div class="card-title-row">
       <div class="card-title">{{ title }}</div>
-      <slot name="controls" /></div>
+      <slot name="controls" />
+    </div>
 
     <div v-if="loading" class="loading">Loading chart…</div>
     <div v-else-if="error" class="plot-error">
@@ -36,14 +37,14 @@ import Plotly from 'plotly.js-dist-min'
 import { figureFileUrl } from '../../api.js'
 
 const props = defineProps({
-  title:   { type: String, required: true },
-  figure:  { type: Object, default: null },
-  theme:   { type: String, default: 'dark' },
+  title: { type: String, required: true },
+  figure: { type: Object, default: null },
+  theme: { type: String, default: 'dark' },
 })
 
-const plotEl   = ref(null)
-const loading  = ref(false)
-const error    = ref(null)
+const plotEl = ref(null)
+const loading = ref(false)
+const error = ref(null)
 const imageUrl = ref(null)
 const plotData = ref(null)
 
@@ -51,17 +52,17 @@ const isInteractive = computed(() => props.figure?.format === 'interactive')
 
 const darkLayout = {
   paper_bgcolor: '#1e293b',
-  plot_bgcolor:  '#1e293b',
-  font:          { color: '#94a3b8' },
+  plot_bgcolor: '#1e293b',
+  font: { color: '#94a3b8' },
 }
 const lightLayout = {
   paper_bgcolor: '#ffffff',
-  plot_bgcolor:  '#f8fafc',
-  font:          { color: '#334155' },
+  plot_bgcolor: '#f8fafc',
+  font: { color: '#334155' },
 }
 
 async function loadFigure() {
-  error.value    = null
+  error.value = null
   imageUrl.value = null
   plotData.value = null
 
@@ -94,7 +95,7 @@ async function loadFigure() {
       loading.value = false
       await nextTick()
       renderPlotly()
-      return  // skip the finally assignment below
+      return // skip the finally assignment below
     } else {
       imageUrl.value = url
     }
@@ -111,7 +112,7 @@ async function loadFigure() {
  * labels remain readable even with many features.
  */
 function heatmapOverrides(data) {
-  const trace = data.find(t => t.type === 'heatmap')
+  const trace = data.find((t) => t.type === 'heatmap')
   if (!trace) return {}
 
   const n = Math.max(
@@ -121,20 +122,20 @@ function heatmapOverrides(data) {
   if (n === 0) return {}
 
   // Each cell needs ~36px minimum; clamp between 360 and 900
-  const cellPx  = Math.max(36, Math.min(64, Math.floor(720 / n)))
-  const height   = Math.min(900, Math.max(360, n * cellPx))
+  const cellPx = Math.max(36, Math.min(64, Math.floor(720 / n)))
+  const height = Math.min(900, Math.max(360, n * cellPx))
 
   // Axis label font: starts at 13px, shrinks as n grows, minimum 8px
   const axisFontSize = Math.max(8, Math.round(13 - (n - 5) * 0.35))
 
   // Annotation font (cell text): hide below 10px - too small to read
   const annotFontSize = Math.max(7, Math.round(12 - (n - 5) * 0.4))
-  const showAnnot     = annotFontSize >= 8
+  const showAnnot = annotFontSize >= 8
 
   // Margins: left/bottom need more room for long axis labels
   const maxLabelLen = Math.max(
-    ...(trace.x ?? []).map(l => String(l).length),
-    ...(trace.y ?? []).map(l => String(l).length),
+    ...(trace.x ?? []).map((l) => String(l).length),
+    ...(trace.y ?? []).map((l) => String(l).length),
   )
   const marginLB = Math.min(160, Math.max(60, maxLabelLen * axisFontSize * 0.65))
 
@@ -147,7 +148,7 @@ function heatmapOverrides(data) {
 
   // Scale down or hide cell annotations if present
   if (Array.isArray(data[0]?.text) || showAnnot === false) {
-    overrides.annotations = (plotData.value.layout?.annotations ?? []).map(a => ({
+    overrides.annotations = (plotData.value.layout?.annotations ?? []).map((a) => ({
       ...a,
       font: { ...a.font, size: showAnnot ? annotFontSize : 0 },
       visible: showAnnot,
@@ -160,18 +161,18 @@ function heatmapOverrides(data) {
 function renderPlotly() {
   if (!plotEl.value || !plotData.value) return
   const themeLayout = props.theme === 'dark' ? darkLayout : lightLayout
-  const dynamic     = heatmapOverrides(plotData.value.data)
+  const dynamic = heatmapOverrides(plotData.value.data)
 
   const layout = {
     ...plotData.value.layout,
     ...themeLayout,
     autosize: true,
-    margin: { l: 50, r: 20, t: 40, b: 50 },  // default; overridden by dynamic if heatmap
+    margin: { l: 50, r: 20, t: 40, b: 50 }, // default; overridden by dynamic if heatmap
     ...dynamic,
     // theme colours override everything, re-apply after dynamic spread
     paper_bgcolor: themeLayout.paper_bgcolor,
-    plot_bgcolor:  themeLayout.plot_bgcolor,
-    font:          { ...themeLayout.font, ...(dynamic.font ?? {}) },
+    plot_bgcolor: themeLayout.plot_bgcolor,
+    font: { ...themeLayout.font, ...(dynamic.font ?? {}) },
   }
 
   Plotly.react(plotEl.value, plotData.value.data, layout, {
@@ -181,9 +182,12 @@ function renderPlotly() {
 }
 
 // Re-render (don't re-fetch) when only theme changes
-watch(() => props.theme, () => {
-  if (isInteractive.value && plotData.value) renderPlotly()
-})
+watch(
+  () => props.theme,
+  () => {
+    if (isInteractive.value && plotData.value) renderPlotly()
+  },
+)
 
 // Re-fetch when the figure itself changes
 watch(() => props.figure?.id, loadFigure)
@@ -196,7 +200,13 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.plot-card { min-height: 200px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+.plot-card {
+  min-height: 200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
 
 .card-title-row {
   display: flex;
@@ -205,17 +215,24 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   margin-bottom: 0;
 }
-.card-title-row .card-title { margin-bottom: 0; }
+.card-title-row .card-title {
+  margin-bottom: 0;
+}
 
-.card-title { flex-shrink: 0; }
+.card-title {
+  flex-shrink: 0;
+}
 
 .plot-container,
 .plot-img,
 .loading,
 .no-figure,
-.plot-error { flex: 1; }
+.plot-error {
+  flex: 1;
+}
 
-.loading, .no-figure {
+.loading,
+.no-figure {
   color: #94a3b8;
   font-size: 13px;
   padding: 40px 0;
@@ -226,8 +243,14 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.no-figure-icon { font-size: 24px; opacity: 0.4; }
-.no-figure-hint { font-size: 11px; color: #64748b; }
+.no-figure-icon {
+  font-size: 24px;
+  opacity: 0.4;
+}
+.no-figure-hint {
+  font-size: 11px;
+  color: #64748b;
+}
 
 .plot-error {
   color: #f87171;
@@ -243,7 +266,9 @@ onBeforeUnmount(() => {
   gap: 8px;
   text-align: left;
 }
-.plot-error-icon { flex-shrink: 0; }
+.plot-error-icon {
+  flex-shrink: 0;
+}
 
 .plot-container {
   width: 100%;

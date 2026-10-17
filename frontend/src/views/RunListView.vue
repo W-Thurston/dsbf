@@ -12,7 +12,7 @@
           autocomplete="off"
           spellcheck="false"
         />
-        <button v-if="query" class="search-clear" @click="query = ''" title="Clear">✕</button>
+        <button v-if="query" class="search-clear" title="Clear" @click="query = ''">✕</button>
       </div>
     </div>
 
@@ -47,8 +47,12 @@
           >
             <td class="run-key" v-html="highlightHtml(run.run_key, query)" />
             <td v-html="highlightHtml(formatDate(run.ran_at), query)" />
-            <td><span class="badge badge-blue">{{ run.profiling_depth }}</span></td>
-            <td><span class="badge badge-gray">{{ run.inferred_stage ?? '-' }}</span></td>
+            <td>
+              <span class="badge badge-blue">{{ run.profiling_depth }}</span>
+            </td>
+            <td>
+              <span class="badge badge-gray">{{ run.inferred_stage ?? '-' }}</span>
+            </td>
             <td>{{ run.row_count?.toLocaleString() ?? '-' }}</td>
             <td>{{ run.col_count?.toLocaleString() ?? '-' }}</td>
             <td :class="qualityClass(run.quality_score)">
@@ -60,9 +64,7 @@
         </tbody>
       </table>
 
-      <div class="result-count" v-if="query">
-        {{ filtered.length }} of {{ runs.length }} runs
-      </div>
+      <div v-if="query" class="result-count">{{ filtered.length }} of {{ runs.length }} runs</div>
     </template>
   </div>
 </template>
@@ -74,10 +76,10 @@ import { listRuns } from '../api.js'
 
 const props = defineProps({ name: String })
 
-const runs    = ref([])
+const runs = ref([])
 const loading = ref(true)
-const error   = ref(null)
-const query   = ref('')
+const error = ref(null)
+const query = ref('')
 
 onMounted(async () => {
   try {
@@ -92,11 +94,11 @@ onMounted(async () => {
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   if (!q) return runs.value
-  return runs.value.filter(run => {
+  return runs.value.filter((run) => {
     return (
-      run.run_key.toLowerCase().includes(q)           ||
+      run.run_key.toLowerCase().includes(q) ||
       (run.profiling_depth ?? '').toLowerCase().includes(q) ||
-      (run.inferred_stage  ?? '').toLowerCase().includes(q) ||
+      (run.inferred_stage ?? '').toLowerCase().includes(q) ||
       formatDate(run.ran_at).toLowerCase().includes(q)
     )
   })
@@ -148,8 +150,12 @@ const filtered = computed(() => {
   transition: border-color 0.15s;
 }
 
-.search-input:focus { border-color: #60a5fa; }
-.search-input::placeholder { color: #64748b; }
+.search-input:focus {
+  border-color: #60a5fa;
+}
+.search-input::placeholder {
+  color: #64748b;
+}
 
 .search-clear {
   position: absolute;
@@ -162,7 +168,9 @@ const filtered = computed(() => {
   padding: 2px 4px;
   line-height: 1;
 }
-.search-clear:hover { color: #e2e8f0; }
+.search-clear:hover {
+  color: #e2e8f0;
+}
 
 .runs-table {
   width: 100%;
@@ -191,7 +199,9 @@ const filtered = computed(() => {
   transition: background 0.12s;
 }
 
-.run-row:hover td { background: #1e293b; }
+.run-row:hover td {
+  background: #1e293b;
+}
 
 .run-key {
   font-family: monospace;
@@ -206,7 +216,9 @@ const filtered = computed(() => {
   text-align: center;
 }
 
-.empty-state strong { color: #94a3b8; }
+.empty-state strong {
+  color: #94a3b8;
+}
 
 .result-count {
   margin-top: 12px;
@@ -215,10 +227,22 @@ const filtered = computed(() => {
   text-align: right;
 }
 
-.score-excellent { color: #4ade80; font-weight: 600; }
-.score-good      { color: #34d399; font-weight: 600; }
-.score-warn      { color: #fb923c; font-weight: 600; }
-.score-poor      { color: #f87171; font-weight: 600; }
+.score-excellent {
+  color: #4ade80;
+  font-weight: 600;
+}
+.score-good {
+  color: #34d399;
+  font-weight: 600;
+}
+.score-warn {
+  color: #fb923c;
+  font-weight: 600;
+}
+.score-poor {
+  color: #f87171;
+  font-weight: 600;
+}
 
 :deep(mark) {
   background: #facc15;

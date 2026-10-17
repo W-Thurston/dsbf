@@ -9,7 +9,7 @@
     </div>
     <div v-if="!run" class="es-not-run">Run metadata not available.</div>
     <div v-else class="run-date-grid">
-      <div class="run-date-item" v-for="item in items" :key="item.label">
+      <div v-for="item in items" :key="item.label" class="run-date-item">
         <span class="run-date-label">
           {{ item.label }}
           <TooltipIcon :text="item.tooltip" align="center" />
@@ -33,14 +33,14 @@ const items = computed(() => {
   if (!props.run) return []
   return [
     {
-      label:   'Run Date',
+      label: 'Run Date',
       tooltip: 'The date and time this profiling run was executed.',
-      value:   formatDateFull(props.run.ran_at),
+      value: formatDateFull(props.run.ran_at),
     },
     {
-      label:   'Run Key',
+      label: 'Run Key',
       tooltip: 'Unique identifier for this run, derived from its execution timestamp.',
-      value:   props.run.run_key ?? '-',
+      value: props.run.run_key ?? '-',
     },
   ]
 })
@@ -73,7 +73,10 @@ const items = computed(() => {
   padding-bottom: 10px;
   border-bottom: 1px solid #0f172a;
 }
-.run-date-item:last-child { border-bottom: none; padding-bottom: 0; }
+.run-date-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
 
 .run-date-label {
   font-size: 12px;

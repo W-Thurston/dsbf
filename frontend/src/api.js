@@ -20,39 +20,39 @@ const client = axios.create({
 
 /** List all datasets with run summary info. */
 export function listDatasets() {
-  return client.get('/datasets').then(r => r.data)
+  return client.get('/datasets').then((r) => r.data)
 }
 
 /** Get a single dataset by name. */
 export function getDataset(name) {
-  return client.get(`/datasets/${name}`).then(r => r.data)
+  return client.get(`/datasets/${name}`).then((r) => r.data)
 }
 
 /** List all runs for a dataset, newest first. */
 export function listRuns(datasetName) {
-  return client.get(`/datasets/${datasetName}/runs`).then(r => r.data)
+  return client.get(`/datasets/${datasetName}/runs`).then((r) => r.data)
 }
 
 // ── Runs ──────────────────────────────────────────────────────────────────────
 
 /** Get run metadata by run_key (no task results). */
 export function getRun(runKey) {
-  return client.get(`/runs/${runKey}`).then(r => r.data)
+  return client.get(`/runs/${runKey}`).then((r) => r.data)
 }
 
 /** Get all task results for a run, keyed by task name. */
 export function getRunTasks(runKey) {
-  return client.get(`/runs/${runKey}/tasks`).then(r => r.data)
+  return client.get(`/runs/${runKey}/tasks`).then((r) => r.data)
 }
 
 /** Get a single task result for a run. */
 export function getTask(runKey, taskName) {
-  return client.get(`/runs/${runKey}/tasks/${taskName}`).then(r => r.data)
+  return client.get(`/runs/${runKey}/tasks/${taskName}`).then((r) => r.data)
 }
 
 /** Get the figure index for a run. */
 export function getRunFigures(runKey) {
-  return client.get(`/runs/${runKey}/figures`).then(r => r.data)
+  return client.get(`/runs/${runKey}/figures`).then((r) => r.data)
 }
 
 /**
@@ -62,9 +62,9 @@ export function getRunFigures(runKey) {
  */
 export function compareRuns(runKeys, taskName) {
   const params = new URLSearchParams()
-  runKeys.forEach(k => params.append('run_keys', k))
+  runKeys.forEach((k) => params.append('run_keys', k))
   params.append('task_name', taskName)
-  return client.get(`/runs/compare?${params}`).then(r => r.data)
+  return client.get(`/runs/compare?${params}`).then((r) => r.data)
 }
 
 /**
@@ -73,7 +73,7 @@ export function compareRuns(runKeys, taskName) {
  * @param {number} n - number of rows (max 50)
  */
 export function getRunSample(runKey, n = 10) {
-  return client.get(`/runs/${runKey}/sample`, { params: { n } }).then(r => r.data)
+  return client.get(`/runs/${runKey}/sample`, { params: { n } }).then((r) => r.data)
 }
 
 /**
@@ -83,7 +83,7 @@ export function getRunSample(runKey, n = 10) {
  * Returns { available: false } if the scorer did not run.
  */
 export function getDqStatus(runKey) {
-  return client.get(`/runs/${runKey}/dq-status`).then(r => r.data)
+  return client.get(`/runs/${runKey}/dq-status`).then((r) => r.data)
 }
 
 /**
@@ -93,7 +93,7 @@ export function getDqStatus(runKey) {
  * Returns { available: false } if the scorer did not run.
  */
 export function getMlReadiness(runKey) {
-  return client.get(`/runs/${runKey}/ml-readiness`).then(r => r.data)
+  return client.get(`/runs/${runKey}/ml-readiness`).then((r) => r.data)
 }
 
 // ── Relationships ────────────────────────────────────────────────────────────
@@ -103,7 +103,7 @@ export function getMlReadiness(runKey) {
  * Returns { source, pairs, summary }
  */
 export function getRunAssociations(runKey) {
-  return client.get(`/runs/${runKey}/associations`).then(r => r.data)
+  return client.get(`/runs/${runKey}/associations`).then((r) => r.data)
 }
 
 /**
@@ -111,10 +111,11 @@ export function getRunAssociations(runKey) {
  * @param {string} minStrength - optional: "strong" | "moderate" | "weak"
  */
 export function getColumnAssociations(runKey, column, minStrength = '') {
-  return client.get(
-    `/runs/${runKey}/associations/${encodeURIComponent(column)}`,
-    { params: minStrength ? { min_strength: minStrength } : {} }
-  ).then(r => r.data)
+  return client
+    .get(`/runs/${runKey}/associations/${encodeURIComponent(column)}`, {
+      params: minStrength ? { min_strength: minStrength } : {},
+    })
+    .then((r) => r.data)
 }
 
 /**
@@ -125,9 +126,9 @@ export function getColumnAssociations(runKey, column, minStrength = '') {
  */
 export function getColumnData(runKey, cols, maxRows = 3000) {
   const params = new URLSearchParams()
-  cols.forEach(c => params.append('cols', c))
+  cols.forEach((c) => params.append('cols', c))
   params.append('max_rows', maxRows)
-  return client.get(`/runs/${runKey}/column-data?${params}`).then(r => r.data)
+  return client.get(`/runs/${runKey}/column-data?${params}`).then((r) => r.data)
 }
 
 // ── Figures ───────────────────────────────────────────────────────────────────
@@ -137,9 +138,11 @@ export function getColumnData(runKey, cols, maxRows = 3000) {
  * Use this as the src attribute on <img> tags or as the URL to load Plotly JSON.
  */
 export function getColumnCorrelations(runKey, column, threshold = 0.0) {
-  return client.get(`/runs/${runKey}/correlations/${encodeURIComponent(column)}`, {
-    params: { threshold },
-  }).then(r => r.data)
+  return client
+    .get(`/runs/${runKey}/correlations/${encodeURIComponent(column)}`, {
+      params: { threshold },
+    })
+    .then((r) => r.data)
 }
 
 export function figureFileUrl(figureId) {

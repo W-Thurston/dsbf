@@ -44,7 +44,7 @@ Read this section before planning or modifying the repository.
    cd ..
    ```
 
-   Run the `integration`, `slow`, `network`, `golden` or `perf` tiers when the affected boundary requires them. Until the toolchain units land, use the interim commands under Current gotchas.
+   Run the `integration`, `slow`, `network`, `golden` or `perf` tiers when the affected boundary requires them.
 8. **Verify against real artifacts and responses.** After engine, data, storage, API or frontend changes, run DSBF on real data in an isolated scratch directory (with its own `DSBF_DB_PATH`). Then inspect the output directly: the `Run` or report, database rows, API responses, and the rendered dashboard. Check:
    - row and column counts, check statuses and their reasons;
    - identities and uniqueness, coverage of eligible columns;
@@ -107,5 +107,4 @@ Branch: unit/<ID>-<slug> · Started: <YYYY-MM-DD>
 
 Each gotcha names the unit that removes it. Delete the line at that unit's close-out.
 
-- The gates in practice 7 need the toolchain units. Until U1-03, the frontend lives in `frontend/` and only has `npm run build`.
 - Every run rewrites `src/dsbf/static_metadata/task_metadata.json` (until U1-04).

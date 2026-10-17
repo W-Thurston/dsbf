@@ -13,7 +13,6 @@
 
 <template>
   <div class="card dtype-card">
-
     <!-- Header - always visible, click to toggle -->
     <div class="dtype-header" @click="open = !open">
       <div class="dtype-header-left">
@@ -73,23 +72,22 @@
           </div>
           <!-- Suggestion rows - scrollable after 10 rows -->
           <div class="dtype-scroll">
-            <div
-              v-for="s in suggestions"
-              :key="s.column"
-              class="dtype-row"
-            >
+            <div v-for="s in suggestions" :key="s.column" class="dtype-row">
               <span class="dtype-col dtype-col--name dtype-col-name">{{ s.column }}</span>
               <span class="dtype-col dtype-col--current dtype-current">{{ s.current_dtype }}</span>
               <span class="dtype-col dtype-col--arrow dtype-arrow">→</span>
-              <span class="dtype-col dtype-col--suggested dtype-suggested">{{ s.suggested_dtype }}</span>
+              <span class="dtype-col dtype-col--suggested dtype-suggested">{{
+                s.suggested_dtype
+              }}</span>
               <span class="dtype-col dtype-col--reason dtype-reason">{{ s.reason }}</span>
-              <span class="dtype-col dtype-col--saving dtype-saving">{{ formatSaving(s.saving_bytes) }}</span>
+              <span class="dtype-col dtype-col--saving dtype-saving">{{
+                formatSaving(s.saving_bytes)
+              }}</span>
             </div>
           </div>
         </div>
       </div>
     </Transition>
-
   </div>
 </template>
 
@@ -105,9 +103,7 @@ const MB = 1024 * 1024
 const KB = 1024
 
 // data.suggestions is the column-keyed dict
-const taskData = computed(
-  () => props.tasks?.suggest_dtype_optimizations?.data?.suggestions ?? {}
-)
+const taskData = computed(() => props.tasks?.suggest_dtype_optimizations?.data?.suggestions ?? {})
 
 const suggestions = computed(() => {
   const out = []
@@ -115,11 +111,11 @@ const suggestions = computed(() => {
     if (!info || typeof info !== 'object') continue
     if (!info.suggested_dtype) continue
     out.push({
-      column:          col,
-      current_dtype:   info.current_dtype   ?? '-',
+      column: col,
+      current_dtype: info.current_dtype ?? '-',
       suggested_dtype: info.suggested_dtype,
-      reason:          info.savings_note    ?? '',
-      saving_bytes:    info.estimated_savings_bytes ?? 0,
+      reason: info.savings_note ?? '',
+      saving_bytes: info.estimated_savings_bytes ?? 0,
     })
   }
   return out.sort((a, b) => b.saving_bytes - a.saving_bytes)
@@ -128,34 +124,38 @@ const suggestions = computed(() => {
 const taskResult = computed(() => props.tasks?.suggest_dtype_optimizations ?? null)
 
 const taskState = computed(() => {
-  if (!taskResult.value)                              return 'not_run'
-  if (taskResult.value.status === 'error' ||
-      taskResult.value.status === 'failure')          return 'error'
-  if (suggestions.value.length === 0)                 return 'empty'
+  if (!taskResult.value) return 'not_run'
+  if (taskResult.value.status === 'error' || taskResult.value.status === 'failure') return 'error'
+  if (suggestions.value.length === 0) return 'empty'
   return 'ready'
 })
 
-const errorMessage = computed(() =>
-  taskResult.value?.error_metadata?.message ??
-  taskResult.value?.summary?.message ??
-  'This task encountered an error.'
+const errorMessage = computed(
+  () =>
+    taskResult.value?.error_metadata?.message ??
+    taskResult.value?.summary?.message ??
+    'This task encountered an error.',
 )
 
 const totalSavingBytes = computed(() =>
-  suggestions.value.reduce((sum, s) => sum + (s.saving_bytes ?? 0), 0)
+  suggestions.value.reduce((sum, s) => sum + (s.saving_bytes ?? 0), 0),
 )
 
 const totalSavingDisplay = computed(() => formatSaving(totalSavingBytes.value))
 
 // Default closed; auto-open once data loads and saving is substantial
 const open = ref(false)
-watch(totalSavingBytes, (bytes) => {
-  if (bytes >= MB) open.value = true
-}, { immediate: true })
+watch(
+  totalSavingBytes,
+  (bytes) => {
+    if (bytes >= MB) open.value = true
+  },
+  { immediate: true },
+)
 
 const summaryClass = computed(() => {
   if (totalSavingBytes.value >= 10 * MB) return 'dtype-summary--high'
-  if (totalSavingBytes.value >= MB)      return 'dtype-summary--mid'
+  if (totalSavingBytes.value >= MB) return 'dtype-summary--mid'
   return 'dtype-summary--low'
 })
 
@@ -168,7 +168,10 @@ function formatSaving(bytes) {
 </script>
 
 <style scoped>
-.dtype-card { padding: 0; overflow: visible; }
+.dtype-card {
+  padding: 0;
+  overflow: visible;
+}
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .dtype-header {
@@ -182,7 +185,9 @@ function formatSaving(bytes) {
   flex-wrap: wrap;
   transition: background 0.12s;
 }
-.dtype-header:hover { background: rgba(255,255,255,0.03); }
+.dtype-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 
 .dtype-header-left {
   display: flex;
@@ -199,7 +204,9 @@ function formatSaving(bytes) {
   gap: 4px;
 }
 /* Match the tooltip icon color to the table-header tooltips */
-.dtype-title-wrap :deep(.tip-icon) { color: #64748b; }
+.dtype-title-wrap :deep(.tip-icon) {
+  color: #64748b;
+}
 
 .dtype-header-right {
   display: flex;
@@ -212,9 +219,15 @@ function formatSaving(bytes) {
   font-size: 12px;
   font-weight: 500;
 }
-.dtype-summary--high { color: #4ade80; }
-.dtype-summary--mid  { color: #fbbf24; }
-.dtype-summary--low  { color: #94a3b8; }
+.dtype-summary--high {
+  color: #4ade80;
+}
+.dtype-summary--mid {
+  color: #fbbf24;
+}
+.dtype-summary--low {
+  color: #94a3b8;
+}
 
 .dtype-note {
   font-size: 11px;
@@ -232,7 +245,10 @@ function formatSaving(bytes) {
   cursor: pointer;
   transition: all 0.12s;
 }
-.dtype-toggle-btn:hover { border-color: #60a5fa; color: #93c5fd; }
+.dtype-toggle-btn:hover {
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
 
 /* ── Body ────────────────────────────────────────────────────────────────── */
 .dtype-body {
@@ -261,10 +277,19 @@ function formatSaving(bytes) {
   scrollbar-width: thin;
   scrollbar-color: #334155 transparent;
 }
-.dtype-scroll::-webkit-scrollbar { width: 5px; }
-.dtype-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-.dtype-scroll .dtype-row:last-child { border-bottom: none; }
-.dtype-row:hover:not(.dtype-row--header) { background: rgba(255,255,255,0.02); }
+.dtype-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.dtype-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+.dtype-scroll .dtype-row:last-child {
+  border-bottom: none;
+}
+.dtype-row:hover:not(.dtype-row--header) {
+  background: rgba(255, 255, 255, 0.02);
+}
 
 .dtype-row--header {
   font-size: 11px;
@@ -277,18 +302,43 @@ function formatSaving(bytes) {
   cursor: default;
 }
 
-.dtype-col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dtype-col {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .dtype-col-name {
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 12px;
   color: #93c5fd;
 }
-.dtype-current   { color: #94a3b8; font-family: monospace; font-size: 12px; }
-.dtype-arrow     { color: #64748b; text-align: center; flex-shrink: 0; }
-.dtype-suggested { color: #4ade80; font-family: monospace; font-size: 12px; font-weight: 600; }
-.dtype-reason    { color: #64748b; font-size: 12px; }
-.dtype-saving    { color: #fbbf24; font-size: 12px; font-weight: 600; text-align: right; }
+.dtype-current {
+  color: #94a3b8;
+  font-family: monospace;
+  font-size: 12px;
+}
+.dtype-arrow {
+  color: #64748b;
+  text-align: center;
+  flex-shrink: 0;
+}
+.dtype-suggested {
+  color: #4ade80;
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dtype-reason {
+  color: #64748b;
+  font-size: 12px;
+}
+.dtype-saving {
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
 .es-not-run {
@@ -319,7 +369,9 @@ function formatSaving(bytes) {
 /* ── Expand/collapse transition ──────────────────────────────────────────── */
 .dtype-expand-enter-active,
 .dtype-expand-leave-active {
-  transition: opacity 0.18s, max-height 0.22s ease;
+  transition:
+    opacity 0.18s,
+    max-height 0.22s ease;
   max-height: 1000px;
   overflow: hidden;
 }
@@ -330,13 +382,33 @@ function formatSaving(bytes) {
 }
 
 /* ── Light theme ─────────────────────────────────────────────────────────── */
-:global(.theme-light) .dtype-header:hover  { background: rgba(0,0,0,0.02); }
-:global(.theme-light) .dtype-body          { border-top-color: #e2e8f0; }
-:global(.theme-light) .dtype-row           { border-bottom-color: #f1f5f9; }
-:global(.theme-light) .dtype-row--header   { border-bottom-color: #e2e8f0; color: #94a3b8; }
-:global(.theme-light) .dtype-row:hover:not(.dtype-row--header) { background: rgba(0,0,0,0.02); }
-:global(.theme-light) .dtype-col-name      { color: #2563eb; }
-:global(.theme-light) .dtype-current       { color: #64748b; }
-:global(.theme-light) .dtype-reason        { color: #94a3b8; }
-:global(.theme-light) .dtype-toggle-btn    { background: #f1f5f9; border-color: #cbd5e1; }
+:global(.theme-light) .dtype-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+:global(.theme-light) .dtype-body {
+  border-top-color: #e2e8f0;
+}
+:global(.theme-light) .dtype-row {
+  border-bottom-color: #f1f5f9;
+}
+:global(.theme-light) .dtype-row--header {
+  border-bottom-color: #e2e8f0;
+  color: #94a3b8;
+}
+:global(.theme-light) .dtype-row:hover:not(.dtype-row--header) {
+  background: rgba(0, 0, 0, 0.02);
+}
+:global(.theme-light) .dtype-col-name {
+  color: #2563eb;
+}
+:global(.theme-light) .dtype-current {
+  color: #64748b;
+}
+:global(.theme-light) .dtype-reason {
+  color: #94a3b8;
+}
+:global(.theme-light) .dtype-toggle-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
 </style>
