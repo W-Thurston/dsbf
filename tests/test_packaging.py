@@ -9,7 +9,7 @@ from packaging.requirements import Requirement
 
 pytestmark = pytest.mark.unit
 
-EXTRAS = {"ml", "timeseries", "text", "pandas", "sql", "server"}
+EXTRAS = {"ml", "timeseries", "text", "excel", "pandas", "sql", "server"}
 
 
 @pytest.fixture(scope="module")
