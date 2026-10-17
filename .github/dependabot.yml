@@ -19,6 +19,8 @@ updates:
         versions: [">=0.15"]
       - dependency-name: scikit-learn
         versions: [">=1.8"]
+      - dependency-name: plotly
+        versions: [">=7"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
