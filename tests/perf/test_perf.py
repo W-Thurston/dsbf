@@ -2,7 +2,8 @@
 
 Run with ``uv run pytest -m perf``; see ``tests/perf/README.md``. Each run writes a
 results JSON (``--perf-results``), and fails when a stage, task, the total, the peak
-memory or a dashboard payload regressed against ``baseline.json``.
+memory or a dashboard payload regressed against ``baseline.json``. The profile pass is
+also held to the absolute budgets in ``compare.PROFILE_BUDGETS``.
 """
 
 from __future__ import annotations
@@ -12,15 +13,19 @@ from typing import Any
 
 import pytest
 
-from tests.perf.compare import TOLERANCE, find_regressions
+from tests.perf.compare import TOLERANCE, check_budget, find_regressions
 from tests.perf.harness import BASELINE_PATH, load_results, measure
-from tests.perf.scenarios import SCENARIOS, Scenario
+from tests.perf.scenarios import PROFILE_SCENARIOS, SCENARIOS, ProfileScenario, Scenario
 
 pytestmark = pytest.mark.perf
 
 
-def _param(scenario: Scenario):
-    marks = [pytest.mark.slow] if scenario.name.startswith("kitchen") else []
+def _param(scenario: Scenario | ProfileScenario):
+    marks = (
+        [pytest.mark.slow]
+        if scenario.name.removeprefix("profile-").startswith(("kitchen", "wide"))
+        else []
+    )
     return pytest.param(scenario, id=scenario.name, marks=marks)
 
 
@@ -38,6 +43,39 @@ def test_run_within_baseline(
     # Timings from a run that crashed tasks describe less work than the baseline did.
     assert not result["failed_tasks"], f"tasks failed: {result['failed_tasks']}"
     assert "error" not in result["api"], result["api"]
+
+    if config.getoption("--update-perf-baseline") or config.getoption(
+        "--perf-no-compare"
+    ):
+        return
+
+    baseline = load_results(BASELINE_PATH)["scenarios"].get(scenario.name)
+    if baseline is None:
+        pytest.skip(
+            f"no baseline for {scenario.name}; record one with --update-perf-baseline"
+        )
+    regressions = find_regressions(scenario.name, baseline, result)
+    assert not regressions, (
+        f"regressed by more than {TOLERANCE:.0%} against tests/perf/baseline.json:\n"
+        + "\n".join(f"  {r.describe()}" for r in regressions)
+    )
+
+
+@pytest.mark.parametrize("scenario", [_param(s) for s in PROFILE_SCENARIOS])
+def test_profile_pass_within_budget(
+    scenario: ProfileScenario,
+    tmp_path: Path,
+    request: pytest.FixtureRequest,
+    measured: dict[str, Any],
+) -> None:
+    config = request.config
+    result = measure(scenario, tmp_path)
+    measured[scenario.name] = result
+
+    # The budget holds with or without a baseline, and when the baseline is being
+    # rewritten: a pass that misses it should not become the new reference unnoticed.
+    over_budget = check_budget(scenario.name, result)
+    assert not over_budget, "over budget:\n" + "\n".join(f"  {b}" for b in over_budget)
 
     if config.getoption("--update-perf-baseline") or config.getoption(
         "--perf-no-compare"
