@@ -137,25 +137,19 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Notes:** `dsbf.engine` adds `Registry` (checks by id, `packs`, `source_of`, `notes`), `Pack`, `load_directory` and `load_entry_points`. A directory is imported as a package named for its path, so plugin files use `from .utils import x` and two `utils.py` coexist. A source already loaded is not loaded again, even by another `Registry` in the process, so an edited plugin file needs a new process. A broken plugin never raises: the registry records a `Note` (`plugin_load_failed`, `plugin_invalid`, `plugin_empty`, `check_id_conflict`). No deviations from the unit; the legacy `eda/task_registry.py` is untouched.
 
 ### U3-03 · Planner I: selection and dependency resolution
-- **Status:** done (2026-10-18)
+- **Status:** done (2026-10-18) · **PR:** #90 (`61db3e0`)
 - **Notes:** `dsbf.engine` adds `Selection` (packs, include, exclude, `Depth`, `max_cost`, dimensions, tags, `exclude_stages`, plugins, entry points), `select`, `make_plan`, `Plan` / `PlanEntry` and `PlanError`. `Depth` is a cost ceiling (`quick` cheap, `standard` moderate, `deep` heavy). Hard requirements are pulled in past the filters and marked `required_by`; soft `after` orders but never pulls in; entries come in deterministic levels; cycles and unknown names are plan errors. `CheckSpec.stage` (default `any`) is informational and filterable; the inferred stage does not select checks, as in the legacy engine.
 - **Deviations:** the F-21 acceptance is met at plan level (hard and soft edges kept apart, soft order explicit); the skip-behaviour test needs an executor and moves to U3-05. `Requires.profile` availability moves to U3-04, since it depends on the profile's values.
 
 ### U3-04 · Planner II: validation, expected statuses and `dsbf plan`
-- **Status:** todo · **Size:** M · **Depends on:** U3-03 · **Resolves:** F-07, F-22
-- **Note from U3-03:** `make_plan(registry, selection)` returns a `Plan` of `PlanEntry` (check, `selected`, `required_by`, `requires`, `after`, `level`) with no parameters yet; add the resolved params and the expected status here. `Requires.profile` features are data-dependent (a constant column has no histogram, an all-null one no stats), so decide `will_run` / `not_applicable` from the profile here, not at selection. `Plan.notes` holds `plan_empty`.
-- **Goal:**
-  - Validate parameters against each check's model, with precise errors.
-  - Annotate the plan with `will_run`, `not_applicable` or `unavailable` (missing extra), with reasons.
-  - Print a readable plan via a new `dsbf plan` CLI command.
-- **Acceptance:**
-  - A misspelled parameter is an error naming the check, key and allowed keys (the F-07 class).
-  - A missing extra shows as `unavailable` with an install hint.
-  - `dsbf plan data.csv` output has a snapshot test.
-- **Commit:** `feat(engine): validate plans and add dsbf plan`
+- **Status:** done (2026-10-18)
+- **Notes:** `make_plan(registry, selection, params=, profile=)` validates parameters against each check's model and reports every mistake in one `PlanError` (unknown key with allowed keys and a suggestion, out-of-bounds value, unknown check id). `PlanEntry` carries the resolved `params` and an `Expectation` (`will_run`, `not_applicable`, `unavailable`, `skipped`, with reason, install hint and eligible columns), judged from installed extras (`dsbf.engine.extras`), hard requirements and the profile's features. `format_plan` and `dsbf plan DATA` (selection options, `--plugin`, `--param check.key=value`) print the plan; `Plan.notes` also carries plugin-load notes. The output has a snapshot test, rewritten with `--update-golden`.
+- **Deviations:** added `skipped` to the design's three expected statuses, for dependents of an `unavailable` or `skipped` check; a `not_applicable` requirement does not block its dependents. Without a profile only extras and requirements are judged (`Plan.profiled` is false).
+- **Note for U3-05:** the context builds its columns from `applies_to` alone, while the plan's eligible columns also drop those missing a required profile feature; make the two agree. Confirm there that a `not_applicable` upstream leaves a hard dependent running.
 
 ### U3-05 · Executor I: isolation, statuses and notes
 - **Status:** todo · **Size:** M · **Depends on:** U3-04 · **Resolves:** F-06, F-20 (engine side)
+- **Note from U3-04:** `PlanEntry.expected` already says which columns a check would read (`Expectation.columns`, which also drops columns lacking a required `requires.profile` feature) and predicts `skipped` for dependents of an `unavailable` or `skipped` check. Build `CheckContext` from the same columns, and confirm that a `not_applicable` upstream leaves a hard dependent running.
 - **Note from U3-03:** the F-21 scenario still needs its execution test: a soft `after` upstream that ends in `error` must leave its dependent running, while a hard `requires` upstream that errors makes the dependent `skipped`. `PlanEntry.requires` and `.after` already separate the two, and `Plan.levels` gives the order.
 - **Note from U3-01:** `run_check(check, context)` builds the `CheckResult` (findings in call order, notes, JSON-safe output, resolved params, wall time, `started_at`). Wrap it for isolation; it leaves CPU time and peak memory unset (U3-06).
 - **Goal:** Sequential execution where every exception becomes `error` with a note (type, message, hint, traceback artifact), hard dependents become `skipped` with the blocker named, and the run always completes with `RunHealth`.

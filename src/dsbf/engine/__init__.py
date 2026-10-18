@@ -20,9 +20,11 @@ from dsbf.engine.errors import (
     PlanError,
     RegistryError,
 )
+from dsbf.engine.expectation import Expectation, Expected
 from dsbf.engine.pack import Pack
 from dsbf.engine.plan import Plan, PlanEntry, make_plan
 from dsbf.engine.registry import Registry
+from dsbf.engine.render import format_plan
 from dsbf.engine.runner import run_check
 from dsbf.engine.selection import Depth, Selection, select
 
@@ -36,6 +38,8 @@ __all__ = [
     "CheckOutputModel",
     "CheckSpec",
     "Depth",
+    "Expectation",
+    "Expected",
     "Extra",
     "NoParams",
     "Pack",
@@ -50,6 +54,7 @@ __all__ = [
     "Selection",
     "SemanticTypes",
     "check",
+    "format_plan",
     "make_plan",
     "run_check",
     "select",

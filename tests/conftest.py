@@ -25,7 +25,8 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--update-golden",
         action="store_true",
         default=False,
-        help="Rewrite the snapshots in tests/golden/snapshots instead of comparing.",
+        help="Rewrite the committed snapshots (golden runs, `dsbf plan`) "
+        "instead of comparing.",
     )
     parser.addoption(
         "--perf-results",

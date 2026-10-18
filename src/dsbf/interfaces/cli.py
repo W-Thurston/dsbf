@@ -8,9 +8,13 @@ import typer
 import yaml
 
 from dsbf.config import load_default_config
+from dsbf.data import SourceError, load
 from dsbf.eda.profile_engine import ProfileEngine
 from dsbf.eda.task_registry import load_task_group
+from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
 from dsbf.interfaces import schema_export
+from dsbf.model import Cost, Dimension
+from dsbf.profile import profile_dataset
 from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -103,6 +107,81 @@ def quickstart(
     cfg["metadata"]["dataset_path"] = None
     engine = ProfileEngine(cfg)
     engine.run()
+
+
+def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:
+    """``check.key=value`` options as ``{check: {key: value}}``; values are YAML."""
+    params: dict[str, dict[str, Any]] = {}
+    for assignment in assignments:
+        target, equals, text = assignment.partition("=")
+        check_id, dot, key = target.partition(".")
+        if not (equals and dot and check_id and key):
+            raise typer.BadParameter(
+                f"{assignment!r} is not check.key=value, such as null_share.min=0.5"
+            )
+        params.setdefault(check_id, {})[key] = yaml.safe_load(text)
+    return params
+
+
+@app.command("plan")
+def plan_command(
+    data: Path = typer.Argument(..., help="Dataset to plan for (CSV, Parquet, ...)."),
+    pack: list[str] = typer.Option([], "--pack", "-p", help="Run only these packs."),
+    include: list[str] = typer.Option(
+        [], "--include", "-i", help="Add a check by id, whatever the filters say."
+    ),
+    exclude: list[str] = typer.Option([], "--exclude", "-x", help="Drop a check."),
+    depth: Depth = typer.Option(
+        Depth.STANDARD, "--depth", "-d", help="The most expensive checks to allow."
+    ),
+    max_cost: Cost | None = typer.Option(
+        None, "--max-cost", help="Lower the cost ceiling set by --depth."
+    ),
+    dimension: list[Dimension] = typer.Option(
+        [], "--dimension", help="Keep checks of these dimensions."
+    ),
+    tag: list[str] = typer.Option([], "--tag", help="Keep checks with these tags."),
+    plugin: list[Path] = typer.Option(
+        [], "--plugin", help="A directory of check plugins to load."
+    ),
+    entry_points: bool = typer.Option(  # noqa: FBT001
+        True,
+        "--entry-points/--no-entry-points",
+        help="Load checks that installed packages offer.",
+    ),
+    param: list[str] = typer.Option(
+        [], "--param", help="Set a check parameter: check.key=value (repeatable)."
+    ),
+) -> None:
+    """Show which checks would run on a dataset, and what each is expected to do."""
+    params = _parse_params(param)
+    try:
+        dataset = load(data)
+        plan = make_plan(
+            Registry(),
+            Selection(
+                packs=pack,
+                include=include,
+                exclude=exclude,
+                depth=depth,
+                max_cost=max_cost,
+                dimensions=dimension,
+                tags=tag,
+                plugins=plugin,
+                entry_points=entry_points,
+            ),
+            params=params,
+            profile=profile_dataset(dataset),
+        )
+    except SourceError as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(2) from error
+    except PlanError as error:
+        for problem in error.problems:
+            typer.echo(f"error: {problem}", err=True)
+        raise typer.Exit(2) from error
+    shape = f"{dataset.n_rows:,} × {dataset.n_columns}"
+    typer.echo(format_plan(plan, dataset=f"{dataset.name} ({shape})"))
 
 
 @tasks_app.command("export")
