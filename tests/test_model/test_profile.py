@@ -2,6 +2,7 @@
 
 import math
 from datetime import UTC, datetime
+from typing import Any
 
 import numpy as np
 import pytest
@@ -18,8 +19,10 @@ from dsbf.model import (
     IdentifierProfile,
     LengthStats,
     NumericStats,
+    PatternCount,
     Quantile,
     TextProfile,
+    TextShape,
     UnknownProfile,
     ValueCount,
 )
@@ -253,6 +256,75 @@ def test_text_identifier_and_unknown_columns_round_trip():
 def test_empty_strings_cannot_exceed_the_non_null_rows():
     with pytest.raises(ValidationError, match="empty_strings"):
         TextProfile(**common(rows=4, nulls=2, distinct=1), empty_strings=3)
+
+
+def shape(**fields) -> TextShape:
+    base: dict[str, Any] = {
+        "with_letters": 3,
+        "with_digits": 1,
+        "with_whitespace": 0,
+        "with_symbols": 0,
+        "edge_whitespace": 0,
+        "n_patterns": 2,
+        "patterns": (
+            PatternCount(pattern="Aa", count=2),
+            PatternCount(pattern="9", count=1),
+        ),
+    }
+    return TextShape.model_validate({**base, **fields})
+
+
+def test_a_text_shape_round_trips_on_both_string_profiles():
+    for column in (
+        CategoricalProfile(**common(rows=4, distinct=3), shape=shape()),
+        TextProfile(**common(rows=4, distinct=3), shape=shape()),
+    ):
+        assert round_trip(column) == column
+
+
+def test_a_shape_is_optional():
+    assert CategoricalProfile(**common()).shape is None
+    assert TextProfile(**common()).shape is None
+
+
+@pytest.mark.parametrize(
+    ("fields", "message"),
+    [
+        ({"with_letters": 5}, "with_letters is at most"),
+        ({"with_digits": 5}, "with_digits is at most"),
+        ({"with_whitespace": 5}, "with_whitespace is at most"),
+        ({"with_symbols": 5}, "with_symbols is at most"),
+        ({"edge_whitespace": 5}, "edge_whitespace is at most"),
+        ({"n_patterns": 5}, "n_patterns is at most"),
+        (
+            {"patterns": (PatternCount(pattern="a", count=4),)},
+            "pattern counts add up",
+        ),
+    ],
+)
+def test_shape_counts_cannot_exceed_the_non_empty_values(fields, message):
+    with pytest.raises(ValidationError, match=message):
+        # Four rows, one empty string: three values have characters.
+        CategoricalProfile(
+            **common(rows=4, distinct=3), empty_strings=1, shape=shape(**fields)
+        )
+
+
+def test_patterns_are_listed_by_decreasing_count_and_within_n_patterns():
+    with pytest.raises(ValidationError, match="decreasing count"):
+        shape(
+            patterns=(
+                PatternCount(pattern="a", count=1),
+                PatternCount(pattern="9", count=2),
+            )
+        )
+    with pytest.raises(ValidationError, match="n_patterns"):
+        shape(n_patterns=1)
+
+
+def test_a_pattern_needs_at_least_one_value():
+    with pytest.raises(ValidationError):
+        PatternCount.model_validate({"pattern": "a", "count": 0})
 
 
 def test_a_semantic_type_is_chosen_by_its_tag():

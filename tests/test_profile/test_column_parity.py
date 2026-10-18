@@ -1,7 +1,8 @@
-"""Column counts and numeric statistics agree with the legacy ``summarize_*`` tasks.
+"""Column profiles agree with the legacy ``summarize_*`` and length tasks.
 
 The legacy tasks run live on each golden dataset as pandas reads it, and the profile
-runs on the same CSV as ``load`` reads it. Differences are listed in ``ACCEPTED``.
+runs on the same CSV as ``load`` reads it. Differences are listed in ``ACCEPTED`` for
+counts and numeric statistics and in ``ACCEPTED_VALUES`` for top values and lengths.
 """
 
 import math
@@ -10,16 +11,29 @@ import pandas as pd
 import pytest
 
 from dsbf.data import load
+from dsbf.eda.tasks.categorical_length_stats import CategoricalLengthStats
 from dsbf.eda.tasks.summarize_nulls import SummarizeNulls
 from dsbf.eda.tasks.summarize_numeric import SummarizeNumeric
 from dsbf.eda.tasks.summarize_unique import SummarizeUnique
-from dsbf.model.profile import NumericProfile
+from dsbf.eda.tasks.summarize_value_counts import SummarizeValueCounts
+from dsbf.model.profile import CategoricalProfile, NumericProfile, TextProfile
 from dsbf.profile import profile_columns
+from dsbf.profile.values import MAX_TOP_VALUE_CHARS
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 
 REL = 1e-9
 ACCEPTED: dict[tuple[str, str], str] = {}
+ACCEPTED_VALUES: dict[tuple[str, str], str] = {
+    ("kitchen5k", "control_character_text"): (
+        "pandas' C parser cuts a field at a NUL byte (its 'text\\x00with\\x1bcontrols' "
+        "reads as 'text'), so its values and lengths are shorter; the profile keeps "
+        "the whole value"
+    ),
+}
+LEGACY_TOP_K = 5
+# Numeric-only datasets: nothing to compare.
+NO_CATEGORICAL_COLUMNS = {"severe_multicollinearity", "single_column"}
 
 LEGACY_PERCENTILES = {
     0.01: "1%",
@@ -100,3 +114,71 @@ def _compare(dataset: GoldenDataset, path, tmp_path) -> None:
 @pytest.mark.parametrize("dataset", GOLDEN_DATASETS, ids=lambda d: d.name)
 def test_matches_the_legacy_summaries(dataset: GoldenDataset, tmp_path):
     _compare(dataset, dataset.write_csv(tmp_path), tmp_path)
+
+
+def _same_top(old: list[tuple], new: list[tuple]) -> bool:
+    """Equal values and counts; floats may differ in the last digit.
+
+    pandas' default CSV float parser is not correctly rounded, so a value such as
+    100.00020190141393 reads one unit in the last place away from Polars' reading.
+    """
+    return len(old) == len(new) and all(
+        o_count == n_count
+        and (o_value == n_value or o_value == pytest.approx(n_value, rel=1e-12))
+        for (o_value, o_count), (n_value, n_count) in zip(old, new, strict=True)
+    )
+
+
+def _compare_values(dataset: GoldenDataset, path, tmp_path) -> None:
+    frame = pd.read_csv(path)
+    legacy_top = _legacy(SummarizeValueCounts, frame, tmp_path)
+    legacy_lengths = _legacy(CategoricalLengthStats, frame, tmp_path)
+    profiles = profile_columns(load(path), top_k=LEGACY_TOP_K)
+
+    differences: list[tuple[str, str, object, object]] = []
+    compared = 0
+    for profile in profiles:
+        if not isinstance(profile, CategoricalProfile | TextProfile):
+            continue
+        name = profile.name
+        if name in legacy_top:
+            # The legacy table counts null as a value (`dropna=False`); the profile's
+            # top values are of the non-null values, and a text column lists only
+            # values that repeat; strings over the length limit are never listed.
+            minimum = 2 if isinstance(profile, TextProfile) else 1
+            expected = [
+                (value, count)
+                for value, count in legacy_top[name].items()
+                if not pd.isna(value)
+                and count >= minimum
+                and len(str(value)) <= MAX_TOP_VALUE_CHARS
+            ]
+            actual = [(v.value, v.count) for v in profile.top_values]
+            compared += 1
+            if not _same_top(expected, actual[: len(expected)]):
+                differences.append((name, "top_values", expected, actual))
+        if name in legacy_lengths and profile.lengths is not None:
+            old = legacy_lengths[name]
+            lengths = profile.lengths
+            compared += 1
+            for key, value in (
+                ("min_length", lengths.min),
+                ("max_length", lengths.max),
+                ("mean_length", lengths.mean),
+            ):
+                if old[key] != pytest.approx(value, rel=REL):
+                    differences.append((name, key, old[key], value))
+
+    unexplained = [
+        d for d in differences if (dataset.name, d[0]) not in ACCEPTED_VALUES
+    ]
+    assert not unexplained, f"{dataset.name}: unlisted differences {unexplained}"
+    listed = {column for name, column in ACCEPTED_VALUES if name == dataset.name}
+    assert {d[0] for d in differences} == listed
+    assert compared or dataset.name in NO_CATEGORICAL_COLUMNS
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("dataset", GOLDEN_DATASETS, ids=lambda d: d.name)
+def test_matches_the_legacy_top_values_and_lengths(dataset: GoldenDataset, tmp_path):
+    _compare_values(dataset, dataset.write_csv(tmp_path), tmp_path)

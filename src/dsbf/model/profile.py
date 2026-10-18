@@ -103,7 +103,10 @@ class Histogram(Contract):
     edges: tuple[FiniteFloat, ...] = Field(description="One more edge than bins.")
     counts: tuple[int, ...] = Field(description="Values per bin; the last is closed.")
     rule: Literal["fd", "sturges", "scott", "sqrt", "fixed"] = Field(
-        description="How the number of bins was chosen."
+        description=(
+            "The rule that proposed the number of bins; a count over the profile's "
+            "bin limit is clipped to it."
+        )
     )
 
     @model_validator(mode="after")
@@ -148,6 +151,65 @@ class LengthStats(Contract):
         if not self.min <= self.mean <= self.max:
             raise ValueError("mean lies between min and max")
         return self
+
+
+class PatternCount(Contract):
+    """A pattern signature and how many values have it."""
+
+    pattern: str = Field(
+        description=(
+            "Each run of uppercase letters is `A`, of lowercase letters `a` and of "
+            "digits `9`; other characters stand for themselves."
+        )
+    )
+    count: int = Field(ge=1)
+
+
+class TextShape(Contract):
+    """What the characters of a string column's non-empty values look like.
+
+    Every count is of non-null, non-empty values, so none exceeds the number of those.
+    """
+
+    with_letters: int = Field(ge=0, description="Values with at least one letter.")
+    with_digits: int = Field(ge=0, description="Values with at least one digit.")
+    with_whitespace: int = Field(ge=0, description="Values with a space or tab.")
+    with_symbols: int = Field(
+        ge=0, description="Values with a character that is not a word or space."
+    )
+    edge_whitespace: int = Field(
+        ge=0, description="Values that start or end with whitespace."
+    )
+    n_patterns: int = Field(ge=0, description="Distinct pattern signatures.")
+    patterns: tuple[PatternCount, ...] = Field(
+        default=(), description="The most common signatures, by decreasing count."
+    )
+
+    @model_validator(mode="after")
+    def _check_patterns(self) -> Self:
+        if len(self.patterns) > self.n_patterns:
+            raise ValueError("there are no more patterns listed than n_patterns")
+        ordered = [p.count for p in self.patterns]
+        if any(a < b for a, b in zip(ordered, ordered[1:], strict=False)):
+            raise ValueError("patterns are listed by decreasing count")
+        return self
+
+    def check_against(self, counts: ColumnCounts, empty_strings: int) -> None:
+        """Raise if the counts could not come from a column with these counts."""
+        candidates = counts.non_null - empty_strings
+        for name in (
+            "with_letters",
+            "with_digits",
+            "with_whitespace",
+            "with_symbols",
+            "edge_whitespace",
+        ):
+            if getattr(self, name) > candidates:
+                raise ValueError(f"{name} is at most the non-empty values")
+        if self.n_patterns > candidates:
+            raise ValueError("n_patterns is at most the non-empty values")
+        if sum(p.count for p in self.patterns) > candidates:
+            raise ValueError("pattern counts add up to at most the non-empty values")
 
 
 def _check_top_values(top_values: tuple[ValueCount, ...], counts: ColumnCounts) -> None:
@@ -203,12 +265,17 @@ class CategoricalProfile(_ColumnBase):
     top_values: tuple[ValueCount, ...] = ()
     lengths: LengthStats | None = None
     empty_strings: int = Field(default=0, ge=0)
+    shape: TextShape | None = Field(
+        default=None, description="Present for string columns only."
+    )
 
     @model_validator(mode="after")
     def _check_counts(self) -> Self:
         _check_top_values(self.top_values, self.counts)
         if self.empty_strings > self.counts.non_null:
             raise ValueError("empty_strings is at most the non-null rows")
+        if self.shape is not None:
+            self.shape.check_against(self.counts, self.empty_strings)
         return self
 
 
@@ -250,14 +317,21 @@ class TextProfile(_ColumnBase):
     semantic_type: Literal["text"] = "text"
     top_values: tuple[ValueCount, ...] = ()
     lengths: LengthStats | None = None
-    avg_word_length: FiniteFloat | None = Field(default=None, ge=0)
+    avg_word_length: FiniteFloat | None = Field(
+        default=None,
+        ge=0,
+        description="Mean characters per whitespace-delimited word.",
+    )
     empty_strings: int = Field(default=0, ge=0)
+    shape: TextShape | None = None
 
     @model_validator(mode="after")
     def _check_counts(self) -> Self:
         _check_top_values(self.top_values, self.counts)
         if self.empty_strings > self.counts.non_null:
             raise ValueError("empty_strings is at most the non-null rows")
+        if self.shape is not None:
+            self.shape.check_against(self.counts, self.empty_strings)
         return self
 
 

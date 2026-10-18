@@ -279,6 +279,18 @@
           "default": 0,
           "minimum": 0,
           "type": "integer"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextShape"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Present for string columns only."
         }
       },
       "required": [
@@ -291,7 +303,8 @@
         "semantic_type",
         "top_values",
         "lengths",
-        "empty_strings"
+        "empty_strings",
+        "shape"
       ],
       "title": "CategoricalProfile",
       "type": "object"
@@ -1059,7 +1072,7 @@
           "type": "array"
         },
         "rule": {
-          "description": "How the number of bins was chosen.",
+          "description": "The rule that proposed the number of bins; a count over the profile's bin limit is clipped to it.",
           "enum": [
             "fd",
             "sturges",
@@ -1687,6 +1700,26 @@
       "title": "PackRef",
       "type": "object"
     },
+    "PatternCount": {
+      "additionalProperties": false,
+      "description": "A pattern signature and how many values have it.",
+      "properties": {
+        "pattern": {
+          "description": "Each run of uppercase letters is `A`, of lowercase letters `a` and of digits `9`; other characters stand for themselves.",
+          "type": "string"
+        },
+        "count": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pattern",
+        "count"
+      ],
+      "title": "PatternCount",
+      "type": "object"
+    },
     "PlanManifest": {
       "additionalProperties": false,
       "description": "The checks a run was asked to perform, and what produced the plan.",
@@ -2213,12 +2246,24 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "Mean characters per whitespace-delimited word."
         },
         "empty_strings": {
           "default": 0,
           "minimum": 0,
           "type": "integer"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TextShape"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2232,9 +2277,65 @@
         "top_values",
         "lengths",
         "avg_word_length",
-        "empty_strings"
+        "empty_strings",
+        "shape"
       ],
       "title": "TextProfile",
+      "type": "object"
+    },
+    "TextShape": {
+      "additionalProperties": false,
+      "description": "What the characters of a string column's non-empty values look like.\n\nEvery count is of non-null, non-empty values, so none exceeds the number of those.",
+      "properties": {
+        "with_letters": {
+          "description": "Values with at least one letter.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "with_digits": {
+          "description": "Values with at least one digit.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "with_whitespace": {
+          "description": "Values with a space or tab.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "with_symbols": {
+          "description": "Values with a character that is not a word or space.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "edge_whitespace": {
+          "description": "Values that start or end with whitespace.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "n_patterns": {
+          "description": "Distinct pattern signatures.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "patterns": {
+          "default": [],
+          "description": "The most common signatures, by decreasing count.",
+          "items": {
+            "$ref": "#/$defs/PatternCount"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "with_letters",
+        "with_digits",
+        "with_whitespace",
+        "with_symbols",
+        "edge_whitespace",
+        "n_patterns",
+        "patterns"
+      ],
+      "title": "TextShape",
       "type": "object"
     },
     "Timing": {
@@ -2384,7 +2485,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.1.0",
+      "default": "0.2.0",
       "type": "string"
     },
     "run_id": {

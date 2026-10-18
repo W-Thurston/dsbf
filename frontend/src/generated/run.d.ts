@@ -306,7 +306,7 @@ export interface Histogram {
    */
   counts: number[];
   /**
-   * How the number of bins was chosen.
+   * The rule that proposed the number of bins; a count over the profile's bin limit is clipped to it.
    */
   rule: "fd" | "sturges" | "scott" | "sqrt" | "fixed";
 }
@@ -337,6 +337,10 @@ export interface CategoricalProfile {
   top_values: ValueCount[];
   lengths: LengthStats | null;
   empty_strings: number;
+  /**
+   * Present for string columns only.
+   */
+  shape: TextShape | null;
 }
 /**
  * One value and how many rows hold it.
@@ -358,6 +362,57 @@ export interface LengthStats {
   min: number;
   max: number;
   mean: number;
+}
+/**
+ * What the characters of a string column's non-empty values look like.
+ *
+ * Every count is of non-null, non-empty values, so none exceeds the number of those.
+ *
+ * This interface was referenced by `Run`'s JSON-Schema
+ * via the `definition` "TextShape".
+ */
+export interface TextShape {
+  /**
+   * Values with at least one letter.
+   */
+  with_letters: number;
+  /**
+   * Values with at least one digit.
+   */
+  with_digits: number;
+  /**
+   * Values with a space or tab.
+   */
+  with_whitespace: number;
+  /**
+   * Values with a character that is not a word or space.
+   */
+  with_symbols: number;
+  /**
+   * Values that start or end with whitespace.
+   */
+  edge_whitespace: number;
+  /**
+   * Distinct pattern signatures.
+   */
+  n_patterns: number;
+  /**
+   * The most common signatures, by decreasing count.
+   */
+  patterns: PatternCount[];
+}
+/**
+ * A pattern signature and how many values have it.
+ *
+ * This interface was referenced by `Run`'s JSON-Schema
+ * via the `definition` "PatternCount".
+ */
+export interface PatternCount {
+  /**
+   * Each run of uppercase letters is `A`, of lowercase letters `a` and of digits `9`; other characters stand for themselves.
+   */
+  pattern: string;
+  count: number;
 }
 /**
  * This interface was referenced by `Run`'s JSON-Schema
@@ -446,8 +501,12 @@ export interface TextProfile {
   semantic_type: "text";
   top_values: ValueCount[];
   lengths: LengthStats | null;
+  /**
+   * Mean characters per whitespace-delimited word.
+   */
   avg_word_length: number | null;
   empty_strings: number;
+  shape: TextShape | null;
 }
 /**
  * A column that names rows (for example a key); only the common fields apply.
