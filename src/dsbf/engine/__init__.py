@@ -20,6 +20,7 @@ from dsbf.engine.errors import (
     PlanError,
     RegistryError,
 )
+from dsbf.engine.executor import execute
 from dsbf.engine.expectation import Expectation, Expected
 from dsbf.engine.pack import Pack
 from dsbf.engine.plan import Plan, PlanEntry, make_plan
@@ -54,6 +55,7 @@ __all__ = [
     "Selection",
     "SemanticTypes",
     "check",
+    "execute",
     "format_plan",
     "make_plan",
     "run_check",
