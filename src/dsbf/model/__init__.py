@@ -48,6 +48,8 @@ from dsbf.model.profile import (
     Histogram,
     IdentifierProfile,
     LengthStats,
+    Missingness,
+    NullPair,
     NumericProfile,
     NumericStats,
     PatternCount,
@@ -61,7 +63,7 @@ from dsbf.model.profile import (
 from dsbf.model.run import SCHEMA_VERSION, Run, order_findings
 from dsbf.model.subject import Subject, SubjectKind
 from dsbf.model.timing import Timing
-from dsbf.model.vocabulary import CheckStatus, Confidence, Dimension, Severity
+from dsbf.model.vocabulary import CheckStatus, Confidence, Dimension, Severity, Stage
 
 __all__ = [
     "Action",
@@ -91,6 +93,8 @@ __all__ = [
     "IdentifierProfile",
     "Interval",
     "LengthStats",
+    "Missingness",
+    "NullPair",
     "Matcher",
     "Metric",
     "MetricComparison",
@@ -116,6 +120,7 @@ __all__ = [
     "SCHEMA_VERSION",
     "SemanticType",
     "Severity",
+    "Stage",
     "SeverityComparison",
     "SourceKind",
     "SourceRef",

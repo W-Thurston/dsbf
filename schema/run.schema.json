@@ -559,6 +559,18 @@
           ],
           "default": null
         },
+        "missingness": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Missingness"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Null co-occurrence; None if not computed."
+        },
         "columns": {
           "items": {
             "discriminator": {
@@ -605,6 +617,7 @@
         "approx_memory_bytes",
         "duplicate_rows",
         "rows_with_any_null",
+        "missingness",
         "columns"
       ],
       "title": "DatasetProfile",
@@ -1386,6 +1399,35 @@
       "title": "MetricComparison",
       "type": "object"
     },
+    "Missingness": {
+      "additionalProperties": false,
+      "description": "Which columns go missing together.",
+      "properties": {
+        "columns_with_nulls": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "columns_considered": {
+          "description": "Columns paired: the ones with the most nulls, when there are more than the pairing limit.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "pairs": {
+          "description": "The strongest co-occurring pairs, most similar first; only pairs that share at least one null row.",
+          "items": {
+            "$ref": "#/$defs/NullPair"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "columns_with_nulls",
+        "columns_considered",
+        "pairs"
+      ],
+      "title": "Missingness",
+      "type": "object"
+    },
     "Note": {
       "additionalProperties": false,
       "description": "An operational message: why a check was skipped, failed or degraded.",
@@ -1458,6 +1500,38 @@
         "detail"
       ],
       "title": "Note",
+      "type": "object"
+    },
+    "NullPair": {
+      "additionalProperties": false,
+      "description": "Two columns that are null in the same rows.",
+      "properties": {
+        "a": {
+          "description": "The earlier column in the dataset's column order.",
+          "type": "string"
+        },
+        "b": {
+          "type": "string"
+        },
+        "both_null": {
+          "description": "Rows where both columns are null.",
+          "minimum": 1,
+          "type": "integer"
+        },
+        "jaccard": {
+          "description": "Rows null in both over rows null in either: 1 means the columns are null in exactly the same rows.",
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "a",
+        "b",
+        "both_null",
+        "jaccard"
+      ],
+      "title": "NullPair",
       "type": "object"
     },
     "NumericProfile": {
@@ -2485,7 +2559,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.2.0",
+      "default": "0.3.0",
       "type": "string"
     },
     "run_id": {

@@ -67,6 +67,20 @@ class Dimension(StrEnum):
     TEMPORAL = "temporal"
 
 
+class Stage(StrEnum):
+    """How prepared the data is, and the stages a check can apply to.
+
+    Inferring the stage of a dataset gives `raw`, `cleaned` or `modeling`. A check
+    also declares `report` (it summarises rather than inspects) or `any`.
+    """
+
+    RAW = "raw"
+    CLEANED = "cleaned"
+    MODELING = "modeling"
+    REPORT = "report"
+    ANY = "any"
+
+
 class CheckStatus(StrEnum):
     """How one check's execution ended. Every status but `ok` comes with a note."""
 

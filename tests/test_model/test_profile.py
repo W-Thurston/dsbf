@@ -18,6 +18,8 @@ from dsbf.model import (
     Histogram,
     IdentifierProfile,
     LengthStats,
+    Missingness,
+    NullPair,
     NumericStats,
     PatternCount,
     Quantile,
@@ -387,3 +389,53 @@ def test_a_dataset_profile_with_no_columns_is_valid():
 def test_a_dataset_profile_must_agree_with_its_columns(columns, fields, message):
     with pytest.raises(ValidationError, match=message):
         make_dataset_profile(columns, **fields)
+
+
+# ── missingness ──────────────────────────────────────────────────────────────
+
+
+def _missingness(*pairs, with_nulls=2, considered=2):
+    return Missingness(
+        columns_with_nulls=with_nulls, columns_considered=considered, pairs=pairs
+    )
+
+
+def test_missingness_round_trips_pairs_of_awkward_names():
+    pair = NullPair(a="a|b", b="[x]", both_null=1, jaccard=1.0)
+    profile = make_dataset_profile(
+        [make_numeric("a|b"), make_numeric("[x]", 1)],
+        missingness=_missingness(pair),
+    )
+
+    assert round_trip(profile).missingness.pairs == (pair,)
+
+
+@pytest.mark.parametrize(
+    ("pair", "message"),
+    [
+        (NullPair(a="a", b="a", both_null=1, jaccard=1.0), "twice"),
+        (NullPair(a="a", b="z", both_null=1, jaccard=1.0), "unknown column"),
+        (NullPair(a="a", b="b", both_null=2, jaccard=1.0), "more null rows"),
+        (NullPair(a="b", b="a", both_null=1, jaccard=1.0), "column order"),
+    ],
+)
+def test_a_null_pair_must_agree_with_the_columns(pair, message):
+    columns = [make_numeric("a"), make_numeric("b", 1)]
+
+    with pytest.raises(ValidationError, match=message):
+        make_dataset_profile(columns, missingness=_missingness(pair))
+
+
+def test_missingness_counts_must_agree_with_the_columns():
+    columns = [make_numeric("a"), make_numeric("b", 1)]
+
+    with pytest.raises(ValidationError, match="columns_with_nulls"):
+        make_dataset_profile(columns, missingness=_missingness(with_nulls=1))
+    with pytest.raises(ValidationError, match="columns_considered"):
+        _missingness(with_nulls=1, considered=2)
+
+
+@pytest.mark.parametrize("jaccard", [-0.1, 1.1, float("nan")])
+def test_a_jaccard_outside_zero_to_one_is_refused(jaccard):
+    with pytest.raises(ValidationError):
+        NullPair(a="a", b="b", both_null=1, jaccard=jaccard)
