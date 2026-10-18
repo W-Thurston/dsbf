@@ -45,4 +45,11 @@ class Timing(Contract):
             "in a worker process."
         ),
     )
+    cached: bool = Field(
+        default=False,
+        description=(
+            "True when the result came from the result cache: the check did not "
+            "run in this run, and the timing is that of reading the entry."
+        ),
+    )
     started_at: AwareDatetime | None = None

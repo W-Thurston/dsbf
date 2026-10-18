@@ -234,3 +234,13 @@ def declare(check_id, *, applies_to=SemanticTypes(), function=None, **spec):
         """A check."""
 
     return dataclasses.replace(declared, function=function) if function else declared
+
+
+def comparable(run):
+    """The run without what depends on the clock, which differs between runs."""
+    data = run.model_dump(mode="json")
+    for key in ("run_id", "started_at", "finished_at"):
+        del data[key]
+    for result in data["results"].values():
+        del result["timing"]
+    return data
