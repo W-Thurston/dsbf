@@ -14,10 +14,17 @@ from dsbf.engine.check import (
     check,
 )
 from dsbf.engine.context import CheckContext, CheckOutput, ProfileView
-from dsbf.engine.errors import CheckContractError, CheckDefinitionError, RegistryError
+from dsbf.engine.errors import (
+    CheckContractError,
+    CheckDefinitionError,
+    PlanError,
+    RegistryError,
+)
 from dsbf.engine.pack import Pack
+from dsbf.engine.plan import Plan, PlanEntry, make_plan
 from dsbf.engine.registry import Registry
 from dsbf.engine.runner import run_check
+from dsbf.engine.selection import Depth, Selection, select
 
 __all__ = [
     "Check",
@@ -28,15 +35,22 @@ __all__ = [
     "CheckOutput",
     "CheckOutputModel",
     "CheckSpec",
+    "Depth",
     "Extra",
     "NoParams",
     "Pack",
+    "Plan",
+    "PlanEntry",
+    "PlanError",
     "ProfileFeature",
     "ProfileView",
     "Registry",
     "RegistryError",
     "Requires",
+    "Selection",
     "SemanticTypes",
     "check",
+    "make_plan",
     "run_check",
+    "select",
 ]

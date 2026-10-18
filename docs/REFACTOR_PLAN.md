@@ -388,6 +388,12 @@ Output: a `Plan` that can be printed (`dsbf plan`) and is recorded in the run ma
 3. **Validate** each check's parameters against its model. Errors name the check, key and allowed values.
 4. **Annotate** each planned check with an expected status: `will_run`, `not_applicable` (no eligible columns), or `unavailable` (missing extra or source capability). Every status comes with a reason.
 
+How steps 1 and 2 work in `dsbf.engine` (`Selection`, `make_plan`):
+- `Depth` is a cost ceiling: `quick` keeps cheap checks, `standard` adds moderate ones, `deep` adds heavy ones. An explicit `max_cost` can only lower it. The candidates are the checks in the named packs (all checks when none is named); depth, dimension, tag and `exclude_stages` filters are ANDed; `include` adds by id past every filter, and `exclude` removes by id last.
+- An unknown pack, an unknown `include` or `exclude` id, and an id in both lists are plan errors that suggest the closest name, and all of them are reported together. A pack with no checks is valid and selects nothing.
+- Hard `requires.checks` are pulled in transitively past the filters and marked (`selected=False`, `required_by`); a requirement that is unregistered or excluded is a plan error naming both checks. A soft `after` orders checks that are in the plan and pulls nothing in. Hard and soft edges are laid out in levels (each sorted by id, so plans are deterministic and a level can run in parallel); a cycle is a plan error that prints the path and the kind of each edge.
+- The inferred data stage does not select checks, as in the legacy engine. A check's `stage` is informational and filterable with `exclude_stages`.
+
 ### 6.4 Executor
 
 - **Isolation (R2):** any exception becomes `status="error"` with a `Note` containing the error type, message, a **hint**, and the traceback in an artifact. Hard dependents become `skipped` with a note naming the blocker. Soft dependents run. Nothing propagates. Only *setup* errors (unreadable source, invalid config) stop a run, and even then the CLI writes a Run containing the error by default.

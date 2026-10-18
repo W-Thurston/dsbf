@@ -22,3 +22,16 @@ class RegistryError(ValueError):
 
     For example a second, different check under an id already taken, or an unknown id.
     """
+
+
+class PlanError(ValueError):
+    """A selection cannot become a plan.
+
+    For example an unknown pack or check id, a required check the user excluded, or
+    a dependency cycle. ``problems`` lists every mistake found, so one run of the
+    planner reports them all.
+    """
+
+    def __init__(self, *problems: str) -> None:
+        super().__init__("; ".join(problems))
+        self.problems = tuple(problems)

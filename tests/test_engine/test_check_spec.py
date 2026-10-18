@@ -15,7 +15,7 @@ from dsbf.engine import (
     SemanticTypes,
     check,
 )
-from dsbf.model import Cost, Dimension, SemanticType
+from dsbf.model import Cost, Dimension, SemanticType, Stage
 from tests.test_engine.toys import SpreadParams, numeric_spread, quality_summary
 
 pytestmark = pytest.mark.unit
@@ -41,10 +41,16 @@ def test_a_declaration_keeps_its_metadata_as_a_frozen_spec():
     assert spec.dimensions == (Dimension.DISTRIBUTION, Dimension.VALIDITY)
     assert spec.params is SpreadParams
     assert spec.cost is Cost.MODERATE
+    assert spec.stage is Stage.ANY
     assert spec.packs == ("core",)
     assert spec.summary == "Standard deviation of each numeric column."
     with pytest.raises(AttributeError):
         spec.id = "other"  # type: ignore[misc]
+
+
+def test_a_check_declares_the_stage_it_is_written_for():
+    assert declare(stage="cleaned").spec.stage is Stage.CLEANED
+    assert declare(stage=Stage.REPORT).spec.stage is Stage.REPORT
 
 
 def test_a_synthesis_check_lists_what_it_reads():
@@ -74,6 +80,7 @@ def test_decorating_returns_a_callable_check():
         ({"dimensions": []}, "declare at least one dimension"),
         ({"dimensions": ["quality"]}, "'quality' is not a valid Dimension"),
         ({"cost": "free"}, "'free' is not a valid Cost"),
+        ({"stage": "late"}, "'late' is not a valid Stage"),
         ({"extras": ["gpu"]}, "unknown extra 'gpu'; choose from ml, timeseries"),
         ({"packs": ["Core Pack"]}, "pack 'Core Pack' must be lower snake case"),
         ({"after": ["Bad"]}, "after 'Bad' must be lower snake case"),

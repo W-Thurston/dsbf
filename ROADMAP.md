@@ -133,20 +133,17 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Notes:** `dsbf.engine` holds `@check`, `CheckSpec`, `Check`, `CheckContext` and `run_check`; importing it registers nothing. A check sees only the columns `applies_to` selects (`columns`, `values()`, the profile view, finding subjects); only analysis checks read values; `ctx.result()` reaches only declared dependencies; `ctx.finding()` fills in sampling provenance and rejects a repeated subject and code. `run_check` returns `not_applicable` without calling a check that has no eligible column, and lets exceptions propagate to the executor. Deviations: added the `Cost` vocabulary to `dsbf.model` (not in the published schema), and `applies_to` uses the profile's semantic types (`numeric`, not the design's `continuous`).
 
 ### U3-02 · Registry, packs and plugin discovery
-- **Status:** done (2026-10-18)
+- **Status:** done (2026-10-18) · **PR:** #89 (`7f33080`)
 - **Notes:** `dsbf.engine` adds `Registry` (checks by id, `packs`, `source_of`, `notes`), `Pack`, `load_directory` and `load_entry_points`. A directory is imported as a package named for its path, so plugin files use `from .utils import x` and two `utils.py` coexist. A source already loaded is not loaded again, even by another `Registry` in the process, so an edited plugin file needs a new process. A broken plugin never raises: the registry records a `Note` (`plugin_load_failed`, `plugin_invalid`, `plugin_empty`, `check_id_conflict`). No deviations from the unit; the legacy `eda/task_registry.py` is untouched.
 
 ### U3-03 · Planner I: selection and dependency resolution
-- **Status:** todo · **Size:** M · **Depends on:** U3-02 · **Resolves:** F-21
-- **Note from U3-02:** `Registry.packs` maps a pack name to check ids, and a pack that matches no check is allowed; decide here whether selecting an unknown pack is a plan error. Read the `plugins:` config list in the plan input and call `load_directory` / `load_entry_points`.
-- **Note from U3-01:** `CheckSpec` has no stage applicability (`Stage`). Add it with the `infer_stage` decision in this unit. `Requires.profile` names (`ProfileFeature`) are declared but not yet checked against what a profile holds; the planner decides availability. `CheckSpec.upstream` is `requires.checks` then `after`.
-- **Note from U2-06:** `infer_stage` rates data by its mean column null ratio, so titanic is `cleaned` although `cabin` is 77% null and 709 of 891 rows have a null. When the inferred stage drives selection here, decide whether a per-column rule (the worst column, or the share of columns over a null limit) is needed.
-- **Goal:** Select checks by packs, include/exclude lists, depth presets, cost budget, dimension and tag. Resolve hard requirements (auto-included and marked) and soft `after` ordering. Report cycles as plan errors.
-- **Acceptance:** Table-driven tests cover selection. A soft-after dependency that errors doesn't skip its dependent (the F-21 scenario).
-- **Commit:** `feat(engine): add plan selection and dependency resolution`
+- **Status:** done (2026-10-18)
+- **Notes:** `dsbf.engine` adds `Selection` (packs, include, exclude, `Depth`, `max_cost`, dimensions, tags, `exclude_stages`, plugins, entry points), `select`, `make_plan`, `Plan` / `PlanEntry` and `PlanError`. `Depth` is a cost ceiling (`quick` cheap, `standard` moderate, `deep` heavy). Hard requirements are pulled in past the filters and marked `required_by`; soft `after` orders but never pulls in; entries come in deterministic levels; cycles and unknown names are plan errors. `CheckSpec.stage` (default `any`) is informational and filterable; the inferred stage does not select checks, as in the legacy engine.
+- **Deviations:** the F-21 acceptance is met at plan level (hard and soft edges kept apart, soft order explicit); the skip-behaviour test needs an executor and moves to U3-05. `Requires.profile` availability moves to U3-04, since it depends on the profile's values.
 
 ### U3-04 · Planner II: validation, expected statuses and `dsbf plan`
 - **Status:** todo · **Size:** M · **Depends on:** U3-03 · **Resolves:** F-07, F-22
+- **Note from U3-03:** `make_plan(registry, selection)` returns a `Plan` of `PlanEntry` (check, `selected`, `required_by`, `requires`, `after`, `level`) with no parameters yet; add the resolved params and the expected status here. `Requires.profile` features are data-dependent (a constant column has no histogram, an all-null one no stats), so decide `will_run` / `not_applicable` from the profile here, not at selection. `Plan.notes` holds `plan_empty`.
 - **Goal:**
   - Validate parameters against each check's model, with precise errors.
   - Annotate the plan with `will_run`, `not_applicable` or `unavailable` (missing extra), with reasons.
@@ -159,6 +156,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-05 · Executor I: isolation, statuses and notes
 - **Status:** todo · **Size:** M · **Depends on:** U3-04 · **Resolves:** F-06, F-20 (engine side)
+- **Note from U3-03:** the F-21 scenario still needs its execution test: a soft `after` upstream that ends in `error` must leave its dependent running, while a hard `requires` upstream that errors makes the dependent `skipped`. `PlanEntry.requires` and `.after` already separate the two, and `Plan.levels` gives the order.
 - **Note from U3-01:** `run_check(check, context)` builds the `CheckResult` (findings in call order, notes, JSON-safe output, resolved params, wall time, `started_at`). Wrap it for isolation; it leaves CPU time and peak memory unset (U3-06).
 - **Goal:** Sequential execution where every exception becomes `error` with a note (type, message, hint, traceback artifact), hard dependents become `skipped` with the blocker named, and the run always completes with `RunHealth`.
 - **Acceptance:** A forced exception in each toy check yields a complete `Run`. The health summary lists the reason. A check returning a failed result is never counted as ok (the F-06 regression test).
@@ -214,6 +212,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U3-03:** build `Selection` from the root config (`packs`, `include`, `exclude`, `depth`, `max_cost`, `dimensions`, `tags`, `plugins`); `Depth` lives in `dsbf.engine.selection`, so the config can use it as its enum. Merge `Plan.notes` with `Registry.notes` into the run's notes. `Selection.entry_points` defaults to `True`; decide whether the config exposes it. The default pack is open: an empty `packs` selects every registered check, so the entry point decides whether to default to `core`.
 - **Note from U3-02:** copy `Registry.notes` (plugin load problems) into the run's notes. A plugin edited after load is not re-executed in the same process; revisit for the Phase 6 service if reload is needed.
 - **Note from U2-08:** on 1M × 50 floats the profile pass takes 9.5 s on the 4-CPU runner (type inference 1.5 s, `profile_dataset` 8.0 s), well inside the 3 min standard-plan target, so no optimisation was needed. If measuring the standard plan on that frame shows the profile as a cost, the options are arithmetic histogram binning with an edge fix-up (about 1.3 s of the column pass at 1M × 50 locally), a sketched distinct count above a row threshold, and sharing `n_unique` and null counts between type inference and the count pass. The run health output's memory figure should say what it measures: `Dataset.frame.estimated_size()` undercounts a CSV-loaded frame (kitchen50k is 47 MB estimated and about 180 MB resident after load). The task-level legacy perf comparison is noisy on shared runners (U0-17); the profile scenarios were within 2% across 3 runs.
 - **Note from U2-06:** call `dsbf.profile.profile_dataset` and `infer_stage` (with `StageThresholds.from_config`) from the entry point, and remove the legacy `eda/stage_inference.py` and its call in `ProfileEngine` when the engine path is replaced.

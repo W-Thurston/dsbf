@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, get_args
 
 from dsbf.engine.errors import CheckDefinitionError
-from dsbf.model import CheckParams, Contract, Cost, Dimension, SemanticType
+from dsbf.model import CheckParams, Contract, Cost, Dimension, SemanticType, Stage
 
 if TYPE_CHECKING:
     from dsbf.engine.context import CheckContext, CheckOutput
@@ -129,6 +129,12 @@ class CheckSpec:
         default=(), metadata={"doc": "Soft ordering: run later, but never skipped."}
     )
     cost: Cost = Cost.MODERATE
+    stage: Stage = field(
+        default=Stage.ANY,
+        metadata={
+            "doc": "The data stage the check is written for; a plan can skip some."
+        },
+    )
     extras: tuple[Extra, ...] = ()
     packs: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
@@ -177,6 +183,10 @@ class CheckSpec:
         extras = get_args(Extra)
         try:
             object.__setattr__(self, "cost", Cost(self.cost))
+        except ValueError as error:
+            raise CheckDefinitionError(f"{self.id}: {error}") from error
+        try:
+            object.__setattr__(self, "stage", Stage(self.stage))
         except ValueError as error:
             raise CheckDefinitionError(f"{self.id}: {error}") from error
         for name in ("extras", "packs", "tags", "after", "dimensions"):
@@ -259,6 +269,7 @@ def check(
     requires: Requires | None = None,
     after: Iterable[str] = (),
     cost: Cost = Cost.MODERATE,
+    stage: Stage = Stage.ANY,
     extras: Iterable[Extra] = (),
     packs: Iterable[str] = (),
     tags: Iterable[str] = (),
@@ -286,6 +297,7 @@ def check(
             requires=requires or Requires(),
             after=tuple(after),
             cost=cost,
+            stage=stage,
             extras=tuple(extras),
             packs=tuple(packs),
             tags=tuple(tags),
