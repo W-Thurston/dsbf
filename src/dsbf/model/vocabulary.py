@@ -90,3 +90,11 @@ class CheckStatus(StrEnum):
     SKIPPED = "skipped"
     ERROR = "error"
     TIMEOUT = "timeout"
+
+
+class Cost(_Ordinal):
+    """How expensive a check is to run, so a plan can stay within a budget."""
+
+    CHEAP = "cheap"
+    MODERATE = "moderate"
+    HEAVY = "heavy"

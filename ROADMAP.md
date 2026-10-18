@@ -116,7 +116,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
   - Profile parity is mostly vocabulary and typing: 9 of 10 golden datasets get a different stage name (5 only by vocabulary, 4 because high cardinality counts categorical columns only), and integer codes typed `categorical` carry no min and max.
   - `SCHEMA_VERSION` went 0.1.0 → 0.3.0 over U2-05 and U2-06, both additive.
   - Phase 3 is already broken into full units, so it has no `U3-00`; U3-01 is next.
-- **PRs:** #80 (U2-01, `876a17c`), #81 (U2-02, `62efb95`), #82 (U2-03, `83a62b1`), #83 (U2-04, `c472927`), #84 (U2-05, `2a15752`), #85 (U2-06, `7fc2643`), #86 (U2-07, `fd7906e`), and U2-08 (number and merge SHA recorded when the next unit starts).
+- **PRs:** #80 (U2-01, `876a17c`), #81 (U2-02, `62efb95`), #82 (U2-03, `83a62b1`), #83 (U2-04, `c472927`), #84 (U2-05, `2a15752`), #85 (U2-06, `7fc2643`), #86 (U2-07, `fd7906e`), and #87 (U2-08, `74cd9d1`).
 
 ---
 
@@ -129,15 +129,12 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Success criteria:** Golden runs reproduce through the adapter. A forced exception in any check still yields a complete `Run` with a note. Changing one parameter re-executes only the affected checks.
 
 ### U3-01 · Check interface and check context
-- **Status:** todo · **Size:** M · **Depends on:** U2-08, U1-09
-- **Goal:** The `@check` decorator and metadata (id, version, kind, params, `applies_to`, `requires`, `after`, cost, extras, packs, dimensions). `CheckContext` provides filtered `columns`, `values()`, `profile`, `finding()`, `note()` and `output()`.
-- **Note from U1-07:** `CheckResult.output` is an open `dict[str, Any]` (made JSON-safe, undefined numbers nulled and named in `non_finite_outputs`). Typed per-check output models belong here.
-- **Assumptions to confirm:** The decorator vs. class-based API (REFACTOR_PLAN §6.2 shows the decorator); naming per ADR D10.
-- **Acceptance:** Three toy checks (rule, analysis, synthesis) run in a test harness and produce valid `CheckResult`s. A check never sees columns outside `applies_to`.
-- **Commit:** `feat(engine): add check interface and check context`
+- **Status:** done (2026-10-18)
+- **Notes:** `dsbf.engine` holds `@check`, `CheckSpec`, `Check`, `CheckContext` and `run_check`; importing it registers nothing. A check sees only the columns `applies_to` selects (`columns`, `values()`, the profile view, finding subjects); only analysis checks read values; `ctx.result()` reaches only declared dependencies; `ctx.finding()` fills in sampling provenance and rejects a repeated subject and code. `run_check` returns `not_applicable` without calling a check that has no eligible column, and lets exceptions propagate to the executor. Deviations: added the `Cost` vocabulary to `dsbf.model` (not in the published schema), and `applies_to` uses the profile's semantic types (`numeric`, not the design's `continuous`).
 
 ### U3-02 · Registry, packs and plugin discovery
 - **Status:** todo · **Size:** M · **Depends on:** U3-01 · **Resolves:** F-23
+- **Note from U3-01:** `Check` is public and built by `check(...)` with no registration; the registry collects `Check` objects explicitly. A check's extras are validated against `pyproject.toml`'s optional-dependency groups (`Extra`).
 - **Goal:** An explicit `Registry` object (no import side effects), the `dsbf.checks` and `dsbf.packs` entry-point groups, local plugin directories imported under unique module names, and reload safety.
 - **Acceptance:**
   - A test plugin package installed in a venv is discovered.
@@ -147,6 +144,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-03 · Planner I: selection and dependency resolution
 - **Status:** todo · **Size:** M · **Depends on:** U3-02 · **Resolves:** F-21
+- **Note from U3-01:** `CheckSpec` has no stage applicability (`Stage`). Add it with the `infer_stage` decision in this unit. `Requires.profile` names (`ProfileFeature`) are declared but not yet checked against what a profile holds; the planner decides availability. `CheckSpec.upstream` is `requires.checks` then `after`.
 - **Note from U2-06:** `infer_stage` rates data by its mean column null ratio, so titanic is `cleaned` although `cabin` is 77% null and 709 of 891 rows have a null. When the inferred stage drives selection here, decide whether a per-column rule (the worst column, or the share of columns over a null limit) is needed.
 - **Goal:** Select checks by packs, include/exclude lists, depth presets, cost budget, dimension and tag. Resolve hard requirements (auto-included and marked) and soft `after` ordering. Report cycles as plan errors.
 - **Acceptance:** Table-driven tests cover selection. A soft-after dependency that errors doesn't skip its dependent (the F-21 scenario).
@@ -166,6 +164,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-05 · Executor I: isolation, statuses and notes
 - **Status:** todo · **Size:** M · **Depends on:** U3-04 · **Resolves:** F-06, F-20 (engine side)
+- **Note from U3-01:** `run_check(check, context)` builds the `CheckResult` (findings in call order, notes, JSON-safe output, resolved params, wall time, `started_at`). Wrap it for isolation; it leaves CPU time and peak memory unset (U3-06).
 - **Goal:** Sequential execution where every exception becomes `error` with a note (type, message, hint, traceback artifact), hard dependents become `skipped` with the blocker named, and the run always completes with `RunHealth`.
 - **Acceptance:** A forced exception in each toy check yields a complete `Run`. The health summary lists the reason. A check returning a failed result is never counted as ok (the F-06 regression test).
 - **Commit:** `feat(engine): execute checks in isolation with explicit statuses`
@@ -202,6 +201,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-10 · Legacy task adapter
 - **Status:** todo · **Size:** M · **Depends on:** U3-08, U3-09
+- **Note from U3-01:** the design caps a finding's confidence per check; the spec has no `max_confidence` yet. Add it when the adapter or a migrated check needs it. The adapter builds one `Check` per task and must emit findings only for columns within its `applies_to`.
 - **Note from U1-07:** blurbs carry no `code`, `dimension`, `confidence` or (always) `n_used`; the adapter supplies them. A `code` must be unique within a check and subject and must not depend on blurb order (the contract test's `<phase>_<index>` shifts when a task reorders blurbs). Map `good` to `Severity.INFO` plus the tag `good`, `__dataset__` to `Subject.dataset()`, and legacy `column`/`columns` on an action to `Action.columns`. `tests/test_model/test_legacy_guidance.py` holds the reference mapping.
 - **Goal:** `LegacyTaskCheck` wraps any `BaseTask`. It provides a legacy `AnalysisContext` shim (data, config, `semantic_types` from the new profile) and maps `TaskResult` statuses onto the new statuses.
 - **Assumptions to confirm:** Which `context.metadata` keys legacy tasks read from each other (grep `get_metadata`, `context.results`).
