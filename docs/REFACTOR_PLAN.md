@@ -332,28 +332,38 @@ class OutlierParams(CheckParams):
     version="2.0.0",
     kind="analysis",
     params=OutlierParams,
+    output=OutlierOutput,  # a CheckOutputModel, so the output has a schema
     applies_to=SemanticTypes(
-        "continuous"
-    ),  # engine filters columns (fixes F-11 by construction)
-    requires=Requires(profile=["quantiles", "mad"], checks=[]),
+        "numeric"
+    ),  # engine filters columns (fixes F-11 by construction); None for a dataset-level check
+    requires=Requires(profile=["quantiles"], checks=[]),
     after=[],  # soft ordering, no failure propagation (F-21)
     cost=Cost.MODERATE,
     extras=[],  # e.g. ["ml"] for isolation forest → "unavailable" if missing
     packs=["core"],
-    dimensions=["validity"],
+    dimensions=[Dimension.VALIDITY],
 )
 def outliers(ctx: CheckContext, params: OutlierParams) -> CheckOutput:
     for col in ctx.columns:  # already filtered by applies_to
-        x = ctx.values(col)  # cached NumPy, non-null
+        x = ctx.values(col)  # cached NumPy, non-null (analysis checks only)
         ...
         ctx.finding(
             code="outliers_iqr",
-            subject=column(col),
+            subject=Subject.column(col),
             severity=...,
+            confidence=...,
+            title=...,
+            message=...,
             evidence=...,
             guidance=...,
         )
     return ctx.output(OutlierOutput(...))
+
+
+# A synthesis check reads other checks through ctx.result("other_check"), for the
+# checks it declares in requires.checks (hard) or after (soft; None if it didn't run).
+# A rule check reads ctx.profile only. run_check(check, context) calls a check and
+# builds its CheckResult; the executor wraps it with isolation.
 ```
 
 What this removes:

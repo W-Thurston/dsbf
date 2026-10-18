@@ -63,7 +63,14 @@ from dsbf.model.profile import (
 from dsbf.model.run import SCHEMA_VERSION, Run, order_findings
 from dsbf.model.subject import Subject, SubjectKind
 from dsbf.model.timing import Timing
-from dsbf.model.vocabulary import CheckStatus, Confidence, Dimension, Severity, Stage
+from dsbf.model.vocabulary import (
+    CheckStatus,
+    Confidence,
+    Cost,
+    Dimension,
+    Severity,
+    Stage,
+)
 
 __all__ = [
     "Action",
@@ -79,6 +86,7 @@ __all__ = [
     "Confidence",
     "ConfidenceComparison",
     "Contract",
+    "Cost",
     "DatasetManifest",
     "DatasetProfile",
     "DatetimeProfile",
