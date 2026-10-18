@@ -9,23 +9,22 @@ from dsbf.data import load
 from dsbf.engine import (
     CheckContext,
     Expected,
-    Registry,
     Requires,
-    Selection,
     SemanticTypes,
-    check,
     execute,
-    make_plan,
     run_check,
 )
 from dsbf.engine import extras as extras_module
-from dsbf.model import CheckResult, CheckStatus, Dimension, Run, Timing
+from dsbf.model import CheckResult, CheckStatus, Run, Timing
 from dsbf.profile import profile_dataset
 from tests.test_engine.toys import (
+    declare,
     make_dataset,
     null_share,
     numeric_spread,
+    plan_for,
     quality_summary,
+    run_plan,
     run_toys,
 )
 
@@ -40,31 +39,6 @@ def explode(ctx, params):
 
 def broken(toy):
     return dataclasses.replace(toy, function=explode)
-
-
-def plan_for(checks, profile):
-    return make_plan(Registry(checks), Selection(entry_points=False), profile=profile)
-
-
-def run_plan(checks, dataset=None):
-    dataset = dataset or make_dataset()
-    profile = profile_dataset(dataset)
-    return execute(plan_for(checks, profile), dataset, profile, dsbf_version="0.0.0")
-
-
-def declare(check_id, *, applies_to=SemanticTypes(), function=None, **spec):
-    @check(
-        id=check_id,
-        version="1.0.0",
-        kind=spec.pop("kind", "rule"),
-        applies_to=applies_to,
-        dimensions=[Dimension.VALIDITY],
-        **spec,
-    )
-    def declared(ctx, params):
-        """A check."""
-
-    return dataclasses.replace(declared, function=function) if function else declared
 
 
 def statuses(run: Run) -> dict[str, CheckStatus]:
@@ -301,7 +275,7 @@ class TestReturnedStatus:
     def test_a_returned_error_result_counts_as_an_error_and_blocks_dependents(
         self, monkeypatch
     ):
-        from dsbf.engine import executor
+        from dsbf.engine import worker
         from dsbf.model import Note
 
         def returns_failure(check_, context: CheckContext) -> CheckResult:
@@ -315,7 +289,7 @@ class TestReturnedStatus:
                 timing=Timing(wall_seconds=0.0),
             )
 
-        monkeypatch.setattr(executor, "run_check", returns_failure)
+        monkeypatch.setattr(worker, "run_check", returns_failure)
 
         run = run_plan(TOYS)
 

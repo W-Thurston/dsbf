@@ -15,13 +15,16 @@ from dsbf.engine.check import (
 )
 from dsbf.engine.context import CheckContext, CheckOutput, ProfileView
 from dsbf.engine.errors import (
+    CheckCancelled,
     CheckContractError,
     CheckDefinitionError,
     PlanError,
     RegistryError,
 )
+from dsbf.engine.events import CheckFinished, CheckStarted, Event, Hook, NoteRecorded
 from dsbf.engine.executor import execute
 from dsbf.engine.expectation import Expectation, Expected
+from dsbf.engine.limits import Limits
 from dsbf.engine.pack import Pack
 from dsbf.engine.plan import Plan, PlanEntry, make_plan
 from dsbf.engine.registry import Registry
@@ -31,18 +34,25 @@ from dsbf.engine.selection import Depth, Selection, select
 
 __all__ = [
     "Check",
+    "CheckCancelled",
     "CheckContext",
     "CheckContractError",
     "CheckDefinitionError",
+    "CheckFinished",
     "CheckKind",
     "CheckOutput",
     "CheckOutputModel",
     "CheckSpec",
+    "CheckStarted",
     "Depth",
+    "Event",
     "Expectation",
     "Expected",
     "Extra",
+    "Hook",
+    "Limits",
     "NoParams",
+    "NoteRecorded",
     "Pack",
     "Plan",
     "PlanEntry",

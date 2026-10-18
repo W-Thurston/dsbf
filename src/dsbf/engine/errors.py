@@ -17,6 +17,15 @@ class CheckContractError(RuntimeError):
     """
 
 
+class CheckCancelled(BaseException):
+    """The executor stopped waiting for this check, which ran out of time.
+
+    Raised from ``CheckContext`` once the check's deadline has passed. It derives
+    from ``BaseException``, like ``asyncio.CancelledError``, so a check's
+    ``except Exception`` cannot swallow it. A check should let it propagate.
+    """
+
+
 class RegistryError(ValueError):
     """A check could not be registered or looked up.
 
