@@ -304,3 +304,18 @@ def test_the_adversarial_frame_profiles_every_column():
     assert inf_col.non_finite > 0
     assert inf_col.stats is not None
     assert math.isfinite(inf_col.stats.mean or 0.0)
+
+
+def test_the_adversarial_frame_profiles_to_strict_json_and_back():
+    frame = build_adversarial_frame()
+    profiles = profile_columns(load(frame))
+    adapter = TypeAdapter(ColumnProfile)
+    for profile in profiles:
+        text = profile.model_dump_json()
+        assert "NaN" not in text
+        assert "Infinity" not in text
+        assert adapter.validate_json(text) == profile
+        if isinstance(profile, NumericProfile) and profile.histogram:
+            assert (
+                profile.histogram.total == profile.counts.non_null - profile.non_finite
+            )

@@ -11,9 +11,14 @@ from typer.testing import CliRunner
 
 from dsbf.interfaces import schema_export
 from dsbf.interfaces.cli import app
+from dsbf.model import SCHEMA_VERSION
 from dsbf.model.schema import run_schema, schema_text
 
 runner = CliRunner()
+
+# The version a schema change is announced with, whatever the current one is.
+_MAJOR, _MINOR, _ = SCHEMA_VERSION.split(".")
+NEXT_MINOR = f"{_MAJOR}.{int(_MINOR) + 1}.0"
 
 REPO = Path(__file__).parents[2]
 GIT = ["git", "-c", "user.name=test", "-c", "user.email=test@example.com"]
@@ -152,7 +157,7 @@ def test_deleting_a_field_with_a_version_bump_passes(repo):
     def delete_code(schema):
         del schema["$defs"]["Finding"]["properties"]["code"]
 
-    write_schema(repo, edited(delete_code, version="0.2.0"))
+    write_schema(repo, edited(delete_code, version=NEXT_MINOR))
 
     result = check()
 
@@ -170,7 +175,7 @@ def test_an_additive_change_needs_a_minor_bump(repo):
 
     write_schema(repo, edited(add_note))
     assert check().exit_code == 1
-    write_schema(repo, edited(add_note, version="0.2.0"))
+    write_schema(repo, edited(add_note, version=NEXT_MINOR))
 
     result = check()
 

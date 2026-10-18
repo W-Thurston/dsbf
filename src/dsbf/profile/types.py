@@ -287,7 +287,8 @@ def _share(matches: pl.Series) -> float:
     return cast("int", matches.sum()) / matches.len()
 
 
-def _parse(strings: pl.Series, fmt: str) -> pl.Series:
+def parse_dates(strings: pl.Series, fmt: str) -> pl.Series:
+    """Parse ``strings`` with ``fmt``; a value that does not parse becomes null."""
     return strings.str.to_datetime(fmt, time_unit="us", strict=False)
 
 
@@ -301,13 +302,13 @@ def _date_format(
     """
     best_format, best_hits = None, 0
     for fmt in _DATE_FORMATS:
-        hits = sample.len() - _parse(sample, fmt).null_count()
+        hits = sample.len() - parse_dates(sample, fmt).null_count()
         if hits > best_hits:
             best_format, best_hits = fmt, hits
     if best_format is None or best_hits / sample.len() <= _DATE_SHARE:
         return None
     if sample.len() == count:
         return best_format, best_hits / count
-    whole = _parse(values.str.strip_chars(), best_format)
+    whole = parse_dates(values.str.strip_chars(), best_format)
     share = (count - whole.null_count()) / count
     return (best_format, share) if share > _DATE_SHARE else None
