@@ -1,7 +1,8 @@
 # Performance benchmark
 
-`pytest -m perf` profiles four datasets end to end, each in a fresh interpreter, and compares
-what it measured with `baseline.json`. It is deselected by default (kitchen50k alone takes
+`pytest -m perf` profiles four datasets end to end with the legacy engine, and times the
+new profile pass on two more, each in a fresh interpreter. It compares what it measured with
+`baseline.json`, and holds the profile pass to absolute budgets. It is deselected by default (kitchen50k alone takes
 over ten minutes), and `.github/workflows/perf.yml` runs it nightly, on demand, and on a pull
 request labelled `perf`. Add that label to any pull request that is meant to change speed or
 memory, or that touches the engine or a slow task.
@@ -13,11 +14,20 @@ memory, or that touches the engine or a slow task.
 | `kitchen5k` | `DSBFTestDataGenerator(n_rows=5000, random_seed=42)`, `normal_date` as the time series | 1 |
 | `kitchen50k` | the same generator at 50,000 rows (52,500 x 60 after the generator's own additions) | 1 |
 
+The profile scenarios time only `dsbf.profile` (type inference, `profile_dataset`, stage
+inference), after the file is loaded:
+
+| Scenario | Input | Runs | Budget |
+|---|---|---|---|
+| `profile-kitchen50k` | the `kitchen50k` frame (52,500 x 60), as CSV | 3, median kept | pass under 2 s; memory under 2.5x |
+| `profile-wide1m` | 1,000,000 x 50 floats (`numpy` seed 42), as Parquet | 3, median kept | memory under 2.5x; time compared with the baseline only |
+
 ## Run it
 
 ```bash
 uv run pytest -m perf                       # all four, compare with the baseline
 uv run pytest -m perf -k titanic            # one scenario
+uv run pytest -m perf -k profile            # the profile pass only (about 30 s)
 uv run pytest -m perf --perf-no-compare     # measure only
 uv run pytest -m perf -k titanic --perf-cprofile   # also write run.prof (slower; diagnosis only)
 ```
@@ -48,7 +58,24 @@ entry per scenario:
 - `task_outcomes` and `failed_tasks`: a scenario fails if any task fails, because the timings
   of a crashed run describe less work than the baseline did.
 
+### The profile pass
+
+`measure_profile.py` records the same `total_seconds`, `stages` and `peak_rss_mb`, with these
+differences:
+
+- `total_seconds` is the pass alone. `stages.load` is timed too, but is not in the total.
+- `data_mb` is `Dataset.frame.estimated_size()`. The child resets the peak resident size
+  after loading (`/proc/self/clear_refs`), so `pass_overhead_mb` is what the pass added to
+  the loaded frame, and `memory_ratio = 1 + pass_overhead_mb / data_mb`: the frame plus what
+  the pass adds, over the frame. Where the peak can't be reset (not Linux) `peak_isolated`
+  is `false`, the figure includes the load, and the memory budget is not applied.
+- There are no `tasks` and no `api` probe.
+
 ## What fails
+
+The budgets in `compare.PROFILE_BUDGETS` hold with or without a baseline, and also when the
+baseline is being rewritten, so a pass that misses them can't become the reference.
+Beyond that, a profile entry is compared with the baseline as below.
 
 A value regresses when it is more than 25% above the baseline **and** above a floor for its
 kind, so shared-runner noise on small values doesn't fail the job:

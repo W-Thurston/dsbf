@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from tests.perf.scenarios import Scenario
+from tests.perf.scenarios import ProfileScenario, Scenario
 
 PERF_DIR = Path(__file__).parent
 BASELINE_PATH = PERF_DIR / "baseline.json"
@@ -22,6 +22,30 @@ RUN_TIMEOUT_SECONDS = 3600
 # Some tasks walk sets of strings, and that order follows PYTHONHASHSEED; pin it so the
 # amount of work, not just its speed, is the same in every run.
 HASH_SEED = "0"
+
+
+def _run_child(command: list[str], workdir: Path, name: str) -> dict[str, Any]:
+    """Run a measuring script in a fresh interpreter and return the JSON it wrote."""
+    env = {
+        **os.environ,
+        "PYTHONHASHSEED": HASH_SEED,
+        "DSBF_DB_PATH": str(workdir / "dsbf.db"),
+        "DSBF_HOME": str(workdir / "home"),
+    }
+    completed = subprocess.run(
+        command,
+        cwd=workdir / "cwd",
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=RUN_TIMEOUT_SECONDS,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(
+            f"Measuring {name} exited with {completed.returncode}:\n"
+            f"{completed.stderr[-4000:]}"
+        )
+    return json.loads((workdir / "out" / "perf_run.json").read_text())
 
 
 def run_once(
@@ -46,36 +70,44 @@ def run_once(
     if cprofile:
         command.append("--cprofile")
 
-    env = {
-        **os.environ,
-        "PYTHONHASHSEED": HASH_SEED,
-        "DSBF_DB_PATH": str(workdir / "dsbf.db"),
-        "DSBF_HOME": str(workdir / "home"),
-    }
-    completed = subprocess.run(
-        command,
-        cwd=cwd,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=RUN_TIMEOUT_SECONDS,
-    )
-    if completed.returncode != 0:
-        raise RuntimeError(
-            f"Measuring {scenario.name} exited with {completed.returncode}:\n"
-            f"{completed.stderr[-4000:]}"
-        )
-    return json.loads((out_dir / "perf_run.json").read_text())
+    return _run_child(command, workdir, name=scenario.name)
+
+
+def run_profile_once(
+    scenario: ProfileScenario, data_path: Path, workdir: Path
+) -> dict[str, Any]:
+    """Run the profile pass over ``data_path`` once under ``workdir``."""
+    workdir = workdir.resolve()
+    for directory in (workdir / "out", workdir / "cwd"):
+        directory.mkdir(parents=True, exist_ok=True)
+    command = [
+        sys.executable,
+        str(PERF_DIR / "measure_profile.py"),
+        scenario.name,
+        str(data_path.resolve()),
+        str(workdir / "out"),
+    ]
+    return _run_child(command, workdir, name=scenario.name)
 
 
 def measure(
-    scenario: Scenario, workdir: Path, cprofile: bool = False
+    scenario: Scenario | ProfileScenario, workdir: Path, cprofile: bool = False
 ) -> dict[str, Any]:
     """Run ``scenario`` ``repeats`` times and keep the run with the median total."""
-    runs = [
-        run_once(scenario, workdir / f"run{i}", cprofile)
-        for i in range(scenario.repeats)
-    ]
+    if isinstance(scenario, ProfileScenario):
+        # The data is written once; each repeat is a fresh interpreter over it.
+        data_dir = workdir / "data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        data_path = scenario.write_data(data_dir)
+        runs = [
+            run_profile_once(scenario, data_path, workdir / f"run{i}")
+            for i in range(scenario.repeats)
+        ]
+    else:
+        runs = [
+            run_once(scenario, workdir / f"run{i}", cprofile)
+            for i in range(scenario.repeats)
+        ]
     median_total = statistics.median_low(r["total_seconds"] for r in runs)
     chosen = next(r for r in runs if r["total_seconds"] == median_total)
     chosen["repeats"] = len(runs)

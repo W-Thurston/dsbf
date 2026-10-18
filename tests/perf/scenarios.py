@@ -6,6 +6,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+import polars as pl
+
 from tests.fixtures.adversarial import build_adversarial_frame
 from tests.generators.dsbf_test_dataset_generator import DSBFTestDataGenerator
 from tests.golden.datasets import KITCHEN5K, TITANIC
@@ -26,6 +29,19 @@ class Scenario:
     write_csv: Callable[[Path], Path]
     time_series_column: str | None = None
     repeats: int = 1
+
+
+@dataclass(frozen=True)
+class ProfileScenario:
+    """One timed profile pass: a name, a writer for its data file, and the repeats.
+
+    Unlike ``Scenario`` it never runs the legacy engine, so a large frame is cheap
+    enough to repeat.
+    """
+
+    name: str
+    write_data: Callable[[Path], Path]
+    repeats: int = 3
 
 
 def _adversarial(directory: Path) -> Path:
@@ -57,4 +73,26 @@ SCENARIOS = [
         _kitchen(50_000, "kitchen50k"),
         time_series_column=KITCHEN_TIME_SERIES_COLUMN,
     ),
+]
+
+
+WIDE_ROWS = 1_000_000
+WIDE_COLUMNS = 50
+WIDE_SEED = 42
+
+
+def _wide(directory: Path) -> Path:
+    """A million rows of fifty float columns, as Parquet to be quick to read."""
+    path = directory / "wide1m.parquet"
+    rng = np.random.default_rng(WIDE_SEED)
+    pl.DataFrame(
+        {f"f{i:02d}": rng.standard_normal(WIDE_ROWS) for i in range(WIDE_COLUMNS)}
+    ).write_parquet(path)
+    return path
+
+
+# The profile pass alone, on the scaling case and on the 1M x 50 case in the design.
+PROFILE_SCENARIOS = [
+    ProfileScenario("profile-kitchen50k", _kitchen(50_000, "kitchen50k")),
+    ProfileScenario("profile-wide1m", _wide),
 ]

@@ -583,6 +583,8 @@ These are delivered as part of the check migrations in Phase 4, not as a separat
 | titanic, standard plan | 80 s | < 5 s |
 | 52k × 60, standard plan | 707 s, 2.1 GB peak | < 60 s, < 1 GB |
 | 1M × 50, standard plan | not measured | < 3 min on a laptop |
+| Profile pass, 52.5k × 60 (type inference, dataset profile, stage; without loading) | 0.44 s, peak 1.06× the loaded data (CI, 2026-10-18) | < 2 s, peak < 2.5× the loaded data (`tests/perf`, `profile-kitchen50k`) |
+| Profile pass, 1M × 50 floats | 9.5 s, peak 1.12× the loaded data (CI, 2026-10-18) | peak < 2.5× the loaded data; time recorded (`profile-wide1m`) |
 | Dashboard: open a run | 8.2 MB (titanic) | < 200 KB |
 | `import dsbf` | 2.0 s | < 0.5 s (lazy imports of heavy extras) |
 

@@ -4,6 +4,9 @@ A value regresses when it grows by more than ``TOLERANCE`` *and* by at least a f
 for its kind. The relative limit alone would flag a task that went from 0.2 s to 0.3 s,
 which on a shared CI runner is noise. A dashboard endpoint that stops answering 200
 regresses regardless of size.
+
+The profile pass has budgets as well: absolute limits that hold with or without a
+baseline (``PROFILE_BUDGETS``).
 """
 
 from __future__ import annotations
@@ -28,6 +31,22 @@ UNITS = {
     "peak memory": "MB",
     "api payload": "B",
     "api status": "",
+}
+
+
+@dataclass(frozen=True)
+class Budget:
+    """Absolute limits for one profile scenario; ``None`` leaves a limit unset."""
+
+    seconds: float | None
+    memory_ratio: float | None
+
+
+# The pass is type inference, the dataset profile and stage inference, without loading.
+# ``memory_ratio`` is the loaded frame plus what the pass adds, over the frame.
+PROFILE_BUDGETS = {
+    "profile-kitchen50k": Budget(seconds=2.0, memory_ratio=2.5),
+    "profile-wide1m": Budget(seconds=None, memory_ratio=2.5),
 }
 
 
@@ -93,6 +112,33 @@ def find_regressions(
     return sorted(found, key=lambda r: r.growth, reverse=True)
 
 
+def check_budget(scenario: str, entry: dict[str, Any]) -> list[str]:
+    """Describe each absolute budget that ``entry`` breaks; empty if it keeps all."""
+    budget = PROFILE_BUDGETS.get(scenario)
+    if budget is None:
+        return []
+    broken = []
+    seconds = entry["total_seconds"]
+    if budget.seconds is not None and seconds > budget.seconds:
+        broken.append(
+            f"{scenario}: profile pass took {seconds:,.2f} s, "
+            f"budget {budget.seconds:,.1f} s"
+        )
+    # Without an isolated peak the figure includes the load, so it isn't held to this.
+    ratio = entry.get("memory_ratio")
+    if (
+        budget.memory_ratio is not None
+        and ratio is not None
+        and entry.get("peak_isolated", False)
+        and ratio > budget.memory_ratio
+    ):
+        broken.append(
+            f"{scenario}: peak memory {ratio:.2f}x the loaded data, "
+            f"budget {budget.memory_ratio:.1f}x"
+        )
+    return broken
+
+
 def _status_regressions(
     scenario: str, baseline: dict[str, Any], current: dict[str, Any]
 ) -> list[Regression]:
@@ -115,7 +161,7 @@ def render_summary(
     """A Markdown table of the run against the baseline, for the CI job summary."""
     lines = [
         "| Scenario | Total (s) | Baseline (s) | Change | Peak RSS (MB) "
-        "| Slowest tasks (s) |",
+        "| Slowest tasks or stages (s) |",
         "|---|---:|---:|---:|---:|---|",
     ]
     for name, entry in results["scenarios"].items():
@@ -126,7 +172,9 @@ def render_summary(
             base_cell, change = f"{before:,.1f}", f"{total / before - 1:+.0%}"
         else:
             base_cell, change = "none", ""
-        slowest = sorted(entry["tasks"].items(), key=lambda kv: -kv[1])[:top_tasks]
+        # A profile entry has stages and no tasks.
+        parts = entry.get("tasks") or entry.get("stages", {})
+        slowest = sorted(parts.items(), key=lambda kv: -kv[1])[:top_tasks]
         tasks = ", ".join(f"`{task}` {seconds:,.1f}" for task, seconds in slowest)
         lines.append(
             f"| {name} | {total:,.1f} | {base_cell} | {change} "

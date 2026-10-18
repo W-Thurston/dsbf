@@ -5,9 +5,14 @@ from typing import Any
 
 import pytest
 
-from tests.perf.compare import find_regressions, render_summary
+from tests.perf.compare import (
+    PROFILE_BUDGETS,
+    check_budget,
+    find_regressions,
+    render_summary,
+)
 from tests.perf.harness import BASELINE_PATH, load_results
-from tests.perf.scenarios import SCENARIOS
+from tests.perf.scenarios import PROFILE_SCENARIOS, SCENARIOS
 
 pytestmark = pytest.mark.unit
 
@@ -96,7 +101,68 @@ def test_summary_marks_a_scenario_without_a_baseline() -> None:
     assert "none" in rows[3]
 
 
+def profile_entry(**overrides: Any) -> dict[str, Any]:
+    base = {
+        "total_seconds": 0.8,
+        "peak_rss_mb": 300.0,
+        "stages": {"load": 1.0, "infer_column_types": 0.3, "profile_dataset": 0.5},
+        "memory_ratio": 1.1,
+        "peak_isolated": True,
+    }
+    return {**base, **overrides}
+
+
+def test_profile_entry_within_budget_breaks_nothing() -> None:
+    assert check_budget("profile-kitchen50k", profile_entry()) == []
+
+
+def test_profile_pass_over_its_time_budget_is_reported() -> None:
+    [broken] = check_budget("profile-kitchen50k", profile_entry(total_seconds=2.4))
+    assert "2.40 s" in broken and "budget 2.0 s" in broken
+
+
+def test_profile_pass_over_its_memory_budget_is_reported() -> None:
+    [broken] = check_budget("profile-kitchen50k", profile_entry(memory_ratio=2.8))
+    assert "2.80x" in broken and "budget 2.5x" in broken
+
+
+def test_time_budget_is_unset_for_the_wide_scenario() -> None:
+    assert check_budget("profile-wide1m", profile_entry(total_seconds=40.0)) == []
+
+
+def test_memory_that_includes_the_load_is_not_held_to_the_budget() -> None:
+    assert (
+        check_budget(
+            "profile-kitchen50k", profile_entry(memory_ratio=9.0, peak_isolated=False)
+        )
+        == []
+    )
+
+
+def test_scenario_without_a_budget_breaks_nothing() -> None:
+    assert check_budget("titanic", entry(total_seconds=1e6)) == []
+
+
+def test_every_profile_scenario_has_a_budget() -> None:
+    assert {s.name for s in PROFILE_SCENARIOS} == set(PROFILE_BUDGETS)
+
+
+def test_summary_lists_stages_for_an_entry_without_tasks() -> None:
+    rows = render_summary({"scenarios": {"p": profile_entry()}}, {}).splitlines()
+    assert "`load` 1.0" in rows[2] and "`profile_dataset` 0.5" in rows[2]
+
+
+def test_profile_entry_is_compared_without_tasks_or_api() -> None:
+    slower = profile_entry(
+        stages={"load": 1.0, "infer_column_types": 0.3, "profile_dataset": 2.0}
+    )
+    [found] = find_regressions("p", profile_entry(), slower)
+    assert (found.kind, found.name) == ("stage", "profile_dataset")
+
+
 def test_committed_baseline_covers_every_scenario() -> None:
     baseline = load_results(BASELINE_PATH)["scenarios"]
-    missing = [s.name for s in SCENARIOS if s.name not in baseline]
+    missing = [
+        s.name for s in [*SCENARIOS, *PROFILE_SCENARIOS] if s.name not in baseline
+    ]
     assert not missing, f"record a baseline for {missing} (--update-perf-baseline)"
