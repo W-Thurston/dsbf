@@ -1,13 +1,14 @@
 # dsbf/engine/expectation.py
 """What a plan expects of each check, judged before anything runs."""
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
 from dsbf.engine.check import Check
+from dsbf.engine.eligibility import eligibility
 from dsbf.engine.extras import install_hint, missing_extras
-from dsbf.model import ColumnProfile, DatasetProfile
+from dsbf.model import DatasetProfile
 
 
 class Expected(StrEnum):
@@ -32,24 +33,6 @@ class Expectation:
     hint: str | None = None
     columns: tuple[str, ...] | None = None
     blocked_by: tuple[str, ...] = ()
-
-
-# The profile features a column can lack: a constant column has no histogram, an
-# all-null one no stats. "counts" is always there, so it needs no entry.
-_COLUMN_FEATURES: dict[str, Callable[[ColumnProfile], bool]] = {
-    "numeric_stats": lambda column: getattr(column, "stats", None) is not None,
-    "quantiles": lambda column: bool(
-        getattr(getattr(column, "stats", None), "quantiles", ())
-    ),
-    "histogram": lambda column: getattr(column, "histogram", None) is not None,
-    "top_values": lambda column: bool(getattr(column, "top_values", ())),
-    "text_shape": lambda column: getattr(column, "shape", None) is not None,
-    "datetime": lambda column: getattr(column, "min", None) is not None,
-}
-_DATASET_FEATURES: dict[str, Callable[[DatasetProfile], bool]] = {
-    "missingness": lambda profile: profile.missingness is not None,
-    "duplicate_rows": lambda profile: profile.duplicate_rows is not None,
-}
 
 
 def expect(
@@ -93,37 +76,9 @@ def expect(
 
 
 def _from_profile(check: Check, profile: DatasetProfile) -> Expectation:
-    spec = check.spec
-    for feature in spec.requires.profile:
-        if feature in _DATASET_FEATURES and not _DATASET_FEATURES[feature](profile):
-            return Expectation(
-                Expected.NOT_APPLICABLE,
-                reason=f"The profile has no {feature}, which {spec.id} requires.",
-            )
-    if spec.applies_to is None:
-        return Expectation(Expected.WILL_RUN)
-
-    of_type = [c for c in profile.columns if spec.applies_to.selects(c.semantic_type)]
-    wanted = [f for f in spec.requires.profile if f in _COLUMN_FEATURES]
-    columns = tuple(
-        c.name for c in of_type if all(_COLUMN_FEATURES[f](c) for f in wanted)
-    )
-    if columns:
-        return Expectation(Expected.WILL_RUN, columns=columns)
-    if of_type:
+    eligible = eligibility(check.spec, profile)
+    if not eligible.applicable:
         return Expectation(
-            Expected.NOT_APPLICABLE,
-            reason=(
-                f"No {spec.applies_to.describe()} column has "
-                f"{', '.join(wanted)} in the profile, which {spec.id} requires."
-            ),
-            columns=(),
+            Expected.NOT_APPLICABLE, reason=eligible.reason, columns=eligible.columns
         )
-    return Expectation(
-        Expected.NOT_APPLICABLE,
-        reason=(
-            f"No column is of a type {spec.id} applies to "
-            f"({spec.applies_to.describe()})."
-        ),
-        columns=(),
-    )
+    return Expectation(Expected.WILL_RUN, columns=eligible.columns)

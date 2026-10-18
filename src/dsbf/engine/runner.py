@@ -13,7 +13,8 @@ from dsbf.model import CheckResult, CheckStatus, Note, Timing
 def run_check(check: Check, context: CheckContext) -> CheckResult:
     """Call the check and assemble its result.
 
-    A check with no eligible column is ``not_applicable`` and isn't called. Any
+    A check the profile leaves nothing to read (no eligible column, or a dataset
+    feature it requires is missing) is ``not_applicable`` and isn't called. Any
     exception from the check propagates: turning it into an ``error`` result is the
     executor's job, so this stays the one place a result is built from a run.
 
@@ -31,15 +32,13 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
     notes: tuple[Note, ...] = ()
     output: CheckOutput | None = None
     status = CheckStatus.OK
-    if spec.applies_to is not None and not context.columns:
+    eligibility = context.eligibility
+    if not eligibility.applicable:
         status = CheckStatus.NOT_APPLICABLE
         notes = (
             Note(
-                code="no_eligible_columns",
-                message=(
-                    f"No column is of a type {spec.id} applies to "
-                    f"({spec.applies_to.describe()})."
-                ),
+                code=eligibility.code or "not_applicable",
+                message=eligibility.reason or "",
             ),
         )
     else:

@@ -9,6 +9,7 @@ import numpy as np
 
 from dsbf.data import Dataset
 from dsbf.engine.check import CheckOutputModel, CheckSpec
+from dsbf.engine.eligibility import eligibility
 from dsbf.engine.errors import CheckContractError
 from dsbf.model import (
     CheckParams,
@@ -66,7 +67,9 @@ class CheckContext:
     The caller builds one per check from the check's spec, the dataset, its profile,
     the resolved parameters and the results of the checks it may read. A check
     reaches columns only through ``columns``, ``values`` and ``profile``, all of
-    which are limited to what ``applies_to`` selects.
+    which are limited to the columns the check can read: those ``applies_to``
+    selects that also have the profile features it requires, as in the plan.
+    ``eligibility`` says why a check has nothing to run on.
     """
 
     def __init__(
@@ -93,12 +96,9 @@ class CheckContext:
         self._finding_ids: set[str] = set()
         self._notes: list[Note] = []
 
-        selector = spec.applies_to
-        scoped = (
-            ()
-            if selector is None
-            else tuple(c for c in profile.columns if selector.selects(c.semantic_type))
-        )
+        self.eligibility = eligibility(spec, profile)
+        eligible = set(self.eligibility.columns or ())
+        scoped = tuple(c for c in profile.columns if c.name in eligible)
         self.columns: tuple[str, ...] = tuple(column.name for column in scoped)
         names = self._scope = frozenset(self.columns)
         self.profile = ProfileView(
