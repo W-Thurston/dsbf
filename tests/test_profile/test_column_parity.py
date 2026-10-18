@@ -1,8 +1,9 @@
 """Column profiles agree with the legacy ``summarize_*`` and length tasks.
 
 The legacy tasks run live on each golden dataset as pandas reads it, and the profile
-runs on the same CSV as ``load`` reads it. Differences are listed in ``ACCEPTED`` for
-counts and numeric statistics and in ``ACCEPTED_VALUES`` for top values and lengths.
+runs on the same CSV as ``load`` reads it. Counts and numeric statistics have no
+accepted differences except the integer codes in ``CODES_WITHOUT_STATISTICS``; top
+values and lengths list theirs in ``ACCEPTED_VALUES``.
 """
 
 import math
@@ -21,16 +22,12 @@ from dsbf.profile import profile_columns
 from dsbf.profile.values import MAX_TOP_VALUE_CHARS
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
+from tests.test_profile.accepted import cells
 
 REL = 1e-9
-ACCEPTED: dict[tuple[str, str], str] = {}
-ACCEPTED_VALUES: dict[tuple[str, str], str] = {
-    ("kitchen5k", "control_character_text"): (
-        "pandas' C parser cuts a field at a NUL byte (its 'text\\x00with\\x1bcontrols' "
-        "reads as 'text'), so its values and lengths are shorter; the profile keeps "
-        "the whole value"
-    ),
-}
+# Reasons for both tables are in ``accepted``.
+ACCEPTED_VALUES = cells("nul-byte-cuts-a-pandas-field")
+CODES_WITHOUT_STATISTICS = cells("categorical-integer-codes-have-no-statistics")
 LEGACY_TOP_K = 5
 # Numeric-only datasets: nothing to compare.
 NO_CATEGORICAL_COLUMNS = {"severe_multicollinearity", "single_column"}
@@ -81,8 +78,12 @@ def _compare(dataset: GoldenDataset, path, tmp_path) -> None:
     # The legacy task summarises every numeric dtype, whatever its semantic type, so
     # it also covers integer codes the profile calls categorical; those have no
     # statistics here. Type agreement is checked in ``test_type_parity``.
+    codes = set()
     for name, profile in profiles.items():
         if not isinstance(profile, NumericProfile):
+            if name in numeric:
+                assert isinstance(profile, CategoricalProfile), (name, profile)
+                codes.add(name)
             continue
         if name not in numeric or profile.stats is None:
             differences.append((name, "missing", name in numeric, profile.stats))
@@ -104,10 +105,9 @@ def _compare(dataset: GoldenDataset, path, tmp_path) -> None:
             if not _same(legacy[key], value)
         )
 
-    unexplained = [d for d in differences if (dataset.name, d[0]) not in ACCEPTED]
-    assert not unexplained, f"{dataset.name}: unlisted differences {unexplained}"
-    listed = {column for name, column in ACCEPTED if name == dataset.name}
-    assert {d[0] for d in differences} == listed
+    assert not differences, f"{dataset.name}: unlisted differences {differences}"
+    # A listed difference that no longer happens should come off the list.
+    assert codes == {c for name, c in CODES_WITHOUT_STATISTICS if name == dataset.name}
 
 
 @pytest.mark.integration
