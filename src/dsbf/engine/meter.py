@@ -1,5 +1,5 @@
 # dsbf/engine/meter.py
-"""Approximate resource use of each check: wall time, process CPU and peak memory."""
+"""Approximate resource use of each check: wall time, CPU and peak memory."""
 
 import threading
 import time
@@ -16,30 +16,77 @@ DEFAULT_SAMPLE_SECONDS = 0.01
 
 
 class Window:
-    """The measurements of one check, open from ``Meter.window()`` until it exits."""
+    """The measurements of one check, open from ``Meter.window()`` until it exits.
 
-    def __init__(self, process: psutil.Process, sampled: bool) -> None:
+    A window of a check on a thread measures this process: its CPU and memory are
+    shared with every window that overlapped it, and ``shared_with`` counts them.
+    A window of a check in a worker process is ``attach``-ed to that process, and
+    then measures it alone.
+    """
+
+    def __init__(
+        self, process: psutil.Process, sampled: bool, own_process: bool = False
+    ) -> None:
         self.started_at = datetime.now(UTC)
         self._clock = time.perf_counter()
         self._cpu = time.process_time()
         self._process = process
         self._sampled = sampled
-        self.peak_bytes: int | None = self.resident() if sampled else None
+        self._own_process = own_process
+        self._attached = False
+        self._overlapped: set[Window] = set()
+        self.peak_bytes: int | None = None
+        if sampled and not own_process:
+            self.peak_bytes = self.resident()
         self.wall_seconds = 0.0
-        self.cpu_seconds = 0.0
+        self.cpu_seconds: float | None = None
 
     def resident(self) -> int:
         return self._process.memory_info().rss
+
+    def attach(self, worker: psutil.Process) -> None:
+        """Measure the memory of ``worker`` from now on, in place of this process's."""
+        self._process = worker
+        self._attached = True
+        if self._sampled:
+            self.sample_now(0)
+
+    @property
+    def shared_with(self) -> int:
+        return len(self._overlapped)
+
+    def overlap(self, other: "Window") -> None:
+        self._overlapped.add(other)
+        other._overlapped.add(self)
+
+    @property
+    def shares_process(self) -> bool:
+        return not self._own_process
 
     def sample(self, resident: int) -> None:
         if self.peak_bytes is None or resident > self.peak_bytes:
             self.peak_bytes = resident
 
+    def sample_now(self, resident: int) -> None:
+        """Record ``resident`` (this process's), or the worker's own, if attached."""
+        if self._own_process:
+            if not self._attached:
+                return
+            try:
+                resident = self.resident()
+            except psutil.Error:
+                return  # the worker has gone; its last sample stands
+        self.sample(resident)
+
     def close(self) -> None:
         self.wall_seconds = time.perf_counter() - self._clock
-        self.cpu_seconds = time.process_time() - self._cpu
+        if self.shares_process:
+            self.cpu_seconds = time.process_time() - self._cpu
         if self._sampled:
-            self.sample(self.resident())
+            if self.shares_process:
+                self.sample(self.resident())
+            else:
+                self.sample_now(0)
 
     @property
     def timing(self) -> Timing:
@@ -47,6 +94,7 @@ class Window:
             wall_seconds=self.wall_seconds,
             cpu_seconds=self.cpu_seconds,
             peak_memory_bytes=self.peak_bytes,
+            shared_with=self.shared_with,
             started_at=self.started_at,
         )
 
@@ -90,18 +138,37 @@ class Meter:
         if self._sampler is not None:
             self._sampler.join()
 
-    @contextmanager
-    def window(self):
-        """Measure what happens inside the ``with`` block; read ``.timing`` after."""
-        window = Window(self._process, sampled=self._interval is not None)
+    def open_window(self, worker: bool = False) -> Window:
+        """Start measuring a check; pass the result to ``close_window`` when it ends.
+
+        Pass ``worker=True`` for a check that runs in a process of its own: its
+        window measures nothing until ``attach`` names that process, and it never
+        counts as overlapping the checks on threads.
+        """
+        window = Window(
+            self._process, sampled=self._interval is not None, own_process=worker
+        )
         with self._lock:
+            if window.shares_process:
+                for other in self._open:
+                    if other.shares_process:
+                        window.overlap(other)
             self._open.add(window)
+        return window
+
+    def close_window(self, window: Window) -> None:
+        with self._lock:
+            self._open.discard(window)
+        window.close()
+
+    @contextmanager
+    def window(self, worker: bool = False):
+        """Measure what happens inside the ``with`` block; read ``.timing`` after."""
+        window = self.open_window(worker)
         try:
             yield window
         finally:
-            with self._lock:
-                self._open.discard(window)
-            window.close()
+            self.close_window(window)
 
     def _sample(self) -> None:
         assert self._interval is not None
@@ -109,4 +176,4 @@ class Meter:
             resident = self._process.memory_info().rss
             with self._lock:
                 for window in self._open:
-                    window.sample(resident)
+                    window.sample_now(resident)

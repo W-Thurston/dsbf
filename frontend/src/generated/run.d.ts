@@ -836,13 +836,17 @@ export interface Timing {
    */
   wall_seconds: number;
   /**
-   * CPU time of the whole process while the check ran, so work on other threads counts too; approximate.
+   * CPU time while the check ran; approximate. For a check on a thread this is the whole process's, so work on other threads counts too, and `shared_with` says whether checks overlapped. For a check in a worker process it is the worker's own, and missing if the worker was killed or died.
    */
   cpu_seconds: number | null;
   /**
-   * Peak resident memory of the whole process while the check ran, including the loaded data, found by sampling; approximate, and a short spike between samples is missed.
+   * Peak resident memory while the check ran, found by sampling; approximate, and a short spike between samples is missed. For a check on a thread it is the whole process's, including the loaded data, and shared with any check that overlapped (`shared_with`). For a check in a worker process it is the worker's own, including what it mapped of the data.
    */
   peak_memory_bytes: number | null;
+  /**
+   * How many other checks on threads ran at the same time as this one. While any did, `cpu_seconds` and `peak_memory_bytes` are the whole process's and cannot be told apart per check. Always 0 for a check in a worker process.
+   */
+  shared_with: number;
   started_at: string | null;
 }
 /**

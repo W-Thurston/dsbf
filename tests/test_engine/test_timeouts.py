@@ -8,6 +8,7 @@ import pytest
 
 from dsbf.engine import CheckCancelled, Limits
 from dsbf.engine import extras as extras_module
+from dsbf.engine.scheduler import Scheduler
 from dsbf.model import CheckStatus
 from tests.test_engine.toys import (
     declare,
@@ -176,6 +177,7 @@ class TestRunBudget:
         run = run_plan(
             [slow, later],
             limits=Limits(run_budget_seconds=0.1, cancel_grace_seconds=0.02),
+            workers=1,
         )
 
         assert statuses(run) == {
@@ -263,15 +265,11 @@ class TestOtherBaseExceptions:
                 stopped.set()
                 raise
 
-        real_join = threading.Thread.join
+        def interrupted_wait(self):
+            time.sleep(0.05)
+            raise KeyboardInterrupt
 
-        def interrupted_join(self, timeout=None):
-            if self.name == "dsbf-check-polite" and timeout is not None:
-                time.sleep(0.05)
-                raise KeyboardInterrupt
-            return real_join(self, timeout)
-
-        monkeypatch.setattr(threading.Thread, "join", interrupted_join)
+        monkeypatch.setattr(Scheduler, "_wait", interrupted_wait)
 
         with pytest.raises(KeyboardInterrupt):
             run_plan([declare("polite", function=polite)], limits=FAST)

@@ -1,6 +1,8 @@
 # dsbf/engine/check.py
 """Declaring a check: its metadata, and the function that runs it."""
 
+import importlib
+import pickle
 import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
@@ -13,6 +15,11 @@ if TYPE_CHECKING:
     from dsbf.engine.context import CheckContext, CheckOutput
 
 CheckKind = Literal["rule", "analysis", "synthesis"]
+
+# Where the executor runs a check. A check that spends its time in compiled code
+# (NumPy, Polars) shares the process's threads; one that loops in Python holds the
+# interpreter lock, so it gets a worker process, which can also be killed.
+RunsIn = Literal["thread", "process"]
 
 # What the profile holds, so a check can declare the parts it reads.
 ProfileFeature = Literal[
@@ -36,6 +43,13 @@ _VERSION = re.compile(r"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)")
 
 def _unique(values: Iterable[Any]) -> tuple[Any, ...]:
     return tuple(dict.fromkeys(values))
+
+
+def _lookup(module: str, qualname: str) -> Any:
+    found: Any = importlib.import_module(module)
+    for part in qualname.split("."):
+        found = getattr(found, part)
+    return found
 
 
 def _require_name(what: str, value: str) -> None:
@@ -135,6 +149,13 @@ class CheckSpec:
             "doc": "The data stage the check is written for; a plan can skip some."
         },
     )
+    runs_in: RunsIn = field(
+        default="thread",
+        metadata={
+            "doc": "'process' for a check that loops in pure Python; see "
+            "``check`` for what that asks of its module."
+        },
+    )
     extras: tuple[Extra, ...] = ()
     packs: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
@@ -150,6 +171,11 @@ class CheckSpec:
             raise CheckDefinitionError(
                 f"{self.id}: kind {self.kind!r} must be one of "
                 f"{', '.join(get_args(CheckKind))}"
+            )
+        if self.runs_in not in get_args(RunsIn):
+            raise CheckDefinitionError(
+                f"{self.id}: runs_in {self.runs_in!r} must be one of "
+                f"{', '.join(get_args(RunsIn))}"
             )
         if not (isinstance(self.params, type) and issubclass(self.params, CheckParams)):
             raise CheckDefinitionError(f"{self.id}: params must be a CheckParams class")
@@ -256,6 +282,33 @@ class Check:
     def __call__(self, context: "CheckContext", params: Any) -> "CheckOutput | None":
         return self.function(context, params)
 
+    def __reduce__(self) -> tuple[Callable[[str, str], "Check"], tuple[str, str]]:
+        """Pickle by reference, as a function is: a worker process imports the check.
+
+        That works for a check declared with ``@check`` at the top level of an
+        importable module. The decorator replaces the function with the ``Check``,
+        so pickling the function itself would fail.
+
+        Raises:
+            pickle.PicklingError: the check is not what its module names.
+        """
+        function = self.function
+        module = getattr(function, "__module__", None)
+        qualname = getattr(function, "__qualname__", None)
+        found = None
+        if module and qualname:
+            try:
+                found = _lookup(module, qualname)
+            except (ImportError, AttributeError):
+                pass
+        if found is not self:
+            raise pickle.PicklingError(
+                f"check {self.id} cannot be sent to a worker process: it is not "
+                f"the object {module}.{qualname}; declare it with @check at the "
+                "top level of an importable module"
+            )
+        return _lookup, (module, qualname)  # type: ignore[return-value]
+
 
 def check(
     *,
@@ -270,6 +323,7 @@ def check(
     after: Iterable[str] = (),
     cost: Cost = Cost.MODERATE,
     stage: Stage = Stage.ANY,
+    runs_in: RunsIn = "thread",
     extras: Iterable[Extra] = (),
     packs: Iterable[str] = (),
     tags: Iterable[str] = (),
@@ -279,6 +333,13 @@ def check(
     The decorated function takes ``(ctx, params)`` and returns what
     ``ctx.output(...)`` builds, or ``None``. Decorating registers nothing; a
     registry collects checks explicitly.
+
+    ``runs_in="process"`` runs the check in a worker process of its own, so a long
+    pure-Python loop neither holds up other checks nor outlives its timeout. The
+    worker imports the check by name, so it must be declared at the top level of an
+    importable module (otherwise it runs on a thread, with a note saying so), and
+    a script that runs such checks needs the usual ``if __name__ == "__main__":``
+    guard, as for any ``multiprocessing`` use.
 
     Raises:
         CheckDefinitionError: the metadata cannot work, such as a malformed id.
@@ -298,6 +359,7 @@ def check(
             after=tuple(after),
             cost=cost,
             stage=stage,
+            runs_in=runs_in,
             extras=tuple(extras),
             packs=tuple(packs),
             tags=tuple(tags),

@@ -20,7 +20,7 @@ from dsbf.model.vocabulary import Severity
 
 # Semver. Additive changes are minor and breaking changes are major. The 1.x
 # compatibility guarantee begins with the first release.
-SCHEMA_VERSION = "0.3.0"
+SCHEMA_VERSION = "0.4.0"
 
 _SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _SEVERITY_FIRST = {severity: -rank for rank, severity in enumerate(Severity)}

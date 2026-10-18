@@ -2432,7 +2432,7 @@
             }
           ],
           "default": null,
-          "description": "CPU time of the whole process while the check ran, so work on other threads counts too; approximate."
+          "description": "CPU time while the check ran; approximate. For a check on a thread this is the whole process's, so work on other threads counts too, and `shared_with` says whether checks overlapped. For a check in a worker process it is the worker's own, and missing if the worker was killed or died."
         },
         "peak_memory_bytes": {
           "anyOf": [
@@ -2445,7 +2445,13 @@
             }
           ],
           "default": null,
-          "description": "Peak resident memory of the whole process while the check ran, including the loaded data, found by sampling; approximate, and a short spike between samples is missed."
+          "description": "Peak resident memory while the check ran, found by sampling; approximate, and a short spike between samples is missed. For a check on a thread it is the whole process's, including the loaded data, and shared with any check that overlapped (`shared_with`). For a check in a worker process it is the worker's own, including what it mapped of the data."
+        },
+        "shared_with": {
+          "default": 0,
+          "description": "How many other checks on threads ran at the same time as this one. While any did, `cpu_seconds` and `peak_memory_bytes` are the whole process's and cannot be told apart per check. Always 0 for a check in a worker process.",
+          "minimum": 0,
+          "type": "integer"
         },
         "started_at": {
           "anyOf": [
@@ -2464,6 +2470,7 @@
         "wall_seconds",
         "cpu_seconds",
         "peak_memory_bytes",
+        "shared_with",
         "started_at"
       ],
       "title": "Timing",
@@ -2561,7 +2568,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.3.0",
+      "default": "0.4.0",
       "type": "string"
     },
     "run_id": {
