@@ -38,7 +38,7 @@ def summary(events):
 def test_each_check_is_started_then_finished_in_plan_order():
     events = []
 
-    run = run_plan(TOYS, hooks=[events.append])
+    run = run_plan(TOYS, hooks=[events.append], workers=1)
 
     assert summary(events) == [
         ("check_started", "null_share"),

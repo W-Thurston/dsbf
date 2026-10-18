@@ -2,14 +2,11 @@
 """Execute a plan: every check ends in an explicit status, and the run completes."""
 
 import time
-import traceback
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from datetime import UTC, datetime
-from functools import partial
 from uuid import uuid4
 
 from dsbf.data import Dataset
-from dsbf.engine.errors import CheckContractError
 from dsbf.engine.events import (
     CheckFinished,
     CheckStarted,
@@ -21,7 +18,8 @@ from dsbf.engine.expectation import Expected
 from dsbf.engine.limits import Limits
 from dsbf.engine.meter import DEFAULT_SAMPLE_SECONDS, Meter, Window
 from dsbf.engine.plan import Plan, PlanEntry
-from dsbf.engine.worker import attempt_check
+from dsbf.engine.scheduler import Launch, Scheduler, default_workers
+from dsbf.engine.worker import Attempt, Failure
 from dsbf.model import (
     CheckResult,
     CheckStatus,
@@ -50,35 +48,43 @@ def execute(
     limits: Limits = Limits(),
     hooks: Iterable[Hook] = (),
     memory_sample_seconds: float | None = DEFAULT_SAMPLE_SECONDS,
+    workers: int | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
-    Checks run one after another, level by level, each on its own thread. Nothing a
-    check does stops the run: an exception becomes an ``error`` result with a note, a
-    check that outlasts ``limits.check_timeout_seconds`` is ``timeout``, a check whose
-    hard requirement did not complete is ``skipped`` (a soft ``after`` upstream that
-    failed changes nothing), and a check missing an optional dependency is
-    ``unavailable``. Once ``limits.run_budget_seconds`` is used up the running check
-    times out and the rest are ``skipped``. Every planned check has a result, and
+    Checks run level by level; the checks of a level, which depend on nothing in
+    each other, run at the same time, up to ``workers`` at once (``None`` is one per
+    core, at most 8). A check runs on a thread of its own, or in a worker process if
+    its spec says ``runs_in="process"``. Nothing a check does stops the run: an
+    exception becomes an ``error`` result with a note, a check that outlasts
+    ``limits.check_timeout_seconds`` is ``timeout``, a check whose hard requirement
+    did not complete is ``skipped`` (a soft ``after`` upstream that failed changes
+    nothing), and a check missing an optional dependency is ``unavailable``. Once
+    ``limits.run_budget_seconds`` is used up the running checks time out and the
+    rest are ``skipped``. Every planned check has a result, in plan order, and
     ``Run.health`` says why any did not complete. ``KeyboardInterrupt`` and
-    ``SystemExit`` are not caught.
+    ``SystemExit`` are not caught. Apart from ``timing``, the run does not depend
+    on ``workers``.
 
-    A thread cannot be killed: a timed-out check that never calls back into its
-    context keeps running in the background until it returns (see
-    ``CheckContext.checkpoint``). Each result's ``timing`` is approximate: the wall
-    time is the executor's, the CPU time is the whole process's, and the memory is
-    the process's resident peak found by sampling every ``memory_sample_seconds``
-    (``None`` skips memory).
+    A thread cannot be killed: a timed-out check on a thread that never calls back
+    into its context keeps running in the background until it returns (see
+    ``CheckContext.checkpoint``). A worker process is terminated instead. Each
+    result's ``timing`` is approximate: the wall time is the executor's. On a thread
+    the CPU time and memory are the whole process's, found by sampling every
+    ``memory_sample_seconds`` (``None`` skips memory), and ``shared_with`` counts the
+    checks that overlapped. In a worker they are the worker's own.
 
     Each ``hook`` receives a ``CheckStarted``, a ``NoteRecorded`` for every note and
-    a ``CheckFinished``, in that order, from the calling thread. A check that is not
-    called has no ``CheckStarted``. A hook that raises is logged and dropped.
+    a ``CheckFinished``, in that order for each check, from the calling thread, so
+    a hook needs no locking. Events of different checks interleave in the order the
+    checks end, which is plan order with one worker. A check that is not called has
+    no ``CheckStarted``. A hook that raises is logged and dropped.
 
     ``profile`` must be the profile of ``dataset``.
 
     Raises:
-        ValueError: ``profile`` is not the profile of ``dataset``, or
-            ``memory_sample_seconds`` is not positive.
+        ValueError: ``profile`` is not the profile of ``dataset``,
+            ``memory_sample_seconds`` is not positive, or ``workers`` is below 1.
     """
     if [column.name for column in profile.columns] != dataset.columns:
         raise ValueError("the profile and the dataset have different columns")
@@ -86,34 +92,57 @@ def execute(
         raise ValueError(
             f"the profile counts {profile.n_rows} rows, the dataset {dataset.n_rows}"
         )
+    if workers is None:
+        workers = default_workers()
+    elif workers < 1:
+        raise ValueError(f"workers must be at least 1, not {workers!r}")
     events = Dispatcher(hooks)
     total = len(plan.entries)
+    positions = {
+        entry.id: position
+        for position, entry in enumerate(
+            (entry for level in plan.levels for entry in level), start=1
+        )
+    }
     started_at = datetime.now(UTC)
     clock = time.monotonic()
     results: dict[str, CheckResult] = {}
-    with Meter(memory_sample_seconds) as meter:
-        for position, entry in enumerate(
-            (entry for level in plan.levels for entry in level), start=1
-        ):
-            remaining = (
-                None
-                if limits.run_budget_seconds is None
-                else limits.run_budget_seconds - (time.monotonic() - clock)
-            )
-            result = _execute_entry(
-                entry,
-                dataset,
-                profile,
+
+    def budget_left() -> float | None:
+        if limits.run_budget_seconds is None:
+            return None
+        return limits.run_budget_seconds - (time.monotonic() - clock)
+
+    with (
+        Meter(memory_sample_seconds) as meter,
+        Scheduler(
+            workers=workers,
+            dataset=dataset,
+            profile=profile,
+            grace=limits.cancel_grace_seconds,
+            meter=meter,
+        ) as scheduler,
+    ):
+        for level in plan.levels:
+            done: dict[str, CheckResult] = {}
+            for entry, result in scheduler.run_level(
+                level,
                 results,
-                limits,
-                remaining,
-                meter,
-                started=partial(events.emit, CheckStarted(entry.id, position, total)),
-            )
-            results[entry.id] = result
-            for note in result.notes:
-                events.emit(NoteRecorded(entry.id, note, position, total))
-            events.emit(CheckFinished(entry.id, result, position, total))
+                prepare=lambda entry: _prepare(entry, results, limits, budget_left()),
+                started=lambda entry: events.emit(
+                    CheckStarted(entry.id, positions[entry.id], total)
+                ),
+                finish=lambda launch, attempt, window: _finish(
+                    launch, attempt, window, limits
+                ),
+            ):
+                done[entry.id] = result
+                position = positions[entry.id]
+                for note in result.notes:
+                    events.emit(NoteRecorded(entry.id, note, position, total))
+                events.emit(CheckFinished(entry.id, result, position, total))
+            for entry in level:  # plan order, whatever order they ended in
+                results[entry.id] = done[entry.id]
     return Run.build(
         results=results.values(),
         run_id=uuid4(),
@@ -125,16 +154,13 @@ def execute(
     )
 
 
-def _execute_entry(
+def _prepare(
     entry: PlanEntry,
-    dataset: Dataset,
-    profile: DatasetProfile,
     results: dict[str, CheckResult],
     limits: Limits,
     budget_left: float | None,
-    meter: Meter,
-    started: Callable[[], None],
-) -> CheckResult:
+) -> CheckResult | Launch:
+    """The result of a check that will not run, or how to run the one that will."""
     expected = entry.expected
     if expected.status is Expected.UNAVAILABLE:
         return _without_running(
@@ -176,26 +202,23 @@ def _execute_entry(
                 hint=_BUDGET_HINT,
             ),
         )
-
     limit = limits.check_timeout_seconds
     by_budget = budget_left is not None and (limit is None or budget_left < limit)
     if by_budget:
         limit = budget_left
-    started()
-    with meter.window() as window:
-        attempt = attempt_check(
-            entry,
-            dataset,
-            profile,
-            results,
-            limit=limit,
-            grace=limits.cancel_grace_seconds,
-        )
+    return Launch(entry, limit, by_budget)
+
+
+def _finish(
+    launch: Launch, attempt: Attempt, window: Window, limits: Limits
+) -> CheckResult:
+    """The result of a check that ran, from how its turn ended."""
+    entry = launch.entry
     if attempt.timed_out:
-        assert limit is not None
-        return _timeout_result(entry, window, limits, limit, by_budget, attempt.stopped)
-    if attempt.error is not None:
-        return _error_result(entry, attempt.error, window)
+        assert launch.limit is not None
+        return _timeout_result(entry, window, limits, launch, attempt)
+    if attempt.failure is not None:
+        return _error_result(entry, attempt.failure, window)
     assert attempt.result is not None
     return attempt.result.model_copy(update={"timing": window.timing})
 
@@ -211,26 +234,36 @@ def _without_running(entry: PlanEntry, status: CheckStatus, note: Note) -> Check
     )
 
 
-def _error_result(entry: PlanEntry, error: Exception, window: Window) -> CheckResult:
+def _error_result(entry: PlanEntry, failure: Failure, window: Window) -> CheckResult:
     """Turn an exception into an ``error`` result; the findings so far are dropped."""
-    what = str(error) or type(error).__name__
-    if isinstance(error, CheckContractError):
+    if failure.type_name == "WorkerDied":
         hint = (
-            f"{entry.id} used its context in a way its declaration does not allow, "
-            "which is a bug in the check; report it to the check's author."
+            f"{entry.id} ended its worker process without a result; look for a crash "
+            "in a compiled extension, or for the check calling os._exit or running "
+            "out of memory."
         )
+        code = "worker_died"
+        message = failure.message
     else:
-        hint = (
-            f"Run {entry.id} on its own to reproduce it, and report the traceback "
-            "in this note to the check's author if the data is valid."
-        )
+        code = "check_failed"
+        message = f"Raised {failure.type_name}: {failure.message}"
+        if failure.contract:
+            hint = (
+                f"{entry.id} used its context in a way its declaration does not "
+                "allow, which is a bug in the check; report it to the check's author."
+            )
+        else:
+            hint = (
+                f"Run {entry.id} on its own to reproduce it, and report the traceback "
+                "in this note to the check's author if the data is valid."
+            )
     note = Note(
-        code="check_failed",
-        message=f"Raised {type(error).__name__}: {what}",
+        code=code,
+        message=message,
         severity=Severity.ERROR,
         hint=hint,
-        exception_type=type(error).__name__,
-        detail="".join(traceback.format_exception(error)),
+        exception_type=None if code == "worker_died" else failure.type_name,
+        detail=failure.detail or None,
     )
     return CheckResult(
         check_id=entry.id,
@@ -246,12 +279,13 @@ def _timeout_result(
     entry: PlanEntry,
     window: Window,
     limits: Limits,
-    limit: float,
-    by_budget: bool,
-    stopped: bool,
+    launch: Launch,
+    attempt: Attempt,
 ) -> CheckResult:
     """A check ran out of time; the findings so far are dropped."""
-    if by_budget:
+    limit = launch.limit
+    assert limit is not None
+    if launch.by_budget:
         code = "run_budget_exhausted"
         message = (
             f"The run budget of {limits.run_budget_seconds:g}s was used up while "
@@ -265,13 +299,17 @@ def _timeout_result(
             f"Raise the check timeout, run {entry.id} on a sample, or exclude it "
             "from the plan."
         )
-    detail = (
-        "The check noticed the cancellation and stopped."
-        if stopped
-        else "The check was still running when the executor stopped waiting; it "
-        "cannot be interrupted and keeps using CPU and memory until it returns, "
-        "which can inflate the timings of the checks after it."
-    )
+    if attempt.killed:
+        detail = "The check ran in a worker process, which was killed."
+    elif attempt.stopped:
+        detail = "The check noticed the cancellation and stopped."
+    else:
+        detail = (
+            "The check was still running when the executor stopped waiting; it "
+            "cannot be interrupted and keeps using CPU and memory until it returns, "
+            "which can inflate the timings of the checks after it. Declare it "
+            'runs_in="process" to have it killed.'
+        )
     note = Note(
         code=code,
         message=message,

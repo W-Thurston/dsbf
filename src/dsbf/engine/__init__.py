@@ -10,6 +10,7 @@ from dsbf.engine.check import (
     NoParams,
     ProfileFeature,
     Requires,
+    RunsIn,
     SemanticTypes,
     check,
 )
@@ -62,6 +63,7 @@ __all__ = [
     "Registry",
     "RegistryError",
     "Requires",
+    "RunsIn",
     "Selection",
     "SemanticTypes",
     "check",
