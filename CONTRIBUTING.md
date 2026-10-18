@@ -67,6 +67,9 @@ a pull request to run them in CI. If a change to a task or the engine moves a sn
 review the diff and accept it with `uv run pytest -m golden --update-golden`. The review
 steps are in [`tests/golden/README.md`](tests/golden/README.md).
 
+The `dsbf plan` output snapshot in `tests/test_interfaces/snapshots/` is a unit test, but
+its update option is the same: `uv run pytest tests/test_interfaces/test_cli_plan.py --update-golden`.
+
 ### Performance runs
 
 `tests/perf/` times a full run on four datasets (titanic, the adversarial frame, and the
