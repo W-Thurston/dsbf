@@ -2453,6 +2453,11 @@
           "minimum": 0,
           "type": "integer"
         },
+        "cached": {
+          "default": false,
+          "description": "True when the result came from the result cache: the check did not run in this run, and the timing is that of reading the entry.",
+          "type": "boolean"
+        },
         "started_at": {
           "anyOf": [
             {
@@ -2471,6 +2476,7 @@
         "cpu_seconds",
         "peak_memory_bytes",
         "shared_with",
+        "cached",
         "started_at"
       ],
       "title": "Timing",
@@ -2568,7 +2574,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.4.0",
+      "default": "0.5.0",
       "type": "string"
     },
     "run_id": {

@@ -847,6 +847,10 @@ export interface Timing {
    * How many other checks on threads ran at the same time as this one. While any did, `cpu_seconds` and `peak_memory_bytes` are the whole process's and cannot be told apart per check. Always 0 for a check in a worker process.
    */
   shared_with: number;
+  /**
+   * True when the result came from the result cache: the check did not run in this run, and the timing is that of reading the entry.
+   */
+  cached: boolean;
   started_at: string | null;
 }
 /**

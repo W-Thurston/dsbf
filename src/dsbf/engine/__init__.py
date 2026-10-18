@@ -1,6 +1,7 @@
 # dsbf/engine/__init__.py
 """The check interface: how a check is declared and what it is given while it runs."""
 
+from dsbf.engine.cache import CacheKey, DiskCache, ResultCache
 from dsbf.engine.check import (
     Check,
     CheckKind,
@@ -34,6 +35,7 @@ from dsbf.engine.runner import run_check
 from dsbf.engine.selection import Depth, Selection, select
 
 __all__ = [
+    "CacheKey",
     "Check",
     "CheckCancelled",
     "CheckContext",
@@ -46,6 +48,7 @@ __all__ = [
     "CheckSpec",
     "CheckStarted",
     "Depth",
+    "DiskCache",
     "Event",
     "Expectation",
     "Expected",
@@ -63,6 +66,7 @@ __all__ = [
     "Registry",
     "RegistryError",
     "Requires",
+    "ResultCache",
     "RunsIn",
     "Selection",
     "SemanticTypes",

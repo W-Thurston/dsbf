@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from dsbf.data import Dataset
+from dsbf.engine.cache import CacheSession, ResultCache
 from dsbf.engine.events import (
     CheckFinished,
     CheckStarted,
@@ -49,6 +50,7 @@ def execute(
     hooks: Iterable[Hook] = (),
     memory_sample_seconds: float | None = DEFAULT_SAMPLE_SECONDS,
     workers: int | None = None,
+    cache: ResultCache | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
@@ -80,6 +82,14 @@ def execute(
     checks end, which is plan order with one worker. A check that is not called has
     no ``CheckStarted``. A hook that raises is logged and dropped.
 
+    With a ``cache``, a check whose inputs are unchanged since it last completed is
+    not run: its stored result is returned, with ``timing.cached`` set, no
+    ``CheckStarted`` and its notes and ``CheckFinished`` as usual. The inputs are the
+    data, the profile, the check's id, version and parameters, and the results it may
+    read, so changing one check's parameters re-runs it and the checks that read its
+    changed result. Only ``ok`` results are stored, and a hit is served even after the
+    run budget is used up. A cache that fails is logged once and ignored.
+
     ``profile`` must be the profile of ``dataset``.
 
     Raises:
@@ -104,6 +114,7 @@ def execute(
             (entry for level in plan.levels for entry in level), start=1
         )
     }
+    session = None if cache is None else CacheSession(cache, dataset, profile)
     started_at = datetime.now(UTC)
     clock = time.monotonic()
     results: dict[str, CheckResult] = {}
@@ -128,12 +139,14 @@ def execute(
             for entry, result in scheduler.run_level(
                 level,
                 results,
-                prepare=lambda entry: _prepare(entry, results, limits, budget_left()),
+                prepare=lambda entry: _prepare(
+                    entry, results, limits, budget_left(), session
+                ),
                 started=lambda entry: events.emit(
                     CheckStarted(entry.id, positions[entry.id], total)
                 ),
                 finish=lambda launch, attempt, window: _finish(
-                    launch, attempt, window, limits
+                    launch, attempt, window, limits, session
                 ),
             ):
                 done[entry.id] = result
@@ -159,6 +172,7 @@ def _prepare(
     results: dict[str, CheckResult],
     limits: Limits,
     budget_left: float | None,
+    session: CacheSession | None,
 ) -> CheckResult | Launch:
     """The result of a check that will not run, or how to run the one that will."""
     expected = entry.expected
@@ -189,6 +203,20 @@ def _prepare(
                 blocked_by=tuple(blockers),
             ),
         )
+    if session is not None:
+        looked_up = time.perf_counter()
+        started_at = datetime.now(UTC)
+        stored = session.lookup(entry, results)
+        if stored is not None:
+            return stored.model_copy(
+                update={
+                    "timing": Timing(
+                        wall_seconds=time.perf_counter() - looked_up,
+                        started_at=started_at,
+                        cached=True,
+                    )
+                }
+            )
     if budget_left is not None and budget_left <= 0:
         return _without_running(
             entry,
@@ -210,7 +238,11 @@ def _prepare(
 
 
 def _finish(
-    launch: Launch, attempt: Attempt, window: Window, limits: Limits
+    launch: Launch,
+    attempt: Attempt,
+    window: Window,
+    limits: Limits,
+    session: CacheSession | None,
 ) -> CheckResult:
     """The result of a check that ran, from how its turn ended."""
     entry = launch.entry
@@ -220,7 +252,10 @@ def _finish(
     if attempt.failure is not None:
         return _error_result(entry, attempt.failure, window)
     assert attempt.result is not None
-    return attempt.result.model_copy(update={"timing": window.timing})
+    result = attempt.result.model_copy(update={"timing": window.timing})
+    if session is not None:
+        session.store(entry, result)
+    return result
 
 
 def _without_running(entry: PlanEntry, status: CheckStatus, note: Note) -> CheckResult:

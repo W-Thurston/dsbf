@@ -17,6 +17,7 @@ from dsbf.engine import (
 from dsbf.engine.scheduler import MAX_DEFAULT_WORKERS, Scheduler, default_workers
 from dsbf.model import CheckStatus
 from tests.test_engine.toys import (
+    comparable,
     declare,
     null_share,
     numeric_spread,
@@ -48,16 +49,6 @@ def meet(parties):
         barrier.wait()
 
     return wait
-
-
-def comparable(run):
-    """The run without what depends on the clock, which differs between runs."""
-    data = run.model_dump(mode="json")
-    for key in ("run_id", "started_at", "finished_at"):
-        del data[key]
-    for result in data["results"].values():
-        del result["timing"]
-    return data
 
 
 class TestConcurrency:
