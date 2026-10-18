@@ -191,6 +191,10 @@ export interface DatasetProfile {
    */
   duplicate_rows: number | null;
   rows_with_any_null: number | null;
+  /**
+   * Null co-occurrence; None if not computed.
+   */
+  missingness: Missingness | null;
   columns: (
     | NumericProfile
     | CategoricalProfile
@@ -200,6 +204,44 @@ export interface DatasetProfile {
     | IdentifierProfile
     | UnknownProfile
   )[];
+}
+/**
+ * Which columns go missing together.
+ *
+ * This interface was referenced by `Run`'s JSON-Schema
+ * via the `definition` "Missingness".
+ */
+export interface Missingness {
+  columns_with_nulls: number;
+  /**
+   * Columns paired: the ones with the most nulls, when there are more than the pairing limit.
+   */
+  columns_considered: number;
+  /**
+   * The strongest co-occurring pairs, most similar first; only pairs that share at least one null row.
+   */
+  pairs: NullPair[];
+}
+/**
+ * Two columns that are null in the same rows.
+ *
+ * This interface was referenced by `Run`'s JSON-Schema
+ * via the `definition` "NullPair".
+ */
+export interface NullPair {
+  /**
+   * The earlier column in the dataset's column order.
+   */
+  a: string;
+  b: string;
+  /**
+   * Rows where both columns are null.
+   */
+  both_null: number;
+  /**
+   * Rows null in both over rows null in either: 1 means the columns are null in exactly the same rows.
+   */
+  jaccard: number;
 }
 /**
  * This interface was referenced by `Run`'s JSON-Schema

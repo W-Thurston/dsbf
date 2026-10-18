@@ -359,6 +359,41 @@ ColumnProfile = Annotated[
 ]
 
 
+class NullPair(Contract):
+    """Two columns that are null in the same rows."""
+
+    a: str = Field(description="The earlier column in the dataset's column order.")
+    b: str
+    both_null: int = Field(ge=1, description="Rows where both columns are null.")
+    jaccard: FiniteFloat = Field(
+        ge=0,
+        le=1,
+        description="Rows null in both over rows null in either: 1 means the "
+        "columns are null in exactly the same rows.",
+    )
+
+
+class Missingness(Contract):
+    """Which columns go missing together."""
+
+    columns_with_nulls: int = Field(ge=0)
+    columns_considered: int = Field(
+        ge=0,
+        description="Columns paired: the ones with the most nulls, when there are "
+        "more than the pairing limit.",
+    )
+    pairs: tuple[NullPair, ...] = Field(
+        description="The strongest co-occurring pairs, most similar first; only "
+        "pairs that share at least one null row."
+    )
+
+    @model_validator(mode="after")
+    def _check_counts(self) -> Self:
+        if self.columns_considered > self.columns_with_nulls:
+            raise ValueError("columns_considered is at most columns_with_nulls")
+        return self
+
+
 class DatasetProfile(Contract):
     """The profile of a whole dataset: its shape and one profile per column."""
 
@@ -370,6 +405,9 @@ class DatasetProfile(Contract):
         description="Rows equal to an earlier row; None if not computed.",
     )
     rows_with_any_null: int | None = Field(default=None, ge=0)
+    missingness: Missingness | None = Field(
+        default=None, description="Null co-occurrence; None if not computed."
+    )
     columns: tuple[ColumnProfile, ...]
 
     @model_validator(mode="after")
@@ -392,7 +430,29 @@ class DatasetProfile(Contract):
             value = getattr(self, name)
             if value is not None and value > self.n_rows:
                 raise ValueError(f"{name} is at most n_rows")
+        if self.missingness is not None:
+            self._check_missingness(self.missingness)
         return self
+
+    def _check_missingness(self, missingness: Missingness) -> None:
+        by_name = {column.name: column for column in self.columns}
+        if missingness.columns_with_nulls != sum(
+            column.counts.nulls > 0 for column in self.columns
+        ):
+            raise ValueError("columns_with_nulls disagrees with the column counts")
+        for pair in missingness.pairs:
+            if pair.a == pair.b:
+                raise ValueError(f"a null pair names {pair.a!r} twice")
+            for name in (pair.a, pair.b):
+                if name not in by_name:
+                    raise ValueError(f"a null pair names unknown column {name!r}")
+                if pair.both_null > by_name[name].counts.nulls:
+                    raise ValueError(
+                        f"pair {pair.a!r}, {pair.b!r} shares more null rows than "
+                        f"{name!r} has nulls"
+                    )
+            if by_name[pair.a].position > by_name[pair.b].position:
+                raise ValueError(f"pair {pair.a!r}, {pair.b!r} is out of column order")
 
     @property
     def n_columns(self) -> int:
