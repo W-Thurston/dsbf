@@ -22,3 +22,11 @@ class SourceReadError(SourceError):
 
 class SourceDependencyError(SourceError):
     """Loading the source needs an optional package that is not installed."""
+
+
+class SamplingError(ValueError):
+    """A sample was asked for that DSBF cannot draw as requested.
+
+    Unlike the source errors this is about the request, not the data: a missing
+    stratification column, or a seed given to a strategy that has none.
+    """

@@ -3,6 +3,7 @@
 
 from dsbf.data.dataset import Dataset
 from dsbf.data.errors import (
+    SamplingError,
     SourceDependencyError,
     SourceError,
     SourceReadError,
@@ -12,6 +13,7 @@ from dsbf.data.load import load
 
 __all__ = [
     "Dataset",
+    "SamplingError",
     "SourceDependencyError",
     "SourceError",
     "SourceReadError",
