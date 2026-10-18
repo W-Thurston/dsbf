@@ -147,12 +147,14 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Deviations:** added `skipped` to the design's three expected statuses, for dependents of an `unavailable` or `skipped` check; a `not_applicable` requirement does not block its dependents. Without a profile only extras and requirements are judged (`Plan.profiled` is false).
 
 ### U3-05 · Executor I: isolation, statuses and notes
-- **Status:** done (2026-10-18) · **Resolves:** F-06, F-20 (engine side)
+- **Status:** done (2026-10-18) · **PR:** #92 (`b233bc8`) · **Resolves:** F-06, F-20 (engine side)
 - **Notes:** `dsbf.engine.execute(plan, dataset, profile, dsbf_version=)` runs a plan sequentially, level by level, and returns a complete `Run`. A missing extra is `unavailable` (not called); a hard requirement that did not end `ok` or `not_applicable` makes the dependent `skipped` with `blocked_by`; any exception, including a failure building the context, is an `error` with a `check_failed` note (type, message, hint, traceback), and a returned status is trusted, never inferred from the absence of an exception (F-06). A soft `after` upstream that fails changes nothing. `eligibility(spec, profile)` is now the one place that decides which columns a check reads, shared by the plan, `CheckContext` and `run_check`; a missing dataset-level feature makes a check `not_applicable` without calling it.
 - **Deviations:** the traceback lives in `Note.detail`, since no artifact store exists before Phase 6. `PlanManifest.packs` is empty (packs have no version) and `Run` has no field for `Plan.notes`.
 
 ### U3-06 · Executor II: timeouts, resource accounting and events
-- **Status:** todo · **Size:** M · **Depends on:** U3-05 · **Resolves:** F-24
+- **Status:** done (2026-10-18) · **Resolves:** F-24
+- **Notes:** `execute(..., limits=Limits(), hooks=(), memory_sample_seconds=0.01)`. Every check runs on its own daemon thread and the executor waits `min(check_timeout_seconds, budget left)`; a late check is `timeout` with a `check_timeout` or `run_budget_exhausted` note, its findings dropped and its hard dependents skipped, and once the run budget is gone the remaining checks are `skipped`. A thread cannot be killed: on a timeout the check's context is cancelled, so any `ctx` call or `ctx.checkpoint()` raises `CheckCancelled` (a `BaseException`), the executor waits `cancel_grace_seconds` and then abandons the thread, and the note's `detail` says whether it stopped or is still running. Each result's `Timing` has the executor's wall time, the whole process's CPU time, and the process's peak resident memory by sampling; the `Timing` field descriptions say so, and the schema and types were regenerated. Hooks receive `CheckStarted`, `NoteRecorded` and `CheckFinished` from the calling thread; a hook that raises is logged and dropped. On a 1M × 50 parquet the sampled peak of a 400 MB check was 1329 MB against `/usr/bin/time`'s 1329 MB.
+- **Deviations:** the unit named per-check timeouts; this is one timeout applied to every check, with per-check overrides left to the Phase 5 config. A fresh-process `ru_maxrss` comparison is not a unit test: a child inherits its parent's high-water mark on Linux, so it was checked by hand under `/usr/bin/time`.
 - **Goal:** Per-check timeouts (→ `timeout` plus a note); an optional run budget; wall, CPU and sampled peak memory per check, labelled approximate; and an event hook API (`check_started`, `check_finished`, `note`).
 - **Assumptions to confirm:** How timeouts work for thread-based checks (cooperative cancellation vs. process isolation for heavy checks).
 - **Acceptance:** A sleeping toy check times out without stalling the run. Events arrive in order. Memory figures are within reason of `/usr/bin/time` on a perf dataset.
@@ -160,6 +162,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-07 · Executor III: parallel execution
 - **Status:** todo · **Size:** M · **Depends on:** U3-06
+- **Note from U3-06:** a timed-out check on a thread keeps running until it returns (Python cannot stop a thread), so a pure-Python check in a process worker is the way to terminate one; do that here and say in the timeout note when the check was killed. `Meter.window()` already supports overlapping checks, but then a check's `cpu_seconds` and `peak_memory_bytes` are the whole process's and shared between them; say so in the run output or split them per worker process. `execute` emits events from the calling thread only; keep that when results arrive from workers, so hooks need no locking.
 - **Goal:** Independent checks at each DAG level run concurrently (threads for compiled-code checks, a process pool for pure-Python ones). Results are deterministic regardless of worker count.
 - **Acceptance:** The same `Run` (excluding timing) with 1 worker and N workers. A speed-up is measured on a perf dataset.
 - **Commit:** `feat(engine): run independent checks in parallel`
@@ -183,6 +186,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-10 · Legacy task adapter
 - **Status:** todo · **Size:** M · **Depends on:** U3-08, U3-09
+- **Note from U3-06:** the executor now runs every check on a worker thread, not the main thread; confirm the plotting tasks (matplotlib `pyplot` keeps global state, and GUI backends must be on the main thread) work on a thread with the `Agg` backend, and that no task relies on `signal` or thread-local state.
 - **Note from U3-05:** the executor trusts the status `run_check` returns, but `run_check` yields only `ok` or `not_applicable`; define how an adapted task ends `error`, `skipped` or `unavailable` without raising (a legacy `TaskResult` with `status="failed"` or `"skipped"`, F-06's second bullet), and cover it with the executor's returned-status regression test.
 - **Note from U3-02:** the legacy `task_groups` config key and `eda/task_registry.py` (global `PLUGIN_WARNINGS`, plugins registered in `sys.modules` by file stem) go when the adapter replaces the legacy registry; the adapter's `Check`s register through `Registry.register`.
 - **Note from U3-01:** the design caps a finding's confidence per check; the spec has no `max_confidence` yet. Add it when the adapter or a migrated check needs it. The adapter builds one `Check` per task and must emit findings only for columns within its `applies_to`.
@@ -202,6 +206,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U3-06:** build `Limits` and the `memory_sample_seconds` argument from the root config (a per-check timeout, a run budget; both off by default in `execute`, so decide the entry point's defaults) and pass `hooks` through `dsbf.profile()`. The legacy `resource_limits.max_memory_gb` and `max_runtime_seconds` keys go with the legacy engine.
 - **Note from U3-05:** `Run` has no field for `Plan.notes` / `Registry.notes`; decide where plugin-load notes surface (a `Run` field, or the health issues). `PlanManifest.packs` is empty because packs have no version: add pack versions, or drop the field. `execute` takes `dsbf_version` as an argument; pass it from `importlib.metadata`. The traceback of an `error` is in `Note.detail` until an artifact store exists (Phase 6).
 - **Note from U3-03:** build `Selection` from the root config (`packs`, `include`, `exclude`, `depth`, `max_cost`, `dimensions`, `tags`, `plugins`); `Depth` lives in `dsbf.engine.selection`, so the config can use it as its enum. Merge `Plan.notes` with `Registry.notes` into the run's notes. `Selection.entry_points` defaults to `True`; decide whether the config exposes it. The default pack is open: an empty `packs` selects every registered check, so the entry point decides whether to default to `core`.
 - **Note from U3-02:** copy `Registry.notes` (plugin load problems) into the run's notes. A plugin edited after load is not re-executed in the same process; revisit for the Phase 6 service if reload is needed.

@@ -1,5 +1,6 @@
 """Three small checks, one of each kind, and the data they run on."""
 
+import dataclasses
 import datetime as dt
 
 import numpy as np
@@ -10,9 +11,13 @@ from dsbf.data import Dataset, load
 from dsbf.engine import (
     CheckContext,
     CheckOutputModel,
+    Registry,
     Requires,
+    Selection,
     SemanticTypes,
     check,
+    execute,
+    make_plan,
     run_check,
 )
 from dsbf.model import (
@@ -199,3 +204,33 @@ def run_toys(dataset: Dataset | None = None) -> dict[str, CheckResult]:
         )
         results[toy.id] = run_check(toy, context)
     return results
+
+
+def plan_for(checks, profile):
+    return make_plan(Registry(checks), Selection(entry_points=False), profile=profile)
+
+
+def run_plan(checks, dataset=None, **options):
+    """Plan and execute ``checks``; ``options`` go to ``execute`` (limits, hooks)."""
+    dataset = dataset or make_dataset()
+    profile = profile_dataset(dataset)
+    return execute(
+        plan_for(checks, profile), dataset, profile, dsbf_version="0.0.0", **options
+    )
+
+
+def declare(check_id, *, applies_to=SemanticTypes(), function=None, **spec):
+    """A do-nothing rule check, or one that runs ``function``."""
+
+    @check(
+        id=check_id,
+        version="1.0.0",
+        kind=spec.pop("kind", "rule"),
+        applies_to=applies_to,
+        dimensions=[Dimension.VALIDITY],
+        **spec,
+    )
+    def declared(ctx, params):
+        """A check."""
+
+    return dataclasses.replace(declared, function=function) if function else declared

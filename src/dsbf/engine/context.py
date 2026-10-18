@@ -1,6 +1,7 @@
 # dsbf/engine/context.py
 """What a check is given while it runs, and nothing beyond its declared scope."""
 
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -10,7 +11,7 @@ import numpy as np
 from dsbf.data import Dataset
 from dsbf.engine.check import CheckOutputModel, CheckSpec
 from dsbf.engine.eligibility import eligibility
-from dsbf.engine.errors import CheckContractError
+from dsbf.engine.errors import CheckCancelled, CheckContractError
 from dsbf.model import (
     CheckParams,
     CheckResult,
@@ -70,6 +71,9 @@ class CheckContext:
     which are limited to the columns the check can read: those ``applies_to``
     selects that also have the profile features it requires, as in the plan.
     ``eligibility`` says why a check has nothing to run on.
+
+    When the executor gives up on a check for taking too long it sets ``cancel``;
+    from then on every method here, and ``checkpoint``, raises ``CheckCancelled``.
     """
 
     def __init__(
@@ -80,6 +84,7 @@ class CheckContext:
         params: CheckParams | None = None,
         *,
         upstream: Mapping[str, CheckResult] | None = None,
+        cancel: threading.Event | None = None,
     ) -> None:
         if [column.name for column in profile.columns] != dataset.columns:
             raise ValueError("the profile and the dataset have different columns")
@@ -92,6 +97,7 @@ class CheckContext:
         self.params = params if params is not None else spec.params()
         self._dataset = dataset
         self._upstream = dict(upstream or {})
+        self._cancel = cancel
         self._findings: list[Finding] = []
         self._finding_ids: set[str] = set()
         self._notes: list[Note] = []
@@ -128,11 +134,25 @@ class CheckContext:
     def notes(self) -> tuple[Note, ...]:
         return tuple(self._notes)
 
+    def checkpoint(self) -> None:
+        """Stop here if the executor has given up on this check.
+
+        Every method of the context calls this, so a check that keeps using its
+        context stops by itself. A long loop that doesn't should call it once per
+        iteration; that is the only way to interrupt a check that has timed out.
+
+        Raises:
+            CheckCancelled: the check's time is up. Let it propagate.
+        """
+        if self._cancel is not None and self._cancel.is_set():
+            raise CheckCancelled(self.spec.id)
+
     def values(self, column: str, dropna: bool = True) -> np.ndarray:
         """The column as a read-only NumPy array; see ``Dataset.values``.
 
         Only an analysis check reads values, and only for columns it applies to.
         """
+        self.checkpoint()
         if self.spec.kind != "analysis":
             raise CheckContractError(
                 f"{self.spec.id} is a {self.spec.kind} check, which does not read "
@@ -146,6 +166,7 @@ class CheckContext:
 
         None when that check didn't run, which can only happen for ``after``.
         """
+        self.checkpoint()
         if check_id not in self.spec.upstream:
             raise CheckContractError(
                 f"{self.spec.id} did not declare {check_id!r} in requires.checks "
@@ -173,6 +194,7 @@ class CheckContext:
         each (subject, code) once. ``dimension`` may be left out when the check
         declares just one. A finding about a sample carries the sample's provenance.
         """
+        self.checkpoint()
         spec = self.spec
         if dimension is None:
             if len(spec.dimensions) != 1:
@@ -222,6 +244,7 @@ class CheckContext:
         detail: str | None = None,
     ) -> Note:
         """Record an operational message, such as a cap that was applied."""
+        self.checkpoint()
         note = Note(
             code=code, message=message, severity=severity, hint=hint, detail=detail
         )
@@ -230,6 +253,7 @@ class CheckContext:
 
     def output(self, model: CheckOutputModel | None = None) -> CheckOutput:
         """Wrap the check's output, which must be an instance of its declared model."""
+        self.checkpoint()
         declared = self.spec.output
         if model is None:
             return CheckOutput(data=None)

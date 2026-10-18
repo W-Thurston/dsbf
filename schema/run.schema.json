@@ -2417,6 +2417,7 @@
       "description": "Wall and CPU time and memory for one check, as measured by the executor.",
       "properties": {
         "wall_seconds": {
+          "description": "Time the executor spent on the check, from its start.",
           "minimum": 0,
           "type": "number"
         },
@@ -2430,7 +2431,8 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "description": "CPU time of the whole process while the check ran, so work on other threads counts too; approximate."
         },
         "peak_memory_bytes": {
           "anyOf": [
@@ -2443,7 +2445,7 @@
             }
           ],
           "default": null,
-          "description": "Peak memory by sampling; approximate."
+          "description": "Peak resident memory of the whole process while the check ran, including the loaded data, found by sampling; approximate, and a short spike between samples is missed."
         },
         "started_at": {
           "anyOf": [

@@ -831,10 +831,16 @@ export interface Action {
  * via the `definition` "Timing".
  */
 export interface Timing {
+  /**
+   * Time the executor spent on the check, from its start.
+   */
   wall_seconds: number;
+  /**
+   * CPU time of the whole process while the check ran, so work on other threads counts too; approximate.
+   */
   cpu_seconds: number | null;
   /**
-   * Peak memory by sampling; approximate.
+   * Peak resident memory of the whole process while the check ran, including the loaded data, found by sampling; approximate, and a short spike between samples is missed.
    */
   peak_memory_bytes: number | null;
   started_at: string | null;
