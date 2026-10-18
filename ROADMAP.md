@@ -123,13 +123,15 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Context:** F-37. `_is_datetime_like` took 8.6 s of `infer_types`' 9.0 s on kitchen5k and grew 10× at 50k rows.
 - **Acceptance:** Parity is checked against U0-13 baselines, and the differences are listed in the PR. Inference time is under 0.5 s on kitchen50k.
 - **Done:** `dsbf.profile.infer_column_types(dataset)` returns a `ColumnType` per column (semantic type, confidence, sample rows, and the date format or epoch unit that U2-05 needs). Parsing and string-shape rules read a seeded sample of at most 1000 values, and a date column is confirmed on the whole column; counts, distinct values and the median come from the whole column. kitchen50k takes 0.28–0.30 s against 25.95 s for the legacy method. An all-null column is `unknown`, whatever dtype held it. On 11 datasets the types match the legacy ones except Polars `Boolean` columns (`boolean`, where legacy said `categorical`) and kitchen5k's `datetime_with_gaps` (years past 2262 overflow pandas, so legacy called it `id`; now `datetime`). Deviations: the legacy dateutil fallback is replaced by a fixed list of 19 formats, so a format outside it is not a date, and `%Y%m%d` is left out because eight-digit identifiers parse under it; the identifier rule (over 90% distinct) is kept for parity, so near-unique free text is `identifier`.
+- **PR:** #82 (`83a62b1`)
 - **Commit:** `feat(profile): add sample-based semantic type inference`
 
 ### U2-04 · Column profile I: counts and numeric statistics
-- **Status:** todo · **Size:** M · **Depends on:** U2-03 · **Resolves:** F-32 (per-column statistics)
+- **Status:** done (2026-10-17) · **Size:** M · **Depends on:** U2-03 · **Resolves:** F-32 (per-column statistics)
 - **Note from U0-09:** `detect_collinear_features` now only guards on complete-row count (infinities treated as missing). Per-column handling, dropping high-missingness columns first and recording `n_used` stay with the VIF redesign in Phase 4.
 - **Goal:** One pass computes counts, nulls, distinct (exact or sketched), zeros, empty strings, non-finite values, and numeric min, max, mean, std, skew, kurtosis, MAD and quantiles, per column on that column's non-null values.
 - **Acceptance:** Values match `summarize_numeric`, `summarize_nulls` and `summarize_unique` on the baselines within tolerance.
+- **Done:** `dsbf.profile.profile_columns(dataset, types=None, *, quantiles=…)` computes every column's counts and statistics in one Polars `select` and returns a `ColumnProfile` per column: nulls, exact distinct, zeros, non-finite values, empty strings, boolean split, and for numeric columns min, max, mean, std, skewness, kurtosis and the seven legacy percentiles, all over that column's own finite non-null values (F-32). Null counts, distinct counts and the numeric statistics equal the legacy `summarize_nulls`, `summarize_unique` and `summarize_numeric` within `rel=1e-9` on all 10 golden datasets, with no accepted differences. kitchen50k takes 0.033 s (types supplied), 1M × 50 floats 2.0 s. Deviations: distinct counts are always exact (the sketched option is left to U2-08), and the contract gives categorical columns no numeric statistics, so integer codes the legacy task summarised have none here (see U2-07).
 - **Commit:** `feat(profile): add count and numeric column statistics`
 
 ### U2-05 · Column profile II: histograms, top-k, text and datetime
@@ -153,6 +155,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U2-07 · Profile parity report against legacy outputs
 - **Status:** todo · **Size:** M · **Depends on:** U2-06
+- **Note from U2-04:** the legacy `summarize_numeric` summarises every numeric dtype, not only `continuous` columns, so it also covers integer codes the profile types `categorical` (titanic's `pclass`, `sibsp`, `parch`, `survived`); `CategoricalProfile` has no numeric statistics. List this as accepted and decide whether a categorical numeric column should carry min and max. Column-statistics parity is in `tests/test_profile/test_column_parity.py` with no accepted differences on the golden datasets.
 - **Note from U2-03:** semantic-type differences to list as accepted, kept in `tests/test_profile/test_type_parity.py`: a Polars `Boolean` column is `boolean` (legacy `categorical`), and kitchen5k's `datetime_with_gaps` is `datetime` (legacy `identifier`, because pandas cannot hold years past 2262). Vocabulary: legacy `continuous` is `numeric`, `id` is `identifier`.
 - **Note from U2-01:** load-level differences from `pd.read_csv` / `pd.read_excel` to list as accepted: an all-null column is `String`, not `float64`; Polars keeps an empty CSV header as `''` where pandas writes `Unnamed: 6`; the Excel reader names an empty header `__UNNAMED__6`; an Excel column of all-midnight datetimes reads as `Date`.
 - **Goal:** An automated comparison between the new profile and the legacy `summarize_*` and `infer_types` outputs on every golden dataset, plus a committed `docs/parity/profile.md` listing accepted differences with reasons.
@@ -161,6 +164,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U2-08 · Profile performance budget
 - **Status:** todo · **Size:** S · **Depends on:** U2-07, U0-14 · **Resolves:** F-30 (profiling part)
+- **Note from U2-04:** `profile_columns` takes 0.033 s on kitchen50k and 2.0 s on 1M × 50 floats (0.77 s without the seven quantiles, which stay Polars expressions: 0.83 s against 1.11 s for `np.quantile` and 1.80 s sorting first). Distinct counts are always exact (`distinct_exact` is always `True`); add a sketched count above a row threshold only if the profile pass measures `n_unique` as a cost.
 - **Note from U2-03:** `infer_column_types` takes 0.28–0.30 s on kitchen50k and computes each column's exact `n_unique` and null count, which the count pass of U2-04 computes again. Share them if the profile pass measures that as a cost.
 - **Note from U1-04:** `record_run` no longer exists, so `tests/perf/baseline.json` still carries a `record_run` stage (0.0 s) in each scenario. Regenerate the baseline with the perf harness when this unit adds the profile pass, which drops the entry.
 - **Note from U0-14:** `tests/perf/scenarios.py` has no 1M x 50 scenario, because today's engine would take hours on it. Add it here if the new profile pass can run it; the REFACTOR_PLAN §11 budget names it. The baseline shows where the legacy time goes: `fuzzy_duplicate_detection` (65% of titanic, 46% of kitchen5k) and `detect_stationarity` (40% of kitchen50k).
