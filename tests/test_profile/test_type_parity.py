@@ -15,19 +15,15 @@ from dsbf.data import load
 from dsbf.eda.tasks.infer_types import InferTypes
 from dsbf.profile import infer_column_types
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
+from tests.test_profile.accepted import cells
 
-# The legacy name for each type that was renamed.
+# The legacy name for each type that was renamed ("semantic-type-names").
 RENAMED = {"continuous": "numeric", "id": "identifier"}
 
-# Differences by dataset and column: (legacy, new, why). A Boolean column is not
-# listed one by one; see ``_boolean_difference``.
+# Differences by dataset and column: (legacy, new). A Boolean column is not listed one
+# by one; see ``_boolean_difference``. The reasons are in ``accepted``.
 ACCEPTED = {
-    ("kitchen5k", "datetime_with_gaps"): (
-        "identifier",
-        "datetime",
-        "Its years run to 2259, past pandas' nanosecond limit, so the legacy parse "
-        "reads 89% of it and misses the 90% line; Polars holds the dates.",
-    ),
+    cell: ("identifier", "datetime") for cell in cells("datetime-past-pandas-range")
 }
 
 
@@ -48,7 +44,7 @@ def _compare(dataset: GoldenDataset, path, legacy: dict[str, str]) -> None:
         if old == new or _boolean_difference(old, new, loaded.schema[column]):
             continue
         accepted = ACCEPTED.get((dataset.name, column))
-        if accepted is None or accepted[:2] != (old, new):
+        if accepted is None or accepted != (old, new):
             unexplained.append((column, old, new, types[column].reason))
         else:
             listed.add(column)
