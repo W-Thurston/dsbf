@@ -14,7 +14,9 @@ from dsbf.engine.check import (
     check,
 )
 from dsbf.engine.context import CheckContext, CheckOutput, ProfileView
-from dsbf.engine.errors import CheckContractError, CheckDefinitionError
+from dsbf.engine.errors import CheckContractError, CheckDefinitionError, RegistryError
+from dsbf.engine.pack import Pack
+from dsbf.engine.registry import Registry
 from dsbf.engine.runner import run_check
 
 __all__ = [
@@ -28,8 +30,11 @@ __all__ = [
     "CheckSpec",
     "Extra",
     "NoParams",
+    "Pack",
     "ProfileFeature",
     "ProfileView",
+    "Registry",
+    "RegistryError",
     "Requires",
     "SemanticTypes",
     "check",

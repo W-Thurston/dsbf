@@ -402,6 +402,8 @@ Output: a `Plan` that can be printed (`dsbf plan`) and is recorded in the run ma
 - Third-party checks and packs are discovered through the `dsbf.checks` / `dsbf.packs` **entry-point groups** (`pip install dsbf-healthcare`).
 - Local directories are still supported (`plugins: [./my_checks/]`). They're imported under unique module names and are reload-safe (F-23).
 - Plugins get the same contracts, parameter validation, isolation and versioning as core checks.
+- A `Registry` holds `Check` objects by id and is built explicitly; nothing registers on import. `dsbf.checks` entry points load a `Check` or an iterable of them, and `dsbf.packs` entry points load a `Pack`. `load_directory` imports a folder as a package with a name unique to its path, so plugin files can use relative imports and two folders can each have a `utils.py`. A source that was loaded is not loaded again, in this registry or another in the same process, so editing a plugin file needs a new process.
+- A plugin that fails to import, declares nothing, or reuses a taken id never raises: the registry records a `Note` (`plugin_load_failed`, `plugin_invalid`, `plugin_empty`, `check_id_conflict`) for the run to report.
 
 ---
 

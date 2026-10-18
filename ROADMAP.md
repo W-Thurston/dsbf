@@ -129,21 +129,16 @@ unit takes an upgrade, it raises the cap and deletes the row.
 - **Success criteria:** Golden runs reproduce through the adapter. A forced exception in any check still yields a complete `Run` with a note. Changing one parameter re-executes only the affected checks.
 
 ### U3-01 · Check interface and check context
-- **Status:** done (2026-10-18)
+- **Status:** done (2026-10-18) · **PR:** #88 (`729d288`)
 - **Notes:** `dsbf.engine` holds `@check`, `CheckSpec`, `Check`, `CheckContext` and `run_check`; importing it registers nothing. A check sees only the columns `applies_to` selects (`columns`, `values()`, the profile view, finding subjects); only analysis checks read values; `ctx.result()` reaches only declared dependencies; `ctx.finding()` fills in sampling provenance and rejects a repeated subject and code. `run_check` returns `not_applicable` without calling a check that has no eligible column, and lets exceptions propagate to the executor. Deviations: added the `Cost` vocabulary to `dsbf.model` (not in the published schema), and `applies_to` uses the profile's semantic types (`numeric`, not the design's `continuous`).
 
 ### U3-02 · Registry, packs and plugin discovery
-- **Status:** todo · **Size:** M · **Depends on:** U3-01 · **Resolves:** F-23
-- **Note from U3-01:** `Check` is public and built by `check(...)` with no registration; the registry collects `Check` objects explicitly. A check's extras are validated against `pyproject.toml`'s optional-dependency groups (`Extra`).
-- **Goal:** An explicit `Registry` object (no import side effects), the `dsbf.checks` and `dsbf.packs` entry-point groups, local plugin directories imported under unique module names, and reload safety.
-- **Acceptance:**
-  - A test plugin package installed in a venv is discovered.
-  - Two plugin dirs that each contain a `utils.py` coexist.
-  - Loading twice in one process is a no-op.
-- **Commit:** `feat(engine): add registry, packs and entry-point plugin discovery`
+- **Status:** done (2026-10-18)
+- **Notes:** `dsbf.engine` adds `Registry` (checks by id, `packs`, `source_of`, `notes`), `Pack`, `load_directory` and `load_entry_points`. A directory is imported as a package named for its path, so plugin files use `from .utils import x` and two `utils.py` coexist. A source already loaded is not loaded again, even by another `Registry` in the process, so an edited plugin file needs a new process. A broken plugin never raises: the registry records a `Note` (`plugin_load_failed`, `plugin_invalid`, `plugin_empty`, `check_id_conflict`). No deviations from the unit; the legacy `eda/task_registry.py` is untouched.
 
 ### U3-03 · Planner I: selection and dependency resolution
 - **Status:** todo · **Size:** M · **Depends on:** U3-02 · **Resolves:** F-21
+- **Note from U3-02:** `Registry.packs` maps a pack name to check ids, and a pack that matches no check is allowed; decide here whether selecting an unknown pack is a plan error. Read the `plugins:` config list in the plan input and call `load_directory` / `load_entry_points`.
 - **Note from U3-01:** `CheckSpec` has no stage applicability (`Stage`). Add it with the `infer_stage` decision in this unit. `Requires.profile` names (`ProfileFeature`) are declared but not yet checked against what a profile holds; the planner decides availability. `CheckSpec.upstream` is `requires.checks` then `after`.
 - **Note from U2-06:** `infer_stage` rates data by its mean column null ratio, so titanic is `cleaned` although `cabin` is 77% null and 709 of 891 rows have a null. When the inferred stage drives selection here, decide whether a per-column rule (the worst column, or the share of columns over a null limit) is needed.
 - **Goal:** Select checks by packs, include/exclude lists, depth presets, cost budget, dimension and tag. Resolve hard requirements (auto-included and marked) and soft `after` ordering. Report cycles as plan errors.
@@ -201,6 +196,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-10 · Legacy task adapter
 - **Status:** todo · **Size:** M · **Depends on:** U3-08, U3-09
+- **Note from U3-02:** the legacy `task_groups` config key and `eda/task_registry.py` (global `PLUGIN_WARNINGS`, plugins registered in `sys.modules` by file stem) go when the adapter replaces the legacy registry; the adapter's `Check`s register through `Registry.register`.
 - **Note from U3-01:** the design caps a finding's confidence per check; the spec has no `max_confidence` yet. Add it when the adapter or a migrated check needs it. The adapter builds one `Check` per task and must emit findings only for columns within its `applies_to`.
 - **Note from U1-07:** blurbs carry no `code`, `dimension`, `confidence` or (always) `n_used`; the adapter supplies them. A `code` must be unique within a check and subject and must not depend on blurb order (the contract test's `<phase>_<index>` shifts when a task reorders blurbs). Map `good` to `Severity.INFO` plus the tag `good`, `__dataset__` to `Subject.dataset()`, and legacy `column`/`columns` on an action to `Action.columns`. `tests/test_model/test_legacy_guidance.py` holds the reference mapping.
 - **Goal:** `LegacyTaskCheck` wraps any `BaseTask`. It provides a legacy `AnalysisContext` shim (data, config, `semantic_types` from the new profile) and maps `TaskResult` statuses onto the new statuses.
@@ -218,6 +214,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 ### U3-12 · `dsbf.profile()` entry point and run health output
 - **Status:** todo · **Size:** M · **Depends on:** U3-11 · **Resolves:** F-16, F-17, F-18, F-34
+- **Note from U3-02:** copy `Registry.notes` (plugin load problems) into the run's notes. A plugin edited after load is not re-executed in the same process; revisit for the Phase 6 service if reload is needed.
 - **Note from U2-08:** on 1M × 50 floats the profile pass takes 9.5 s on the 4-CPU runner (type inference 1.5 s, `profile_dataset` 8.0 s), well inside the 3 min standard-plan target, so no optimisation was needed. If measuring the standard plan on that frame shows the profile as a cost, the options are arithmetic histogram binning with an edge fix-up (about 1.3 s of the column pass at 1M × 50 locally), a sketched distinct count above a row threshold, and sharing `n_unique` and null counts between type inference and the count pass. The run health output's memory figure should say what it measures: `Dataset.frame.estimated_size()` undercounts a CSV-loaded frame (kitchen50k is 47 MB estimated and about 180 MB resident after load). The task-level legacy perf comparison is noisy on shared runners (U0-17); the profile scenarios were within 2% across 3 runs.
 - **Note from U2-06:** call `dsbf.profile.profile_dataset` and `infer_stage` (with `StageThresholds.from_config`) from the entry point, and remove the legacy `eda/stage_inference.py` and its call in `ProfileEngine` when the engine path is replaced.
 - **Note from U2-03:** the identifier and period-label rules use the share of distinct values, so a row sample can type a column differently from the full data (kitchen50k's `high_cardinality_random` is `categorical` whole and `identifier` in a 2000-row random sample). Decide whether `sample=…` types the full dataset first and profiles the sample, or types the sample and records it in `semantic_sample_rows`.
