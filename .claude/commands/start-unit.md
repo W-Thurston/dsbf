@@ -19,7 +19,7 @@ its *done when* condition.
    - State the selected ID and title, and today's date (`YYYY-MM-DD`).
    - *Done when* exactly one unit is selected.
 3. **Backfill the previous unit.**
-   - If the most recently `done` unit has no PR number and merge SHA, find them with `gh pr list --state merged --search "<commit subject>"` and `git log`, and add them to its entry.
+   - If the most recently `done` unit has no PR number and merge SHA, find them with `gh pr list --state merged --search "<commit subject>"` and `git log`, and add them to its entry. When that unit closed its phase, its entry is the phase's PR list and "Units and PRs" row in `docs/HISTORY.md`.
    - *Done when* the previous `done` unit's entry carries its PR number and SHA, or there is no previous unit.
 4. **Branch.**
    - `git switch main && git pull --ff-only`, then `git switch -c unit/<ID>-<slug>`.

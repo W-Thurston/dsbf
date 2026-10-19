@@ -2,24 +2,30 @@
 
 This is the backlog of upcoming work. Each **phase** is a program: its capability, motivation,
 boundaries, sequence and success criteria are locked at the top of the phase. Work inside a phase
-is broken into **units**. A unit is one branch, one PR, one commit and one session. The workflow for running a unit is in [`CLAUDE.md`](CLAUDE.md), and the active unit (at
-most one) lives in [`PLAN.md`](PLAN.md).
+is broken into **units**. A unit is one branch, one PR, one commit and one session. The workflow
+for running a unit is in [`CLAUDE.md`](CLAUDE.md), and the active unit (at most one) lives in
+[`PLAN.md`](PLAN.md).
 
 - **Design:** [`docs/REFACTOR_PLAN.md`](docs/REFACTOR_PLAN.md)
-- **Findings cited as F-xx / N-xx:** [`docs/REVIEW_FINDINGS.md`](docs/REVIEW_FINDINGS.md)
-- **How a run works today, with measurements:** [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md)
+- **Findings cited as F-xx / N-xx, with their status:** [`docs/REVIEW_FINDINGS.md`](docs/REVIEW_FINDINGS.md)
+- **Finished programs, with every unit and PR:** [`docs/HISTORY.md`](docs/HISTORY.md)
+- **How a legacy run works, with measurements:** [`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md)
 
 **Status values:**
 - `todo`: ready once its dependencies are `done`
 - `active`: currently in `PLAN.md`
-- `done`: merged; the entry carries notes and the PR number. When a phase's last unit closes,
-  its unit entries are condensed into a short program summary (see `.claude/commands/closeout.md`).
-- `placeholder`: a later phase, detailed by that phase's planning unit
+- `done`: merged; the entry carries notes and the PR number. When a phase's last unit closes, its
+  unit entries become a program summary in `docs/HISTORY.md` and a row under "Finished programs"
+  (see `.claude/commands/closeout.md`).
+- `outline`: a named unit with its goal, dependencies and acceptance. Its phase's planning unit
+  confirms it, adds assumptions and steps, and sets it `todo`.
+- `placeholder`: a later phase's work, broken into units by that phase's planning unit
 
 **Next unit:** the first `todo` unit, in order, whose dependencies are all `done`.
 
-Phases 0–3 are broken down in full. Phases 4–9 are placeholders. Each starts with a `Ux-00`
-planning unit that turns the placeholders into full units, using what earlier phases taught.
+Phase 4 is broken down in full. Phase 5 is broken into `outline` units that U5-00 confirms.
+Phases 6–9 have a locked phase block and an ordered list of placeholders; each starts with a
+`Ux-00` planning unit that turns the list into full units, using what earlier phases taught.
 
 ## Dependency upgrades
 
@@ -32,154 +38,533 @@ becomes its own reviewed step (golden snapshots regenerated, with the difference
 PR) or stays behind a cap, recorded in the table below with the unit that revisits it. When a
 unit takes an upgrade, it raises the cap and deletes the row.
 
+The four Python caps below protect legacy tasks. The core checks that replace those tasks are
+written and tested against the newer releases (each unit runs its tests with `uv run --with`), and
+U4-19 lifts the caps once U4-18 has deleted the legacy code.
+
 | Held back (`pyproject.toml` cap) | Why | Revisit in |
 |---|---|---|
-| `pandas <3` (PR #47, closed 2026-10-16) | 3.0 fails the 3.12 and 3.13 test jobs (string dtype, copy-on-write); the legacy tasks run on pandas until they migrate | U4-E (the base cap; pandas 3 frames already load as an input type, U2-01) |
-| `statsmodels <0.15` | 0.15's `variance_inflation_factor` includes the intercept: VIFs drop and four columns on the `clean` archetype stop being flagged | U4-B (VIF redesign, F-32) |
-| `scikit-learn <1.8` | 1.8 changes `GaussianMixture` log-likelihood on discrete columns (titanic `pclass` BIC 1016 → 1763), so `detect_bimodal_distribution` reports other BIC values and finding titles | U4-B (bimodality is an analysis check) |
-| `scipy <1.18` (found in U1-05, no PR) | 1.18 makes `kstest(x, "norm", args=(mu, sigma))` raise `TypeError: ndtr() takes from 1 to 2 positional arguments but 3 were given`, so `run_ks` and two normality tests fail on a fresh `pip install`; DSBF imported scipy without declaring it, so only the lock kept it on 1.16.3 | the unit that migrates the normality tests (Phase 4; U4-00 assigns it), or sooner if a unit touches `normality_tests.py` |
-| `plotly <7` (PR #62, closed 2026-10-16) | 7 removes the `mapbox` layout property that `custom_plotly_templates.py` sets, so it fails at import; the backend plotting that uses plotly is deleted anyway | U4-E (plotly is deleted; drop the cap and the ignore entry) |
+| `pandas <3` (PR #47, closed 2026-10-16) | 3.0 fails the 3.12 and 3.13 test jobs (string dtype, copy-on-write); the legacy tasks run on pandas | U4-19 (pandas 3 frames already load as an input type, U2-01) |
+| `statsmodels <0.15` | 0.15's `variance_inflation_factor` includes the intercept: VIFs drop and four columns on the `clean` archetype stop being flagged | U4-08 decides the VIF definition; U4-19 lifts the cap |
+| `scikit-learn <1.8` | 1.8 changes `GaussianMixture` log-likelihood on discrete columns (titanic `pclass` BIC 1016 → 1763), so `detect_bimodal_distribution` reports other BIC values and finding titles | U4-06 decides how bimodality reports BIC; U4-19 lifts the cap |
+| `scipy <1.18` (found in U1-05, no PR) | 1.18 makes `kstest(x, "norm", args=(mu, sigma))` raise `TypeError: ndtr() takes from 1 to 2 positional arguments but 3 were given`, so `run_ks` and two normality tests fail on a fresh `pip install` | U4-06 writes `normality` without that call; U4-19 lifts the cap |
+| `plotly <7` (PR #62, closed 2026-10-16) | 7 removes the `mapbox` layout property that `custom_plotly_templates.py` sets, so it fails at import | U4-18 (plotly is deleted with the backend plotting; drop the cap and the ignore entry) |
 | `vue-router <5` (PR #69, ignored from 2026-10-17) | 5 is a major bump of the router the current dashboard is built on; checking it needs the dashboard viewed in a browser, and the dashboard is rebuilt in Phase 6 | U6-00 |
 | `plotly.js-dist-min <4` (PR #70, ignored from 2026-10-17) | 4 is a major bump of the library behind the legacy charts; checking it needs the dashboard viewed in a browser, and the charts are rebuilt in Phase 6 | U6-00 |
 
 `.github/dependabot.yml` carries an `ignore` entry for each row, so Dependabot doesn't re-raise the held-back version. Removing a cap removes its entry.
 
----
+## Finished programs
 
-## Phase 0: Stabilise and baseline
+Each program's summary (capability, measured success criteria, key decisions, deviations, PRs) is
+in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is recorded in
+[`docs/REVIEW_FINDINGS.md`](docs/REVIEW_FINDINGS.md).
 
-**Done (2026-10-16), 17 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U0-xx" lines.
-
-- **Capability delivered:** a trustworthy, measured baseline on the target toolchain. CI runs lint (ruff from `uv.lock`), type check (pyrefly with a baseline), the fast gate and the full suite on Python 3.12 and 3.13, CodeQL, and the `golden` and `perf` workflows (nightly, on demand and on labelled PRs). Dependencies are managed with uv. Tests run hermetically from a temporary directory, every registered task completes on a hostile frame, and ADRs D1–D11 are accepted.
-- **Success criteria, measured:**
-  - Every Phase 0 unit is `done`: 17 of 17.
-  - Fast gate (`unit and not slow`) 29 s; full suite 5 min 14 s (858 tests, U0-06). The `titanic` quickstart from a temporary directory went from 4 failed tasks to 0 (U0-07); `kitchen5k` from 3 failed tasks to 0, with 5 skipped by design (U0-09).
-  - Golden baselines: ten snapshots (the 8 archetypes, `titanic`, `kitchen5k`), 60 successful and 5 skipped tasks each, 0 errors; two full runs matched byte for byte (U0-13). Re-checked on 2026-10-16 against the upgraded dependency set: 10 of 10 pass.
-  - Performance baseline, taken on `ubuntu-latest` (4 CPUs): `titanic` 26 s, adversarial frame 16 s, `kitchen5k` 147 s, `kitchen50k` 357 s with a 2.08 GB peak, 0 failed tasks (U0-14).
-  - pyrefly baseline: 895 existing errors across `dsbf/`, `tests/` and `docs/practice_run/` (U0-12); 0 new.
-  - ADRs D1–D11 are `Accepted`: [0001](docs/adr/0001-library-first-layering.md), [0002](docs/adr/0002-findings-as-primary-output.md), [0003](docs/adr/0003-polars-arrow-data-representation.md), [0004](docs/adr/0004-ibis-warehouse-pushdown.md), [0005](docs/adr/0005-pydantic-contracts.md), [0006](docs/adr/0006-report-only-failure-semantics.md), [0007](docs/adr/0007-entry-point-plugins.md), [0008](docs/adr/0008-sqlalchemy-alembic-fsspec-storage.md), [0009](docs/adr/0009-single-distribution-with-extras.md), [0010](docs/adr/0010-check-naming.md), [0011](docs/adr/0011-toolchain.md).
-  - Security alerts: 0 open code-scanning alerts and 0 open Dependabot alerts, re-listed on 2026-10-16 after #59 merged (alerts 3–10 closed when CodeQL re-scanned `main`).
-- **Key decisions:** uv with the `uv_build` backend and `uv.lock` (ADR 0011); pyrefly as a pinned dev dependency, `default` preset, committed baseline that only shrinks; Python 3.14 out of the CI matrix (nine locked packages had no cp314 wheel); golden runs pin `PYTHONHASHSEED=0` and rank value counts with a stable sort (`ranked_value_counts`); `titanic` is vendored for the golden suite (seaborn-data has no license); perf numbers are compared only against the CI-hardware baseline; U0-16 closed the code-scanning alerts by returning generic API error text and logging the exception, and by giving the workflows `permissions: contents: read`.
-- **Deviations from the phase block:**
-  - The phase promised "no new features" and cheap safety fixes only. U0-09 also fixed `RichHandler(markup=True)`, which made seven tasks crash on column names such as `[/x]` (the largest crash cause); U0-13 fixed unstable tie ordering in three tasks; U0-06 added API tests.
-  - "Dependabot backlog merged" took three units: U0-04, U0-16 and U0-17. U0-16 was widened on 2026-10-16 from the security alerts to the whole backlog, so Phase 1 starts with no open PR. It took #34, #38, #42, #43 and #45, and closed #46 (polars 2) and #47 (pandas 3) as deferred. Dependabot then raised four more PRs as soon as #59 merged, so U0-17 took #60 (pandas 2.3.3, polars 1.44.2; its pyrefly baseline lost one entry the new typings fixed), #61 (ipykernel 7) and #63 (rich 15), all on green CI with golden 10 of 10, and closed #62 (plotly 7, which fails at import and is deleted with the legacy plotting in U4-E).
-  - The golden suite showed that two upgrades in #43 change results, so they stay behind caps: `statsmodels <0.15` (VIF includes the intercept) and `scikit-learn <1.8` (`GaussianMixture` log-likelihood on discrete columns). With `pandas <3`, `polars <2` and `plotly <7` they are listed under "Dependency upgrades" at the top of this file, each with the unit that revisits it, and mirrored by `ignore` entries in `.github/dependabot.yml`.
-  - The README's examples were all rebuilt (U0-11) because most no longer ran.
-- **PRs:** #29, #31, #32, #40, #41, #48, #50, #51, #52, #53, #54, #55, #56, #57, #58, #59 (U0-16, merged as `751ad9d`), and #64 (U0-17, merged as `de863ab`). Dependency PRs merged along the way: #23, #26, #24, #28, #27, #20, #22 and #36 (U0-04); #38, #42, #45, #34 and #43 (U0-16); #61, #63 and #60 (U0-17).
+| Phase | Done | Units (PRs) | Delivered |
+|---|---|---|---|
+| [0 · Stabilise and baseline](docs/HISTORY.md#phase-0-stabilise-and-baseline) | 2026-10-16 | 17 (#29–#64) | CI green on uv, ruff from the lock, pyrefly with a baseline and test tier markers; hermetic tests; golden snapshots for 10 datasets; the perf harness and CI baseline; ADRs D1–D11 |
+| [1 · Contracts](docs/HISTORY.md#phase-1-contracts) | 2026-10-17 | 11 (#66–#79) | `src/` layout, pnpm frontend toolchain, `DSBF_HOME`, extras, the versioned `dsbf.model` contracts, the layered config loader, `dsbf schema export` with a breaking-change gate |
+| [2 · Data and profile](docs/HISTORY.md#phase-2-data-and-profile) | 2026-10-18 | 8 (#80–#87) | `dsbf.data.load` to a fingerprinted, sampled `Dataset`; one profile pass (0.44 s at 52.5k × 60); parity with the legacy summaries documented |
+| [3 · Engine and check API](docs/HISTORY.md#phase-3-engine-and-check-api) | 2026-10-19 | 12 (#88–#99) | `@check` API, registry and plugins, planner and `dsbf plan`, an isolated, parallel and cached executor, library-friendly logging, all 65 legacy tasks adapted with findings, `dsbf.profile()` |
 
 ---
 
-## Phase 1: Contracts
+## Phase 4: Migrate checks
 
-**Done (2026-10-17), 11 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U1-xx" lines.
+- **Capability:** Every analysis DSBF performs is a typed check in the `core` pack. It reads the profile or the value cache and declares its parameters, output, cost and extras. The legacy engine, tasks, store, API v1 and backend plotting are gone. A stopgap `dsbf profile` runs the new engine, and the base install holds only the core dependencies.
+- **Motivation:** Findings with evidence and statistical fixes are the product (REFACTOR_PLAN §2, §10). Column selection by construction removes F-11. Heavy checks with budgets meet the performance targets (§11). Deleting the legacy stack ends the two-system period that Phase 3 opened.
+- **Boundaries:** No policy evaluation, no sinks beyond the stopgap CLI's `run.json`, and no CLI v2 (all Phase 5). No store, API v2 or dashboard (Phase 6). The frontend source stays in the repo unchanged; with API v1 deleted, the dashboard does not run from U4-18 until Phase 6 (decided by the user on 2026-10-19). No new data sources (Phase 7).
+- **Sequence and dependencies:** Depends on Phase 3. Foundations (U4-01 to U4-03), then rule checks (U4-04, U4-05), analysis checks (U4-06 to U4-09), heavy checks (U4-10 to U4-12), ML-prep, target-aware and synthesis checks (U4-13 to U4-15), calibration (U4-16), and the cutover (U4-17 to U4-19).
+- **Success criteria:**
+  - No legacy task remains; `dsbf.legacy`, `dsbf.eda`, `dsbf.core`, `dsbf.storage` and `dsbf.api` are deleted.
+  - On the CI runner, the standard plan takes under 5 s on titanic, and under 60 s with under 1 GB peak on kitchen50k (52.5k × 60).
+  - Calibration baselines (false-positive and false-negative rates) are recorded for each core check version.
+  - Every core check runs on the adversarial frame, and the golden findings snapshots cover every core check.
+  - `pip install dsbf` without extras runs `dsbf profile`, and each check that needs an extra reports `unavailable`.
 
-- **Capability delivered:** the `src/` layout, a top-level `frontend/` on pnpm with ESLint, Prettier and Vitest in CI, runtime paths under `DSBF_HOME`, the optional-dependency extras, and the versioned result contracts in `dsbf.model` (subjects, evidence, findings, check results, run health, profiles, manifests, `Run`, policy rules) with a layered config loader (`dsbf.config`). `dsbf schema export` publishes `schema/run.schema.json` and `frontend/src/generated/run.d.ts`, and a CI `contracts` job fails on a stale export or on a schema change its version number does not announce.
-- **Success criteria, measured:**
-  - Every Phase 1 unit is `done`: 11 of 11.
-  - A hand-built `Run` validates, round-trips through JSON, validates against the exported schema with `jsonschema` and compiles against the generated types under `tsc --strict` (U1-11). The `ColumnProfile` union narrows exhaustively.
-  - Size: profile plus manifests for titanic are about 10 KB against a 200 KB budget (U1-08); a 61-check, 610-finding run is 338 KB, down from 644 KB before `Run.findings` became derived (U1-11).
-  - Breaking-change gate, exercised on a real field removal: stale export exit 1, unannounced removal exit 1, with `SCHEMA_VERSION` raised exit 0 (U1-11).
-  - Packaging: the wheel's file list equals `git ls-files src` (U1-01); the wheel with `[all]` in a clean venv passes the suite, 1006 tests (U1-05).
-  - Paths: a run started from a scratch directory writes only under the home, and 357 of 357 figures are served by the API from another directory; golden 10 of 10 unchanged (U1-04).
-  - Non-finite values: 5 of 5 on the adversarial frame are nulled and flagged, and all output is strict JSON, where the legacy `report.json` has 269 `NaN` and 19 `Infinity` (U1-06).
-  - Frontend: `pnpm lint && pnpm build && pnpm test:run` pass with 31 unit tests and 20 lint warnings recorded as follow-ups (U1-03).
-- **Key decisions:** pydantic v2 contracts that are frozen, reject unknown fields and use tuples ([ADR 0005](docs/adr/0005-pydantic-contracts.md)); undefined numbers become `None` plus a flag, never an error; `Finding.id` hashes check, subject and code; the home is `DSBF_HOME`, else the per-user data directory, chosen by the user on 2026-10-17 so one build serves a laptop and a cloud job ([ADR 0008](docs/adr/0008-sqlalchemy-alembic-fsspec-storage.md)); extras follow [ADR 0009](docs/adr/0009-single-distribution-with-extras.md) while the base install is unchanged; Prettier was chosen over ESLint stylistic rules (U1-03); the config loader is hand-written, because `pydantic-settings` cannot name the layer behind a bad key; the published schema describes a dumped run (serialization mode, defaults required) and treats any change to a type constraint as breaking, with the version rule in `CONTRIBUTING.md`; `Run.findings` is derived from `results`, not serialised.
-- **Deviations from the phase block:**
-  - The phase promised "packaging, paths and models only". U1-04 also made the metadata export opt-in (`dsbf tasks export`) and removed `record_run`; U1-05 declared scipy, which a clean install showed was imported but never declared, and capped it below 1.18; U1-09 added the config loader and U1-10 the policy schema, which the phase block did not list by name.
-  - The policy matcher set grew beyond the REFACTOR_PLAN §7.2 example (all six comparison operators; `check`, `confidence`, `tag` and `column` matchers; `then` accepts a list) because the example cannot scope a rule to a check or column (U1-10).
-  - `identifier` and `unknown` were added to the profile variants because the legacy `infer_types` emits them (U1-08). `pyarrow` stayed in the base install, as the design lists it (U1-05).
-  - `Policy` is not in the published schema, because its loose spellings normalise on load; it ships with its loader (carried into U5-00). The dashboard was not viewed in a browser, and Dependabot's vue-router 5 and plotly.js 4 are held back (rows above, revisited in U6-00).
-  - Phase 2 is already broken into full units, so it has no `U2-00`; U2-01 is next.
-- **PRs:** #66 (U1-01, `bfc43e1`), #67 (U1-02, `b99633a`), #68 (U1-03, `c82fe45`), #71 (U1-04, `77d1992`), #72 (U1-05, `9f9d2c8`), #74 (U1-06, `837aea9`), #75 (U1-07, `07c2f53`), #76 (U1-08, `4b76948`), #77 (U1-09, `4af82d8`), #78 (U1-10, `3f39519`), and #79 (U1-11, `3b76aa7`).
+### How a migration works
+
+These rules apply to every migration unit (U4-02 to U4-15). They were decided in U4-00, and the
+retired set and the legacy stack's end were chosen by the user on 2026-10-19.
+
+- **Parallel tracks.** Core checks live in `src/dsbf/checks/`, in the `core` pack, beside the intact `legacy` pack. A core check names the legacy tasks it supersedes. Until U4-15, the default selection is `core` plus every legacy task that nothing supersedes. A superseded task still runs when a remaining legacy task hard-requires it (the planner pulls it in as `required_by`) or reads its result without declaring it (`UNDECLARED_READS` in `dsbf.legacy.adapter`: `data_quality_scorer` reads `detect_out_of_bounds`, `detect_collinear_features` and `summarize_numeric`). Its findings are dropped, so each finding is reported once, and the legacy scorers keep their inputs until U4-15 removes them. No shim feeds legacy scorers from core output.
+- **Parity, then intended differences.** Each migration compares the core check with the tasks it supersedes on the ten golden datasets, through the harness from U4-02. A metric either matches within tolerance or is an accepted difference with a reason, as in `tests/test_profile/accepted.py`. A statistical fix is an accepted difference whose reason says why the new result is right. The unit removes its tasks' entries from `tests/golden/engine_differences.json`.
+- **Golden findings.** Each unit regenerates the core findings snapshots with `--update-golden` and explains the diff in its PR. The golden suite and the perf suite run on a PR only with the `golden` or `perf` label, so every migration PR carries `golden`, and a PR that changes run time (a new heavy check, or a change to the executor) also carries `perf`.
+- **Run time rises before it falls.** `ml_readiness_scorer` hard-requires 14 legacy tasks, most of them superseded in U4-02 to U4-08, so they keep running beside the core checks that replace them until U4-15 takes the scorers out of the default selection. Each unit reports its change to the `standard-*` scenarios; the drop is measured at U4-15.
+- **Every check has** an `applies_to` (column selection by construction, F-11), a `CheckParams` model with bounds, an output model, `n_used` and the method on each finding's evidence, a cost class, its extras (`unavailable` without them), unit tests on small fixtures, and the adversarial-frame test. Recommendation tips are attached after the check returns (U4-04).
+- **Retired, not migrated:** the 13 tasks that restate the profile (`summarize_nulls`, `summarize_numeric`, `summarize_unique`, `summarize_value_counts`, `summarize_modes`, `summarize_boolean_fields`, `summarize_text_fields`, `summarize_dataset_shape`, `categorical_length_stats`, `missingness_heatmap`, `infer_types`, `sample_head`, `sample_tail`), whose guidance moves to rule checks; `validate_plugin_coverage`, `identify_bottleneck_tasks` and `log_resource_usage`, which registry notes and `Timing` replace; and the two plot tasks (N-A2).
+- **Names** are nouns for the domain behaviour (ADR 0010): `zeros`, not `detect_zeros`.
+
+| Core check | Kind | Supersedes | Unit |
+|---|---|---|---|
+| `zeros` | rule | `detect_zeros` | U4-02 |
+| `null_rate` | rule | `summarize_nulls` (findings) | U4-04 |
+| `constant_columns` | rule | `detect_constant_columns` | U4-04 |
+| `high_cardinality` | rule | `detect_high_cardinality` | U4-04 |
+| `id_columns` | rule | `detect_id_columns` | U4-04 |
+| `dominant_value` | rule | `detect_single_dominant_value`; `summarize_boolean_fields` (imbalance finding) | U4-04 |
+| `near_zero_variance` | rule | `detect_near_zero_variance`; `summarize_numeric` (near-zero-variance findings) | U4-04 |
+| `duplicate_rows` | rule | `detect_duplicates` | U4-04 |
+| `duplicate_columns` | rule | `detect_duplicate_columns` | U4-04 |
+| `text_encoding` | rule | new: U+FFFD and NUL in names and values | U4-04 |
+| `skewness` | rule | `detect_skewness`; `summarize_numeric` (mean–median gap findings) | U4-05 |
+| `kurtosis` | rule | `compute_kurtosis` | U4-05 |
+| `entropy` | rule | `compute_entropy` | U4-05 |
+| `dtype_optimizations` | rule | `suggest_dtype_optimizations` | U4-05 |
+| `sample_size` | rule | `sample_size_adequacy` | U4-05 |
+| `class_imbalance` | rule | `detect_class_imbalance` | U4-05 |
+| `schema` | rule | `schema_validation` | U4-05 |
+| `outliers` | analysis | `detect_outliers` | U4-06 |
+| `normality` | analysis | `normality_tests`, `normality_qq_plots` | U4-06 |
+| `bimodality` | analysis (`ml`) | `detect_bimodal_distribution` | U4-06 |
+| `out_of_bounds` | analysis | `detect_out_of_bounds` | U4-06 |
+| `associations` | analysis | `compute_pairwise_associations`; `detect_data_leakage` (feature–feature pairs, F-26) | U4-07 |
+| `contingency` | analysis | `contingency_tables` | U4-07 |
+| `group_differences` | analysis | `one_way_anova`, `kruskal_wallis`, `mann_whitney_u` | U4-08 |
+| `collinearity` | analysis | `detect_collinear_features` | U4-08 |
+| `missingness_mechanism` | analysis | `missingness_mechanism_analysis` | U4-09 |
+| `mixed_types` | analysis | `detect_mixed_type_columns` | U4-09 |
+| `encoded_columns` | analysis | `detect_encoded_columns` | U4-09 |
+| `format_violations` | analysis | `detect_regex_format_violations` | U4-09 |
+| `string_anomalies` | analysis | `detect_string_anomalies` | U4-09 |
+| `fuzzy_duplicates` | analysis, heavy (`text`) | `fuzzy_duplicate_detection` | U4-10 |
+| `temporal_gaps`, `datetime_consistency`, `datetime_features` | rule | `temporal_gap_detection`, `check_datetime_consistency`, `extract_datetime_features` | U4-11 |
+| `stationarity`, `autocorrelation`, `seasonal_decomposition` | analysis (`timeseries`) | `detect_stationarity`, `compute_acf_pacf`, `decompose_time_series` | U4-11 |
+| `reference_drift` | analysis | `compare_with_reference_dataset`, `detect_feature_drift`, `detect_target_drift` | U4-12 |
+| `categorical_encoding`, `numeric_binning`, `transformations` | rule, analysis | `suggest_categorical_encoding`, `suggest_numerical_binning`, `transformation_preview` | U4-13 |
+| `imputation` | synthesis | `imputation_strategy_suggestions` | U4-13 |
+| `target_leakage` | analysis | new: feature→target leakage (F-26) | U4-14 |
+| `mutual_information` | analysis (`ml`) | `compute_mutual_information` | U4-14 |
+| `quality_dimensions`, `ml_readiness` | synthesis | `data_quality_scorer`, `ml_readiness_scorer` | U4-15 |
+
+The 49 superseded and 18 retired tasks account for all 67 registered legacy tasks.
+
+### U4-00 · Plan Phase 4
+- **Status:** done (2026-10-19) · **Size:** M · **Depends on:** U3-12
+- **Notes:** Phases 0–3 are now rows above, with their summaries and a 48-unit PR table in `docs/HISTORY.md`. Every finding in `docs/REVIEW_FINDINGS.md` has a dated status, checked against the code and probe runs. Phase 4 has 19 units, Phase 5 has `outline` units, and Phases 6–9 are sketched. A review before merging (2026-10-19) fixed U4-01's warning design, kept soft-read legacy inputs running, resized U4-02 and moved its per-check schema export to U5-03, and gave the text-heavy golden dataset to U4-09.
+- **Deviations:** scope was widened by the user before the unit started. The user also chose to delete the legacy stack, including the old store, API v1 and the dashboard's backend, in Phase 4, with a stopgap CLI, and to retire the 13 profile-restating summaries. API v1's removal moved from Phase 6, and some Phase 5 carry-ins moved to Phase 4 or became moot.
+- **Goal:** Break the Phase 4 batches into full units using Phase 3 learnings and golden-run evidence. Scope widened by the user on 2026-10-19: condense Phases 0–3 into the table above and `docs/HISTORY.md`; record a status for every finding in `docs/REVIEW_FINDINGS.md`, verified against the code and real runs; plan Phase 5 as `outline` units and sketch Phases 6–9.
+- **Commit:** `docs: plan the check migration and record finding status`
+
+### U4-01 · Engine performance baseline and warnings as notes
+- **Status:** todo · **Size:** S · **Depends on:** U4-00
+- **Note from U3-12:** record the `engine-*` perf baselines (serial and parallel, titanic and kitchen5k) from the CI runner with `--update-perf-baseline` before the first migration, so each Phase 4 unit is measured against them. Locally the parallel executor is slower than serial for the adapted tasks (titanic 24.7 s against 22.4 s, kitchen5k 120.3 s against 104.1 s), so use the CI figures to decide whether the default `workers` should be lower for adapted checks, and whether `fuzzy_duplicate_detection` (18.4 s of titanic's serial time, 74.3 s of kitchen5k's) should be `runs_in="process"`.
+- **Note from U3-12:** Python warnings from legacy tasks (`infer_types` date parsing, `scipy` constant input, `statsmodels` KPSS) reach the caller's stderr during `dsbf.profile()`, because they are not log records.
+- **Note from U4-00:** the `engine-*` scenarios arrived with #99, after the 2026-10-19 nightly; the first nightly perf artifact that measures them is 2026-10-20's, so promote from a nightly run on `main` rather than dispatching one. Under the default warning filters, Python shows an identical warning once per code location and remembers it for the life of the process (checked on 2026-10-19), so a hook on `warnings.showwarning` alone sees a repeat zero times, and a second `dsbf.profile()` in the same notebook sees nothing.
+- **Note from U4-00:** take Dependabot PR #73 (scipy 1.16.3 → 1.17.1, platformdirs, fastapi; open since 2026-10-17, fast gate green, golden suite never run) in this unit, after a golden run on it, so the baselines are recorded on the locked versions.
+- **Goal:**
+  - Record the `engine-*` baselines from the CI runner.
+  - Add `standard-titanic` and `standard-kitchen50k` scenarios: the default selection at the standard depth, with the Phase 4 budgets (under 5 s; under 60 s and 1 GB) reported but not enforced, so every migration reports its change (which rises until U4-15; see "How a migration works").
+  - A warning raised inside a check becomes one `python_warning` note on that check per category and message, with a count, instead of reaching stderr. For the length of a run, the executor makes every warning reach the hook (an `always` filter set from the calling thread and restored after) and routes each one to the check whose thread raised it; a warning from any other thread goes to the original handler.
+  - Decide the default workers for adapted checks and whether fuzzy duplicates run in a process.
+- **Assumptions to confirm:**
+  - `warnings.showwarning` runs in the thread that raised, so a thread-local "current check" can route a warning to its check. `warnings.catch_warnings` is not thread-safe and can't be used per check, and Python 3.12 and 3.13 have no context-aware warning filters, so the run-wide filter change is visible to the caller's other threads while a run lasts; document that in `dsbf.profile()`.
+  - A process check can collect its warnings in the worker and return them with its result.
+  - A baseline is promoted from the perf workflow's artifact as `tests/perf/README.md` describes (workflow dispatch, then `--update-perf-baseline` on the downloaded results).
+- **Acceptance:**
+  - `tests/perf/baseline.json` holds the `engine-*` and `standard-*` scenarios, recorded on `ubuntu-latest`.
+  - A toy check that warns twice gets one note with count 2, at 1 and N workers and in a process, and nothing reaches stderr.
+  - A second run in the same process records the same note again, and the caller's warning filters are as they were after the run.
+  - titanic's default run prints no warning on stderr.
+- **Commit:** `perf: record engine baselines and turn check warnings into notes`
+
+### U4-02 · Core pack, migration harness and the first rule check
+- **Status:** todo · **Size:** L · **Depends on:** U4-01 · **Resolves:** F-11 (mechanism and regression test)
+- **Note from U0-03:** the legacy guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. Verified on 2026-10-19: a 0/1 integer column profiled `categorical` appears in nine continuous-only legacy checks' output.
+- **Goal:**
+  - Create `src/dsbf/checks/` holding the `core` pack. `dsbf.profile()` and `dsbf plan` register it explicitly, never on import.
+  - Add the supersedes mapping and the default selection rule from "How a migration works", including the superseded tasks a remaining legacy task reads through `UNDECLARED_READS`. The mapping lives in `dsbf.legacy`, so the engine stays free of legacy knowledge and the mapping is deleted with it.
+  - Build the parity harness: the golden datasets, the legacy task through the adapter and the core check through the engine, a comparator per check, and an accepted-differences registry with reasons that fails on drift.
+  - Add core findings snapshots to the golden tier, normalised to id, check, code, subject, severity and key metrics.
+  - Add an adversarial test over every core check: the adversarial fixture plus Hypothesis-generated frames (odd names such as `a|b`, `[/x]`, empty and unicode names; all-null columns; one row; mixed types; timezone-aware datetimes). Hypothesis is added with `uv add --dev` (approved by the user on 2026-10-19).
+  - Migrate the pilot check, `zeros`.
+- **Assumptions to confirm:**
+  - How `dsbf.profile()` builds its registry and selection today (`library.py`), and where `core` joins.
+  - Whether the adapter can drop the findings of a check that is in the plan only as a requirement (`PlanEntry.selected` is false).
+  - What `tests/golden/engine_one.py` needs to run the core pack.
+- **Acceptance:**
+  - `zeros` runs on titanic and the adversarial frame.
+  - The default selection runs `zeros` and not `detect_zeros`, while `data_quality_scorer` and `ml_readiness_scorer` still get `detect_zeros` as a requirement, with its findings dropped.
+  - The parity test compares `zeros` with `detect_zeros` on the ten golden datasets, with the differences listed.
+  - An integer-coded boolean column never appears in `zeros` output.
+  - A drift in the core findings fails the golden tier.
+  - With `detect_out_of_bounds` marked superseded in a test mapping, `data_quality_scorer` still receives its result, and its findings are dropped.
+- **Commit:** `feat(checks): add the core check pack with a migration harness`
+
+### U4-03 · Profile additions for rule checks
+- **Status:** todo · **Size:** S · **Depends on:** U4-02
+- **Note from U2-03:** `load` decodes a non-UTF-8 CSV lossily with no error (a UTF-16 file reads with U+FFFD and NUL characters in names and values).
+- **Goal:** Add what the U4-04 and U4-05 rule checks need and the profile lacks:
+  - Shannon entropy over the full value distribution for categorical, boolean and text columns;
+  - a per-column content hash, so equal hashes mark duplicate-column candidates;
+  - counts of values containing U+FFFD or NUL, and a flag on names that contain them.
+
+  Bump `SCHEMA_VERSION` (minor) and update `docs/parity/profile.md`.
+- **Assumptions to confirm:**
+  - Every rule check in U4-04 and U4-05 maps to profile fields; list the mapping in `PLAN.md`. A check whose needs the profile can't meet becomes an analysis check.
+  - Polars' column hash is deterministic within a process, which is all a duplicate-column comparison needs. The profile digest in the cache key changes with it, as it does for any profile change.
+- **Acceptance:**
+  - `profile-kitchen50k` and `profile-wide1m` stay within budget (under 2 s; memory ratio under 2.5).
+  - The generated duplicate columns in kitchen5k have equal hashes.
+  - A UTF-16 CSV shows non-zero U+FFFD and NUL counts.
+- **Commit:** `feat(profile): add entropy, content hashes and encoding damage counts`
+
+### U4-04 · Rule checks I: column health and declarative tips
+- **Status:** todo · **Size:** M · **Depends on:** U4-03 · **Resolves:** F-31 (`eval`), F-11 and F-07 for these checks
+- **Note from U0-07:** `get_recommendation_tip` (`utils/reco_engine.py`) still runs `eval` on the YAML `condition` strings (F-31). Replace it with a declarative condition format (`{"field": ..., "op": ">", "value": ...}`) when the tasks that call it migrate.
+- **Note from U2-05:** a categorical column with mostly unique strings lists first-seen one-off values as top values (text columns skip values seen once). Decide, with the checks that consume top values, whether categorical should also require a repeat.
+- **Note from U4-00:** an integer row number (`0..n-1`) is profiled `numeric`, not `identifier` (checked on 2026-10-19). `id_columns` decides whether such a column is an identifier.
+- **Goal:** Profile-only rule checks (cost cheap): `null_rate`, `constant_columns`, `high_cardinality`, `id_columns`, `dominant_value`, `near_zero_variance`, `duplicate_rows`, `duplicate_columns` and `text_encoding`. A declarative recommendation library: conditions as `{field, op, value}`, evaluated after a check returns, with a failed lookup recorded as a note.
+- **Assumptions to confirm:**
+  - Every condition in `recommendation_library.yaml` fits `{field, op, value}`; list any that don't.
+  - Where a tip lives on a `Finding`, since the contract has no tip field: an `Action`, or an additive schema change.
+- **Acceptance:**
+  - Each check matches its legacy task, or lists its differences.
+  - The nine checks take under 50 ms together on the kitchen50k profile.
+  - No `eval` remains in the code.
+  - Every finding these tasks emitted on the golden datasets maps to a core finding code, or is dropped with a reason.
+- **Commit:** `feat(checks): add column health rule checks with declarative tips`
+
+### U4-05 · Rule checks II: distribution shape, types and data contracts
+- **Status:** todo · **Size:** M · **Depends on:** U4-04 · **Resolves:** F-07 (`schema_validation` keys)
+- **Note from U2-07:** a categorical column of integer codes has no min and max, where the legacy `summarize_numeric` summarised it. `dtype_optimizations` decides whether to read such codes as numeric.
+- **Goal:** Rule checks `skewness`, `kurtosis`, `entropy`, `dtype_optimizations`, `sample_size`, `class_imbalance` (on the `target` setting) and `schema`. `schema` takes the expected columns, types, nullability, ranges and allowed values as params, and is `not_applicable` without them. Supersede the 13 retired summary tasks.
+- **Assumptions to confirm:**
+  - How the profile's skewness and kurtosis estimators differ from scipy's defaults in the legacy tasks; that is either an accepted difference or a parameter.
+  - That every guidance blurb of the retired tasks is covered by a core check, or dropped with a reason.
+- **Acceptance:**
+  - Parity, or listed differences.
+  - A test maps every legacy finding code from the retired tasks on the golden datasets to a core code, or to "dropped" with a reason.
+  - `dsbf.profile(target=...)` drives `class_imbalance`.
+- **Commit:** `feat(checks): add distribution, type and schema rule checks`
+
+### U4-06 · Analysis checks I: distributions
+- **Status:** todo · **Size:** M · **Depends on:** U4-05 · **Resolves:** N-A3 (data side)
+- **Note from U1-05:** the `scipy <1.18` cap: write `normality` without the positional `kstest(..., args=...)` call that 1.18 breaks.
+- **Note from U0-16:** when bimodality is migrated, decide how the BIC comparison is reported. The absolute BIC and `delta / abs(bic1)` both depend on scikit-learn's log-likelihood convention; the delta itself did not move.
+- **Goal:** `outliers` (IQR, z-score and MAD, plus isolation forest behind `ml`), `normality` (the legacy tests, with Q-Q quantiles in its output), `bimodality` (Gaussian mixture BIC behind `ml`) and `out_of_bounds` (user bounds, counted from values). Each reads `ctx.values(col)` and records `n_used`, with row caps recorded in the evidence.
+- **Assumptions to confirm:**
+  - The new calls work on scipy 1.16 and 1.18 and on scikit-learn 1.7 and 1.8 (`uv run --with`).
+  - The mixture fit is deterministic with a seed.
+  - Isolation forest at 1M rows needs a sample cap.
+- **Acceptance:**
+  - Parity, or listed differences.
+  - Without `ml`, `bimodality` and the isolation-forest method report `unavailable`.
+  - The tests pass with scipy 1.18 and scikit-learn 1.8.
+- **Commit:** `feat(checks): add outlier, normality, bimodality and bounds checks`
+
+### U4-07 · Analysis checks II: pairwise associations
+- **Status:** todo · **Size:** M · **Depends on:** U4-06 · **Resolves:** F-13, F-10 (pair subjects), F-26 (redundancy part), REVIEW_FINDINGS part 2 C (intervals, Cramér's V, comparable scale, multiple comparisons)
+- **Note from U0-09:** the leakage correlation scan uses `select_dtypes` (F-11).
+- **Goal:**
+  - `associations`: Pearson, Spearman and Kendall routing, with the small-sample Kendall's τ reachable (route before the gate); η for numeric–categorical pairs, so strengths compare on one scale; Fisher z intervals for r and τ; `n_used` per pair; pairs as `Subject.column_pair`; pairs tested next to pairs flagged; and near-duplicate features (|r| ≥ 0.99) as `redundancy` findings, which supersedes `detect_data_leakage`'s scan.
+  - `contingency`: bias-corrected Cramér's V (Bergsma 2013) with a bootstrap interval and a category cap.
+- **Assumptions to confirm:**
+  - The pair cap and cost class: the legacy task took 33.9 s on kitchen50k in the CI baseline.
+  - Where the correlation matrix goes: in the output, or computed on demand in Phase 6.
+- **Acceptance:**
+  - A 20-row frame gets Kendall's τ.
+  - Columns named `a|b` and `c|d` get correct subjects.
+  - On small samples the corrected V is below the uncorrected one.
+  - Intended differences are documented, and the time at kitchen50k is recorded.
+- **Commit:** `feat(checks): add association and contingency checks with intervals`
+
+### U4-08 · Analysis checks III: group differences and collinearity
+- **Status:** todo · **Size:** M · **Depends on:** U4-07 · **Resolves:** F-32 (VIF part)
+- **Note from U0-09 and U0-16:** the collinearity check needs per-column VIF handling and `n_used` (F-32). Decide the VIF definition: centred with an intercept, as statsmodels 0.15 computes it, or the uncentred one the baselines record. The centred VIF is the diagonal of the inverse correlation matrix, so NumPy can compute it without statsmodels.
+- **Goal:** `group_differences`, one check with ANOVA, Kruskal–Wallis and Mann–Whitney as methods, effect sizes with intervals, and the number of tests run. `collinearity`, with VIF per column under its own missing-data strategy (drop sparse columns first, then rows), `n_used`, and a guard on rows below k + 1.
+- **Acceptance:**
+  - Parity, or listed differences, explaining the four `clean` columns the statsmodels note names.
+  - The VIF definition and `n_used` are in the evidence.
+- **Commit:** `feat(checks): add group difference and collinearity checks`
+
+### U4-09 · Analysis checks IV: missingness and string structure
+- **Status:** todo · **Size:** M · **Depends on:** U4-08
+- **Note from U2-03:** a column that mixes date formats (kitchen5k's `inconsistent_datetime`) is typed `categorical`, so a check could report the mix. The identifier rule treats any string column over 90% distinct as `identifier`, so near-unique free text (kitchen50k's `long_text`) is not `text`; revisit the identifier-before-text order with the checks that consume the type.
+- **Note from U2-07 (was on U4-02):** no golden dataset produces `summarize_text_fields` output, and all ten plan `detect_regex_format_violations` and `summarize_text_fields` `not_applicable` today, so the text checks have no golden coverage.
+- **Goal:**
+  - `missingness_mechanism` (built on the profile's missingness pairs, with n per test), `mixed_types` (its null handling can be switched off, which F-07 found impossible), `encoded_columns`, `format_violations` (regex rules plus mixed date formats from pattern signatures) and `string_anomalies`.
+  - Add a text-heavy golden dataset whose license allows vendoring, with its legacy and core snapshots.
+- **Acceptance:**
+  - The text-heavy golden dataset exercises `format_violations` and `string_anomalies`.
+  - Parity, or listed differences.
+  - `inconsistent_datetime` is reported as mixed formats.
+- **Commit:** `feat(checks): add missingness mechanism and string structure checks`
+
+### U4-10 · Fuzzy duplicates redesigned
+- **Status:** todo · **Size:** M · **Depends on:** U4-09 · **Resolves:** F-35
+- **Note from U3-11:** `fuzzy_duplicate_detection` puts its whole pair list in its output, 8.46 MB of an 8.93 MB titanic `Run` (2026-10-19).
+- **Note from U0-13:** it builds candidate pairs from a token index over sets of strings and stops at `max_candidates`, so which pairs it keeps (and the count) follows `PYTHONHASHSEED`. Make the order deterministic, so the golden runner no longer needs the pinned seed.
+- **Goal:**
+  - rapidfuzz (`text` extra) on row strings extracted once;
+  - blocking on rare tokens (IDF-weighted or MinHash/LSH) that leaves low-cardinality categoricals out of the row string;
+  - a deterministic candidate order;
+  - coverage (`pairs_compared / pairs_possible`) and budgets (rows, pairs, seconds) recorded in the evidence;
+  - the top N pairs plus counts in the output, with the bulk behind `details_ref` once Phase 6 has an artifact store.
+
+  Add planted near-duplicate rows to the kitchen-sink generator (it has none) and calibrate the threshold on them. Use `runs_in` as U4-01 decided.
+- **Acceptance:**
+  - The check's output on titanic is under 100 KB.
+  - Results are equal across `PYTHONHASHSEED` values.
+  - Recall on the planted near-duplicates is recorded.
+  - Time at titanic and kitchen5k is within a budget set from U4-01's figures.
+- **Commit:** `feat(checks): redesign fuzzy duplicate detection with blocking and budgets`
+
+### U4-11 · Time-series checks redesigned
+- **Status:** todo · **Size:** L · **Depends on:** U4-10 · **Resolves:** F-39, N-A4 (data side)
+- **Note from U0-13:** on kitchen5k, `decompose_time_series` cannot infer a seasonal period (frequency `None` for a daily index with repeated dates), and the golden baseline records that.
+- **Goal:**
+  - `temporal_gaps`, `datetime_consistency` and `datetime_features` as rule checks on the datetime profile.
+  - `stationarity` (ADF and KPSS), `autocorrelation` (ACF and PACF) and `seasonal_decomposition` on the series resampled to the inferred or configured frequency, with repeated timestamps aggregated, and with capped `maxlag` and series length. All three are recorded in the evidence. These checks are behind `timeseries` and take the index from `dsbf.profile(time_index=...)`.
+- **Acceptance:**
+  - `stationarity` takes under 2 s at kitchen50k (89 s for the legacy task in the CI baseline).
+  - The frequency, `maxlag` and series length are in the evidence.
+  - Parity, or listed differences.
+- **Commit:** `feat(checks): redesign time-series checks with resampling and capped lags`
+
+### U4-12 · Drift against a reference
+- **Status:** todo · **Size:** M · **Depends on:** U4-11 · **Resolves:** F-07 (drift keys), F-30 (reference only CSV)
+- **Goal:** `dsbf.profile(..., reference=...)` takes any source `load` accepts, or a `Run`. `reference_drift` compares the two: PSI or JS divergence on numeric distributions, TVD on categorical top values, type, schema and missingness changes, and target drift when `target` is set.
+- **Assumptions to confirm:**
+  - The two profiles' histograms have different edges, so decide between re-binning from values (the reference is data) and approximating from quantiles (the reference is a stored profile). Phase 7's history-based drift reuses the second.
+  - The reference is profiled with the same settings and sampling as the data.
+- **Acceptance:**
+  - Identical data shows no drift, and a perturbed copy of kitchen5k flags the shifted columns.
+  - Parity with the three legacy tasks, or listed differences.
+- **Commit:** `feat(checks): compare a dataset with a reference`
+
+### U4-13 · ML-prep guidance checks
+- **Status:** todo · **Size:** M · **Depends on:** U4-12
+- **Goal:** `categorical_encoding`, `numeric_binning`, `transformations` (Yeo–Johnson and Box–Cox through scipy, with the skew reduction measured) and `imputation`, a synthesis check reading `null_rate` and `missingness_mechanism`. Their findings are `phase: ml` with typed actions, which the Phase 9 pipeline export will read.
+- **Assumptions to confirm:** the legacy tasks use scikit-learn only for `PowerTransformer` and `LabelEncoder`, and scipy and NumPy can replace both, so these checks need no extra.
+- **Acceptance:**
+  - Parity, or listed differences.
+  - Every action validates against `Action`.
+  - The checks run without the `ml` extra.
+- **Commit:** `feat(checks): add encoding, binning, transformation and imputation guidance`
+
+### U4-14 · Target-aware checks
+- **Status:** todo · **Size:** M · **Depends on:** U4-13 · **Resolves:** F-26 (target leakage), F-07 (one target setting)
+- **Goal:**
+  - `target_leakage`: near-perfect feature→target association by type, identifiers derived from the target, and timestamps after the event when `time_index` is set. Without a target it is `not_applicable` with a note.
+  - `mutual_information` (`ml`) with the target.
+- **Acceptance:**
+  - kitchen5k's planted `leakage_*` columns are flagged.
+  - Without a target, both checks are `not_applicable` with a note.
+- **Commit:** `feat(checks): detect target leakage and mutual information`
+
+### U4-15 · Synthesis: quality dimensions and ML readiness
+- **Status:** todo · **Size:** M · **Depends on:** U4-14 · **Resolves:** F-26 (Leakage dimension), F-21 (inputs as soft edges)
+- **Goal:**
+  - `quality_dimensions` over core findings (completeness, validity, usability, redundancy, leakage), listing each dimension's inputs and their coverage. It is report-only, and Leakage is "not assessed" without a target.
+  - `ml_readiness` over findings.
+
+  Both declare their inputs with soft `after`, so a missing input lowers coverage instead of skipping the score. After this unit the default pack is `core`, and no legacy task is in the default selection.
+- **Acceptance:**
+  - The default `dsbf.profile()` plans no legacy check.
+  - The `standard-*` perf scenarios are measured against U4-01's figures, and the drop is recorded.
+  - The golden findings snapshots cover every core check.
+  - Parity with the legacy scorers, or listed differences.
+- **Commit:** `feat(checks): score quality dimensions and ML readiness from findings`
+
+### U4-16 · Calibration suite
+- **Status:** todo · **Size:** M · **Depends on:** U4-15 · **Resolves:** REVIEW_FINDINGS part 2 C (calibration suite)
+- **Note from U0-13 and U1-04 (was in Phase 5):** `tests/validation/run_validation.py` without `--report` looks for the newest `report.json` under `dsbf/outputs/`, which DSBF stopped writing to in U1-04, and used to take whatever dataset's report was newest. The README keeps a warning about it, and the `clean` checklist says 10 columns where the dataset has 9.
+- **Goal:**
+  - Planted-truth datasets, generated deterministically: leakage, MAR and MNAR missingness, bimodality, near-duplicate rows, drift, outliers and encoding damage.
+  - False-positive and false-negative rates per check version, from a nightly workflow that uploads its report, with baselines committed.
+  - `tests/validation/` rebuilt on `dsbf.profile()`, its archetype assertions written against findings, and the README warning dropped.
+- **Acceptance:**
+  - The nightly calibration job is green.
+  - The baseline rates are committed.
+  - The validation archetypes pass in memory.
+- **Commit:** `test: add a calibration suite of planted-truth datasets`
+
+### U4-17 · Stopgap CLI on the new engine
+- **Status:** todo · **Size:** S · **Depends on:** U4-15
+- **Note from U0-11 (was in Phase 5):** `dsbf profile` defaults `--depth` to `standard`, while `dsbf quickstart` and `dsbf run` use `full`. The stopgap uses `standard`.
+- **Note from U2-01:** add a parquet file with a `datetime64` column to the end-to-end test (the legacy writer failed on it).
+- **Goal:** `dsbf profile DATA [--out DIR] [--pack] [--depth] [--target] [--time-index] [--plugin] [--param check.key=value]` runs `dsbf.profile()`. It writes `run.json` to `--out`, resolved to an absolute path (default `$DSBF_HOME/outputs/<run_id>/`), and prints `Run.render_health()`. The exit code is 0 unless setup fails (2). The command attaches console logging. The legacy `dsbf run` and `dsbf quickstart` are removed.
+- **Acceptance:**
+  - An end-to-end test from a temporary directory (titanic and the datetime parquet) writes a `run.json` that validates against `schema/run.schema.json`.
+  - The README's CLI section is updated.
+- **Commit:** `feat(cli): run dsbf profile on the new engine`
+
+### U4-18 · Remove the legacy stack
+- **Status:** todo · **Size:** L · **Depends on:** U4-16, U4-17 · **Resolves:** N-A2, F-38; deletes the legacy copies behind F-06, F-08, F-09, F-15, F-17, F-18, F-20, F-22, F-23, F-24, F-25, F-34 and F-36
+- **Note from U3-10 and U3-06:** the adapter goes with `set_plugin_logger` / `PLUGIN_LOG_FN` and the global `PLUGIN_WARNINGS` in `eda/task_registry.py`, the legacy `task_groups` config key, `legacy_checks(session, plugin_groups=...)`, `LegacyParams.shared` (the whole shared config repeated in every adapted check's parameters), and the legacy `resource_limits.max_memory_gb` and `max_runtime_seconds` keys.
+- **Note from U2-02:** remove the legacy `data_sampling` (the F-09 crash and the `stratified` alias for head). **Note from U2-06:** remove `eda/stage_inference.py`.
+- **Note from U3-12:** the two plot-writing checks left out of an in-memory run go with `plot_factory`.
+- **Note from U1-06 (was in Phase 6):** `tests/perf/baseline.json` records the HTTP 500s of API v1 on the adversarial run; the legacy scenarios and their API timings go with API v1.
+- **Note from U0-08:** the time-series test configs carry an inert nested `time_series.tasks.<name>` block; it goes with those tests.
+- **Moot with this unit (were in Phase 5):** `dsbf run -c` using the YAML as the whole config (F-22), the dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name`, `message_verbosity`'s comment, and a relative configured `output_dir` (U1-04). All of these belong to the legacy config.
+- **Goal:**
+  - Delete `dsbf.legacy`, `dsbf.eda`, `dsbf.core`, `interfaces/api.py` (`EDA`), `dsbf.storage`, `dsbf.api` (API v1), `utils/plot_factory.py`, `utils/reco_engine.py`, `utils/data_utils.py`, the legacy config (`default_config.yaml` and its helpers, `custom_plotly_templates.py`), `run_profile.py`, `migrate_runs.py`, and `dsbf tasks export` with `static_metadata/task_metadata.*`.
+  - Delete the legacy golden snapshots, `test_engine_parity.py` and `engine_differences.json`.
+  - Replace the legacy perf scenarios with the `standard-*` and `profile-*` scenarios.
+  - Remove the legacy entries from the pyrefly baseline by regenerating it.
+  - Update `CLAUDE.md` practice 9, `docs/architecture.md`, and the README. Mark `docs/WALKTHROUGH.md` as describing the removed legacy run.
+  - Keep the frontend source; it has no API until Phase 6.
+- **Assumptions to confirm:** nothing outside the deleted packages imports them (search `src`, `tests` and `docs/practice_run`); the frontend's lint, build and tests don't need the API.
+- **Acceptance:**
+  - No import of the deleted packages remains in `src` or `tests`.
+  - Every gate passes, and the golden tier holds only core snapshots.
+  - The wheel builds, and `dsbf profile` works from a clean venv.
+- **Commit:** `refactor!: remove the legacy engine, tasks, store and API`
+
+### U4-19 · Lean base install and Phase 4 exit
+- **Status:** todo · **Size:** M · **Depends on:** U4-18
+- **Note from U0-15 (ADR 0009):** shrink the base install to the core dependency set, moving the rest behind extras and deleting the dependencies nothing imports (for example matplotlib, plotly, seaborn, networkx, graphviz, pydot and missingno, verified by grep).
+- **Note from U1-05:**
+  1. Each extra needs a test that the core runs without it and reports `unavailable`.
+  2. CI runs the extras as an install matrix, one leg per extra.
+  3. Decide pyarrow's home: the design keeps it in the base.
+  4. Declare `numpy` (never declared; imported by 34 files under `src/` on 2026-10-19) with a tested range, and declare every other directly imported package.
+- **Note from U0-16 and the held-back table:** lift `pandas <3` (the golden suite and the pandas extra's tests must pass on 3.x), `statsmodels <0.15`, `scikit-learn <1.8` and `scipy <1.18`. Regenerate the golden findings and explain the differences.
+- **Note from U3-12:** the README's library section and the golden child both rely on the pandas backend default; with no legacy task left, make Polars the default.
+- **Goal:** The base install is the core set. The extras each have an `unavailable` test, and CI runs an extras matrix. The caps are lifted, and the default backend is Polars. The perf budgets are enforced, and the Phase 4 exit is measured.
+- **Acceptance:**
+  - In a clean venv, `pip install dsbf` without extras runs `dsbf profile` on titanic, with the `ml`, `timeseries` and `text` checks `unavailable`.
+  - The install size is measured before and after.
+  - On the CI runner, `standard-titanic` takes under 5 s, and `standard-kitchen50k` under 60 s with under 1 GB peak, as enforced budgets.
+  - Only the Phase 6 rows remain in the held-back table.
+- **Commit:** `build: shrink the base install to the core dependency set`
 
 ---
 
-## Phase 2: Data and profile
+## Phase 5: Policy, sinks, CLI v2. First release for embedded use
 
-- **Capability:** Tier-1 sources (in-memory data and files), a `Dataset` with fingerprint and sampling provenance, and a single profiling pass that replaces per-task rescans.
-- **Motivation:** "Measure once, decide many times" (REFACTOR_PLAN §2). It removes the repeated per-column computation and the per-task pandas copies, and fixes type inference cost, listwise deletion and histogram honesty at the source.
-- **Boundaries:** No check API and no changes to legacy tasks. The profile is new code, compared against legacy outputs.
-- **Sequence and dependencies:** Depends on Phase 1 contracts. Sources, then dataset, then type inference, then column statistics, then dataset-level profile, then parity, then the performance budget.
-- **Success criteria:** Profile parity with legacy outputs is documented, and the profile pass runs in under 2 s at 52k × 60 on CI hardware.
+- **Capability:** User policies over findings (report-only by default); JSON, NDJSON, Parquet and static HTML sinks; a findings query API and notebook display; CLI v2 (`profile`, `check`, `plan`, `schema export`, the health summary on every run); docs for embedded use; release engineering; `1.0.0a1` on PyPI.
+- **Motivation:** Mode 1 (embedded) needs structured outputs, exit codes that only a user's policy sets, and a published package (REFACTOR_PLAN §1, §7, §8.1, §9).
+- **Boundaries:** No store, API or dashboard (Phase 6). No new sources (Phase 7). Schema compatibility guarantees start with this release (§4.3).
+- **Sequence and dependencies:** Depends on Phase 4. Policy, then the findings API, then sinks (JSON, Parquet, HTML), then CLI v2 and execution settings, then docs, then the release.
+- **Success criteria:**
+  - A clean-venv install from a temporary directory passes as a CI job on every PR.
+  - An example GitHub Actions workflow writes Parquet findings.
+  - Policy exit codes are documented and tested.
+  - `1.0.0a1` is on PyPI.
 
-**Done (2026-10-18), 8 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U2-xx" lines.
+### U5-00 · Plan Phase 5
+- **Status:** todo · **Size:** S · **Depends on:** U4-19
+- **Goal:** Confirm the outline units below against what Phase 4 delivered, and fill in each one's assumptions and steps. Ask the user how the package will be published (the PyPI name `dsbf` and trusted publishing) and confirm the HTML report's scope.
 
-- **Capability delivered:** `dsbf.data.load` reads pandas, Polars and Arrow objects and CSV, TSV, Parquet, Excel, JSON and NDJSON files into a Polars-backed `Dataset` with a content fingerprint, seeded sampling provenance and a bounded value cache. `dsbf.profile` runs one pass: `infer_column_types` (sample-based semantic types), `profile_columns` (counts, numeric statistics, equal-width histograms, top values, string shape, datetime frequency and gaps) and `profile_dataset` (shape, duplicate rows, missingness pairs), with `infer_stage` reading only the profile. Typed errors carry a hint.
-- **Success criteria, measured:**
-  - Parity is documented: `tests/test_profile/accepted.py` lists 23 accepted differences in 7 areas, `docs/parity/profile.md` explains each, and a test fails if the two drift (U2-07). Counts, distinct values and numeric statistics equal the legacy tasks within `rel=1e-9` on all 10 golden datasets with no accepted differences (U2-04).
-  - The profile pass at kitchen50k (52,500 × 60) takes 0.44 s on the 4-CPU runner against the 2 s budget, with the pass adding 3 MB to a 47 MB frame (`memory_ratio` 1.06 against 2.5). On 1M × 50 floats it takes 9.5 s and the ratio is 1.12 (U2-08). The legacy type inference alone took 25.95 s on kitchen50k; the new one takes 0.2–0.3 s (U2-03).
-  - A 52.5k × 60 profile serialises to 59 KB and a 1M × 50 profile to 155 KB, with no non-finite token (U2-08).
-  - Perf harness: both profile scenarios are in `tests/perf/baseline.json`, recorded on `ubuntu-latest`, and the budgets are checked whether or not a baseline exists.
-- **Key decisions:** Polars and Arrow as the data representation, with the frame read-only after load ([ADR 0003](docs/adr/0003-polars-arrow-data-representation.md)); profile and semantic-type contracts are pydantic models ([ADR 0005](docs/adr/0005-pydantic-contracts.md)); the profile reads a seeded sample for type rules but counts over the whole column, and distinct counts are exact; the profile pass is timed apart from loading, and its memory is measured as the frame plus what the pass adds (`/proc/self/clear_refs` resets the peak after load).
-- **Deviations from the phase block:**
-  - "No changes to legacy tasks" held, but U2-01 lifted the Polars cap (golden 10 of 10 unchanged) and added the `dsbf[excel]` extra, which the unit did not list.
-  - Profile parity is mostly vocabulary and typing: 9 of 10 golden datasets get a different stage name (5 only by vocabulary, 4 because high cardinality counts categorical columns only), and integer codes typed `categorical` carry no min and max.
-  - `SCHEMA_VERSION` went 0.1.0 → 0.3.0 over U2-05 and U2-06, both additive.
-  - Phase 3 is already broken into full units, so it has no `U3-00`; U3-01 is next.
-- **PRs:** #80 (U2-01, `876a17c`), #81 (U2-02, `62efb95`), #82 (U2-03, `83a62b1`), #83 (U2-04, `c472927`), #84 (U2-05, `2a15752`), #85 (U2-06, `7fc2643`), #86 (U2-07, `fd7906e`), and #87 (U2-08, `74cd9d1`).
+### U5-01 · Policy evaluator
+- **Status:** outline · **Size:** M · **Depends on:** U5-00
+- **Note from U1-10:** (1) the policy loader turns `yaml.safe_load` and `Policy.model_validate` failures into a `ConfigError`-style report that names the rule; (2) decide what `new_since: previous_run` does without a previous run; (3) add a range on one setting (`>0.1` and `<0.5`) only if users ask. **Note from U1-11:** publish `schema/policy.schema.json` with the loose spellings documented, together with its loader.
+- **Goal:** `dsbf.profile(..., policy=..., previous=...)` evaluates the rules over findings and health and fills `Run.policy`. `fail` only sets the exit code.
+- **Acceptance:** A REFACTOR_PLAN §7.2 example policy produces the documented `Run.policy`. A run with no rules matched exits 0. The policy schema export is checked in CI.
+
+### U5-02 · Findings query API and notebook display
+- **Status:** outline · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
+- **Goal:** `run.findings.filter(severity=">=warn", dimension=..., column=...)`, `.to_polars()` and `.to_pandas()` (with the `pandas` extra). `Run._repr_html_` shows the health summary and the top findings in a notebook.
+- **Acceptance:** The REFACTOR_PLAN §9 library example runs as a test. The HTML display renders the adversarial run without breaking on odd column names.
+
+### U5-03 · JSON and NDJSON sinks, and reading a run back
+- **Status:** outline · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
+- **Note from U4-00 (was on U4-02):** every core check declares a params and output model from U4-02 on, but nothing in Phase 4 reads them as JSON Schema, so their export lands here, with the published run schema.
+- **Goal:** `run.write(dir, sinks=["json", "ndjson"])` writes `run.json` and `findings.ndjson`, and `dsbf.Run.read(path)` round-trips. The stopgap CLI's writer moves onto it. `dsbf schema export` also writes each core check's params and output schema (`schema/checks/<id>.schema.json`), and `--check` covers them.
+- **Acceptance:** A round-trip test passes. The files validate against the published schema with `jsonschema`, and each check's output in a titanic run validates against its exported schema. `dsbf schema export --check` covers the check schemas.
+
+### U5-04 · Parquet sinks and the consumer schema guide
+- **Status:** outline · **Size:** M · **Depends on:** U5-03
+- **Goal:** `findings.parquet`, `profile.parquet` and `results.parquet` with documented, versioned columns, plus a guide for loading them into a warehouse or BI tool.
+- **Acceptance:** The Parquet schemas have their own breaking-change check. DuckDB reads the example queries in the guide back.
+
+### U5-05 · Static HTML report
+- **Status:** outline · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
+- **Goal:** One self-contained HTML file per run (no server, no CDN) with the health summary, findings by dimension and severity, and per-column profiles drawn from the profile's equal-width bins.
+- **Acceptance:** The titanic report is under a size budget set in U5-00 and opens offline. User text is escaped (the F-14 lesson).
+
+### U5-06 · CLI v2
+- **Status:** outline · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
+- **Note from U3-09:** give the Typer app one callback that attaches the console handler, with a `--verbosity` option, so every command prints log records. **Note from U1-09:** CLI v2 builds the `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser.
+- **Goal:** `dsbf profile` and `dsbf check` (with `--config`, `--set`, `--policy`, `--previous`, `--out` and `--sink`), plus `plan` and `schema export`. Every run prints the health summary. The exit code is 0, or 1 when the policy fails the run, or 2 on a setup error.
+- **Acceptance:** The commands are tested end to end from a temporary directory, and each exit code is tested.
+
+### U5-07 · Execution settings and cache management
+- **Status:** outline · **Size:** S · **Depends on:** U5-06
+- **Note from U3-07:** expose the worker count in the CLI and config, with per-check `runs_in` and timeout overrides (U3-06 deferred those too). **Note from U3-08:** add `dsbf cache clear` and a size or age eviction for `<DSBF_HOME>/cache/results/`, and expose cache on/off in the CLI and config.
+- **Acceptance:** A per-check timeout set in config applies. Eviction keeps the cache under its cap, which a test checks.
+
+### U5-08 · Docs for embedded use
+- **Status:** outline · **Size:** M · **Depends on:** U5-07
+- **Note from U3-09:** a library call prints nothing unless the host configures logging; say so, and list the accepted levels.
+- **Goal:** README rewrite. Guides: "Use DSBF in your pipeline", "Consume DSBF findings in your own dashboard", "Write a check" and "Write a policy", plus a generated check reference (params, outputs, findings codes). An example GitHub Actions workflow writes Parquet findings.
+- **Acceptance:** Every code block in the guides is executed by a test, and the example workflow runs in CI.
+
+### U5-09 · Release readiness and 1.0.0a1
+- **Status:** outline · **Size:** M · **Depends on:** U5-08 · **Resolves:** F-31 (install smoke test), REVIEW_FINDINGS part 2 E (PyPI) and F (coverage)
+- **Note from U3-07:** worker processes use `spawn` where there is no `forkserver` (Windows), about 0.44 s per check as measured on Linux, and no CI leg covers that path; add one before the first release.
+- **Goal:** A CI job that builds the wheel, installs it in a clean venv and runs `dsbf check` from a temporary directory. A Windows leg. Coverage reporting. A release workflow on tags with trusted publishing, the CHANGELOG, and the `1.0.0a1` release. Publishing is the user's step.
+- **Acceptance:** The smoke job runs on every PR. `pip install dsbf==1.0.0a1` works from PyPI.
 
 ---
-
-## Phase 3: Engine and check API
-
-- **Capability:** The check API, registry and packs, the planner, an isolated, parallel and cached executor, library-friendly logging, a legacy adapter running every existing task, and the public `dsbf.profile()` entry point.
-- **Motivation:** "Choose your own analysis" and report-only failure handling (REFACTOR_PLAN §1, R1 and R2) live in the engine. The adapter lets checks migrate one at a time against a running system.
-- **Boundaries:** No check migrations (Phase 4), and no storage, API or dashboard changes (Phase 6).
-- **Sequence and dependencies:** Depends on Phase 2. Interface, registry, planner, executor (isolation, then timeouts and events, then parallelism), cache, logging, adapter, entry point.
-- **Success criteria:** Golden runs reproduce through the adapter. A forced exception in any check still yields a complete `Run` with a note. Changing one parameter re-executes only the affected checks.
-
-**Done (2026-10-19), 12 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U3-xx" lines.
-
-- **Capability delivered:** `dsbf.engine` holds the `@check` interface and `CheckContext`, a `Registry` with packs and directory and entry-point plugins, a planner (`Selection`, `make_plan`, validation, expected statuses, `dsbf plan`) and an executor that isolates each check, applies timeouts and a run budget, accounts for time and memory, emits events, runs a level's checks in parallel (threads, or one process per check with `runs_in="process"`) and caches `ok` results on disk by data fingerprint and parameters. Logging is library-friendly (`dsbf.*` loggers with a `NullHandler`; the CLI attaches handlers). `dsbf.legacy` adapts all 65 registered tasks to checks and turns their guidance into `Finding`s. `dsbf.profile(source, packs=, checks=, depth=, target=, time_index=, sample=, ...)` returns an in-memory `Run` (`Run.notes`, `Run.render_health()`) from a `ProfileConfig`; the version comes from `importlib.metadata`.
-- **Success criteria, measured:**
-  - Golden runs reproduce through the adapter: `tests/golden/test_engine_parity.py` runs the ten golden datasets through the engine and compares each task with its snapshot. 128 differences are listed in `tests/golden/engine_differences.json`, each with a reason (`types`, `load`, `downstream`); on titanic 55 of 56 `ok` tasks match exactly (U3-10, U3-11). The golden tier is 20 of 20 on the final tree (U3-12).
-  - A forced exception still gives a complete `Run`: a plugin check that raises ends `error` with a `check_failed` note and the rest of the run is intact (U3-05, U3-12); the adversarial frame gives 67 results, no `check_failed` (U3-11). A timeout does not stall the run (U3-06).
-  - A parameter change re-executes only the affected checks: on titanic with the cache, a first call takes 4.8 s and a second 0.3 s with 52 of 59 results cached, and changing `detect_zeros.flag_threshold` re-ran exactly `detect_zeros` and the two scorers that read it (U3-08, U3-12).
-  - No filesystem writes: a test runs `dsbf.profile()` from a scratch directory under an isolated `DSBF_HOME` and finds both empty (U3-12). The README library example is executed by a test.
-  - `dsbf.profile()` on titanic at `deep` runs 63 checks (`ok 53 · not applicable 5 · skipped 5`, no error) into an 8.5 MB `Run`; 22.4 s serial and 24.7 s with the default workers locally. kitchen5k takes 104.1 s and 120.3 s. The parallel executor does not speed up the adapted tasks (pandas and Python code under threads); on toy checks over 1M × 50 floats it does: 1.41 s against 1.02 s for compiled checks, and 4.22 s against 1.75 s for pure-Python checks in worker processes (U3-07).
-  - Schema: `SCHEMA_VERSION` 0.3.0 → 0.6.0 (U3-07 `Timing.shared_with`, U3-08 `Timing.cached`, U3-12 `Run.notes`, which also removed `PlanManifest.packs`).
-- **Key decisions:** a failing check is data, never an exception ([ADR 0006](docs/adr/0006-report-only-failure-semantics.md)), with the returned status trusted and never inferred (F-06); plugins by entry point or directory, and a broken plugin is a note ([ADR 0007](docs/adr/0007-entry-point-plugins.md)); a timeout on a thread is cooperative (the context is cancelled, then the thread is abandoned), and a process check is killed; the cache key includes the digest of each upstream result, so a dependent re-runs only when what it reads changed; `Depth` is a cost ceiling and the inferred stage selects nothing; a library call writes nothing unasked, so the cache is off (`cache=True` opts in) and the two plot-writing legacy checks are left out of an in-memory run (chosen by the user on 2026-10-18); the subpackage `dsbf.profile` was renamed `dsbf.profiling` so `dsbf.profile` is the function (chosen by the user on 2026-10-18); the entry point defaults to the pandas backend, because the legacy tasks are written for pandas frames and the golden snapshots are pandas runs.
-- **Deviations from the phase block:**
-  - "Golden runs reproduce" holds with 128 listed differences, not byte for byte: mostly the new profile typing a column differently from the legacy inference (`types`), `dsbf.data.load` and `pandas.read_csv` reading the file differently (`load`), and effects of those on dependent tasks (`downstream`).
-  - Timeouts are one value for every check, not per check (per-check overrides go to the Phase 5 config). Process isolation is one process per check, not a pool.
-  - The CLI's `run`, `profile` and `quickstart` commands still use the legacy engine; `dsbf.profile()` reaches the CLI with CLI v2 in Phase 5. Only `dsbf plan` uses the new engine, and `dsbf version` now reads `importlib.metadata`.
-  - The `engine-*` perf scenarios (serial and parallel, titanic and kitchen5k) are added, but their baseline can only be recorded from the CI runner, so it is open (carried into U4-00).
-  - `RunHealth` has no `summary()`; the §7.1 text is `Run.render_health()`, and REFACTOR_PLAN §9 says so.
-- **PRs:** #88 (U3-01, `729d288`), #89 (U3-02, `7f33080`), #90 (U3-03, `61db3e0`), #91 (U3-04, `4a22481`), #92 (U3-05, `b233bc8`), #93 (U3-06, `294c5e4`), #94 (U3-07, `75674f4`), #95 (U3-08, `3474ef0`), #96 (U3-09, `e401bb0`), #97 (U3-10, `9fcb2bc`), #98 (U3-11, `dca2abe`), and U3-12 (number and merge SHA recorded by the next unit).
-
----
-
-## Phase 4: Migrate checks (placeholder)
-
-- **U4-00 · Plan Phase 4** (`todo`, depends on U3-12): break down the batches below into full units using Phase 3 learnings and golden-run evidence. Carry in from U3-11: `tests/golden/engine_differences.json` lists 128 differences between the engine and the legacy snapshots (see `tests/golden/README.md`); a migrated check should remove its entries (`types`: the profile types a column differently from the legacy inference, `load`: `dsbf.data.load` and `pandas.read_csv` read the file differently, `downstream`), or give a reason that says why the new result is the right one; `load` differences are mostly legacy artefacts of pandas NaN in text columns (for example `detect_mixed_type_columns` calls `deck` mixed float and str). Update REFACTOR_PLAN if needed. Carry in from U0-15 (ADR 0009): shrink the base install to the core dependency set as the legacy tasks migrate, moving the rest behind extras and deleting dependencies nothing imports (for example matplotlib, plotly, seaborn, networkx, graphviz, pydot and missingno, to be verified by grep). Carry in from U1-05: (1) each extra needs a test that the core runs without it and reports `unavailable` (ADR 0009), added by the unit that removes its package from `dependencies`; (2) CI runs the extras as an install matrix, one leg per extra, once the base shrinks and an extra's absence is observable; (3) decide pyarrow's home: the design keeps it in the base, while the U0-04 note wanted it in the extra for parquet input (pandas is its only parquet user today); (4) declare `numpy` (imported in 45 places, never declared) with a tested range when the core dependency set is fixed, and declare each other directly imported package at the same time; (5) the `scipy <1.18` cap: change the `kstest` call in `normality_tests.py` when migrating it, then lift the cap. Carry in from U3-12: (1) record the `engine-*` perf baselines (serial and parallel, titanic and kitchen5k) from the CI runner with `--update-perf-baseline` before the first migration, so each Phase 4 unit is measured against them; locally the parallel executor is slower than serial for the adapted tasks (titanic 24.7 s against 22.4 s, kitchen5k 120.3 s against 104.1 s), so use the CI figures to decide whether the default `workers` should be lower for legacy checks, and whether `fuzzy_duplicate_detection` (18.4 s of titanic's serial time, 74.3 s of kitchen5k's) should be `runs_in="process"`. (2) Python warnings from legacy tasks (`infer_types` date parsing, `scipy` constant input, `statsmodels` KPSS) reach the caller's stderr during `dsbf.profile()` because they are not log records; capture them into check notes as each task migrates. (3) The README's Python library section and the golden child (`tests/golden/engine_one.py`, which pins `pandas`) both rely on the pandas default; when no legacy task needs pandas, revisit the default backend.
-- U4-A · Rule checks onto the profile, about 20 tasks (`placeholder`). From U2-07: a categorical column of integer codes has no min and max, where the legacy `summarize_numeric` summarised it; the check that replaces it decides whether to read such codes as numeric. No golden dataset gives `summarize_text_fields` output, so `avg_word_length` was never compared to the legacy task; add a text-heavy golden dataset when the text checks move. From U2-05: a categorical column with mostly unique strings lists first-seen one-off values as top values (text columns skip values seen once); decide with the checks that consume top values whether categorical should also require a repeat. From U2-03: `load` decodes a non-UTF-8 CSV lossily with no error (a UTF-16 file reads with U+FFFD and NUL characters in names and values), so add a rule check that flags U+FFFD and NUL in column names and values; a column that mixes date formats (kitchen5k's `inconsistent_datetime`) is typed `categorical`, so a check could report the mix. From U0-03: the migrated guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. And a migrated task run without `infer_types` now skips instead of analysing all numeric columns. Decide the intended behaviour per check. From U0-08: the time-series test configs still carry an inert nested `time_series.tasks.<name>` block that no task reads (tasks read `tasks.<task name>`); drop it when those tests migrate. From U0-07: `get_recommendation_tip` (`dsbf/utils/reco_engine.py`) still runs `eval` on the YAML `condition` strings (F-31); replace it with a declarative condition format (`{"field": ..., "op": ">", "value": ...}`) when the 14 tasks that call it migrate
-- U4-B · Analysis checks with statistical fixes: F-11, F-13, confidence intervals, bias-corrected Cramér's V (`placeholder`). From U0-09: `summarize_modes` iterates all columns rather than `matched_cols`, and the leakage correlation scan uses `select_dtypes` (F-11); the collinear check needs per-column VIF handling and `n_used` (F-32). From U0-16: when the VIF check is redesigned, lift the `statsmodels <0.15` cap and decide the intended VIF definition (centred, with an intercept, as 0.15 computes it, or the uncentred one the baselines record); when bimodality is migrated, lift `scikit-learn <1.8` and decide how the BIC comparison is reported (the absolute BIC and `delta / abs(bic1)` both depend on the log-likelihood convention; the delta itself did not move). Regenerate those golden snapshots in the same PR, with the differences explained
-- U4-C · Heavy checks redesigned with budgets: fuzzy duplicates (F-35), time series (F-39), drift against reference profiles (`placeholder`). From U3-11: `fuzzy_duplicate_detection` puts its whole pair list in its output, 7.7 MB of an 8.3 MB titanic `Run`; the redesign caps what it stores or keeps the bulk behind `details_ref`. From U0-13: `fuzzy_duplicate_detection` builds candidate pairs from a token index over sets of strings and stops at `max_candidates`, so which pairs it keeps (and the count) follows `PYTHONHASHSEED`; make the order deterministic, then the golden runner no longer needs the pinned seed. On kitchen5k, `decompose_time_series` cannot infer a seasonal period (frequency `None` for a daily index with repeated dates), and the golden baseline records that.
-- U4-D · Synthesis: quality dimensions, ML readiness, target-based leakage (F-26) (`placeholder`). From U2-03: the identifier rule treats any string column over 90% distinct as `identifier`, so near-unique free text (kitchen50k's `long_text`) is not `text`; revisit the identifier-before-text order with the checks that consume the type.
-- U4-E · Remove the legacy adapter, backend plotting and plotting dependencies (N-A2, F-38) (`placeholder`). From U0-16: once no legacy task needs pandas, lift the `pandas <3` cap (PR #47 was closed as deferred; the golden suite and the pandas extra's tests must pass on 3.x) From U3-10 and U3-06: the adapter goes with `set_plugin_logger` / `PLUGIN_LOG_FN` and global `PLUGIN_WARNINGS` in `eda/task_registry.py`, the legacy `task_groups` config key, `legacy_checks(session, plugin_groups=...)`, `LegacyParams.shared` (the whole shared config repeated in every adapted check's recorded parameters, about 67 copies in `Run.plan`) and the legacy `resource_limits.max_memory_gb` and `max_runtime_seconds` keys. From U2-02: remove the legacy `data_sampling` (the F-09 crash and the `stratified` alias for head) when its last caller goes. From U3-12: the two plot-writing checks left out of an in-memory run go with `plot_factory`.
-
-## Phase 5: Policy, sinks, CLI v2. First release for embedded use (placeholder)
-
-- **U5-00 · Plan Phase 5** (`todo`, depends on the Phase 4 units). Carry in from U3-09: (1) only the legacy `run`, `profile` and `quickstart` commands wrap their work in `console_logging`, so `dsbf plan` and the other commands print no log records (a cache or plugin warning from the engine is silent there); give the Typer app one callback that attaches the console handler, with a `--verbosity` option. (2) A library call, including `EDA(...)`, prints nothing unless the host configures logging, but the README's configuration section still presents `message_verbosity` as the console switch: reword it with the release docs, and list `error` among the accepted levels. Carry in from U3-07: (1) `execute`'s `workers` and a check's `runs_in` are API-only; expose the worker count in the CLI and config, with per-check `runs_in` and timeout overrides (U3-06 deferred the latter too); (2) workers use `spawn` where there is no `forkserver` (Windows), about 0.44 s per check as measured on Linux, and no CI leg covers that path: add one before the first release. Carry in from U3-08: add `dsbf cache clear` and a size or age eviction for `<DSBF_HOME>/cache/results/` (entries for old data, check versions and parameters are never removed), and expose cache on/off in the CLI and config. Carry in from U1-09: CLI v2 builds its `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser (U1-09 left it out); `dsbf run -c` still uses the YAML as the whole config (F-22, first bullet) and goes away with the legacy CLI. Carry in from U0-13 and U1-04: `tests/validation/run_validation.py` without `--report` looks for the newest `report.json` under `dsbf/outputs/`, which DSBF stopped writing to in U1-04 (runs now go under `$DSBF_HOME/outputs/`), so it finds nothing new, and used to take whatever dataset's report was newest (it checked `near_clean` against a stale 9,217-row run on 2026-10-16), and the README keeps a warning about it; make it profile into its own output directory, as the golden runner does, then drop the warning. Its `clean` checklist also says 10 columns where the dataset has 9. Carry in from U0-11: (1) `dsbf profile` defaults `--depth` to `standard`, while `default_config.yaml`, `dsbf quickstart` and `dsbf run` use `full`: pick one default for CLI v2. (2) The default config's `message_verbosity` comment lists `quiet | info | debug`, but the logger also accepts `warn` and `stage`. (3) Dead config keys `metadata.output_format`, `engine.severity_thresholds` and `metadata.layout_name` (F-28) go with the config redesign. Carry in from U1-04: a configured `output_dir` is used as given, so a relative one still stores relative figure paths (only the default location is absolute); resolve it to absolute in the config redesign. Carry in from U1-10: (1) the policy loader (`--policy`) turns the validation failures of `yaml.safe_load` + `Policy.model_validate` into a `ConfigError`-style report with the rule name; (2) the evaluator decides what `new_since: previous_run` does without a previous run; (3) a range on one setting (`>0.1` and `<0.5`) needs a list of comparisons per `metric` key, `severity` or `confidence`: add it if users ask. Carry in from U1-11: publish the `Policy` schema (`schema/policy.schema.json`, with the loose spellings documented) together with its loader, because the model's own schema describes only the normalised form. Carry in from U3-12: (1) `Selection.entry_points` defaults to `True`, so `dsbf.profile()` imports installed packages' checks, and `ProfileConfig` does not expose it; decide whether it should. (2) `infer_stage` is no longer called by the new path; `eda/stage_inference.py` goes with the legacy `ProfileEngine` when CLI v2 runs on `dsbf.profile()`. (3) `dsbf.profile()` has `workers`, `limits` and `cache` as keyword arguments only; CLI v2 exposes them (this repeats the U3-07 and U3-08 carry-ins). (4) The wheel reads its version from package metadata, so the release check should assert `dsbf version` and `dsbf.__version__` agree with the tag.
-- Placeholders: policy evaluator (report-only default) · JSON/NDJSON sinks · Parquet sinks with a consumer schema guide · static HTML report · CLI v2 (`profile`, `check`, `plan`, `schema export`, run health summary) · pipeline and consumer docs · install smoke test from a temp dir · release `1.0.0a1`
 
 ## Phase 6: Store, service and dashboard v2. Standalone local (placeholder)
 
-- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units). Carry in from U1-06: `tests/perf/baseline.json` still records the HTTP 500s on the adversarial run (`/associations` and `/sample` emit `NaN`; the U0-14 note is kept under U1-06); the legacy writer and API do not use `dsbf.model`, so once results are written from the `Run` (nulled and flagged), or the API stops emitting non-finite floats, regenerate the baseline with the perf harness so the benchmark guards the 200s. Carry in from U1-11: (1) the dashboard is JavaScript, so it can use `frontend/src/generated/run.d.ts` only through JSDoc `import()` types or after a move to TypeScript; (2) a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry; (3) revisit the `vue-router <5` and `plotly.js-dist-min <4` caps in the held-back table. Carry in from U3-12: `Run.notes` (plugin-load notes, plan notes, `cache_unavailable`) are printed by `Run.render_health()` as `! code: message` lines; the dashboard's Run health panel needs to show them too. A `Run` of a text-heavy dataset is megabytes (titanic at `deep` is 8.5 MB), so the artifact store must keep bulky check output behind a reference rather than in the run row.
-- Placeholders: run repository on SQLite with Alembic · artifact store and per-run data snapshot · `dsbf runs …` · API v2 · local job runner · generated TS client · dashboard shell and run health · findings explorer · column view (reuse `wip/echarts-charts` components with real histogram bins; the profile now carries equal-width bins from U2-05, while the dashboard still draws the percentile-binned histogram of F-12) (U0-16 saw the light theme draw chart titles and card headings such as "Value Counts" almost white on a light background; same on echarts 5) · relationships · quality · ML readiness · time series · run compare and history · settings → rerun · frontend component and end-to-end tests (F-29) · clear the 20 frontend lint warnings from U1-03 and raise `no-unused-vars`, `vue/no-side-effects-in-computed-properties` and `vue/require-default-prop` to `error` (16 dead variables in 12 files, `acfSelectedColData` in `TimeSeriesTab.vue` assigns inside a `computed`, route props in `RunDetailView.vue` and `RunListView.vue`); revisit `vue/no-v-html` if another source appears · code-split the dashboard bundle (over 500 kB, Plotly and ECharts load eagerly) · bundle the dashboard into the wheel with `dsbf dashboard` · remove API v1 and the old store (F-15, F-25) · release `1.0.0`
+- **Capability:** A run store (SQLite with Alembic) and an artifact store (fsspec), `dsbf runs ...`, API v2 with a local job runner, a generated TypeScript client, and the dashboard rebuilt on API v2 and served by `dsbf dashboard` from the wheel; release `1.0.0`.
+- **Motivation:** Mode 2 (standalone, local): DSBF is the pipeline, with history and a bundled UI (REFACTOR_PLAN §8.2–§8.4).
+- **Boundaries:** Local and single-user only: no Postgres, auth or queue (Phase 8). API v1 and the old store were deleted in U4-18, so this phase builds new and migrates nothing.
+- **Sequence and dependencies:** Depends on Phase 5. Store, then API, then client, then the dashboard tab by tab, then packaging.
+- **Success criteria:** `pip install "dsbf[server]" && dsbf check data.csv --sink store && dsbf dashboard` works on a clean machine. Opening a run transfers under 200 KB.
+
+- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units).
+  - **Carry in from U4-00:** the dashboard does not run from U4-18 until this phase's API v2 and shell land (decided 2026-10-19). F-15 (dataset identity, the snapshot of the data as profiled) and F-25 (pagination, error mapping, migrations, garbage collection, encoded path parameters) are design inputs for the store and API, not fixes to old code.
+  - **Carry in from U1-11:** (1) the dashboard is JavaScript, so it can use `frontend/src/generated/run.d.ts` only through JSDoc `import()` types or after a move to TypeScript; (2) a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry; (3) revisit the `vue-router <5` and `plotly.js-dist-min <4` caps in the held-back table.
+  - **Carry in from U1-03 and U0-16:** clear the 20 frontend lint warnings and raise `no-unused-vars`, `vue/no-side-effects-in-computed-properties` and `vue/require-default-prop` to `error` (16 dead variables in 12 files; `acfSelectedColData` in `TimeSeriesTab.vue` assigns inside a `computed`; route props in `RunDetailView.vue` and `RunListView.vue`); revisit `vue/no-v-html` if another source appears. The light theme draws chart titles and card headings such as "Value Counts" almost white on a light background (same on ECharts 5).
+- Placeholders, in order:
+  1. Run repository on SQLite with Alembic (datasets with a stable identity, runs, check results, findings, profiles).
+  2. Artifact store on fsspec: bulky evidence behind `details_ref` (fuzzy pairs, full matrices) and tracebacks.
+  3. A per-run Parquet snapshot of the data as profiled (F-15).
+  4. `--sink store`, `dsbf.store.save(run)` and `dsbf runs list | show | diff | delete | gc`.
+  5. API v2 read endpoints, paginated.
+  6. Job API and local runner with progress events.
+  7. Generated TypeScript client, and the JavaScript-or-TypeScript decision.
+  8. Dashboard shell and Run health panel (F-20).
+  9. Findings explorer (N-A5).
+  10. Column view with the profile's bins (F-12) and Q-Q plots (N-A3), reusing the `wip/echarts-charts` components.
+  11. Relationships.
+  12. Quality and ML readiness.
+  13. Time series (N-A4).
+  14. Run compare and history.
+  15. Settings, then rerun.
+  16. Frontend component and end-to-end tests (F-29, Playwright), with the lint warnings cleared.
+  17. Code-split the bundle (over 500 kB; Plotly and ECharts load eagerly) and remove Plotly (N-A1).
+  18. Bundle the dashboard into the wheel with `dsbf dashboard`, and release `1.0.0`.
 
 ## Phase 7: Scale and sources (placeholder)
 
-- **U7-00 · Plan Phase 7**. Carry in from U0-15: re-check ADR 0004, that the profile interface can be expressed as an Ibis aggregation (with the approximate-statistics caveats), before committing to the pushdown design; amend or supersede the ADR if it can't.
-- **Carry in from U2-01:** `dsbf.data.load` reads one local file, the first Excel sheet only, and rejects directories, globs and URLs (`UnsupportedSourceError`). Sheet choice, globs and `s3://`-style paths belong to T2.
-- Placeholders: larger-than-memory files and object storage (T2) · Ibis sources with DuckDB/Postgres, then Snowflake/BigQuery (T3) · recurring datasets, history and profile-based drift (T4) · scheduling recipes
+- **Capability:** Larger-than-memory files and object storage (T2), warehouse sources with pushdown through Ibis (T3), recurring datasets with history and profile-based drift (T4), and scheduling recipes.
+- **Motivation:** R3: from a laptop to cloud pipelines without redesigning the core (REFACTOR_PLAN §5.1).
+- **Boundaries:** No team features (Phase 8) and no new modalities (Phase 9). Checks never see a path or a connection, only a `Dataset` and its profile.
+- **Sequence and dependencies:** Depends on Phase 6 (history needs the store). T2, then T3 (DuckDB and Postgres first), then T4, then recipes.
+- **Success criteria:** 1M × 50 within budget; a 100M-row Parquet glob profiled with a sample taken at read time and its provenance shown; one warehouse source verified end to end.
+
+- **U7-00 · Plan Phase 7**.
+  - **Carry in from U0-15:** re-check ADR 0004, that the profile interface can be expressed as an Ibis aggregation (with the approximate-statistics caveats), before committing to the pushdown design; amend or supersede the ADR if it can't.
+  - **Carry in from U2-01:** `dsbf.data.load` reads one local file, the first Excel sheet only, and rejects directories, globs and URLs (`UnsupportedSourceError`). Sheet choice, globs and `s3://`-style paths belong to T2.
+  - **Carry in from U2-08:** on 1M × 50 floats the profile pass takes 9.5 s on the 4-CPU runner (type inference 1.5 s, `profile_dataset` 8.0 s). If the standard plan at that size shows the profile as a cost, the options are arithmetic histogram binning with an edge fix-up, a sketched distinct count above a row threshold, and sharing `n_unique` and null counts between type inference and the count pass. `Dataset.frame.estimated_size()` undercounts a CSV-loaded frame, so a memory figure should say what it measures.
+  - **Carry in from U4-12:** drift approximated from stored profiles is the basis of history-based drift.
+- Placeholders, in order: lazy and streaming scans with read-time sampling, globs and object storage (T2, N-B6) · Ibis sources on DuckDB and Postgres with profile pushdown (T3) · Snowflake and BigQuery · recurring datasets, history views and drift from stored profiles (T4) · `dsbf watch` and scheduling recipes (cron, orchestrators)
 
 ## Phase 8: Team and cloud (placeholder)
 
-- **U8-00 · Plan Phase 8**
-- Placeholders: Postgres repository · object-storage artifacts · auth (token, OIDC) · job queue · Docker image and Helm chart · GitHub Action · Airflow, Prefect and Dagster adapters · dbt recipe · notifiers and OpenLineage · MCP server
+- **Capability:** A team deployment: the Postgres repository, object-storage artifacts, pluggable auth, a job queue, and the integrations that wrap the library.
+- **Motivation:** R4: local first, team later, as new implementations behind the Phase 6 interfaces, not a rewrite.
+- **Boundaries:** No new check logic; integrations are thin wrappers over the library and CLI.
+- **Sequence and dependencies:** Depends on Phase 6, and on Phase 7 for warehouse sources in the integrations.
+- **Success criteria:** A documented team deployment; each adapter has an example and a CI smoke test.
+
+- **U8-00 · Plan Phase 8**.
+- Placeholders, in order: Postgres repository · object-storage artifacts (S3, GCS, Azure) · auth (token, then OIDC) · database-backed job queue with an adapter interface · Docker image and Helm chart (REVIEW_FINDINGS part 2 E) · GitHub Action and pre-commit hook · Airflow, Prefect and Dagster adapters · dbt recipe · notifiers (webhook, Slack, email) and OpenLineage facets · MCP server (REVIEW_FINDINGS part 2 G)
 
 ## Phase 9: Modalities and workflow phases (placeholder)
 
-- **U9-00 · Plan Phase 9**
-- Placeholders: text-corpus modality · domain packs · modelling-prep exports (ML guidance actions as sklearn pipelines) · modelling diagnostics
+- **Capability:** Non-tabular modalities (text corpora first), domain packs, modelling-prep exports and modelling diagnostics.
+- **Motivation:** The README vision: from EDA to the next workflow phases, on more kinds of data (REFACTOR_PLAN §5.1 T5).
+- **Boundaries:** Each modality is a new profiler and check pack behind the same contracts.
+- **Sequence and dependencies:** Depends on Phase 4's checks and Phase 5's contracts; independent of Phases 7 and 8.
+- **Success criteria:** Set by U9-00.
+
+- **U9-00 · Plan Phase 9**.
+- Placeholders, in order: text-corpus modality · domain packs (REVIEW_FINDINGS part 2 G) · modelling-prep exports (the ML guidance actions from U4-13 as sklearn pipelines) · modelling diagnostics

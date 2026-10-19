@@ -7,7 +7,7 @@ Work in this repo is planned at two levels:
 The documents involved:
 - `ROADMAP.md` is the backlog of programs and their units: status, dependencies, assumptions, steps and acceptance criteria.
 - `PLAN.md` holds the **active unit**, at most one, and nothing else.
-- `docs/REFACTOR_PLAN.md` is the design, and `docs/adr/` records the architecture decisions (D1–D11) it rests on. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite. `docs/WALKTHROUGH.md` explains how a run works today.
+- `docs/REFACTOR_PLAN.md` is the design, and `docs/adr/` records the architecture decisions (D1–D11) it rests on. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite, with each one's status. `docs/HISTORY.md` holds the summaries of finished programs and every unit's PR. `docs/WALKTHROUGH.md` explains how a legacy run works.
 
 ## Ways of working
 
