@@ -9,8 +9,8 @@ import pytest
 from dsbf.data import load
 from dsbf.model.profile import NumericProfile
 from dsbf.model.vocabulary import Confidence
-from dsbf.profile import ColumnType, profile_columns
-from dsbf.profile.histogram import histogram
+from dsbf.profiling import ColumnType, profile_columns
+from dsbf.profiling.histogram import histogram
 
 pytestmark = pytest.mark.unit
 

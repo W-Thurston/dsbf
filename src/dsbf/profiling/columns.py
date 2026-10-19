@@ -1,4 +1,4 @@
-# dsbf/profile/columns.py
+# dsbf/profiling/columns.py
 """Per-column counts, statistics, histograms, top values, text and datetime profiles.
 
 Every count and numeric aggregate for every column goes into a single Polars
@@ -36,10 +36,10 @@ from dsbf.model.profile import (
     TextProfile,
     UnknownProfile,
 )
-from dsbf.profile.histogram import DEFAULT_MAX_BINS, histogram
-from dsbf.profile.temporal import datetime_stats
-from dsbf.profile.types import ColumnType, infer_column_types
-from dsbf.profile.values import DEFAULT_TOP_K, string_stats, top_values, value_counts
+from dsbf.profiling.histogram import DEFAULT_MAX_BINS, histogram
+from dsbf.profiling.temporal import datetime_stats
+from dsbf.profiling.types import ColumnType, infer_column_types
+from dsbf.profiling.values import DEFAULT_TOP_K, string_stats, top_values, value_counts
 
 DEFAULT_QUANTILES = (0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99)
 _TEXT_DTYPES = (pl.String, pl.Categorical, pl.Enum)

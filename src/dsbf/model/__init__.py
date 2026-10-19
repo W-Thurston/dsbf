@@ -18,7 +18,6 @@ from dsbf.model.finding import Action, Finding, Guidance, GuidancePhase
 from dsbf.model.health import HealthIssue, RunHealth, StatusCounts
 from dsbf.model.manifest import (
     DatasetManifest,
-    PackRef,
     PlanManifest,
     PlannedCheck,
     SourceKind,
@@ -111,7 +110,6 @@ __all__ = [
     "NumericStats",
     "Operator",
     "order_findings",
-    "PackRef",
     "PatternCount",
     "PlanManifest",
     "PlannedCheck",

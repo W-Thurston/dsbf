@@ -1,4 +1,4 @@
-# dsbf/profile/types.py
+# dsbf/profiling/types.py
 """Semantic types, inferred from a sample of each column.
 
 A semantic type says how analysis should treat a column (``numeric``, ``categorical``,

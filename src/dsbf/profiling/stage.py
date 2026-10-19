@@ -1,4 +1,4 @@
-# dsbf/profile/stage.py
+# dsbf/profiling/stage.py
 """How prepared the data is, read from its profile."""
 
 from collections.abc import Mapping

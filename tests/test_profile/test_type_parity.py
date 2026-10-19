@@ -13,7 +13,7 @@ import pytest
 
 from dsbf.data import load
 from dsbf.eda.tasks.infer_types import InferTypes
-from dsbf.profile import infer_column_types
+from dsbf.profiling import infer_column_types
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
 from tests.test_profile.accepted import cells
 

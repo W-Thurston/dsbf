@@ -1,4 +1,4 @@
-# dsbf/profile/histogram.py
+# dsbf/profiling/histogram.py
 """Equal-width histograms of a numeric column, with the binning rule recorded.
 
 The bin count comes from the Freedman–Diaconis rule, ``2 · IQR · n^(-1/3)`` for the

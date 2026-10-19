@@ -61,7 +61,6 @@ def test_importing_the_contracts_pulls_in_no_analysis_library():
         "DatasetProfile",
         "SourceRef",
         "DatasetManifest",
-        "PackRef",
         "PlannedCheck",
         "PlanManifest",
         "Run",

@@ -14,7 +14,7 @@ from dsbf.engine import (
 from dsbf.engine import extras as extras_module
 from dsbf.engine.check import SemanticTypes
 from dsbf.model import Dimension
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import make_dataset
 
 pytestmark = pytest.mark.unit

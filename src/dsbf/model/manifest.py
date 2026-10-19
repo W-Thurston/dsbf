@@ -48,13 +48,6 @@ class DatasetManifest(Contract):
         return self.sampling.sampled_rows if self.sampling else self.n_rows
 
 
-class PackRef(Contract):
-    """A pack of checks, at the version the plan used."""
-
-    name: str = Field(min_length=1)
-    version: str = Field(min_length=1)
-
-
 class PlannedCheck(Contract):
     """One check the plan includes, with the parameters it will run under."""
 
@@ -83,7 +76,6 @@ class PlanManifest(Contract):
 
     dsbf_version: str = Field(min_length=1)
     depth: str | None = Field(default=None, description="The depth preset, if any.")
-    packs: tuple[PackRef, ...] = ()
     checks: tuple[PlannedCheck, ...] = ()
 
     @model_validator(mode="after")
@@ -91,14 +83,7 @@ class PlanManifest(Contract):
         ids = [check.check_id for check in self.checks]
         if len(set(ids)) != len(ids):
             raise ValueError("a plan lists each check once")
-        pack_names = {pack.name for pack in self.packs}
-        if len(pack_names) != len(self.packs):
-            raise ValueError("a plan lists each pack once")
         for check in self.checks:
-            if check.pack is not None and check.pack not in pack_names:
-                raise ValueError(
-                    f"{check.check_id} names pack {check.pack!r}, which the plan lacks"
-                )
             for dependency in check.depends_on:
                 if dependency == check.check_id:
                     raise ValueError(f"{check.check_id} depends on itself")

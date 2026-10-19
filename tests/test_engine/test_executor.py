@@ -16,7 +16,7 @@ from dsbf.engine import (
 )
 from dsbf.engine import extras as extras_module
 from dsbf.model import CheckResult, CheckStatus, Run, Timing
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import (
     declare,
     make_dataset,

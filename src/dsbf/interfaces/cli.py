@@ -14,7 +14,7 @@ from dsbf.eda.task_registry import load_task_group
 from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
 from dsbf.interfaces import schema_export
 from dsbf.model import Cost, Dimension
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from dsbf.utils.logging_utils import console_logging
 from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version

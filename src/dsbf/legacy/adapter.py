@@ -143,7 +143,9 @@ def legacy_checks(
     """An adapted check for every registered task but ``EXCLUDED_TASKS``, by name.
 
     The built-in tasks are loaded first, then each plugin group (a directory path
-    or a module name, as the legacy ``task_groups`` config key names them).
+    or a module name, as the legacy ``task_groups`` config key names them). A task
+    that writes files is left out when the session has no output directory, since
+    it could only end ``error``; ``adapt_task`` still adapts one by name.
     """
     _scan_native_libraries()
     load_all_tasks()
@@ -153,6 +155,9 @@ def legacy_checks(
         adapt_task(TASK_REGISTRY[name], session)
         for name in sorted(TASK_REGISTRY)
         if name not in EXCLUDED_TASKS
+        and (
+            session.output_dir is not None or not _writes_files(TASK_REGISTRY[name].cls)
+        )
     )
 
 

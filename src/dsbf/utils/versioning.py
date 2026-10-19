@@ -1,18 +1,22 @@
 # dsbf/utils/versioning.py
 
-import subprocess
+from importlib.metadata import PackageNotFoundError, version
+
+UNKNOWN_VERSION = "0+unknown"
 
 
 def get_dsbf_version() -> str:
     """
-    Return the current DSBF version, using the latest Git tag if available.
-    Falls back to 'dev' if Git or tag is not available.
+    Return the version of the installed ``dsbf`` package.
+
+    It is read from the package metadata, so it names DSBF and not whatever
+    repository the working directory happens to be in. Where the package is not
+    installed (a bare source tree on ``PYTHONPATH``), returns ``UNKNOWN_VERSION``.
 
     Returns:
-        str: Version string (e.g., 'v0.15.0' or 'dev')
+        str: Version string (e.g., '0.20.0')
     """
     try:
-        version = subprocess.check_output(["git", "describe", "--tags", "--abbrev=0"])
-        return version.decode("utf-8").strip()
-    except Exception:
-        return "dev"
+        return version("dsbf")
+    except PackageNotFoundError:
+        return UNKNOWN_VERSION

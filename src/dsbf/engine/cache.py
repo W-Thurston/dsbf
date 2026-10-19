@@ -138,6 +138,7 @@ class CacheSession:
         }
         self._keys: dict[str, CacheKey] = {}
         self._digests: dict[str, str] = {}
+        self.failure: str | None = None
 
     def lookup(
         self, entry: PlanEntry, results: Mapping[str, CheckResult]
@@ -188,5 +189,6 @@ class CacheSession:
                 type(error).__name__,
                 error,
             )
+            self.failure = f"{type(error).__name__}: {error}"
             self._cache = None
             return None

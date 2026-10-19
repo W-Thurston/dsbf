@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from dsbf.config import load_default_config
 from dsbf.data import load
 from dsbf.model import DatasetProfile, Stage
-from dsbf.profile import StageThresholds, infer_stage, profile_dataset
+from dsbf.profiling import StageThresholds, infer_stage, profile_dataset
 
 pytestmark = pytest.mark.unit
 

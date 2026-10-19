@@ -26,6 +26,7 @@ from .builders import (
     make_dataset_manifest,
     make_dataset_profile,
     make_finding,
+    make_note,
     make_plan,
     make_result,
     make_run,
@@ -125,6 +126,26 @@ def test_the_header_names_what_the_run_looked_at():
         "DSBF run 7f3c…  titanic  (10 × 1, full scan)   1 checks"
     )
     assert text.splitlines()[-1].endswith("→ see findings.parquet")
+
+
+def test_run_notes_are_listed_under_the_check_issues():
+    note = make_note(
+        code="plugin_failed", message="Could not load a.py.", hint="Fix it."
+    )
+
+    run = make_run(notes=(note,))
+
+    lines = run.render_health().splitlines()
+    assert "  ! plugin_failed: Could not load a.py. Hint: Fix it." in lines
+    assert (
+        lines.index("  ! plugin_failed: Could not load a.py. Hint: Fix it.")
+        < len(lines) - 1
+    )
+    assert round_trip(run).notes == (note,)
+
+
+def test_a_run_without_notes_has_none():
+    assert make_run().notes == ()
 
 
 def test_a_sampled_run_says_so():

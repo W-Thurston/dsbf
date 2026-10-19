@@ -12,7 +12,7 @@ from tests.perf.compare import (
     render_summary,
 )
 from tests.perf.harness import BASELINE_PATH, load_results
-from tests.perf.scenarios import PROFILE_SCENARIOS, SCENARIOS
+from tests.perf.scenarios import ENGINE_SCENARIOS, PROFILE_SCENARIOS, SCENARIOS
 
 pytestmark = pytest.mark.unit
 
@@ -160,7 +160,16 @@ def test_profile_entry_is_compared_without_tasks_or_api() -> None:
     assert (found.kind, found.name) == ("stage", "profile_dataset")
 
 
-def test_committed_baseline_covers_every_scenario() -> None:
+def test_the_engine_scenarios_pair_each_dataset_serial_and_parallel() -> None:
+    by_data = {}
+    for scenario in ENGINE_SCENARIOS:
+        by_data.setdefault(scenario.name.split("-")[1], set()).add(scenario.workers)
+    assert by_data == {"titanic": {1, None}, "kitchen5k": {1, None}}
+
+
+def test_committed_baseline_covers_every_scenario_but_the_engine_ones() -> None:
+    # The engine scenarios' baseline must be recorded on the CI runner, so it is
+    # added by the first nightly run rather than by the change that adds them.
     baseline = load_results(BASELINE_PATH)["scenarios"]
     missing = [
         s.name for s in [*SCENARIOS, *PROFILE_SCENARIOS] if s.name not in baseline

@@ -1,6 +1,6 @@
 # Profile parity with the legacy outputs
 
-The profile (`dsbf.profile`) replaces the per-task scans of the legacy `summarize_*`,
+The profile (`dsbf.profiling`) replaces the per-task scans of the legacy `summarize_*`,
 `detect_duplicates` and `infer_types` tasks and the legacy `infer_stage`. This page lists
 where the two disagree on the 10 golden datasets and why each difference is accepted.
 Anything not listed here is a failure: the parity tests compare the two and fail on a

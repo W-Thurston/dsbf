@@ -1,4 +1,4 @@
-# dsbf/profile/temporal.py
+# dsbf/profiling/temporal.py
 """Range, time zone, frequency and gaps of a datetime column.
 
 Instants come from the column as stored (Date, Datetime), from a text column parsed
@@ -22,7 +22,7 @@ from typing import Any, cast
 import numpy as np
 import polars as pl
 
-from dsbf.profile.types import ColumnType, parse_dates
+from dsbf.profiling.types import ColumnType, parse_dates
 
 _MIN_INSTANTS_FOR_FREQUENCY = 3
 _DOMINANT_STEP_SHARE = 0.5

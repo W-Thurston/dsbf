@@ -164,6 +164,7 @@ def execute(
         dataset=_dataset_manifest(dataset),
         plan=_plan_manifest(plan, dsbf_version),
         profile=profile,
+        notes=(*plan.notes, *_cache_notes(session)),
     )
 
 
@@ -359,6 +360,20 @@ def _timeout_result(
         notes=(note,),
         timing=window.timing,
         params=entry.params.model_dump(mode="json"),
+    )
+
+
+def _cache_notes(session: CacheSession | None) -> tuple[Note, ...]:
+    if session is None or session.failure is None:
+        return ()
+    return (
+        Note(
+            code="cache_unavailable",
+            message="The result cache failed, so the checks after that ran uncached.",
+            severity=Severity.WARN,
+            hint="Check that the cache directory is writable, or run without a cache.",
+            detail=session.failure,
+        ),
     )
 
 

@@ -8,8 +8,8 @@ import pytest
 from dsbf.data import load
 from dsbf.model.profile import CategoricalProfile, TextProfile
 from dsbf.model.vocabulary import Confidence
-from dsbf.profile import ColumnType, profile_columns
-from dsbf.profile.values import (
+from dsbf.profiling import ColumnType, profile_columns
+from dsbf.profiling.values import (
     MAX_TOP_VALUE_CHARS,
     string_stats,
     top_values,

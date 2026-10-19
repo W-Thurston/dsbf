@@ -19,7 +19,7 @@ from dsbf.legacy import LegacyParams, LegacySession, legacy_checks
 from dsbf.legacy.result import plain
 from dsbf.model import Run
 from dsbf.model.scrub import json_safe
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from dsbf.utils.task_utils import instantiate_task
 
 N_ROWS = 240
