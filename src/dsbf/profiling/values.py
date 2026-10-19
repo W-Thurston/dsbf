@@ -1,4 +1,4 @@
-# dsbf/profile/values.py
+# dsbf/profiling/values.py
 """Top values, string lengths, character classes and patterns of a column.
 
 A column's distinct values and their counts are worked out once. Everything else

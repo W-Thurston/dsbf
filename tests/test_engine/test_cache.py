@@ -27,7 +27,7 @@ from dsbf.engine import (
 from dsbf.engine.cache import CacheSession, result_digest
 from dsbf.model import CheckResult, CheckStatus
 from dsbf.paths import dsbf_home
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import (
     build_frame,
     comparable,
@@ -381,10 +381,21 @@ class TestFailingCache:
             run = go(toys(calls), BrokenCache())
 
         assert {r.status for r in run.results.values()} == {CheckStatus.OK}
-        assert comparable(run) == comparable(go(toys([]), None))
+        assert comparable(run) | {"notes": []} == comparable(go(toys([]), None))
         warnings = [r for r in caplog.records if r.name == "dsbf.engine.cache"]
         assert len(warnings) == 1
         assert "disk gone" in warnings[0].getMessage()
+
+    def test_the_run_says_the_cache_failed(self):
+        run = go(toys([]), BrokenCache())
+
+        (note,) = run.notes
+        assert note.code == "cache_unavailable"
+        assert "disk gone" in (note.detail or "")
+        assert "cache_unavailable" in run.render_health()
+
+    def test_a_working_cache_leaves_no_run_note(self):
+        assert go(toys([]), MemoryCache()).notes == ()
 
 
 class TestDiskCache:

@@ -160,7 +160,7 @@ class TestCooperativeCancellation:
 
     def test_the_context_without_a_cancel_event_never_cancels(self):
         from dsbf.engine import CheckContext
-        from dsbf.profile import profile_dataset
+        from dsbf.profiling import profile_dataset
         from tests.test_engine.toys import make_dataset
 
         dataset = make_dataset()

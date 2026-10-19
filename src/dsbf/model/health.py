@@ -7,7 +7,7 @@ from typing import Self
 from pydantic import Field
 
 from dsbf.model.base import Contract
-from dsbf.model.check import CheckResult
+from dsbf.model.check import CheckResult, Note
 from dsbf.model.vocabulary import CheckStatus, Severity
 
 # The statuses that put a line in the summary. "Not applicable" is expected.
@@ -91,11 +91,17 @@ class RunHealth(Contract):
             findings_at_warn_or_above=at_warn,
         )
 
-    def render(self, header: str | None = None, pointer: str | None = None) -> str:
+    def render(
+        self,
+        header: str | None = None,
+        pointer: str | None = None,
+        notes: tuple[Note, ...] = (),
+    ) -> str:
         """Plain text for a terminal or a log.
 
         ``header`` names the run (id, dataset, shape, check count), which the run
         knows and this object does not. ``pointer`` says where the findings are.
+        ``notes`` are the run's own, which belong to no check.
         """
         lines = [header] if header else []
         lines.append(
@@ -113,6 +119,9 @@ class RunHealth(Contract):
                 f"  {_MARKS[issue.status]} {issue.status.value:<{_STATUS_WIDTH}}"
                 f"{issue.check_id:<{id_width}}{text}"
             )
+        for note in notes:
+            text = note.message + (f" Hint: {note.hint}" if note.hint else "")
+            lines.append(f"  ! {note.code}: {text}")
         count = self.findings_at_warn_or_above
         if count:
             noun = "finding" if count == 1 else "findings"

@@ -10,7 +10,7 @@ from dsbf.data import load
 from dsbf.engine import Registry, Selection, execute, make_plan
 from dsbf.legacy import LegacySession, legacy_checks
 from dsbf.model import CheckStatus
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.fixtures.adversarial import build_adversarial_frame
 from tests.test_model.builders import strict_loads
 

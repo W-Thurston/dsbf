@@ -15,17 +15,21 @@ import pytest
 
 from tests.perf.compare import TOLERANCE, check_budget, find_regressions
 from tests.perf.harness import BASELINE_PATH, load_results, measure
-from tests.perf.scenarios import PROFILE_SCENARIOS, SCENARIOS, ProfileScenario, Scenario
+from tests.perf.scenarios import (
+    ENGINE_SCENARIOS,
+    PROFILE_SCENARIOS,
+    SCENARIOS,
+    EngineScenario,
+    ProfileScenario,
+    Scenario,
+)
 
 pytestmark = pytest.mark.perf
 
 
-def _param(scenario: Scenario | ProfileScenario):
-    marks = (
-        [pytest.mark.slow]
-        if scenario.name.removeprefix("profile-").startswith(("kitchen", "wide"))
-        else []
-    )
+def _param(scenario: Scenario | ProfileScenario | EngineScenario):
+    stem = scenario.name.removeprefix("profile-").removeprefix("engine-")
+    marks = [pytest.mark.slow] if stem.startswith(("kitchen", "wide")) else []
     return pytest.param(scenario, id=scenario.name, marks=marks)
 
 
@@ -76,6 +80,37 @@ def test_profile_pass_within_budget(
     # rewritten: a pass that misses it should not become the new reference unnoticed.
     over_budget = check_budget(scenario.name, result)
     assert not over_budget, "over budget:\n" + "\n".join(f"  {b}" for b in over_budget)
+
+    if config.getoption("--update-perf-baseline") or config.getoption(
+        "--perf-no-compare"
+    ):
+        return
+
+    baseline = load_results(BASELINE_PATH)["scenarios"].get(scenario.name)
+    if baseline is None:
+        pytest.skip(
+            f"no baseline for {scenario.name}; record one with --update-perf-baseline"
+        )
+    regressions = find_regressions(scenario.name, baseline, result)
+    assert not regressions, (
+        f"regressed by more than {TOLERANCE:.0%} against tests/perf/baseline.json:\n"
+        + "\n".join(f"  {r.describe()}" for r in regressions)
+    )
+
+
+@pytest.mark.parametrize("scenario", [_param(s) for s in ENGINE_SCENARIOS])
+def test_engine_run_within_baseline(
+    scenario: EngineScenario,
+    tmp_path: Path,
+    request: pytest.FixtureRequest,
+    measured: dict[str, Any],
+) -> None:
+    config = request.config
+    result = measure(scenario, tmp_path)
+    measured[scenario.name] = result
+
+    # A check that errored or timed out did less work than the baseline's did.
+    assert not result["failed_checks"], f"checks failed: {result['failed_checks']}"
 
     if config.getoption("--update-perf-baseline") or config.getoption(
         "--perf-no-compare"

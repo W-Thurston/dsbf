@@ -44,6 +44,22 @@ class ProfileScenario:
     repeats: int = 3
 
 
+@dataclass(frozen=True)
+class EngineScenario:
+    """One timed ``dsbf.profile()`` call: the new engine over the adapted legacy tasks.
+
+    ``workers`` is how many checks run at once; ``None`` is the executor's default,
+    one per core. A serial and a parallel scenario on the same data show what the
+    parallel executor buys, so the pair is the measurement.
+    """
+
+    name: str
+    write_csv: Callable[[Path], Path]
+    workers: int | None
+    time_series_column: str | None = None
+    repeats: int = 1
+
+
 def _adversarial(directory: Path) -> Path:
     path = directory / "adversarial.csv"
     build_adversarial_frame().to_csv(path, index=False)
@@ -95,4 +111,27 @@ def _wide(directory: Path) -> Path:
 PROFILE_SCENARIOS = [
     ProfileScenario("profile-kitchen50k", _kitchen(50_000, "kitchen50k")),
     ProfileScenario("profile-wide1m", _wide),
+]
+
+
+# The full legacy task set through ``dsbf.profile(depth="deep")``, serial and parallel.
+# Their baseline can only be recorded from the CI runner (see README.md), so until it
+# is, these run and write their numbers without a comparison.
+ENGINE_SCENARIOS = [
+    EngineScenario("engine-titanic-serial", TITANIC.write_csv, workers=1, repeats=3),
+    EngineScenario(
+        "engine-titanic-parallel", TITANIC.write_csv, workers=None, repeats=3
+    ),
+    EngineScenario(
+        "engine-kitchen5k-serial",
+        KITCHEN5K.write_csv,
+        workers=1,
+        time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+    ),
+    EngineScenario(
+        "engine-kitchen5k-parallel",
+        KITCHEN5K.write_csv,
+        workers=None,
+        time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+    ),
 ]

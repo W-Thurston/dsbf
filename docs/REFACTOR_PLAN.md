@@ -237,7 +237,7 @@ class Run(BaseModel):
     started_at: AwareDatetime
     finished_at: AwareDatetime
     dataset: DatasetManifest  # identity, fingerprint, source, shape, sampling
-    plan: PlanManifest  # checks, versions, params, packs, dsbf version (F-18)
+    plan: PlanManifest  # checks, versions, params, dsbf version (F-18); a check's pack is a name, packs have no version
     profile: DatasetProfile
     results: dict[str, CheckResult]
     health: RunHealth  # counts and reasons by status: the "never read logs" summary
@@ -384,6 +384,13 @@ How the adapter works (`dsbf.legacy`; `legacy_checks(session)` returns one `Chec
 - The task runs against a `LegacyContext`: the data as pandas or Polars (a private copy per check, since a task may edit its input and checks overlap), the config, the upstream `TaskResult`s rebuilt from the stored output, and `semantic_types` from the profile (legacy `continuous`, `id` and `categorical` for the profile's `numeric`, `identifier` and `categorical` or `boolean`) and `inferred_dtypes`.
 - The output is the whole `TaskResult.to_dict()`, made JSON-plain (`LegacyTaskOutput.result`). A task that returns `failed` ends `error` with its `error_metadata` as the note; one that returns `skipped` ends `skipped` with its message. The parameters are the task's config, the shared config, a digest of the task's module and the shared code, and the output directory or reference digest for a task that writes files or reads the reference, so a cached result is reused only when all of them are the same. Findings are not derived yet.
 
+How the entry point works (`dsbf.profile(source, ...)`, in `dsbf/library.py`; the subpackage that holds the profile pass is `dsbf.profiling`):
+- The settings are a `ProfileConfig` (`dsbf.config.profile`): packs, include and exclude, `depth`, `target`, `time_index`, `sample`, `backend`, `limits`, `workers`, `plugins` and per-task overrides. The keyword arguments are its `overrides` layer, a `config=` path is its project file, and the working directory is never read, so a library call is the same wherever it runs. A bad value, or a `target`, `time_index` or task name the data does not have, is a `ConfigError` with a suggestion.
+- The flow is `load` (or the `Dataset` given), `Dataset.sample` if asked, the profile pass on the sampled rows, a `LegacySession`, `legacy_checks`, `make_plan` and `execute`. `checks` takes `+id` and a bare id to include and `-id` to exclude. The default pack is `legacy`, the only one until Phase 4; the backend defaults to `pandas`, because the legacy tasks are written for pandas frames (on titanic 47 of 63 checks differ on Polars). The inferred stage is not computed, because no check reads it.
+- Nothing is written unless asked: the result cache is off (`cache=True` is `DiskCache.default()`, or pass any `ResultCache`), and the two legacy checks that write plots are left out of a run with no output directory.
+- `Run.notes` holds what happened to the run as a whole: plugin-load problems, plan notes, and `cache_unavailable` when the cache failed during the run. `Run.render_health()` prints them under the check issues. The version in the manifest and `dsbf.__version__` come from `importlib.metadata`.
+- A `Run` is in memory and can be megabytes on text-heavy data: titanic at `deep` is 8.5 MB, 7.9 MB of it the output of `fuzzy_duplicate_detection`, which Phase 4 redesigns.
+
 ### 6.3 Planner
 
 Input: Dataset, Profile (or the schema only, for a dry run), selection and configuration.
@@ -421,7 +428,7 @@ How isolation works in `dsbf.engine` (`execute(plan, dataset, profile, dsbf_vers
   - A check declares `runs_in="process"` (default `"thread"`) when it loops in pure Python. It then runs in a worker process whatever `workers` is, and a timeout terminates the process (the note says it was killed). A worker is one process per check from a `forkserver` context (`spawn` where there is none), preloaded with the engine so it starts in about 10 ms. Polars' thread pool makes a plain fork unsafe. The frame is written once per run to an uncompressed Arrow file that workers memory-map through pyarrow (no copy, so no per-worker 400 MB for 1M × 50); the check travels by name, so it must be declared at the top level of an importable module, and one that is not runs on a thread with a `ran_in_thread` note. A worker that exits without a result is an `error` with a `worker_died` note, and `SystemExit` in a worker is that, not a stop of the run.
   - The calling thread does all the waiting and emits every event, so hooks need no locking: per check `check_started`, its notes, `check_finished`; across checks the order of completion (plan order with one worker), with plan positions. `Run.results` is in plan order, and a run is the same, timing aside, for any worker count.
   - Timing: a thread check's CPU and peak memory are the whole process's, so `Timing.shared_with` counts the checks that overlapped on threads; a worker's are its own (`shared_with` is 0), and a killed worker has no CPU figure.
-- **Caching:** results are keyed by `(dataset.fingerprint, check.id, check.version, params_hash, sampling)`. Rerunning after changing one threshold recomputes only the affected checks and their dependents. The cache is local disk by default and pluggable.
+- **Caching:** results are keyed by `(dataset.fingerprint, check.id, check.version, params_hash, sampling)`. Rerunning after changing one threshold recomputes only the affected checks and their dependents. The cache is local disk and pluggable; it is on only when asked for (`cache=True` in `dsbf.profile()`).
   How it works in `dsbf.engine` (`execute(..., cache=None)`; off unless given, so a library call writes nothing it was not asked to):
   - The key hashes the dataset fingerprint, the sampling record, a digest of the profile (checks read it, and the profile code can change while the data does not), the check's id, version and parameters, and the digest of each upstream result the check may read (`requires` and `after`; a result's digest leaves out its timing). Because an upstream result is in the key, changing one check's parameters re-runs it and the checks that read its changed result; a dependent whose upstream re-ran to the same result is still served, and one whose soft upstream failed last time is not.
   - Only `ok` results are stored: an error, timeout, skip or missing extra depends on the machine and the limits, and a `not_applicable` result costs nothing to recompute. A hit is looked up after the extra and requirement rules and before the run budget, so it is served even when the budget is gone. It has no `CheckStarted`; its notes and `CheckFinished` come as usual, and `Timing.cached` is true with the lookup's wall time and no CPU or memory.
@@ -562,7 +569,7 @@ run = dsbf.profile(
     time_index="event_ts",
     sample=dsbf.Sample(rows=1_000_000),
 )
-run.health.summary()
+run.render_health()  # the §7.1 text; its header needs the run, not just the health
 run.findings.filter(severity=">=warn").to_polars()
 run.write("out/", sinks=["parquet", "html"])
 dsbf.store.save(run)  # optional: make it visible in the dashboard

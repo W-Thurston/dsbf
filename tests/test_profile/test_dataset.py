@@ -7,7 +7,7 @@ import pytest
 
 from dsbf.data import load
 from dsbf.model import DatasetProfile, Missingness
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.fixtures.adversarial import N_ROWS, build_adversarial_frame
 
 pytestmark = pytest.mark.unit
@@ -171,7 +171,7 @@ def test_the_pair_list_is_capped_at_max_pairs():
 
 
 def test_the_null_mask_is_chunked_without_changing_counts(monkeypatch):
-    monkeypatch.setattr("dsbf.profile.dataset._MASK_CHUNK_BYTES", 4 * 2 * 7)
+    monkeypatch.setattr("dsbf.profiling.dataset._MASK_CHUNK_BYTES", 4 * 2 * 7)
     rng = np.random.default_rng(3)
     frame = pd.DataFrame(rng.normal(size=(100, 3)), columns=list("abc"))
     frame = frame.mask(rng.random(frame.shape) < 0.3)

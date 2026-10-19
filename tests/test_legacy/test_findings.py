@@ -11,7 +11,7 @@ from dsbf.engine import CheckContext
 from dsbf.legacy import LegacySession, legacy_checks
 from dsbf.legacy.findings import findings_from
 from dsbf.model import Confidence, Run, Severity, Subject
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_legacy.support import make_session, output_of, run_adapted
 from tests.test_model.builders import round_trip, strict_loads
 from tests.test_model.test_legacy_guidance import (

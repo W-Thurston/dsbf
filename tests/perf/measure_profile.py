@@ -19,7 +19,7 @@ from pathlib import Path
 
 START = time.perf_counter()
 from dsbf.data import load  # noqa: E402
-from dsbf.profile import (  # noqa: E402
+from dsbf.profiling import (  # noqa: E402
     infer_column_types,
     infer_stage,
     profile_dataset,

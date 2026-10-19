@@ -15,7 +15,7 @@ from dsbf.engine import (
     run_check,
 )
 from dsbf.model import CheckResult, CheckStatus, Dimension, Severity
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import (
     make_dataset,
     null_share,

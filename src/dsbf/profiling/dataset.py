@@ -1,4 +1,4 @@
-# dsbf/profile/dataset.py
+# dsbf/profiling/dataset.py
 """The dataset-level profile: shape, duplicate rows and missingness co-occurrence."""
 
 from collections.abc import Mapping, Sequence
@@ -13,10 +13,10 @@ from dsbf.model.profile import (
     Missingness,
     NullPair,
 )
-from dsbf.profile.columns import DEFAULT_QUANTILES, profile_columns
-from dsbf.profile.histogram import DEFAULT_MAX_BINS
-from dsbf.profile.types import ColumnType, infer_column_types
-from dsbf.profile.values import DEFAULT_TOP_K
+from dsbf.profiling.columns import DEFAULT_QUANTILES, profile_columns
+from dsbf.profiling.histogram import DEFAULT_MAX_BINS
+from dsbf.profiling.types import ColumnType, infer_column_types
+from dsbf.profiling.values import DEFAULT_TOP_K
 
 DEFAULT_MAX_PAIR_COLUMNS = 100
 DEFAULT_MAX_PAIRS = 20

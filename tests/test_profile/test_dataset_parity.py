@@ -11,7 +11,7 @@ import pytest
 
 from dsbf.data import load
 from dsbf.model import Stage
-from dsbf.profile import infer_stage, profile_dataset
+from dsbf.profiling import infer_stage, profile_dataset
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
 
 pytestmark = pytest.mark.unit

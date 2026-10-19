@@ -114,7 +114,34 @@ uv run dsbf quickstart titanic     # seaborn built-in
 uv run dsbf quickstart iris        # sklearn built-in
 ```
 
-### Python API
+### Python library — `dsbf.profile()`
+
+```python
+import dsbf
+from dsbf.model import Severity
+
+run = dsbf.profile("data.csv", depth="quick", target="survived")
+print(run.render_health())  # check counts, and why any check did not complete
+worst = [f for f in run.findings if f.severity >= Severity.WARN]
+```
+
+`dsbf.profile()` takes a pandas, Polars or Arrow table or a file path, and returns a `Run` in memory. It writes nothing to disk, and no check can stop it: a check that fails ends with a status and a note in `run.results`. `run.findings` lists the findings, highest severity first.
+
+| Argument | Meaning |
+|---|---|
+| `depth` | `quick`, `standard` (the default) or `deep`: the most expensive kind of check to run |
+| `packs`, `checks` | The packs to draw checks from (`legacy`, which holds every existing task, by default); `checks=["-detect_outliers", "+detect_zeros"]` removes and adds checks by id |
+| `target`, `time_index` | The columns the checks that need a target or a time axis use |
+| `sample` | `dsbf.Sample(rows=100_000, strategy="random", seed=1)`, or a row count for the first rows; the `Run` records how the rows were chosen |
+| `tasks` | Settings for a legacy task, by name: `{"detect_outliers": {"flag_threshold": 0.05}}` |
+| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once |
+| `cache` | `True` keeps results under the DSBF home, so a second call re-runs only the checks whose inputs changed; off by default |
+| `hooks`, `plugins` | Functions that receive an event as each check starts and finishes; directories of check plugins |
+| `config` | The path of a settings file with the same names. An argument here overrides the file, and `DSBF__SECTION__KEY` environment variables sit between the two. No file is read unless you name it |
+
+A `Run` can be megabytes on text-heavy data, because a check's output is kept whole: the titanic `Run` is 8.4 MB, 7.9 MB of it from `fuzzy_duplicate_detection`.
+
+### Python API (the original `EDA` class)
 
 ```python
 from dsbf.interfaces.api import EDA
@@ -212,7 +239,7 @@ time_series:
   datetime_index_column: null   # must be set explicitly — DSBF will not guess
 ```
 
-Pass a config of your own with `uv run dsbf run --config my_config.yaml`.
+Pass a config of your own with `uv run dsbf run --config my_config.yaml`. `dsbf.profile()` does not read this file: it has its own settings (see above), and applies `tasks` over the task defaults here.
 
 ---
 

@@ -21,7 +21,7 @@ from dsbf.model.profile import (
     UnknownProfile,
 )
 from dsbf.model.vocabulary import Confidence
-from dsbf.profile import (
+from dsbf.profiling import (
     DEFAULT_QUANTILES,
     ColumnType,
     infer_column_types,

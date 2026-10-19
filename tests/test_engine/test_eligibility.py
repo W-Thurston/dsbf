@@ -7,7 +7,7 @@ from dsbf.data import load
 from dsbf.engine import CheckContext, Requires, SemanticTypes, check
 from dsbf.engine.eligibility import eligibility
 from dsbf.model import Dimension
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import make_dataset
 
 pytestmark = pytest.mark.unit

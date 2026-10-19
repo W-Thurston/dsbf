@@ -17,7 +17,7 @@ from dsbf.config import load_default_config
 from dsbf.data import load
 from dsbf.engine import Registry, Selection, execute, make_plan
 from dsbf.legacy import LegacySession, legacy_checks
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 
 
 def main() -> None:

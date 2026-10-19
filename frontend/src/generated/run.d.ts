@@ -70,6 +70,10 @@ export interface Run {
   };
   health: RunHealth;
   /**
+   * What happened to the run as a whole rather than to one check: a plugin that failed to load, an empty plan, a result cache that failed.
+   */
+  notes: Note[];
+  /**
    * What the user's policy decided; absent when none was applied.
    */
   policy: PolicyOutcome | null;
@@ -140,18 +144,7 @@ export interface PlanManifest {
    * The depth preset, if any.
    */
   depth: string | null;
-  packs: PackRef[];
   checks: PlannedCheck[];
-}
-/**
- * A pack of checks, at the version the plan used.
- *
- * This interface was referenced by `Run`'s JSON-Schema
- * via the `definition` "PackRef".
- */
-export interface PackRef {
-  name: string;
-  version: string;
 }
 /**
  * One check the plan includes, with the parameters it will run under.

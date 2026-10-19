@@ -18,8 +18,8 @@ from dsbf.eda.tasks.summarize_numeric import SummarizeNumeric
 from dsbf.eda.tasks.summarize_unique import SummarizeUnique
 from dsbf.eda.tasks.summarize_value_counts import SummarizeValueCounts
 from dsbf.model.profile import CategoricalProfile, NumericProfile, TextProfile
-from dsbf.profile import profile_columns
-from dsbf.profile.values import MAX_TOP_VALUE_CHARS
+from dsbf.profiling import profile_columns
+from dsbf.profiling.values import MAX_TOP_VALUE_CHARS
 from tests.golden.datasets import GOLDEN_DATASETS, GoldenDataset
 from tests.helpers.context_utils import make_ctx_and_task, run_task_with_dependencies
 from tests.test_profile.accepted import cells

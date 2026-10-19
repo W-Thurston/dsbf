@@ -30,7 +30,7 @@ from dsbf.model import (
     Severity,
     Subject,
 )
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 
 N_ROWS = 200
 

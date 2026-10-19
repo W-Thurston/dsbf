@@ -40,6 +40,21 @@ def test_every_registered_task_becomes_a_check_but_the_timing_reports(checks):
     assert len(checks) > 60
 
 
+def test_tasks_that_write_files_are_left_out_without_an_output_directory(
+    checks, tmp_path
+):
+    base = make_session(tmp_path)
+    session = type(base)(base.dataset, base.profile, config=base.config)
+
+    in_memory = {check.id for check in legacy_checks(session)}
+
+    assert set(checks) - in_memory == {
+        "generate_dataset_summary_plots",
+        "generate_univariate_plots",
+    }
+    assert in_memory <= set(checks)
+
+
 def test_building_the_checks_scans_the_native_libraries_before_any_check_runs(
     monkeypatch, tmp_path
 ):

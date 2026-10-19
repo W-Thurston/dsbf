@@ -23,7 +23,7 @@ from dsbf.engine import (
 from dsbf.engine.process import WorkerHost
 from dsbf.engine.scheduler import Scheduler
 from dsbf.model import CheckStatus, Dimension
-from dsbf.profile import profile_dataset
+from dsbf.profiling import profile_dataset
 from tests.test_engine import process_toys as toys
 from tests.test_engine.test_parallel import comparable
 from tests.test_engine.toys import (

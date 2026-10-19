@@ -9,8 +9,8 @@ import pytest
 
 from dsbf.data import load
 from dsbf.model.vocabulary import Confidence
-from dsbf.profile import TYPE_SAMPLE_ROWS, infer_column_type, infer_column_types
-from dsbf.profile.types import _date_format
+from dsbf.profiling import TYPE_SAMPLE_ROWS, infer_column_type, infer_column_types
+from dsbf.profiling.types import _date_format
 
 pytestmark = pytest.mark.unit
 

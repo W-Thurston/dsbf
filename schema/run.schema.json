@@ -1754,26 +1754,6 @@
       "title": "Operator",
       "type": "string"
     },
-    "PackRef": {
-      "additionalProperties": false,
-      "description": "A pack of checks, at the version the plan used.",
-      "properties": {
-        "name": {
-          "minLength": 1,
-          "type": "string"
-        },
-        "version": {
-          "minLength": 1,
-          "type": "string"
-        }
-      },
-      "required": [
-        "name",
-        "version"
-      ],
-      "title": "PackRef",
-      "type": "object"
-    },
     "PatternCount": {
       "additionalProperties": false,
       "description": "A pattern signature and how many values have it.",
@@ -1814,13 +1794,6 @@
           "default": null,
           "description": "The depth preset, if any."
         },
-        "packs": {
-          "default": [],
-          "items": {
-            "$ref": "#/$defs/PackRef"
-          },
-          "type": "array"
-        },
         "checks": {
           "default": [],
           "items": {
@@ -1832,7 +1805,6 @@
       "required": [
         "dsbf_version",
         "depth",
-        "packs",
         "checks"
       ],
       "title": "PlanManifest",
@@ -2574,7 +2546,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.5.0",
+      "default": "0.6.0",
       "type": "string"
     },
     "run_id": {
@@ -2608,6 +2580,14 @@
     "health": {
       "$ref": "#/$defs/RunHealth"
     },
+    "notes": {
+      "default": [],
+      "description": "What happened to the run as a whole rather than to one check: a plugin that failed to load, an empty plan, a result cache that failed.",
+      "items": {
+        "$ref": "#/$defs/Note"
+      },
+      "type": "array"
+    },
     "policy": {
       "anyOf": [
         {
@@ -2631,6 +2611,7 @@
     "profile",
     "results",
     "health",
+    "notes",
     "policy"
   ],
   "title": "Run",

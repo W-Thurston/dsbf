@@ -10,7 +10,7 @@ from uuid import UUID
 from pydantic import AwareDatetime, Field, field_validator, model_validator
 
 from dsbf.model.base import Contract
-from dsbf.model.check import CheckResult
+from dsbf.model.check import CheckResult, Note
 from dsbf.model.finding import Finding
 from dsbf.model.health import RunHealth
 from dsbf.model.manifest import DatasetManifest, PlanManifest
@@ -20,7 +20,7 @@ from dsbf.model.vocabulary import Severity
 
 # Semver. Additive changes are minor and breaking changes are major. The 1.x
 # compatibility guarantee begins with the first release.
-SCHEMA_VERSION = "0.5.0"
+SCHEMA_VERSION = "0.6.0"
 
 _SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _SEVERITY_FIRST = {severity: -rank for rank, severity in enumerate(Severity)}
@@ -47,6 +47,11 @@ class Run(Contract):
         description="One result per planned check, keyed by check id."
     )
     health: RunHealth
+    notes: tuple[Note, ...] = Field(
+        default=(),
+        description="What happened to the run as a whole rather than to one check: "
+        "a plugin that failed to load, an empty plan, a result cache that failed.",
+    )
     policy: PolicyOutcome | None = Field(
         default=None,
         description="What the user's policy decided; absent when none was applied.",
@@ -159,4 +164,4 @@ class Run(Contract):
             f"({self.dataset.n_rows:,} × {self.dataset.n_columns}, {scan})   "
             f"{len(self.results)} checks"
         )
-        return self.health.render(header=header, pointer=pointer)
+        return self.health.render(header=header, pointer=pointer, notes=self.notes)

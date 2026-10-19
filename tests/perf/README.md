@@ -1,7 +1,7 @@
 # Performance benchmark
 
-`pytest -m perf` profiles four datasets end to end with the legacy engine, and times the
-new profile pass on two more, each in a fresh interpreter. It compares what it measured with
+`pytest -m perf` profiles four datasets end to end with the legacy engine, times the new
+profile pass on two more and `dsbf.profile()` on two, each in a fresh interpreter. It compares what it measured with
 `baseline.json`, and holds the profile pass to absolute budgets. It is deselected by default (kitchen50k alone takes
 over ten minutes), and `.github/workflows/perf.yml` runs it nightly, on demand, and on a pull
 request labelled `perf`. Add that label to any pull request that is meant to change speed or
@@ -14,7 +14,7 @@ memory, or that touches the engine or a slow task.
 | `kitchen5k` | `DSBFTestDataGenerator(n_rows=5000, random_seed=42)`, `normal_date` as the time series | 1 |
 | `kitchen50k` | the same generator at 50,000 rows (52,500 x 60 after the generator's own additions) | 1 |
 
-The profile scenarios time only `dsbf.profile` (type inference, `profile_dataset`, stage
+The profile scenarios time only `dsbf.profiling` (type inference, `profile_dataset`, stage
 inference), after the file is loaded:
 
 | Scenario | Input | Runs | Budget |
@@ -22,12 +22,28 @@ inference), after the file is loaded:
 | `profile-kitchen50k` | the `kitchen50k` frame (52,500 x 60), as CSV | 3, median kept | pass under 2 s; memory under 2.5x |
 | `profile-wide1m` | 1,000,000 x 50 floats (`numpy` seed 42), as Parquet | 3, median kept | memory under 2.5x; time compared with the baseline only |
 
+The engine scenarios time one `dsbf.profile(depth="deep")` call (loading the file, the
+profile pass, planning and executing every adapted legacy task), serial and parallel, in a
+fresh interpreter. Each writes the wall time of every check as its `tasks`, so the executor's
+effect shows per check as well as in the total. They run and write their numbers, and skip
+the comparison until a baseline from the CI runner is committed, since a local figure is not
+comparable (titanic took 33.5 s and 614 MB locally against 26.7 s and 492 MB for the legacy
+engine on the runner).
+
+| Scenario | Input | Runs | `workers` |
+|---|---|---|---|
+| `engine-titanic-serial` | titanic | 3, median kept | 1 |
+| `engine-titanic-parallel` | titanic | 3, median kept | the executor's default (one per core, at most 8) |
+| `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | 1 |
+| `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | the default |
+
 ## Run it
 
 ```bash
 uv run pytest -m perf                       # all four, compare with the baseline
 uv run pytest -m perf -k titanic            # one scenario
 uv run pytest -m perf -k profile            # the profile pass only (about 30 s)
+uv run pytest -m perf -k engine             # dsbf.profile(), serial and parallel
 uv run pytest -m perf --perf-no-compare     # measure only
 uv run pytest -m perf -k titanic --perf-cprofile   # also write run.prof (slower; diagnosis only)
 ```

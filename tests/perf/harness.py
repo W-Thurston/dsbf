@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from tests.perf.scenarios import ProfileScenario, Scenario
+from tests.perf.scenarios import EngineScenario, ProfileScenario, Scenario
 
 PERF_DIR = Path(__file__).parent
 BASELINE_PATH = PERF_DIR / "baseline.json"
@@ -90,8 +90,30 @@ def run_profile_once(
     return _run_child(command, workdir, name=scenario.name)
 
 
+def run_engine_once(scenario: EngineScenario, workdir: Path) -> dict[str, Any]:
+    """Call ``dsbf.profile()`` on ``scenario``'s data once under ``workdir``."""
+    workdir = workdir.resolve()
+    data_dir, out_dir, cwd = workdir / "data", workdir / "out", workdir / "cwd"
+    for directory in (data_dir, out_dir, cwd):
+        directory.mkdir(parents=True, exist_ok=True)
+    command = [
+        sys.executable,
+        str(PERF_DIR / "measure_engine.py"),
+        scenario.name,
+        str(scenario.write_csv(data_dir).resolve()),
+        str(out_dir),
+        "--workers",
+        "default" if scenario.workers is None else str(scenario.workers),
+    ]
+    if scenario.time_series_column:
+        command += ["--time-index", scenario.time_series_column]
+    return _run_child(command, workdir, name=scenario.name)
+
+
 def measure(
-    scenario: Scenario | ProfileScenario, workdir: Path, cprofile: bool = False
+    scenario: Scenario | ProfileScenario | EngineScenario,
+    workdir: Path,
+    cprofile: bool = False,
 ) -> dict[str, Any]:
     """Run ``scenario`` ``repeats`` times and keep the run with the median total."""
     if isinstance(scenario, ProfileScenario):
@@ -101,6 +123,11 @@ def measure(
         data_path = scenario.write_data(data_dir)
         runs = [
             run_profile_once(scenario, data_path, workdir / f"run{i}")
+            for i in range(scenario.repeats)
+        ]
+    elif isinstance(scenario, EngineScenario):
+        runs = [
+            run_engine_once(scenario, workdir / f"run{i}")
             for i in range(scenario.repeats)
         ]
     else:

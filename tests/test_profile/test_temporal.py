@@ -9,8 +9,8 @@ import pytest
 from dsbf.data import load
 from dsbf.model.profile import DatetimeProfile
 from dsbf.model.vocabulary import Confidence
-from dsbf.profile import ColumnType, profile_columns
-from dsbf.profile.temporal import datetime_stats
+from dsbf.profiling import ColumnType, profile_columns
+from dsbf.profiling.temporal import datetime_stats
 
 pytestmark = pytest.mark.unit
 
