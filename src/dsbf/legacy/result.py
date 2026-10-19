@@ -9,6 +9,7 @@ import numpy as np
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.engine import CheckContext, CheckOutput, CheckOutputModel
+from dsbf.legacy.findings import findings_from
 from dsbf.model import CheckStatus, Severity
 
 
@@ -46,7 +47,7 @@ def to_output(ctx: CheckContext, result: TaskResult) -> CheckOutput:
 
     A task that returns ``failed`` or ``skipped`` instead of raising ends the check
     ``error`` or ``skipped`` with a note taken from its result; anything else is
-    ``ok`` and the output is the result itself.
+    ``ok``, the output is the result itself and each guidance blurb becomes a finding.
     """
     message = str(result.summary.get("message") or "")
     if result.status == "failed":
@@ -67,7 +68,9 @@ def to_output(ctx: CheckContext, result: TaskResult) -> CheckOutput:
             message or f"{result.name} was skipped.",
             severity=Severity.INFO,
         )
-    return ctx.output(LegacyTaskOutput(result=plain(result.to_dict())))
+    stored = plain(result.to_dict())
+    findings_from(ctx, stored["guidance"])
+    return ctx.output(LegacyTaskOutput(result=stored))
 
 
 def from_output(output: dict[str, Any]) -> TaskResult:

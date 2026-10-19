@@ -2,6 +2,7 @@
 """Wrap a legacy ``BaseTask`` as a ``Check`` the new engine can plan and run."""
 
 import hashlib
+import importlib
 import inspect
 import re
 from functools import cache
@@ -63,6 +64,12 @@ _DIMENSION_OF_TAG: dict[str, Dimension] = {
     "quality": Dimension.USABILITY,
     "scoring": Dimension.USABILITY,
 }
+
+# The two tasks that report how long the others took. Each result's ``Timing`` says
+# that now, and neither can run in an adapted run: they read a duration table only the
+# legacy graph engine fills in (the first ends ``error`` without it, the second
+# reports on empty statistics).
+EXCLUDED_TASKS = frozenset({"identify_bottleneck_tasks", "log_resource_usage"})
 
 # Results a task reads without naming the task in ``depends_on``. The legacy engine
 # showed them only if the task happened to run earlier; here they order the run
@@ -133,17 +140,39 @@ def adapt_task(spec: TaskSpec, session: LegacySession) -> Check:
 def legacy_checks(
     session: LegacySession, plugin_groups: tuple[str, ...] = ()
 ) -> tuple[Check, ...]:
-    """An adapted check for every registered task, by name.
+    """An adapted check for every registered task but ``EXCLUDED_TASKS``, by name.
 
     The built-in tasks are loaded first, then each plugin group (a directory path
     or a module name, as the legacy ``task_groups`` config key names them).
     """
+    _scan_native_libraries()
     load_all_tasks()
     for group in plugin_groups:
         load_task_group(group)
     return tuple(
-        adapt_task(TASK_REGISTRY[name], session) for name in sorted(TASK_REGISTRY)
+        adapt_task(TASK_REGISTRY[name], session)
+        for name in sorted(TASK_REGISTRY)
+        if name not in EXCLUDED_TASKS
     )
+
+
+def _scan_native_libraries() -> None:
+    """Have scikit-learn scan the process's native libraries now, on this thread.
+
+    The scan (threadpoolctl) walks every loaded shared library while holding the
+    dynamic loader's lock, and needs the interpreter's lock to do it. A check that
+    imports a compiled module at that moment, such as the first PNG save of a plot,
+    holds the interpreter's lock and waits for the loader's, so both wait for ever.
+    scikit-learn keeps the result of its first scan, so making it before any check
+    starts leaves nothing to scan while they run in parallel.
+    """
+    try:
+        parallel = importlib.import_module("sklearn.utils.parallel")
+    except ImportError:  # no scikit-learn, nothing to scan
+        return
+    scan = getattr(parallel, "_get_threadpool_controller", None)
+    if scan is not None:
+        scan()
 
 
 def _run_task(
@@ -209,13 +238,14 @@ def _reads_reference(cls: type[BaseTask]) -> bool:
 
 @cache
 def _support_digest() -> str:
-    """A digest of the code every legacy task shares: the base task, context, utils."""
+    """A digest of the code every legacy task shares: base task, utils, findings."""
     root = Path(dsbf.__file__).parent
     files = [
         *sorted((root / "core").glob("*.py")),
         *sorted((root / "utils").glob("*.py")),
         *sorted((root / "eda").glob("*.py")),
         root / "eda" / "tasks" / "_time_series_utils.py",
+        root / "legacy" / "findings.py",
     ]
     digest = hashlib.sha256()
     for path in files:
