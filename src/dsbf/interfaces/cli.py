@@ -15,6 +15,7 @@ from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make
 from dsbf.interfaces import schema_export
 from dsbf.model import Cost, Dimension
 from dsbf.profile import profile_dataset
+from dsbf.utils.logging_utils import console_logging
 from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -23,6 +24,13 @@ tasks_app = typer.Typer(help="Inspect the registered tasks.")
 app.add_typer(tasks_app, name="tasks")
 schema_app = typer.Typer(help="Publish and guard the result schema.")
 app.add_typer(schema_app, name="schema")
+
+
+def _run_engine(cfg: dict[str, Any]) -> None:
+    """Run the legacy engine with its log records printed to the console."""
+    verbosity = cfg.get("metadata", {}).get("message_verbosity", "info")
+    with console_logging(verbosity):
+        ProfileEngine(cfg).run()
 
 
 def _load_config(config_path: str) -> dict:
@@ -60,8 +68,7 @@ def run(
             True  # you can handle this flag in report_utils
         )
 
-    engine = ProfileEngine(cfg)
-    engine.run()
+    _run_engine(cfg)
 
 
 @app.command()
@@ -88,8 +95,7 @@ def profile(
     # Use the provided name, or fall back to the CSV filename stem so the
     # dashboard always shows a meaningful name rather than the default_config value.
     cfg["metadata"]["dataset_name"] = name or Path(data).stem
-    engine = ProfileEngine(cfg)
-    engine.run()
+    _run_engine(cfg)
 
 
 @app.command()
@@ -105,8 +111,7 @@ def quickstart(
     # Explicitly clear dataset_path so writer.py never stores a stale file path
     # from default_config.yaml as the source for a built-in dataset.
     cfg["metadata"]["dataset_path"] = None
-    engine = ProfileEngine(cfg)
-    engine.run()
+    _run_engine(cfg)
 
 
 def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:

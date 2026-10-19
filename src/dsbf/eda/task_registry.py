@@ -2,6 +2,7 @@
 
 import importlib
 import importlib.util
+import logging
 import re
 import sys
 import traceback
@@ -12,9 +13,8 @@ from pathlib import Path
 from typing import Literal
 
 from dsbf.core.base_task import BaseTask
-from dsbf.utils.logging_utils import setup_logger
 
-logger = setup_logger("dsbf.task_registry", "info")
+logger = logging.getLogger(__name__)
 
 PLUGIN_LOG_FN = None
 

@@ -1,6 +1,7 @@
 # tests/eda/test_engine/test_profile_engine.py
 
 import json
+import logging
 import os
 import warnings
 
@@ -209,3 +210,27 @@ def test_profile_engine_sampling_metadata(tmp_path):
     assert "sampling" in engine.run_metadata
     assert engine.run_metadata["sampling"]["sampled_rows"] == 1_000_000
     assert engine.run_metadata["sampling"]["original_rows"] == 2_000_000
+
+
+def test_run_log_holds_task_messages_and_is_closed(tmp_path):
+    data = tmp_path / "small.csv"
+    data.write_text("a,b\n1,x\n2,y\n3,x\n4,y\n5,x\n")
+    config = {
+        "metadata": {
+            "dataset_path": str(data),
+            "dataset_name": "small",
+            "message_verbosity": "debug",
+            "profiling_depth": "basic",
+        },
+        "output_dir": str(tmp_path / "out"),
+    }
+    root = logging.getLogger("dsbf")
+    handlers_before = list(root.handlers)
+
+    engine = ProfileEngine(config)
+    engine.run()
+
+    log = (tmp_path / "out" / "run.log").read_text()
+    assert "[STAGE] dsbf.core.base_engine: Starting profiling..." in log
+    assert "dsbf.core.context: [" in log
+    assert list(root.handlers) == handlers_before

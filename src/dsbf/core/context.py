@@ -1,5 +1,6 @@
 # dsbf/core/context.py
 
+import logging
 from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
@@ -7,7 +8,7 @@ import polars as pl
 
 from dsbf.eda.task_result import TaskResult
 from dsbf.utils.backend import is_polars
-from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+from dsbf.utils.logging_utils import get_log_fn
 from dsbf.utils.reliability_stats import compute_reliability_flags as compute_flags
 
 if TYPE_CHECKING:
@@ -54,10 +55,7 @@ class AnalysisContext:
         self.stage: str | None = None  # Inferred data stage (raw, cleaned, etc.)
         self.reliability_flags: dict[str, Any] = {}  # Cached global reliability info
 
-        self.logger: DSBFLogger = setup_logger(
-            "dsbf.context",
-            self.config.get("metadata", {}).get("message_verbosity", "info"),
-        )
+        self.logger: logging.Logger = logging.getLogger(__name__)
 
     def _log(self, msg: str, level: str = "info", task_name: str | None = None) -> None:
         """

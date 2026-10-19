@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Any
 
@@ -7,9 +8,8 @@ from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_registry import is_diagnostic_name as is_diagnostic_task
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.logging_utils import setup_logger
 
-logger = setup_logger("dsbf.task_validator", "warn")
+logger = logging.getLogger(__name__)
 
 load_all_tasks()
 

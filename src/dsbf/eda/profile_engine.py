@@ -23,6 +23,7 @@ from dsbf.storage.writer import persist_run
 from dsbf.utils.config_validation import validate_config_and_graph
 from dsbf.utils.data_loader import load_dataset
 from dsbf.utils.data_utils import data_sampling
+from dsbf.utils.logging_utils import run_log_file
 from dsbf.utils.report_utils import render_user_report, write_metadata_report
 from dsbf.utils.task_and_column_mapping_utils import build_column_task_mappings
 from dsbf.utils.task_utils import filter_tasks, instantiate_task
@@ -48,6 +49,10 @@ class ProfileEngine(BaseEngine):
         return self.results
 
     def run(self):
+        with run_log_file(self.output_dir, self.message_verbosity):
+            self._run()
+
+    def _run(self):
         self._log("Starting profiling...", level="stage")
 
         df = self._load_data()
