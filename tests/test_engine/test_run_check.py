@@ -192,3 +192,87 @@ class TestContract:
 
         with pytest.raises(CheckContractError, match="built for null_share, not"):
             run_check(numeric_spread, context)
+
+
+class TestStop:
+    """A check ends in a status other than ``ok`` without raising."""
+
+    @pytest.mark.parametrize(
+        "status",
+        [
+            CheckStatus.NOT_APPLICABLE,
+            CheckStatus.UNAVAILABLE,
+            CheckStatus.SKIPPED,
+            CheckStatus.ERROR,
+        ],
+    )
+    def test_each_allowed_status_is_returned_with_its_note(self, status):
+        @declare_with()
+        def stops(ctx, params):
+            return ctx.stop(
+                status,
+                "why",
+                "Because.",
+                severity=Severity.ERROR,
+                hint="Do this.",
+                exception_type="ValueError",
+                detail="trace",
+            )
+
+        result = run(stops)
+
+        assert result.status is status
+        (note,) = result.notes
+        assert (note.code, note.message, note.severity) == (
+            "why",
+            "Because.",
+            Severity.ERROR,
+        )
+        assert (note.hint, note.exception_type, note.detail) == (
+            "Do this.",
+            "ValueError",
+            "trace",
+        )
+        assert result.output is None
+
+    def test_findings_made_before_stopping_are_dropped_and_notes_kept(self):
+        @declare_with()
+        def half_done(ctx, params):
+            ctx.finding(**finding_fields())
+            ctx.note("capped", "Looked at 10 columns.")
+            return ctx.stop(CheckStatus.ERROR, "gave_up", "Gave up.")
+
+        result = run(half_done)
+
+        assert result.findings == ()
+        assert [n.code for n in result.notes] == ["capped", "gave_up"]
+
+    @pytest.mark.parametrize("status", [CheckStatus.OK, CheckStatus.TIMEOUT])
+    def test_ok_and_timeout_are_not_the_checks_to_choose(self, status):
+        @declare_with()
+        def overreach(ctx, params):
+            return ctx.stop(status, "why", "Because.")
+
+        with pytest.raises(CheckContractError, match="cannot stop with status"):
+            run(overreach)
+
+    def test_a_check_that_does_not_stop_stays_ok(self):
+        @declare_with()
+        def fine(ctx, params):
+            return ctx.output()
+
+        assert run(fine).status is CheckStatus.OK
+
+
+def finding_fields():
+    from dsbf.model import Confidence, Evidence, Subject
+
+    return {
+        "code": "x",
+        "subject": Subject.column("amount"),
+        "severity": Severity.INFO,
+        "confidence": Confidence.HIGH,
+        "title": "t",
+        "message": "m",
+        "evidence": Evidence(metrics={}, n_used=1, n_total=1, method="m"),
+    }

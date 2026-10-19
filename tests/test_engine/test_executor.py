@@ -302,6 +302,49 @@ class TestReturnedStatus:
         assert run.health.counts.error == 1
         assert "The check reported a failure." in run.render_health()
 
+    @pytest.mark.parametrize(
+        "status", [CheckStatus.ERROR, CheckStatus.SKIPPED, CheckStatus.UNAVAILABLE]
+    )
+    def test_a_check_that_stops_blocks_its_hard_dependent(self, status):
+        def stops(ctx, params):
+            return ctx.stop(status, "why", "Because.")
+
+        run = run_plan(
+            [
+                declare("first", function=stops),
+                declare("second", requires=Requires(checks=["first"])),
+            ]
+        )
+
+        assert statuses(run) == {"first": status, "second": CheckStatus.SKIPPED}
+        assert run.results["second"].notes[0].blocked_by == ("first",)
+        assert run.results["first"].notes[0].code == "why"
+
+    def test_a_not_applicable_stop_does_not_block_its_dependent(self):
+        def stops(ctx, params):
+            return ctx.stop(CheckStatus.NOT_APPLICABLE, "nothing", "Nothing to read.")
+
+        run = run_plan(
+            [
+                declare("first", function=stops),
+                declare("second", requires=Requires(checks=["first"])),
+            ]
+        )
+
+        assert statuses(run) == {
+            "first": CheckStatus.NOT_APPLICABLE,
+            "second": CheckStatus.OK,
+        }
+
+    def test_a_stopped_check_counts_in_the_health_summary(self):
+        def stops(ctx, params):
+            return ctx.stop(CheckStatus.ERROR, "caught", "Caught its own failure.")
+
+        run = run_plan([declare("only", function=stops)])
+
+        assert run.health.counts.error == 1
+        assert "Caught its own failure." in run.render_health()
+
 
 class TestEligibilityAgreesWithThePlan:
     def test_the_check_reads_the_columns_the_plan_said(self):

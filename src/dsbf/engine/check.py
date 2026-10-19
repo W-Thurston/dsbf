@@ -331,8 +331,8 @@ def check(
     """Declare a check.
 
     The decorated function takes ``(ctx, params)`` and returns what
-    ``ctx.output(...)`` builds, or ``None``. Decorating registers nothing; a
-    registry collects checks explicitly.
+    ``ctx.output(...)`` or ``ctx.stop(...)`` builds, or ``None``. Decorating
+    registers nothing; a registry collects checks explicitly.
 
     ``runs_in="process"`` runs the check in a worker process of its own, so a long
     pure-Python loop neither holds up other checks nor outlives its timeout. The

@@ -15,6 +15,7 @@ from dsbf.engine.errors import CheckCancelled, CheckContractError
 from dsbf.model import (
     CheckParams,
     CheckResult,
+    CheckStatus,
     ColumnProfile,
     Confidence,
     DatasetProfile,
@@ -29,12 +30,23 @@ from dsbf.model import (
     Subject,
 )
 
+_STOP_STATUSES = (
+    CheckStatus.NOT_APPLICABLE,
+    CheckStatus.UNAVAILABLE,
+    CheckStatus.SKIPPED,
+    CheckStatus.ERROR,
+)
+
 
 @dataclass(frozen=True)
 class CheckOutput:
-    """A check's output, validated against the model it declared."""
+    """A check's output, validated against the model it declared.
+
+    ``status`` is ``ok`` unless the check ended through ``CheckContext.stop``.
+    """
 
     data: dict[str, Any] | None
+    status: CheckStatus = CheckStatus.OK
 
 
 @dataclass(frozen=True)
@@ -241,15 +253,62 @@ class CheckContext:
         *,
         severity: Severity = Severity.INFO,
         hint: str | None = None,
+        exception_type: str | None = None,
         detail: str | None = None,
     ) -> Note:
         """Record an operational message, such as a cap that was applied."""
         self.checkpoint()
         note = Note(
-            code=code, message=message, severity=severity, hint=hint, detail=detail
+            code=code,
+            message=message,
+            severity=severity,
+            hint=hint,
+            exception_type=exception_type,
+            detail=detail,
         )
         self._notes.append(note)
         return note
+
+    def stop(
+        self,
+        status: CheckStatus,
+        code: str,
+        message: str,
+        *,
+        severity: Severity = Severity.WARN,
+        hint: str | None = None,
+        exception_type: str | None = None,
+        detail: str | None = None,
+    ) -> CheckOutput:
+        """End the check without an output, in a status other than ``ok``.
+
+        For a check that finds out, part way, that it cannot give an answer and can
+        say why without raising: ``skipped`` when something it needs is absent,
+        ``not_applicable`` when the data leaves it nothing to read, ``error`` when it
+        failed and caught the failure. The note says why; the findings and notes
+        recorded so far are kept only as notes, and the findings are dropped, as for
+        an exception. Return the result from the check.
+
+        Raises:
+            CheckContractError: ``status`` is ``ok`` (use ``output``), or a status
+                the executor alone decides (``unavailable``, ``timeout``).
+        """
+        self.checkpoint()
+        if status not in _STOP_STATUSES:
+            allowed = ", ".join(s.value for s in _STOP_STATUSES)
+            raise CheckContractError(
+                f"{self.spec.id} cannot stop with status {status.value!r}; "
+                f"choose from {allowed}"
+            )
+        self.note(
+            code,
+            message,
+            severity=severity,
+            hint=hint,
+            exception_type=exception_type,
+            detail=detail,
+        )
+        return CheckOutput(data=None, status=status)
 
     def output(self, model: CheckOutputModel | None = None) -> CheckOutput:
         """Wrap the check's output, which must be an instance of its declared model."""
