@@ -14,7 +14,8 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
     """Call the check and assemble its result.
 
     A check the profile leaves nothing to read (no eligible column, or a dataset
-    feature it requires is missing) is ``not_applicable`` and isn't called. Any
+    feature it requires is missing) is ``not_applicable`` and isn't called. A check
+    that ends through ``ctx.stop`` gets the status it chose and no findings. Any
     exception from the check propagates: turning it into an ``error`` result is the
     executor's job, so this stays the one place a result is built from a run.
 
@@ -49,12 +50,14 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
                 "or None"
             )
         notes = context.notes
+        if output is not None and output.status is not CheckStatus.OK:
+            status = output.status
     return CheckResult(
         check_id=spec.id,
         check_version=spec.version,
         status=status,
         notes=notes,
-        findings=context.findings,
+        findings=context.findings if status is CheckStatus.OK else (),
         output=output.data if output else None,
         timing=Timing(wall_seconds=time.perf_counter() - clock, started_at=started_at),
         params=context.params.model_dump(mode="json"),
