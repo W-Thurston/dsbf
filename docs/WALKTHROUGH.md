@@ -75,14 +75,14 @@ npm run dev                 ──►  5. Vue dashboard calls /api/...
 **What happens:** importing `dsbf.eda.profile_engine` pulls in `dsbf.utils.task_utils`, which calls
 `load_all_tasks()` **at module import time** (`dsbf/utils/task_utils.py:14`). That imports every
 module in `dsbf/eda/tasks/`, and each `@register_task` decorator adds a `TaskSpec` to the global
-`TASK_REGISTRY` (`dsbf/eda/task_registry.py:71`). Logging is also configured globally at import
-(`logging.setLoggerClass`).
+`TASK_REGISTRY` (`dsbf/eda/task_registry.py:71`). Importing changes no logging state: every module
+logs to a `dsbf.*` logger, and `dsbf` carries only a `NullHandler`.
 
 **Measured:** about 2.0 s, and about 300 MB RSS before any data is loaded. Most of that is
 eager imports of seaborn, matplotlib, sklearn, statsmodels and the plot factory.
 
 **Issues:** registration depends on import side effects, while the `core` task group it's supposed
-to come from is an empty module (F-23). Importing DSBF changes global logging (F-19). Every run
+to come from is an empty module (F-23). Every run
 pays for plotting libraries even after the ECharts migration makes them unnecessary (N-A2).
 
 ## 1. Load configuration
@@ -100,7 +100,7 @@ user's YAML **instead of** the defaults (no merge).
 
 **What happens:** `BaseEngine.__init__` (`dsbf/core/base_engine.py`):
 - picks the output dir (`<DSBF_HOME>/outputs/<YYYYmmdd_HHMMSS>`, absolute; the home defaults to the per-user data directory) and creates it;
-- sets up the `dsbf` logger with a Rich console handler and a `run.log` file handler;
+- attaches no log handler (the CLI adds a console handler around the run, and `ProfileEngine.run` adds the `run.log` file handler for the length of the run);
 - runs `git describe` and `git rev-parse` subprocesses for version and SHA metadata.
 
 **Measured:** 6 ms.
@@ -139,9 +139,9 @@ dict that tasks use to pass information to each other (for example `semantic_typ
 
 **Measured:** negligible.
 
-**Issues:** the context gets its own `dsbf.context` logger with no file handler, so everything
-logged through it is missing from `run.log`. In the titanic run `run.log` had **11 lines** while
-the console had **452** (F-19, verified).
+The context logs to `dsbf.core.context`, a child of `dsbf`, so its records reach the console and
+`run.log` alike. (Before the logging change `run.log` held 11 lines of the titanic run while the
+console had 452.)
 
 ## 3e. Load task groups and plugins
 

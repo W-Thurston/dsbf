@@ -36,7 +36,7 @@ def test_load_real_plugin_print_shape_debug():
         TASK_REGISTRY.pop("print_shape_debug", None)
 
 
-def test_load_nonexistent_plugin_path_does_not_crash(capfd):
+def test_load_nonexistent_plugin_path_does_not_crash(caplog):
     bogus_path = str(CUSTOM_PLUGINS_DIR / f"_nonexistent_{uuid.uuid4().hex}")
     before = set(TASK_REGISTRY.keys())
 
@@ -45,8 +45,7 @@ def test_load_nonexistent_plugin_path_does_not_crash(capfd):
         after = set(TASK_REGISTRY.keys())
         assert before == after
 
-        out, _ = capfd.readouterr()
-        assert "does not exist" in out or "Failed to load" in out
+        assert "does not exist" in caplog.text or "Failed to load" in caplog.text
     finally:
         # Defensive cleanup (should be no-op)
         for key in set(TASK_REGISTRY.keys()) - before:

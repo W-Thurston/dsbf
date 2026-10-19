@@ -1,5 +1,6 @@
 # dsbf/core/base_task.py
 
+import logging
 import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
@@ -9,7 +10,7 @@ import polars as pl
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
-from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+from dsbf.utils.logging_utils import get_log_fn
 
 if TYPE_CHECKING:
     from dsbf.eda.task_registry import TaskSpec
@@ -114,7 +115,7 @@ class BaseTask(ABC):
         if self.context and hasattr(self.context, "_log"):
             self.context._log(msg, level=level, task_name=self.name)
         else:
-            fallback: DSBFLogger = setup_logger("dsbf.task", "info")
+            fallback = logging.getLogger(__name__)
             get_log_fn(fallback, level)(f"[{self.name}] {msg}")
 
     def ensure_reliability_flags(self) -> dict:

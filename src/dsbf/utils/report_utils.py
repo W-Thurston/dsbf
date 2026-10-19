@@ -1,16 +1,17 @@
 # dsbf/utils/report_utils.py
 
 import json
+import logging
 import os
 from typing import Any
 
 from dsbf.core.context import AnalysisContext
 from dsbf.eda.task_result import TaskResult
 from dsbf.paths import default_outputs_dir
-from dsbf.utils.logging_utils import setup_logger
+from dsbf.utils.logging_utils import get_log_fn
 from dsbf.utils.task_utils import is_diagnostic_task
 
-logger = setup_logger("dsbf.report_utils", "info")
+logger = logging.getLogger(__name__)
 
 
 def render_user_report(results: dict[str, TaskResult], output_path: str) -> None:
@@ -99,4 +100,6 @@ def write_metadata_report(
         json.dump(metadata, f, indent=2)
 
     # Log result location for debugging
-    logger.info2(f" [write_metadata_report] Metadata written to: {output_path}")
+    get_log_fn(logger, "info")(
+        f" [write_metadata_report] Metadata written to: {output_path}"
+    )

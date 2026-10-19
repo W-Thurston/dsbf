@@ -1,95 +1,127 @@
 # dsbf/utils/logging_utils.py
 
 import logging
-import os
-from typing import cast
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from functools import partial
+from pathlib import Path
 
 from rich.logging import RichHandler
+from rich.text import Text
 
 # Custom levels between WARNING and DEBUG
 STAGE_LEVEL = 25
 INFO2_LEVEL = 15
 QUIET_LEVEL = 100  # Custom level above CRITICAL
 
-logging.addLevelName(STAGE_LEVEL, "STAGE")
-logging.addLevelName(INFO2_LEVEL, "INFO2")
-logging.addLevelName(QUIET_LEVEL, "QUIET")
+ROOT_LOGGER_NAME = "dsbf"
+
+# DSBF's own level names, applied by its handlers; the global level-name table
+# belongs to the host application and is left alone.
+_LEVEL_NAMES = {STAGE_LEVEL: "STAGE", INFO2_LEVEL: "INFO2"}
+
+_LEVELS = {
+    "quiet": QUIET_LEVEL,
+    "error": logging.ERROR,
+    "warn": logging.WARNING,
+    "stage": STAGE_LEVEL,
+    "info": INFO2_LEVEL,
+    "debug": logging.DEBUG,
+}
+
+# A library installs no output of its own: with this handler a host that has not
+# configured logging sees nothing, and records still reach any handler it adds.
+logging.getLogger(ROOT_LOGGER_NAME).addHandler(logging.NullHandler())
 
 
-class DSBFLogger(logging.Logger):
-    def stage(self, msg, *args, **kwargs):
-        if self.isEnabledFor(STAGE_LEVEL):
-            self._log(STAGE_LEVEL, msg, args, **kwargs)
-
-    def info2(self, msg, *args, **kwargs):
-        if self.isEnabledFor(INFO2_LEVEL):
-            self._log(INFO2_LEVEL, msg, args, **kwargs)
+def level_from_name(level: str) -> int:
+    """Map a verbosity name (``quiet`` to ``debug``) to a logging level."""
+    return _LEVELS.get(level.lower(), INFO2_LEVEL)
 
 
-# Register globally
-logging.setLoggerClass(DSBFLogger)
+def _level_name(record: logging.LogRecord) -> str:
+    return _LEVEL_NAMES.get(record.levelno, record.levelname)
 
 
-def setup_logger(
-    name="dsbf", level: str = "info", output_dir: str | None = None
-) -> DSBFLogger:
+class _FileFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        levelname = record.levelname
+        record.levelname = _level_name(record)
+        try:
+            return super().format(record)
+        finally:
+            record.levelname = levelname
+
+
+class _ConsoleHandler(RichHandler):
+    """A Rich handler that prints messages verbatim, whatever brackets they hold.
+
+    Messages carry user column names such as ``[/x]``, so they must never be
+    parsed as Rich markup.
     """
-    Create a DSBF logger with optional Rich console and file output.
 
-    Args:
-        name (str): Logger name.
-        level (str): One of "quiet", "warn", "stage", "info", "debug".
-        output_dir (str | None): If provided, also logs to output_dir/run.log
+    def __init__(self, level: int) -> None:
+        super().__init__(level=level, rich_tracebacks=True, markup=False)
+        self.setFormatter(logging.Formatter("%(message)s"))
 
-    Returns:
-        DSBFLogger
+    def get_level_text(self, record: logging.LogRecord) -> Text:
+        name = _level_name(record)
+        return Text.styled(name.ljust(8), f"logging.level.{name.lower()}")
+
+
+@contextmanager
+def _attached(handler: logging.Handler) -> Iterator[logging.Handler]:
+    """Attach ``handler`` to the ``dsbf`` logger, then remove and close it."""
+    logger = logging.getLogger(ROOT_LOGGER_NAME)
+    previous_level = logger.level
+    if previous_level == logging.NOTSET or handler.level < previous_level:
+        logger.setLevel(handler.level)
+    logger.addHandler(handler)
+    try:
+        yield handler
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+        logger.setLevel(previous_level)
+
+
+@contextmanager
+def console_logging(level: str = "info") -> Iterator[None]:
+    """Print ``dsbf`` log records to the console, for the length of the block.
+
+    Only an application (the CLI) should call this; the library never does.
+    ``quiet`` prints nothing.
     """
-    level_map = {
-        "quiet": QUIET_LEVEL,
-        "warn": logging.WARNING,
-        "stage": STAGE_LEVEL,
-        "info": INFO2_LEVEL,
-        "debug": logging.DEBUG,
-    }
-    logging_level = level_map.get(level.lower(), INFO2_LEVEL)
-
-    # Ensure logger is built as DSBFLogger
-    logger = logging.getLogger(name)
-    if not isinstance(logger, DSBFLogger):
-        logging.setLoggerClass(DSBFLogger)
-        logging.Logger.manager.loggerDict.pop(name, None)
-        logger = logging.getLogger(name)
-
-    logger.setLevel(logging_level)
-    logger.handlers.clear()
-
+    logging_level = level_from_name(level)
     if logging_level >= QUIET_LEVEL:
-        logger.disabled = True
-        return cast(DSBFLogger, logger)
+        yield
+        return
+    with _attached(_ConsoleHandler(logging_level)):
+        yield
 
-    # Console (Rich). Messages carry user column names such as "[/x]", so they
-    # must never be parsed as Rich markup.
-    rich_handler = RichHandler(rich_tracebacks=True, markup=False)
-    rich_handler.setLevel(logging_level)
-    rich_handler.setFormatter(logging.Formatter("%(message)s"))
-    logger.addHandler(rich_handler)
 
-    # Optional file logging
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-        file_path = os.path.join(output_dir, "run.log")
-        file_handler = logging.FileHandler(file_path)
-        file_handler.setLevel(logging_level)
-        file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-            )
+@contextmanager
+def run_log_file(output_dir: str | Path, level: str = "info") -> Iterator[None]:
+    """Write ``dsbf`` log records to ``<output_dir>/run.log`` for one run.
+
+    The file is closed when the block ends, so a long-lived process does not
+    accumulate open files. ``quiet`` writes nothing.
+    """
+    logging_level = level_from_name(level)
+    if logging_level >= QUIET_LEVEL:
+        yield
+        return
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(Path(output_dir) / "run.log")
+    handler.setLevel(logging_level)
+    handler.setFormatter(
+        _FileFormatter(
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
-        logger.addHandler(file_handler)
-
-    logger.propagate = False
-    return cast(DSBFLogger, logger)
+    )
+    with _attached(handler):
+        yield
 
 
 def format_number(value: object, spec: str = ".4f") -> str:
@@ -106,20 +138,15 @@ def format_number(value: object, spec: str = ".4f") -> str:
         return "n/a"
 
 
-def get_log_fn(logger: DSBFLogger, level: str = "info"):
+def get_log_fn(logger: logging.Logger, level: str = "info") -> Callable[[str], None]:
     """
     Return the appropriate logging function for the given verbosity level.
 
     Args:
-        logger (DSBFLogger): An instance of the project logger.
-        level (str): One of "warn", "stage", "info", "debug".
+        logger (logging.Logger): A logger of the ``dsbf`` hierarchy.
+        level (str): One of "error", "warn", "stage", "info", "debug".
 
     Returns:
-        Callable[[str], None]: The logging method corresponding to the level.
+        Callable[[str], None]: A function that logs one message at that level.
     """
-    return {
-        "warn": logger.warning,
-        "stage": logger.stage,
-        "info": logger.info2,
-        "debug": logger.debug,
-    }.get(level, logger.info2)
+    return partial(logger.log, _LEVELS.get(level, INFO2_LEVEL))

@@ -1,14 +1,13 @@
 # dsbf/utils/reco_engine.py
 
+import logging
 from importlib.resources import files
 from importlib.resources.abc import Traversable
 from typing import Any
 
 import yaml
 
-from dsbf.utils.logging_utils import setup_logger
-
-logger = setup_logger("dsbf.reco_engine", "warn")
+logger = logging.getLogger(__name__)
 
 RECO_CACHE: dict[str, Any] | None = None  # cache after load
 

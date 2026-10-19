@@ -9,6 +9,7 @@ and metadata.
 """
 
 import abc
+import logging
 import os
 import platform
 import subprocess
@@ -16,7 +17,7 @@ from datetime import datetime
 from typing import Any
 
 from dsbf.paths import default_outputs_dir
-from dsbf.utils.logging_utils import DSBFLogger, get_log_fn, setup_logger
+from dsbf.utils.logging_utils import get_log_fn
 from dsbf.utils.versioning import get_dsbf_version
 
 
@@ -45,9 +46,7 @@ class BaseEngine(abc.ABC):
         self.fig_path = os.path.join(self.output_dir, "figs")
         self.layout_name = config.get("metadata", {}).get("layout_name", "default")
 
-        self.logger: DSBFLogger = setup_logger(
-            "dsbf", self.message_verbosity, self.output_dir
-        )
+        self.logger: logging.Logger = logging.getLogger(__name__)
 
         metadata_cfg = config.get("metadata", {})
         self.run_metadata = {

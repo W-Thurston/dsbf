@@ -7,6 +7,7 @@ seaborn demos, and OpenML, with backend-agnostic support for pandas and polars.
 """
 
 import inspect
+import logging
 
 import pandas as pd
 import polars as pl
@@ -14,9 +15,7 @@ import seaborn as sns
 from sklearn import datasets as sklearn_datasets
 from sklearn.datasets import fetch_openml
 
-from dsbf.utils.logging_utils import setup_logger
-
-logger = setup_logger("dsbf.data_loader", "warn")
+logger = logging.getLogger(__name__)
 
 
 def load_dataset(
