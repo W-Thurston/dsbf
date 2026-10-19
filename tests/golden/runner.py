@@ -26,11 +26,28 @@ class GoldenRun:
 
 
 def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
-    """Profile ``dataset`` under ``workdir`` and return its own report.
+    """Profile ``dataset`` under ``workdir`` with the legacy engine.
 
     The report is read from this run's output directory, never found by searching, so it
     cannot be a stale run of another dataset.
     """
+    return _run_child(
+        "profile_one.py", dataset, workdir, "report.json", "golden_run.json"
+    )
+
+
+def profile_with_engine(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
+    """Run ``dataset`` through the new engine; ``report`` holds the engine's checks."""
+    return _run_child("engine_one.py", dataset, workdir, "engine_run.json", "run.json")
+
+
+def _run_child(
+    script: str,
+    dataset: GoldenDataset,
+    workdir: Path,
+    report_name: str,
+    run_info_name: str,
+) -> GoldenRun:
     workdir = workdir.resolve()
     data_dir = workdir / "data"
     out_dir = workdir / "out"
@@ -47,7 +64,7 @@ def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
     }
     command = [
         sys.executable,
-        str(GOLDEN_DIR / "profile_one.py"),
+        str(GOLDEN_DIR / script),
         dataset.name,
         str(csv_path),
         str(out_dir),
@@ -69,8 +86,8 @@ def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
             f"{completed.stderr[-4000:]}"
         )
 
-    report = json.loads((out_dir / "report.json").read_text())
-    run_info = json.loads((out_dir / "golden_run.json").read_text())
+    report = json.loads((out_dir / report_name).read_text())
+    run_info = json.loads((out_dir / run_info_name).read_text())
     return GoldenRun(
         report=report,
         run_info=run_info,

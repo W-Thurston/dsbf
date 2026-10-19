@@ -62,6 +62,31 @@ The normaliser in `normalise.py` makes two identical runs produce identical file
   Any change to it still fails the comparison, but the diff shows only the digest. To see
   what changed, profile the dataset with `dsbf profile` and compare the two reports.
 
+## The same datasets through the new engine
+
+`test_engine_parity.py` runs each dataset through the new engine (`engine_one.py`: load,
+profile, every adapted legacy task through `execute`, with the pandas backend the legacy
+engine used for files) and compares each task with the snapshot, using the snapshot's own
+normaliser. The snapshots come from the legacy engine, so the two differ in places;
+`engine_differences.json` lists every difference by dataset and task, and a run that
+differs in any other way, or no longer differs where it did, fails.
+
+A difference is one of two kinds. `status: legacy success, engine not_applicable` is a
+task the engine plans `not_applicable` because the profile types no column the way the task
+expects. `changed: data, summary` names the entry fields that moved. The snapshot's `"NaN"`
+is read as the null a result holds, so that is not a difference. `changed` in the file
+gives each changed task a reason (`types`, `load` or `downstream`, defined in `reasons`).
+
+After a change that moves a difference, read it and rewrite the file:
+
+```bash
+uv run pytest -m golden -k engine --update-golden
+git diff tests/golden/engine_differences.json
+```
+
+Give a task that now differs under `changed` a reason by hand: the update writes the
+differences and leaves `changed` and `reasons` alone.
+
 ## Determinism
 
 Each dataset runs in a fresh child process (`profile_one.py`) with `PYTHONHASHSEED=0`, a

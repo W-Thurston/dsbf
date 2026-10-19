@@ -7,7 +7,13 @@ from dsbf.eda.task_loader import load_all_tasks
 from dsbf.eda.task_registry import TASK_REGISTRY, TaskSpec
 from dsbf.eda.task_result import TaskResult
 from dsbf.engine import DiskCache, Registry, Selection, make_plan
-from dsbf.legacy import LEGACY_PACK, LegacyParams, adapt_task, legacy_checks
+from dsbf.legacy import (
+    EXCLUDED_TASKS,
+    LEGACY_PACK,
+    LegacyParams,
+    adapt_task,
+    legacy_checks,
+)
 from dsbf.model import CheckStatus, Cost, Dimension
 from tests.test_legacy.support import (
     make_config,
@@ -26,11 +32,26 @@ def checks(tmp_path_factory):
     return {check.id: check for check in legacy_checks(session)}
 
 
-def test_every_registered_task_becomes_a_check(checks):
+def test_every_registered_task_becomes_a_check_but_the_timing_reports(checks):
     load_all_tasks()
 
-    assert set(checks) == set(TASK_REGISTRY)
+    assert set(checks) == set(TASK_REGISTRY) - EXCLUDED_TASKS
+    assert EXCLUDED_TASKS == {"identify_bottleneck_tasks", "log_resource_usage"}
     assert len(checks) > 60
+
+
+def test_building_the_checks_scans_the_native_libraries_before_any_check_runs(
+    monkeypatch, tmp_path
+):
+    # Scanning them while checks run in parallel can deadlock against a check that
+    # imports a compiled module (see ``_scan_native_libraries``).
+    from sklearn.utils import parallel
+
+    monkeypatch.setattr(parallel, "_threadpool_controller", None)
+
+    legacy_checks(make_session(tmp_path))
+
+    assert getattr(parallel, "_threadpool_controller") is not None
 
 
 def test_the_checks_form_a_valid_plan(tmp_path):
@@ -42,7 +63,7 @@ def test_the_checks_form_a_valid_plan(tmp_path):
         profile=session.profile,
     )
 
-    assert {entry.id for entry in plan.entries} == set(TASK_REGISTRY)
+    assert {entry.id for entry in plan.entries} == set(TASK_REGISTRY) - EXCLUDED_TASKS
 
 
 def test_an_adapted_check_runs_on_a_thread_in_the_legacy_pack(checks):
@@ -54,7 +75,8 @@ def test_an_adapted_check_runs_on_a_thread_in_the_legacy_pack(checks):
 
 
 def test_depends_on_becomes_hard_requirements_and_undeclared_reads_soft(checks):
-    for name, spec in TASK_REGISTRY.items():
+    for name in checks:
+        spec = TASK_REGISTRY[name]
         assert checks[name].spec.requires.checks == tuple(spec.depends_on or ())
     scorer = checks["data_quality_scorer"].spec
     assert "summarize_numeric" in scorer.after
