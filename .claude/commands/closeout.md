@@ -24,10 +24,12 @@ step ends on its *done when* condition.
    - Add every follow-up from `PLAN.md`, either as a new `todo` unit in the right phase (full unit format) or as a note on an existing unit.
    - *Done when* no follow-up is left unrecorded.
 5. **Program closeout** (only when this unit is the last unit of its phase).
-   - Replace the phase's detailed unit entries with a short **program summary**: the capability delivered, success criteria with measured results, key decisions with ADR links, deviations from the phase block, and the list of PRs.
+   - Write a **program summary** under the phase's heading in `docs/HISTORY.md`, after the phase block copied from `ROADMAP.md`: the capability delivered, success criteria with measured results, key decisions with ADR links, deviations from the phase block, and the list of PRs. Add the phase's units to its "Units and PRs" table.
+   - In `ROADMAP.md`, delete the phase's section and add its row to "Finished programs" (phase, date, units and PRs, one line on what it delivered). Carry any note a later unit still needs into that unit as a "Note from Ux-yy" line.
+   - Update the status of each finding the phase changed in `docs/REVIEW_FINDINGS.md`.
    - Make sure the next phase's planning unit (`Ux-00`) is `todo`.
    - Update `docs/REFACTOR_PLAN.md` if the program changed the design.
-   - *Done when* the phase reads as a summary, and the next phase is ready to plan.
+   - *Done when* the phase is a row in `ROADMAP.md` and a summary in `docs/HISTORY.md`, and the next phase is ready to plan.
 6. **Prune `CLAUDE.md`.**
    - Delete every Current gotchas line that names this unit, and any other line the unit made stale.
    - *Done when* no line in `CLAUDE.md` describes behaviour that no longer exists.

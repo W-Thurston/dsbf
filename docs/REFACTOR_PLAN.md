@@ -1,6 +1,6 @@
 # DSBF Refactor Plan
 
-**Status:** proposal, 2026-10-15; decisions D1–D11 accepted 2026-10-16 ([ADRs](adr/README.md))
+**Status:** proposal, 2026-10-15; decisions D1–D11 accepted 2026-10-16 ([ADRs](adr/README.md)); Phase 4 scope revised 2026-10-19 (U4-00)
 **Inputs:** [`REVIEW_FINDINGS.md`](REVIEW_FINDINGS.md) (fixes F-01 to F-39, next steps N-*),
 [`docs/WALKTHROUGH.md`](WALKTHROUGH.md) (measured practice run), and the maintainer's goals below.
 
@@ -34,7 +34,7 @@ Requirements that follow from the maintainer's answers:
 
 - **A1.** There's one maintainer, sometimes with help, so work is sequenced into small, independently shippable PRs.
 - **A2.** DSBF has never had a published release or external users (not on PyPI; the GitHub repo has no forks, checked 2026-10-15). Development-era schemas, configs, commands and data are replaced when the design requires it, with no compatibility shims. Runs in existing local databases are **not** migrated; you re-profile. Compatibility guarantees start with the published 1.x schema (§4.3).
-- **A3.** `feature/viz_refactor` is parked after the histogram fix ([Phase 0](#phase-0--stabilise-and-baseline)). The new dashboard is built on the new API in Phase 6.
+- **A3.** `feature/viz_refactor` is parked after the histogram fix ([Phase 0](#phase-0-stabilise-and-baseline-sm)). The new dashboard is built on the new API in Phase 6.
 - **A4.** Python ≥ 3.12, as today.
 
 ---
@@ -257,7 +257,7 @@ equals `DatasetManifest.sampling.sampled_rows`.
 ### 4.3 Versioning rules
 
 - `schema_version` follows semver. Additive changes are minor and breaking changes are major. The JSON Schema is checked in, and CI fails on an unannounced breaking diff.
-- Each check has its own `version`. Changing its statistics or output bumps the version, which invalidates cache entries ([§6.4](#64-caching)) and is called out in golden-run diffs.
+- Each check has its own `version`. Changing its statistics or output bumps the version, which invalidates cache entries ([§6.4](#64-executor)) and is called out in golden-run diffs.
 - `Finding.id` is stable for the same check, subject and code, so findings can be compared across runs ("new since yesterday", "resolved").
 
 ---
@@ -686,14 +686,18 @@ The goal is a trustworthy baseline to measure the refactor against. This is the 
 **Exit:** the golden runs reproduce through the adapter. A forced exception in any check yields a complete Run with a note. Changing one parameter re-executes only the affected checks.
 **Resolves:** F-06, F-07, F-19, F-21, F-22, F-23, F-24, F-34, F-16, F-17, F-18 (core does no I/O).
 
-### Phase 4: Migrate checks (L, in four batches, each 1–3 PRs)
+### Phase 4: Migrate checks (L, 19 units)
+Revised in U4-00 (2026-10-19); the units and the full migration map are in [`ROADMAP.md`](../ROADMAP.md#phase-4-migrate-checks).
+- **Parallel tracks:** core checks are built in a `core` pack beside the intact legacy pack. A core check names the legacy tasks it supersedes, and those leave the default selection. A superseded task still runs, with its findings dropped, when a remaining legacy task hard-requires it or reads its result undeclared, so no shim feeds legacy scorers from core output. Run time therefore rises until the legacy scorers leave the default selection.
+- **Retired, not migrated** (chosen by the user on 2026-10-19): the 13 tasks that restate the profile (the `summarize_*` tasks, `categorical_length_stats`, `missingness_heatmap`, `infer_types`, `sample_head`, `sample_tail`), whose guidance moves to rule checks; the engine-metadata tasks; and the plot tasks. The ML-prep suggestion tasks and `schema_validation` are migrated as checks.
 - **4a Rule checks (~20):** move onto the profile. Expected outcome is a large speed-up with near-zero findings diff.
 - **4b Analysis checks:** outliers, normality and QQ, associations, contingency, group tests, bimodality, missingness mechanism, mutual information, encoded/regex/mixed types, string anomalies. Apply the statistical fixes (F-11, F-13, confidence intervals, Cramér's V correction) with intended diffs documented per PR.
 - **4c Heavy checks, redesigned:** fuzzy duplicates (rapidfuzz, blocking, coverage, top-N artifact; F-35), time-series suite (resampling, capped lags, budgets; F-39), drift checks against reference *profiles*.
 - **4d Synthesis:** quality dimensions over findings (report-only by design), ML readiness, target-based leakage (F-26).
-- Delete the legacy adapter, `plot_factory`, backend plotting tasks and the matplotlib/seaborn/missingno/plotly dependencies (N-A2, F-38).
+- **Calibration suite:** planted-truth datasets with false-positive and false-negative rates per check version (§10); `tests/validation/` is rebuilt on the new engine.
+- **Cutover** (chosen by the user on 2026-10-19): a stopgap `dsbf profile` runs `dsbf.profile()` and writes `run.json`. Then the whole legacy stack is deleted: the adapter, the legacy engine and tasks, `plot_factory`, the old store and API v1, and their dependencies (N-A2, F-38). The base install shrinks to the core set. The dashboard does not run from then until Phase 6 rebuilds it.
 
-**Exit:** no legacy tasks remain; the perf budgets for titanic and 52k × 60 are met; calibration suite baselines are recorded.
+**Exit:** no legacy tasks remain; the perf budgets for titanic and 52k × 60 are met; calibration suite baselines are recorded; `pip install dsbf` without extras runs `dsbf profile`.
 
 ### Phase 5: Policy, sinks, CLI v2. **First release for mode 1** (M)
 - Policy engine (§7.2), default report-only.
@@ -708,7 +712,7 @@ The goal is a trustworthy baseline to measure the refactor against. This is the 
 - RunRepository on SQLite with Alembic; ArtifactStore on local fsspec; per-run data snapshot; `dsbf runs …`.
 - API v2 plus the local job runner. Generated TS client.
 - Dashboard rebuilt tab by tab on API v2 (reusing `DsbfChart`, `chartTheme` and existing card designs where they fit); Run health panel; Findings explorer; Settings → rerun; run compare.
-- `dsbf dashboard` serves the bundled frontend. Remove API v1, the old storage and the old DB.
+- `dsbf dashboard` serves the bundled frontend. API v1, the old storage and the old DB were already deleted in Phase 4, so nothing is migrated.
 
 **Release:** `1.0.0`.
 **Exit:** `pip install "dsbf[server]" && dsbf check data.csv --sink store && dsbf dashboard` works on a clean machine. Opening a run transfers under 200 KB.
@@ -731,19 +735,22 @@ The goal is a trustworthy baseline to measure the refactor against. This is the 
 
 ```
 P0 ─► P1 ─► P2 ─► P3 ─► P4 ─► P5 (1.0.0a1, mode 1) ─► P6 (1.0.0, mode 2 local) ─► P7 ─► P8
-                     └─────────── P4 batches can overlap with P5 once 4a lands ───┘
+   P4 ends by deleting the legacy stack, so P5 starts after it (revised 2026-10-19)
 ```
 
 ### Where the review fixes land
 
-| Fixes | Resolved in |
-|---|---|
-| F-01, F-02, F-03, F-04, F-05, F-12, F-14, F-27, F-28, F-31, F-33 | Phase 0 (on current code) |
-| F-10, F-20, F-36 | Phase 1 (by schema) |
-| F-08, F-09, F-30, F-32, F-37 | Phase 2 |
-| F-06, F-07, F-16, F-17, F-18, F-19, F-21, F-22, F-23, F-24, F-34 | Phase 3 |
-| F-11, F-13, F-26, F-35, F-38, F-39 | Phase 4 |
-| F-15, F-25, F-29 | Phase 6 |
+| Fixes | Planned for | How it stands after Phase 3 (2026-10-19) |
+|---|---|---|
+| F-01, F-02, F-03, F-04, F-05, F-12, F-14, F-27, F-28, F-31, F-33 | Phase 0 (on current code) | Done, except F-12's dashboard display (Phase 6), F-28's two root scripts and F-31's `eval` and install smoke test (Phase 4 and 5) |
+| F-10, F-20, F-36 | Phase 1 (by schema) | Done in the contracts; legacy pair keys and API v1 go in Phase 4 |
+| F-08, F-09, F-30, F-32, F-37 | Phase 2 | Done in the data layer and profile; VIF `n_used` (F-32) is a Phase 4 check |
+| F-06, F-07, F-16, F-17, F-18, F-19, F-21, F-22, F-23, F-24, F-34 | Phase 3 | Done in the engine; F-07's per-task keys go as each task migrates |
+| F-11, F-13, F-26, F-35, F-38, F-39 | Phase 4 | Open; each has a unit |
+| F-15, F-25, F-29 | Phase 6 | F-15's run identity is done; the old store and API v1 are deleted in Phase 4, so the rest are design inputs for Phase 6 |
+
+The status of every finding, with its evidence, is recorded in
+[`REVIEW_FINDINGS.md`](REVIEW_FINDINGS.md).
 
 Fixes **not** listed for Phase 0 are deliberately **not** done on the old code. They disappear when
 that code is replaced. Doing them twice is wasted effort, unless the refactor is abandoned, in which
@@ -778,7 +785,7 @@ Each is recorded in [`docs/adr/`](adr/README.md). The table summarises them; the
 |---|---|---|
 | Statistical nuance lost in migration | Silent quality regressions, which is DSBF's core value | Phase 0 golden runs; parity tests; intended diffs listed per PR; calibration suite |
 | Scope too large for one maintainer | Stalls halfway, leaving two systems | Strangler pattern: each phase ships; the legacy adapter keeps everything running; Phase 5 delivers user value before the server work |
-| The old dashboard breaks before the new one exists | Mode 2 users lose the UI | The old stack (engine, DB, API v1, dashboard) keeps working unchanged until the Phase 6 cutover. New features go only to the new stack |
+| The old dashboard breaks before the new one exists | Mode 2 users lose the UI | Accepted on 2026-10-19: there are no external users (A2), so the old stack is deleted at the end of Phase 4. Until Phase 6, the stopgap `dsbf profile` (Phase 4) and the static HTML report (Phase 5) are the ways to read a run |
 | Polars or Ibis API churn | Maintenance load | Pin minor versions; adapters isolate them; Ibis only behind `dsbf[sql]` |
 | Over-engineering team features early | Slows local delivery | Interfaces only until Phase 8; no Postgres or auth code before then |
 | The schema evolves too fast for mode-1 consumers | Downstream breakage | Semver plus a schema diff gate; additive-only within 1.x; deprecation window of one minor release |
@@ -790,6 +797,7 @@ Each is recorded in [`docs/adr/`](adr/README.md). The table summarises them; the
 
 This plan is executed as **units**, each a single branch, PR and commit that can be finished in
 one session. The backlog is [`ROADMAP.md`](../ROADMAP.md), the active unit lives in
-[`PLAN.md`](../PLAN.md), and the workflow is in [`CLAUDE.md`](../CLAUDE.md). Phases 0–3 are
-broken down in full. Each later phase starts with a planning unit that breaks it down using what
-the earlier phases taught.
+[`PLAN.md`](../PLAN.md), and the workflow is in [`CLAUDE.md`](../CLAUDE.md). Phases 0–3 were
+broken down in full and are finished. Phase 4 was broken down in full by U4-00, and Phase 5 into outline units.
+Each later phase starts with a planning unit that breaks it down using what the earlier phases
+taught. Finished programs are summarised in [`HISTORY.md`](HISTORY.md).
