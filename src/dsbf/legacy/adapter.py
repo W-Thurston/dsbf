@@ -5,6 +5,7 @@ import hashlib
 import importlib
 import inspect
 import re
+from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,9 @@ from dsbf.legacy.session import LegacySession
 from dsbf.model import CheckParams, CheckStatus, Cost, Dimension, Severity, Stage
 
 LEGACY_PACK = "legacy"
+# Where a task that a core check replaces sits: no default selection includes it, and a
+# check that requires it still pulls it in.
+SUPERSEDED_PACK = "legacy_superseded"
 LEGACY_VERSION = "0.1.0"
 
 # The profile types a legacy semantic type covers.
@@ -93,7 +97,9 @@ class LegacyParams(CheckParams):
     changes the cache key; ``source`` is a digest of the code that runs, so editing a
     task does too. ``output_dir`` and ``reference`` are set only for a task that
     writes files or reads the reference frame, so a cached result never points at a
-    directory it was not written to nor compares the wrong frame.
+    directory it was not written to nor compares the wrong frame. ``superseded_by``
+    names the core check that reports this task's findings, so the task reports none
+    of its own; it is part of the key because the result differs.
     """
 
     task: dict[str, Any] = {}
@@ -101,18 +107,26 @@ class LegacyParams(CheckParams):
     source: str = ""
     output_dir: str | None = None
     reference: str | None = None
+    superseded_by: str | None = None
 
 
-def adapt_task(spec: TaskSpec, session: LegacySession) -> Check:
+def adapt_task(
+    spec: TaskSpec, session: LegacySession, superseded_by: str | None = None
+) -> Check:
     """The check that runs the task ``spec`` registered, on ``session``'s data.
 
     The check applies to the profile types the task's expected semantic types map
     to, so a dataset with none of them plans it ``not_applicable`` where the legacy
     engine ran it and got an empty result. It runs on a thread: an adapted check is
     built at run time, which a worker process cannot import by name.
+
+    A task ``superseded_by`` a core check is in the ``legacy_superseded`` pack instead
+    of ``legacy``, so the default selection leaves it out, but a check that requires it
+    still pulls it in. It reports its output and no
+    findings, so each finding is reported once.
     """
     source = _module_source(spec.cls)
-    params = _params_model(spec, session, source)
+    params = _params_model(spec, session, source, superseded_by)
     declared = CheckSpec(
         id=spec.name,
         version=LEGACY_VERSION,
@@ -126,7 +140,7 @@ def adapt_task(spec: TaskSpec, session: LegacySession) -> Check:
         cost=_COST.get(spec.runtime_estimate or "", Cost.MODERATE),
         stage=Stage(spec.stage or "any"),
         runs_in="thread",
-        packs=(LEGACY_PACK,),
+        packs=(SUPERSEDED_PACK if superseded_by else LEGACY_PACK,),
         tags=tuple(spec.tags or ()),
         summary=_summary(spec),
     )
@@ -138,7 +152,9 @@ def adapt_task(spec: TaskSpec, session: LegacySession) -> Check:
 
 
 def legacy_checks(
-    session: LegacySession, plugin_groups: tuple[str, ...] = ()
+    session: LegacySession,
+    plugin_groups: tuple[str, ...] = (),
+    superseded: Mapping[str, str] | None = None,
 ) -> tuple[Check, ...]:
     """An adapted check for every registered task but ``EXCLUDED_TASKS``, by name.
 
@@ -146,13 +162,15 @@ def legacy_checks(
     or a module name, as the legacy ``task_groups`` config key names them). A task
     that writes files is left out when the session has no output directory, since
     it could only end ``error``; ``adapt_task`` still adapts one by name.
+    ``superseded`` maps a task to the core check that replaces it in this run
+    (``dsbf.legacy.superseded_tasks``).
     """
     _scan_native_libraries()
     load_all_tasks()
     for group in plugin_groups:
         load_task_group(group)
     return tuple(
-        adapt_task(TASK_REGISTRY[name], session)
+        adapt_task(TASK_REGISTRY[name], session, (superseded or {}).get(name))
         for name in sorted(TASK_REGISTRY)
         if name not in EXCLUDED_TASKS
         and (
@@ -202,7 +220,7 @@ def _run_task(
             hint="Give the LegacySession an output_dir.",
         )
     ctx.checkpoint()
-    return to_output(ctx, legacy.run_task(task))
+    return to_output(ctx, legacy.run_task(task), superseded_by=params.superseded_by)
 
 
 def _applies_to(expected: list[str] | None) -> SemanticTypes:
@@ -265,7 +283,7 @@ def _module_source(cls: type[BaseTask]) -> str:
 
 
 def _params_model(
-    spec: TaskSpec, session: LegacySession, source: str
+    spec: TaskSpec, session: LegacySession, source: str, superseded_by: str | None
 ) -> type[LegacyParams]:
     config = session.config
     return create_model(  # type: ignore[call-overload,no-any-return]
@@ -285,4 +303,5 @@ def _params_model(
             str | None,
             session.reference_digest() if _reads_reference(spec.cls) else None,
         ),
+        superseded_by=(str | None, superseded_by),
     )

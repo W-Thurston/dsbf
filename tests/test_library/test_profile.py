@@ -101,6 +101,54 @@ class TestNoWrites:
         assert (tmp_path / "home" / "cache" / "results").is_dir()
 
 
+@pytest.fixture(scope="module")
+def sparse() -> pl.DataFrame:
+    """A numeric column that is 60% zeros, beside one that has none."""
+    values = [0.0] * 60 + [float(i) + 0.5 for i in range(40)]
+    return pl.DataFrame({"sparse": values, "dense": [float(i) for i in range(100)]})
+
+
+class TestMigratedChecks:
+    """A core check replaces its legacy task, which keeps feeding the scorers."""
+
+    def test_the_default_selection_runs_the_core_check_not_the_task(self, sparse):
+        run = dsbf.profile(sparse, depth="quick")
+
+        assert run.results["zeros"].status is CheckStatus.OK
+        zero_findings = [f for f in run.findings if f.subject.columns == ("sparse",)]
+        assert {f.check_id for f in zero_findings if "zero" in f.code} == {"zeros"}
+
+    def test_a_scorer_still_gets_the_task_as_a_requirement_without_its_findings(
+        self, sparse
+    ):
+        run = dsbf.profile(sparse, depth="quick")
+
+        task = run.results["detect_zeros"]
+        assert task.status is CheckStatus.OK
+        assert task.output is not None
+        assert task.findings == ()
+        assert [n.code for n in task.notes] == ["findings_superseded"]
+        assert run.results["ml_readiness_scorer"].status is CheckStatus.OK
+
+    def test_without_the_core_pack_the_task_reports_its_findings(self, sparse):
+        run = dsbf.profile(sparse, depth="quick", packs=["legacy"])
+
+        assert "zeros" not in run.results
+        assert run.results["detect_zeros"].findings
+        assert not run.results["detect_zeros"].notes
+
+    def test_naming_the_task_asks_for_it_as_it_was(self, sparse):
+        run = dsbf.profile(sparse, depth="quick", checks=["+detect_zeros"])
+
+        assert run.results["detect_zeros"].findings
+        assert run.results["zeros"].findings
+
+    def test_a_check_in_its_own_pack_can_be_run_alone(self, sparse):
+        run = dsbf.profile(sparse, packs=["core"])
+
+        assert tuple(run.results) == ("zeros",)
+
+
 class TestSelection:
     def test_a_minus_removes_a_check_nothing_else_needs(self, frame):
         run = dsbf.profile(frame, depth="quick", checks=["-detect_duplicate_columns"])

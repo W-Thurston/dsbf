@@ -1,0 +1,108 @@
+"""Compare a core check with the legacy task it replaces, on one golden dataset.
+
+A ``Comparator`` takes what the legacy task stored (through the adapter) and what the
+core check returned, as the dicts the golden child process writes, and lists every
+``Difference``. Each one must be an ``Accepted`` difference with a reason, or the
+comparison fails; and an accepted difference that no longer occurs fails too, so the
+registry cannot go stale.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any
+
+# The engine's statuses in the words ``engine_run.json`` records for the legacy task.
+Result = Mapping[str, Any]
+
+
+@dataclass(frozen=True, order=True)
+class Difference:
+    """One way the core check's result differs from the legacy task's."""
+
+    subject: str
+    kind: str
+    detail: str
+
+    def describe(self) -> str:
+        return f"{self.subject or 'dataset'}: {self.kind}: {self.detail}"
+
+
+@dataclass(frozen=True)
+class Accepted:
+    """A difference that is intended, and why the core check is right.
+
+    ``dataset`` is a golden dataset name; ``subject`` is the column the difference is
+    about, or empty for the whole check.
+    """
+
+    check: str
+    dataset: str
+    subject: str
+    kind: str
+    detail: str
+    reason: str
+
+    @property
+    def difference(self) -> Difference:
+        return Difference(self.subject, self.kind, self.detail)
+
+
+# A comparator gets the legacy task's stored entry (status, notes, finding count and
+# result, as ``engine_run.json`` has it) and the core check's result as a dict.
+Comparator = Callable[[Result, Result], list[Difference]]
+
+
+def compare(
+    check: str,
+    comparator: Comparator,
+    legacy: Result | None,
+    core: Result,
+) -> list[Difference]:
+    """Every difference between the two, the statuses first.
+
+    A legacy task the engine did not run is itself a difference, since there is
+    nothing to compare the core check with.
+    """
+    if legacy is None:
+        return [Difference("", "legacy_not_run", f"{check} has no legacy result")]
+    legacy_status = _legacy_word(legacy["status"])
+    core_status = core["status"]
+    if legacy_status != core_status:
+        return [Difference("", "status", f"legacy {legacy_status}, core {core_status}")]
+    if core_status != "ok":
+        return []
+    return sorted(comparator(legacy, core))
+
+
+def _legacy_word(status: str) -> str:
+    """The adapter records the engine's status, which is already the core's word."""
+    return status
+
+
+@dataclass(frozen=True)
+class Verdict:
+    """How the differences found compare with the ones accepted."""
+
+    unexpected: list[Difference]
+    stale: list[Accepted]
+
+    @property
+    def clean(self) -> bool:
+        return not (self.unexpected or self.stale)
+
+
+def judge(
+    check: str,
+    dataset: str,
+    found: list[Difference],
+    accepted: tuple[Accepted, ...],
+) -> Verdict:
+    """The differences nobody accepted, and the accepted ones that did not occur."""
+    listed = [a for a in accepted if a.check == check and a.dataset == dataset]
+    wanted = {a.difference for a in listed}
+    return Verdict(
+        unexpected=[d for d in found if d not in wanted],
+        stale=[a for a in listed if a.difference not in set(found)],
+    )

@@ -1,0 +1,15 @@
+{
+ "checks": {
+  "zeros": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  }
+ },
+ "dataset": "wide",
+ "format": 1,
+ "shape": [
+  1000,
+  100
+ ]
+}

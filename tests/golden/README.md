@@ -87,6 +87,31 @@ git diff tests/golden/engine_differences.json
 Give a task that now differs under `changed` a reason by hand: the update writes the
 differences and leaves `changed` and `reasons` alone.
 
+## The core pack on the same datasets
+
+`engine_one.py` also runs the `core` pack alone and writes its `Run` as `core_run.json`.
+Two suites read it, sharing one child run per dataset (`conftest.py`).
+
+**Core findings snapshots.** `snapshots/core/<dataset>.json` holds, for each core check,
+its version and status and its findings reduced to id, check, code, subject, severity and
+evidence metrics (`migration/snapshot.py`). `test_core_snapshot.py` compares and rewrites
+with `--update-golden`, like the legacy snapshots. Commit the files with the change that
+moved them and explain the diff in the PR.
+
+**Migration parity.** `test_migration_parity.py` compares each core check with the legacy
+task it replaces (`dsbf.legacy.SUPERSEDED_BY`), using the task's result through the adapter
+in `engine_run.json`. The check's comparator (`migration/<check>.py`, listed in
+`migration/registry.py`) returns the differences: columns each side reads, counts, shares,
+severities and the findings each raises. Every difference must be in
+`migration/accepted.py` with the column, the kind, the exact detail and the reason the core
+check is right; one that is not listed fails, and so does a listed one that no longer
+occurs. The failure prints the entry to add. Reasons are written by hand, so
+`--update-golden` leaves the file alone. A unit test checks that every entry has a reason
+and names a golden dataset and a registered comparator.
+
+To migrate another task, add it to `SUPERSEDED_BY`, write its comparator, run the suite,
+and list each difference with its reason.
+
 ## Determinism
 
 Each dataset runs in a fresh child process (`profile_one.py`) with `PYTHONHASHSEED=0`, a

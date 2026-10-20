@@ -1,11 +1,12 @@
-Plan for data (6 × 4): 6 checks
-  will run 3 · not applicable 1 · unavailable 1 · skipped 1
+Plan for data (6 × 4): 7 checks
+  will run 4 · not applicable 1 · unavailable 1 · skipped 1
 
 level 0
   – not applicable  date_gaps             No column is of a type date_gaps applies to (datetime).
   ✓ will run        null_share            reads 4 columns · required by quality_summary
   ✓ will run        numeric_spread        reads 2 columns
   ⦸ unavailable     stationarity          Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`. · required by trend_summary
+  ✓ will run        zeros                 reads 2 columns
 
 level 1
   ✓ will run        quality_summary       requires null_share · after numeric_spread

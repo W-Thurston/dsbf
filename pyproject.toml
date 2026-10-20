@@ -84,6 +84,7 @@ dev = [
     # `excel` extra carries; the fast gate installs no extras.
     "xlsxwriter>=3.2,<4",
     "fastexcel>=0.21,<1",
+    "hypothesis>=6.170.5",
 ]
 
 [build-system]

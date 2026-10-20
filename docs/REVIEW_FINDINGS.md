@@ -31,8 +31,8 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
 | Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-36, F-37 |
-| Mostly resolved or partial | F-07, F-10, F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
-| Open, owned by Phase 4 | F-11 (U4-02 to U4-15), F-13 (U4-07), F-26 (U4-07, U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
+| Mostly resolved or partial | F-07, F-10, F-11 (U4-04 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
+| Open, owned by Phase 4 | F-13 (U4-07), F-26 (U4-07, U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
 ---
@@ -174,14 +174,14 @@ silently mis-attributes the pair instead.
 - [x] Store pairs as `{"a": ..., "b": ..., ...}` records, or use a nested `{col1: {col2: ...}}` map, instead of encoded string keys.
 
 ### F-11 Semantic-type filtering is still bypassed in places
-**Status (2026-10-19): Open, verified on 2026-10-19.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88). The legacy tasks still pick their own: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appears in the output of nine continuous-only checks, `detect_data_leakage` and `detect_collinear_features` among them. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15), and U4-02 adds the regression test. The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; U4-04 decides that with `id_columns`.
+**Status (2026-10-20): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's first check, `zeros`, does (U4-02). The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; U4-04 decides that with `id_columns`.
 
 v0.20.0 fixed tasks iterating over `df.columns` instead of `matched_cols`. The same bug class
 remains: `detect_data_leakage.py:73` computes correlations over
 `df.select_dtypes(include="number")`, so integer-encoded booleans and IDs enter the leakage scan
 and could produce false "Leakage" findings. 21 task files use `select_dtypes`.
 - [ ] Audit each one and intersect with `matched_cols`, or replace it with `matched_cols`.
-- [ ] Add a regression test: an int-coded boolean column must not appear in any continuous-only task output.
+- [x] Add a regression test: an int-coded boolean column must not appear in any continuous-only task output (U4-02, for `zeros`; each migration adds its check to `tests/test_checks/test_adversarial.py`).
 
 ### F-12 The new histogram misrepresents distributions
 **Status (2026-10-19): Partial.** The profile carries equal-width bins with the rule recorded (U2-05 #84). The dashboard still draws the percentile bins (`DistributionHistogramChart.vue:31`); the dashboard is off from U4-18, and its Phase 6 column view draws the profile's bins.

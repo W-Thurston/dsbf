@@ -31,6 +31,11 @@ class GoldenDataset:
     def snapshot_path(self) -> Path:
         return SNAPSHOT_DIR / f"{self.name}.json"
 
+    @property
+    def core_snapshot_path(self) -> Path:
+        """The core pack's findings on this dataset."""
+        return SNAPSHOT_DIR / "core" / f"{self.name}.json"
+
 
 def _archetype(name: str) -> GoldenDataset:
     def write_csv(directory: Path) -> Path:

@@ -42,12 +42,16 @@ def plain(value: Any) -> Any:
     return str(value)  # a path, a timedelta, anything else a task left behind
 
 
-def to_output(ctx: CheckContext, result: TaskResult) -> CheckOutput:
+def to_output(
+    ctx: CheckContext, result: TaskResult, superseded_by: str | None = None
+) -> CheckOutput:
     """The check's return value for ``result``, whichever way the task ended.
 
     A task that returns ``failed`` or ``skipped`` instead of raising ends the check
     ``error`` or ``skipped`` with a note taken from its result; anything else is
     ``ok``, the output is the result itself and each guidance blurb becomes a finding.
+    A task superseded by a core check keeps its output and records no findings, with
+    a note that says which check reports them.
     """
     message = str(result.summary.get("message") or "")
     if result.status == "failed":
@@ -69,7 +73,14 @@ def to_output(ctx: CheckContext, result: TaskResult) -> CheckOutput:
             severity=Severity.INFO,
         )
     stored = plain(result.to_dict())
-    findings_from(ctx, stored["guidance"])
+    if superseded_by is None:
+        findings_from(ctx, stored["guidance"])
+    else:
+        ctx.note(
+            "findings_superseded",
+            f"{ctx.spec.id} ran as an input of another task; its findings are "
+            f"reported by {superseded_by}.",
+        )
     return ctx.output(LegacyTaskOutput(result=stored))
 
 

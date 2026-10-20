@@ -1,6 +1,8 @@
 """Executing a plan always completes, and every check ends in an explicit status."""
 
 import dataclasses
+import datetime
+import types
 
 import polars as pl
 import pytest
@@ -73,6 +75,25 @@ class TestCompletion:
         assert planned["quality_summary"].depends_on == ("null_share", "numeric_spread")
         assert planned["numeric_spread"].params == {"min_std": 0.5}
         assert run.finished_at >= run.started_at
+
+    def test_a_wall_clock_that_steps_back_during_the_run_still_gives_a_run(
+        self, monkeypatch
+    ):
+        real_now = datetime.datetime.now
+        calls: list[int] = []
+
+        def stepping_back(tz: datetime.tzinfo | None = None) -> datetime.datetime:
+            calls.append(1)
+            return real_now(tz) - datetime.timedelta(seconds=len(calls) * 60)
+
+        monkeypatch.setattr(
+            "dsbf.engine.executor.datetime", types.SimpleNamespace(now=stepping_back)
+        )
+
+        run = run_plan(TOYS)
+
+        assert run.finished_at >= run.started_at
+        assert run.health.counts.ok == 3
 
     def test_an_empty_plan_is_an_empty_run(self):
         run = run_plan([])
