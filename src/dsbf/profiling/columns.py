@@ -8,6 +8,11 @@ across columns (a column with nulls does not shrink the others). The profile par
 that need the values themselves (histogram bins, top values, string shape, datetime
 spacing) are then built per column by ``histogram``, ``values`` and ``temporal``.
 
+A column's ``content_hash`` is the sum, wrapping in 64 bits, of each value's hash
+combined with the hash of its row number, so it follows the values in row order. Polars
+hashes with fixed seeds, so the digest is the same in every process (the cache key
+relies on that).
+
 Nulls are counted apart from ``non_finite`` values: a pandas ``NaN`` is null after
 ``load``, while a ``NaN`` or infinity in a Polars float column is a value, counted in
 ``non_finite`` and left out of the numeric statistics. Those statistics are pandas'
@@ -39,10 +44,21 @@ from dsbf.model.profile import (
 from dsbf.profiling.histogram import DEFAULT_MAX_BINS, histogram
 from dsbf.profiling.temporal import datetime_stats
 from dsbf.profiling.types import ColumnType, infer_column_types
-from dsbf.profiling.values import DEFAULT_TOP_K, string_stats, top_values, value_counts
+from dsbf.profiling.values import (
+    DEFAULT_TOP_K,
+    entropy_bits,
+    string_stats,
+    top_values,
+    value_counts,
+)
 
 DEFAULT_QUANTILES = (0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99)
 _TEXT_DTYPES = (pl.String, pl.Categorical, pl.Enum)
+_REPLACEMENT_CHAR = "\ufffd"
+_NUL = "\x00"
+# The row-number hash takes another seed than the values': an Enum hashes its category
+# index, so with one seed a column of codes 0, 1, 2... would cancel to zero.
+_POSITION_SEED = 1
 
 
 def profile_columns(
@@ -120,6 +136,14 @@ def _expressions(
     exprs = [column.null_count().alias(_key(position, "nulls"))]
     if dtype != pl.Object:
         exprs.append(column.drop_nulls().n_unique().alias(_key(position, "distinct")))
+    if _hashable(frame.get_column(name)):
+        row = pl.int_range(pl.len(), dtype=pl.UInt64).hash(seed=_POSITION_SEED)
+        exprs.append((column.hash() ^ row).sum().alias(_key(position, "hash")))
+    if dtype in _TEXT_DTYPES:
+        text = column.cast(pl.String)
+        for stat, char in (("replacement", _REPLACEMENT_CHAR), ("nul", _NUL)):
+            found = text.str.contains(char, literal=True).sum()
+            exprs.append(found.alias(_key(position, stat)))
     semantic_type = types[name].semantic_type
     if semantic_type == "numeric":
         exprs.extend(_numeric_expressions(position, column, quantiles))
@@ -129,6 +153,20 @@ def _expressions(
         empty = (column.cast(pl.String) == "").sum()
         exprs.append(empty.alias(_key(position, "empty")))
     return exprs
+
+
+def _hashable(series: pl.Series) -> bool:
+    """Whether Polars can hash the column to the same digest in every process.
+
+    An Object column hashes by object identity, so its digest means nothing.
+    """
+    if series.dtype == pl.Object:
+        return False
+    try:
+        series.head(0).hash()
+    except pl.exceptions.PolarsError:
+        return False
+    return True
 
 
 def _numeric_expressions(
@@ -182,7 +220,14 @@ def _profile(
         "semantic_confidence": column_type.confidence,
         "semantic_sample_rows": column_type.sample_rows,
         "counts": ColumnCounts(rows=dataset.n_rows, nulls=nulls, distinct=distinct),
+        "name_encoding_damage": _REPLACEMENT_CHAR in name or _NUL in name,
     }
+    digest = row.get(_key(position, "hash"))
+    if digest is not None:
+        common["content_hash"] = f"{digest:016x}"
+    if _key(position, "replacement") in row:
+        common["values_with_replacement_char"] = row[_key(position, "replacement")]
+        common["values_with_nul"] = row[_key(position, "nul")]
     match column_type.semantic_type:
         case "numeric":
             return _numeric_profile(position, common, row, quantiles, series, max_bins)
@@ -190,10 +235,12 @@ def _profile(
             true_count = row.get(_key(position, "true"))
             if true_count is None:
                 return UnknownProfile(**common)
+            false_count = dataset.n_rows - nulls - true_count
             return BooleanProfile(
                 **common,
                 true_count=true_count,
-                false_count=dataset.n_rows - nulls - true_count,
+                false_count=false_count,
+                entropy_bits=entropy_bits((true_count, false_count)),
             )
         case "categorical":
             return CategoricalProfile(
@@ -277,7 +324,8 @@ def _value_fields(series: pl.Series, top_k: int, *, text: bool) -> dict[str, Any
     """
     counts = value_counts(series)
     fields: dict[str, Any] = {
-        "top_values": top_values(counts, top_k, min_count=2 if text else 1)
+        "top_values": top_values(counts, top_k, min_count=2 if text else 1),
+        "entropy_bits": entropy_bits(counts["count"].to_list()),
     }
     if series.dtype in _TEXT_DTYPES:
         stats = string_stats(counts, top_k)

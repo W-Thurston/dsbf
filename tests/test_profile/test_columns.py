@@ -1,6 +1,9 @@
 """Counts and numeric statistics are per column, over that column's own values."""
 
 import math
+import subprocess
+import sys
+import textwrap
 from decimal import Decimal
 
 import numpy as np
@@ -8,6 +11,7 @@ import pandas as pd
 import polars as pl
 import pytest
 from pydantic import TypeAdapter
+from scipy.stats import entropy as scipy_entropy
 
 from dsbf.data import load
 from dsbf.model.profile import (
@@ -275,6 +279,272 @@ class TestArguments:
         frame = pl.DataFrame({"0:nulls": [1.0, 2.0], "": [3.0, 4.0], " ": [5.0, 6.0]})
         names = [p.name for p in _profile(frame)]
         assert names == ["0:nulls", "", " "]
+
+
+def _by_name(frame: pl.DataFrame, **kwargs):
+    return {p.name: p for p in _profile(frame, **kwargs)}
+
+
+class TestEntropy:
+    def test_matches_scipy_over_the_whole_distribution(self):
+        # Fifteen distinct values: beyond the ten top values the profile lists.
+        values = [chr(97 + i) for i in range(15) for _ in range(i + 1)]
+        counts = np.arange(1, 16)
+
+        profile = _one(values)
+
+        assert isinstance(profile, CategoricalProfile)
+        assert len(profile.top_values) == 10
+        assert profile.entropy_bits == pytest.approx(scipy_entropy(counts, base=2))
+
+    def test_text_columns_have_it_too(self):
+        profile = _one(["a b c", "a b c", "d e f", "g h i"] * 5 + ["j k l"])
+
+        assert isinstance(profile, TextProfile | CategoricalProfile)
+        assert profile.entropy_bits == pytest.approx(
+            scipy_entropy([10, 5, 5, 1], base=2)
+        )
+
+    def test_a_boolean_column_has_the_entropy_of_its_split(self):
+        profile = _one([True, True, True, False, None])
+
+        assert isinstance(profile, BooleanProfile)
+        assert profile.entropy_bits == pytest.approx(scipy_entropy([3, 1], base=2))
+
+    def test_one_value_is_a_positive_zero(self):
+        profile = _one(["same"] * 6)
+
+        assert isinstance(profile, CategoricalProfile)
+        assert profile.entropy_bits == 0.0
+        assert repr(profile.entropy_bits) == "0.0"  # not -0.0
+
+    def test_a_uniform_column_has_log2_of_its_values(self):
+        profile = _one(list("abcdefgh") * 3)
+
+        assert isinstance(profile, CategoricalProfile)
+        assert profile.entropy_bits == pytest.approx(3.0)
+
+    def test_nulls_are_not_a_value(self):
+        profile = _one(["a", "b", "a", "b", None, None, None, None])
+
+        assert isinstance(profile, CategoricalProfile)
+        assert profile.entropy_bits == pytest.approx(1.0)
+
+    def test_a_boolean_with_one_value_is_a_positive_zero(self):
+        profile = _one([True, None, True], dtype=pl.Boolean)
+
+        assert isinstance(profile, BooleanProfile)
+        assert profile.entropy_bits == 0.0
+        assert repr(profile.entropy_bits) == "0.0"  # not -0.0
+
+    def test_does_not_depend_on_how_many_top_values_are_listed(self):
+        values = list("aabbbcccc")
+
+        assert _one(values, top_k=0).entropy_bits == _one(values).entropy_bits
+
+    def test_numeric_columns_have_none(self):
+        profile = _one([1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5])
+
+        assert isinstance(profile, NumericProfile)
+        assert not hasattr(profile, "entropy_bits")
+
+
+class TestContentHash:
+    FRAME = pl.DataFrame(
+        {
+            "a": [1, 2, 3, None, 5, 6, 7, 8],
+            "same": [1, 2, 3, None, 5, 6, 7, 8],
+            "reordered": [2, 1, 3, None, 5, 6, 7, 8],
+            "changed": [1, 2, 3, None, 5, 6, 7, 9],
+            "no_null": [1, 2, 3, 4, 5, 6, 7, 8],
+        }
+    )
+
+    def test_equal_columns_hash_equal_and_other_columns_do_not(self):
+        hashes = {name: p.content_hash for name, p in _by_name(self.FRAME).items()}
+
+        assert hashes["a"] == hashes["same"]
+        assert len({hashes[n] for n in ("a", "reordered", "changed", "no_null")}) == 4
+
+    def test_a_hash_is_sixteen_hex_digits_even_for_no_rows_or_all_nulls(self):
+        empty = _one([], dtype=pl.Int64)
+        nulls = _one([None, None, None], dtype=pl.Int64)
+
+        for profile in (empty, nulls, *_profile(self.FRAME)):
+            assert profile.content_hash is not None
+            assert len(profile.content_hash) == 16
+            int(profile.content_hash, 16)
+
+    def test_the_hash_follows_row_order(self):
+        forward = _one(list("abcdef"))
+        backward = _one(list("fedcba"))
+
+        assert forward.content_hash != backward.content_hash
+
+    def test_the_hash_ignores_the_dtype_so_the_dtype_must_be_compared(self):
+        frame = pl.DataFrame(
+            {
+                "ints": pl.Series([1, 2, 3, 4], dtype=pl.Int64),
+                "narrow": pl.Series([1, 2, 3, 4], dtype=pl.Int32),
+                "dates": pl.Series([1, 2, 3, 4], dtype=pl.Int64).cast(pl.Date),
+            }
+        )
+        by_name = _by_name(frame)
+
+        assert by_name["ints"].content_hash == by_name["dates"].content_hash
+        assert by_name["ints"].physical_dtype != by_name["dates"].physical_dtype
+
+    def test_negative_zero_and_nan_hash_as_equal_values(self):
+        frame = pl.DataFrame(
+            {
+                "x": [0.0, float("nan"), 1.0, 2.0],
+                "y": [-0.0, float("nan"), 1.0, 2.0],
+            }
+        )
+        by_name = _by_name(frame)
+
+        assert by_name["x"].content_hash == by_name["y"].content_hash
+
+    def test_a_categorical_hashes_by_its_values_not_its_codes(self):
+        values = ["x", "y", None, "z", "x", "y"]
+        frame = pl.DataFrame(
+            {
+                "plain": pl.Series(values, dtype=pl.Categorical),
+                "recoded": pl.Series(
+                    values, dtype=pl.Categorical
+                ),  # built again, same strings
+                "string": pl.Series(values),
+            }
+        )
+        by_name = _by_name(frame)
+
+        assert by_name["plain"].content_hash == by_name["recoded"].content_hash
+
+    def test_an_enum_whose_codes_count_up_is_not_hashed_to_zero(self):
+        enum = pl.Enum(["a", "b", "c"])
+        profile = _one(["a", "b", "c", "a"], dtype=enum)
+
+        assert profile.content_hash != "0" * 16
+
+    def test_an_object_column_has_no_hash(self):
+        profile = _one([object(), "x", None], dtype=pl.Object)
+
+        assert profile.content_hash is None
+
+    def test_nested_and_other_dtypes_hash(self):
+        frame = pl.DataFrame(
+            {
+                "list": [[1], [2], None],
+                "struct": [{"a": 1}, {"a": 2}, None],
+                "bytes": [b"a", b"b", None],
+                "decimal": pl.Series([Decimal("1.5"), None, Decimal("2")]),
+            }
+        )
+
+        assert all(p.content_hash for p in _profile(frame))
+
+    def test_the_digest_is_the_same_in_another_process(self):
+        script = textwrap.dedent(
+            """
+            import polars as pl
+            from dsbf.data import load
+            from dsbf.profiling import profile_columns
+
+            frame = pl.DataFrame(
+                {"a": [1, None, 3], "s": ["x", "y", None], "f": [0.5, -0.0, 2.5]}
+            )
+            print([p.content_hash for p in profile_columns(load(frame))])
+            """
+        )
+        runs = {
+            subprocess.run(
+                [sys.executable, "-I", "-c", script],
+                check=True,
+                capture_output=True,
+                text=True,
+                env={"PYTHONHASHSEED": seed},
+            ).stdout
+            for seed in ("1", "2", "random")
+        }
+
+        assert len(runs) == 1
+        frame = pl.DataFrame(
+            {"a": [1, None, 3], "s": ["x", "y", None], "f": [0.5, -0.0, 2.5]}
+        )
+        assert runs == {str([p.content_hash for p in _profile(frame)]) + "\n"}
+
+
+class TestEncodingDamage:
+    FRAME = pl.DataFrame(
+        {
+            "clean": ["a", "b", "c", "d"],
+            "replaced": ["a\ufffd", "b", "\ufffd\ufffd", None],
+            "nulled": ["a\x00b", "c", "d", "e\x00"],
+            "both": ["\ufffd\x00", "x", "y", "z"],
+            "number": [1.5, 2.5, 3.5, 4.5],
+            "bad\ufffdname": ["p", "q", "r", "s"],
+            "nul\x00name": [1, 2, 3, 4],
+        }
+    )
+
+    def test_counts_are_of_values_not_characters(self):
+        by_name = _by_name(self.FRAME)
+
+        assert (
+            by_name["clean"].values_with_replacement_char,
+            by_name["clean"].values_with_nul,
+        ) == (0, 0)
+        assert by_name["replaced"].values_with_replacement_char == 2
+        assert by_name["replaced"].values_with_nul == 0
+        assert by_name["nulled"].values_with_nul == 2
+        assert by_name["nulled"].values_with_replacement_char == 0
+        assert by_name["both"].values_with_replacement_char == 1
+        assert by_name["both"].values_with_nul == 1
+
+    def test_columns_that_are_not_strings_have_none(self):
+        by_name = _by_name(self.FRAME)
+
+        for name in ("number", "nul\x00name"):
+            assert by_name[name].values_with_replacement_char is None
+            assert by_name[name].values_with_nul is None
+
+    def test_a_damaged_name_is_flagged_whatever_the_column_holds(self):
+        by_name = _by_name(self.FRAME)
+
+        flagged = {name for name, p in by_name.items() if p.name_encoding_damage}
+        assert flagged == {"bad\ufffdname", "nul\x00name"}
+
+    def test_every_string_column_is_counted_whatever_its_semantic_type(self):
+        values = [f"id\ufffd{i}" for i in range(50)]
+        frame = pl.DataFrame(
+            {
+                "long_unique": values,
+                "category": pl.Series(["a\x00", "b"] * 25, dtype=pl.Categorical),
+                "enum": pl.Series(["a\x00", "b"] * 25, dtype=pl.Enum(["a\x00", "b"])),
+            }
+        )
+        by_name = _by_name(frame)
+
+        assert by_name["long_unique"].values_with_replacement_char == 50
+        assert by_name["category"].values_with_nul == 25
+        assert by_name["enum"].values_with_nul == 25
+
+    def test_a_utf16_file_read_lossily_shows_both_marks(self, tmp_path):
+        path = tmp_path / "wide.csv"
+        rows = "".join(f"Anna{i},Zürich,{i}\n" for i in range(50))
+        path.write_bytes(("name,city,n\n" + rows).encode("utf-16"))
+        frame = pl.read_csv(path, encoding="utf8-lossy")
+
+        profiles = _profile(frame)
+
+        assert all(p.name_encoding_damage for p in profiles)
+        strings = [p for p in profiles if p.values_with_nul is not None]
+        assert strings
+        assert all(
+            p.values_with_nul and p.values_with_replacement_char is not None
+            for p in strings
+        )
+        assert any(p.values_with_replacement_char for p in strings)
 
 
 def test_profiles_round_trip_through_the_contract():
