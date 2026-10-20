@@ -659,6 +659,10 @@ export interface Note {
    * Technical detail, for example a traceback summary.
    */
   detail: string | null;
+  /**
+   * How many times it happened, for a note that can repeat, such as a `python_warning`.
+   */
+  count: number | null;
 }
 /**
  * One statement about the data: what, where, how much, and why to believe it.

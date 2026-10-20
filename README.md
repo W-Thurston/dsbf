@@ -125,7 +125,7 @@ print(run.render_health())  # check counts, and why any check did not complete
 worst = [f for f in run.findings if f.severity >= Severity.WARN]
 ```
 
-`dsbf.profile()` takes a pandas, Polars or Arrow table or a file path, and returns a `Run` in memory. It writes nothing to disk, and no check can stop it: a check that fails ends with a status and a note in `run.results`. `run.findings` lists the findings, highest severity first.
+`dsbf.profile()` takes a pandas, Polars or Arrow table or a file path, and returns a `Run` in memory. It writes nothing to disk, and no check can stop it: a check that fails ends with a status and a note in `run.results`. `run.findings` lists the findings, highest severity first. A Python warning raised inside a check doesn't reach stderr; it becomes a `python_warning` note on that check, one per category and message, with a `count`. While the call lasts, the process's warning filters show every repeat of a warning (your `ignore` and `error` filters still apply), so your other threads may print a warning more than once in that time.
 
 | Argument | Meaning |
 |---|---|
@@ -134,7 +134,7 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 | `target`, `time_index` | The columns the checks that need a target or a time axis use |
 | `sample` | `dsbf.Sample(rows=100_000, strategy="random", seed=1)`, or a row count for the first rows; the `Run` records how the rows were chosen |
 | `tasks` | Settings for a legacy task, by name: `{"detect_outliers": {"flag_threshold": 0.05}}` |
-| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once |
+| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one by default while every check is a legacy task, since they run no faster together; otherwise one per core, at most 8 |
 | `cache` | `True` keeps results under the DSBF home, so a second call re-runs only the checks whose inputs changed; off by default |
 | `hooks`, `plugins` | Functions that receive an event as each check starts and finishes; directories of check plugins |
 | `config` | The path of a settings file with the same names. An argument here overrides the file, and `DSBF__SECTION__KEY` environment variables sit between the two. No file is read unless you name it |

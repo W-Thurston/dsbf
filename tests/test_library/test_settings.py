@@ -14,7 +14,9 @@ from dsbf.config import (
     SampleConfig,
 )
 from dsbf.engine import Depth
-from dsbf.library import parse_checks
+from dsbf.library import _default_workers, parse_checks
+from dsbf.profiling import profile_dataset
+from tests.test_engine.toys import declare, make_dataset, plan_for
 
 pytestmark = pytest.mark.unit
 
@@ -119,3 +121,18 @@ class TestRefusedSettings:
             dsbf.profile(frame, config=path, workers=2)
 
         assert {i.path for i in caught.value.issues} == {"depth"}
+
+
+class TestDefaultWorkers:
+    """Legacy tasks run one at a time unless asked; anything else runs per core."""
+
+    @staticmethod
+    def plan(*packs):
+        checks = [declare(f"c{i}", packs=pack) for i, pack in enumerate(packs)]
+        return _default_workers(plan_for(checks, profile_dataset(make_dataset())))
+
+    def test_a_plan_of_legacy_tasks_runs_one_at_a_time(self):
+        assert self.plan(("legacy",), ("legacy",)) == 1
+
+    def test_a_plan_with_any_other_check_uses_the_executors_default(self):
+        assert self.plan(("legacy",), ("core",)) is None

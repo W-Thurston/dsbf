@@ -5,6 +5,7 @@ A worker imports a check by name, which a function defined inside a test cannot 
 
 import os
 import time
+import warnings
 
 from pydantic import Field
 
@@ -176,4 +177,19 @@ def py_downstream(ctx: CheckContext, params: CheckParams):
     if upstream:
         total = float(upstream.findings[0].evidence.metrics["total"])  # type: ignore[arg-type]
     _report(ctx, "seen_total", total=total)
+    return None
+
+
+@check(
+    id="py_warns",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes(),
+    dimensions=[Dimension.VALIDITY],
+    runs_in="process",
+)
+def py_warns(ctx: CheckContext, params: CheckParams):
+    """Raise the same warning twice, as a library called in a loop does."""
+    for _ in range(2):
+        warnings.warn("constant input in a worker", RuntimeWarning, stacklevel=1)
     return None

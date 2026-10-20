@@ -104,6 +104,8 @@ def run_engine_once(scenario: EngineScenario, workdir: Path) -> dict[str, Any]:
         str(out_dir),
         "--workers",
         "default" if scenario.workers is None else str(scenario.workers),
+        "--depth",
+        scenario.depth,
     ]
     if scenario.time_series_column:
         command += ["--time-index", scenario.time_series_column]

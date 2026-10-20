@@ -139,6 +139,17 @@ class TestNote:
 
         assert round_trip(note) == note
 
+    def test_counts_a_repeated_event(self):
+        note = make_note(code="python_warning", count=7)
+
+        assert round_trip(note).count == 7
+        assert make_note().count is None
+
+    @pytest.mark.parametrize("count", [0, -1])
+    def test_a_count_is_at_least_one(self, count):
+        with pytest.raises(ValidationError):
+            make_note(count=count)
+
     @pytest.mark.parametrize("field", ["code", "message"])
     def test_needs_a_code_and_a_message(self, field):
         with pytest.raises(ValidationError):

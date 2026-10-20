@@ -6,13 +6,20 @@ from typing import Any
 import pytest
 
 from tests.perf.compare import (
+    ENGINE_BUDGETS,
     PROFILE_BUDGETS,
     check_budget,
+    check_engine_budget,
     find_regressions,
     render_summary,
 )
 from tests.perf.harness import BASELINE_PATH, load_results
-from tests.perf.scenarios import ENGINE_SCENARIOS, PROFILE_SCENARIOS, SCENARIOS
+from tests.perf.scenarios import (
+    ENGINE_SCENARIOS,
+    PER_CORE,
+    PROFILE_SCENARIOS,
+    SCENARIOS,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -163,15 +170,49 @@ def test_profile_entry_is_compared_without_tasks_or_api() -> None:
 def test_the_engine_scenarios_pair_each_dataset_serial_and_parallel() -> None:
     by_data = {}
     for scenario in ENGINE_SCENARIOS:
-        by_data.setdefault(scenario.name.split("-")[1], set()).add(scenario.workers)
-    assert by_data == {"titanic": {1, None}, "kitchen5k": {1, None}}
+        if scenario.name.startswith("engine-"):
+            by_data.setdefault(scenario.name.split("-")[1], set()).add(scenario.workers)
+    assert by_data == {"titanic": {1, PER_CORE}, "kitchen5k": {1, PER_CORE}}
 
 
-def test_committed_baseline_covers_every_scenario_but_the_engine_ones() -> None:
-    # The engine scenarios' baseline must be recorded on the CI runner, so it is
-    # added by the first nightly run rather than by the change that adds them.
+def test_every_standard_scenario_has_a_target_and_runs_the_default_plan() -> None:
+    standard = [s for s in ENGINE_SCENARIOS if s.name.startswith("standard-")]
+    assert {s.name for s in standard} == set(ENGINE_BUDGETS)
+    assert {(s.depth, s.workers) for s in standard} == {("standard", None)}
+
+
+def test_an_engine_entry_within_its_target_misses_nothing() -> None:
+    assert check_engine_budget("standard-titanic", entry(total_seconds=4.0)) == []
+
+
+def test_a_missed_target_is_described() -> None:
+    missed = check_engine_budget(
+        "standard-kitchen50k", entry(total_seconds=90.0, peak_rss_mb=1500.0)
+    )
+    assert missed == [
+        "standard-kitchen50k: took 90.0 s, target 60 s",
+        "standard-kitchen50k: peak memory 1,500 MB, target 1,024 MB",
+    ]
+
+
+def test_the_summary_reports_the_targets() -> None:
+    results = {
+        "scenarios": {
+            "standard-titanic": entry(total_seconds=30.0),
+            "standard-kitchen50k": entry(total_seconds=50.0, peak_rss_mb=900.0),
+        }
+    }
+    summary = render_summary(results, {})
+    assert "- standard-titanic: took 30.0 s, target 5 s" in summary
+    assert "- standard-kitchen50k: within its target" in summary
+
+
+def test_committed_baseline_covers_every_scenario() -> None:
+    # Recorded on the CI runner: copy a perf run's perf.json (README.md).
     baseline = load_results(BASELINE_PATH)["scenarios"]
     missing = [
-        s.name for s in [*SCENARIOS, *PROFILE_SCENARIOS] if s.name not in baseline
+        s.name
+        for s in [*SCENARIOS, *PROFILE_SCENARIOS, *ENGINE_SCENARIOS]
+        if s.name not in baseline
     ]
-    assert not missing, f"record a baseline for {missing} (--update-perf-baseline)"
+    assert not missing, f"record a baseline for {missing} from the CI runner"

@@ -1,7 +1,7 @@
 # Performance benchmark
 
 `pytest -m perf` profiles four datasets end to end with the legacy engine, times the new
-profile pass on two more and `dsbf.profile()` on two, each in a fresh interpreter. It compares what it measured with
+profile pass on two more and `dsbf.profile()` on three, each in a fresh interpreter. It compares what it measured with
 `baseline.json`, and holds the profile pass to absolute budgets. It is deselected by default (kitchen50k alone takes
 over ten minutes), and `.github/workflows/perf.yml` runs it nightly, on demand, and on a pull
 request labelled `perf`. Add that label to any pull request that is meant to change speed or
@@ -22,20 +22,28 @@ inference), after the file is loaded:
 | `profile-kitchen50k` | the `kitchen50k` frame (52,500 x 60), as CSV | 3, median kept | pass under 2 s; memory under 2.5x |
 | `profile-wide1m` | 1,000,000 x 50 floats (`numpy` seed 42), as Parquet | 3, median kept | memory under 2.5x; time compared with the baseline only |
 
-The engine scenarios time one `dsbf.profile(depth="deep")` call (loading the file, the
-profile pass, planning and executing every adapted legacy task), serial and parallel, in a
-fresh interpreter. Each writes the wall time of every check as its `tasks`, so the executor's
-effect shows per check as well as in the total. They run and write their numbers, and skip
-the comparison until a baseline from the CI runner is committed, since a local figure is not
-comparable (titanic took 33.5 s and 614 MB locally against 26.7 s and 492 MB for the legacy
-engine on the runner).
+The engine scenarios time one `dsbf.profile()` call (loading the file, the profile pass,
+planning and executing the adapted legacy tasks), in a fresh interpreter. Each writes the
+wall time of every check as its `tasks`, so the executor's effect shows per check as well
+as in the total. The `engine-*` pairs run every check (`depth="deep"`), serial and
+parallel. The `standard-*` scenarios run what `dsbf.profile()` runs when no depth is
+given, which is what the Phase 4 targets are about (REFACTOR_PLAN section 11). The summary
+lists each target the run misses. Nothing fails on a target, because the run time rises
+while the core checks run beside the legacy tasks they replace and only falls when those
+are removed. The baseline comparison applies to them as to every scenario.
 
-| Scenario | Input | Runs | `workers` |
-|---|---|---|---|
-| `engine-titanic-serial` | titanic | 3, median kept | 1 |
-| `engine-titanic-parallel` | titanic | 3, median kept | the executor's default (one per core, at most 8) |
-| `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | 1 |
-| `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | the default |
+An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`. Linux keeps
+`ru_maxrss` across `exec`, so a child started after the harness had generated the
+`profile-wide1m` frame reported the harness's 959 MB whatever it did.
+
+| Scenario | Input | Runs | `depth` | `workers` | Target (reported) |
+|---|---|---|---|---|---|
+| `engine-titanic-serial` | titanic | 3, median kept | `deep` | 1 | |
+| `engine-titanic-parallel` | titanic | 3, median kept | `deep` | the executor's default (one per core, at most 8) | |
+| `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | `deep` | 1 | |
+| `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | `deep` | one per core | |
+| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one, for legacy tasks only) | under 5 s |
+| `standard-kitchen50k` | kitchen50k, `normal_date` as the time index | 1 | `standard` | `dsbf.profile()`'s choice | under 60 s and 1 GB peak |
 
 ## Run it
 
@@ -43,7 +51,8 @@ engine on the runner).
 uv run pytest -m perf                       # all four, compare with the baseline
 uv run pytest -m perf -k titanic            # one scenario
 uv run pytest -m perf -k profile            # the profile pass only (about 30 s)
-uv run pytest -m perf -k engine             # dsbf.profile(), serial and parallel
+uv run pytest -m perf -k engine             # dsbf.profile() at deep, serial and parallel
+uv run pytest -m perf -k standard           # dsbf.profile() at the standard depth
 uv run pytest -m perf --perf-no-compare     # measure only
 uv run pytest -m perf -k titanic --perf-cprofile   # also write run.prof (slower; diagnosis only)
 ```
