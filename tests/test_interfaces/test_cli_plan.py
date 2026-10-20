@@ -237,8 +237,10 @@ def test_an_unknown_pack_is_an_error_with_a_suggestion(data, plugin):
     assert "unknown pack 'cor'; did you mean 'core'?" in result.stderr
 
 
-def test_with_no_checks_registered_the_plan_is_empty_and_says_why(data):
-    result = runner.invoke(app, ["plan", str(data), "--no-entry-points"])
+def test_with_every_check_excluded_the_plan_is_empty_and_says_why(data):
+    result = runner.invoke(
+        app, ["plan", str(data), "--no-entry-points", "--exclude", "zeros"]
+    )
 
     assert result.exit_code == 0
     assert "nothing to run" in result.stdout

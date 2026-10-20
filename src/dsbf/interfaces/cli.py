@@ -7,6 +7,7 @@ from typing import Any
 import typer
 import yaml
 
+from dsbf.checks import core_pack
 from dsbf.config import load_default_config
 from dsbf.data import SourceError, load
 from dsbf.eda.profile_engine import ProfileEngine
@@ -162,8 +163,10 @@ def plan_command(
     params = _parse_params(param)
     try:
         dataset = load(data)
+        registry = Registry()
+        registry.register_pack(core_pack())
         plan = make_plan(
-            Registry(),
+            registry,
             Selection(
                 packs=pack,
                 include=include,

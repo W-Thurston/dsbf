@@ -23,6 +23,7 @@ class GoldenRun:
     report: dict[str, Any]
     run_info: dict[str, Any]
     roots: list[str]
+    core: dict[str, Any] | None = None
 
 
 def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
@@ -37,8 +38,18 @@ def profile(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
 
 
 def profile_with_engine(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
-    """Run ``dataset`` through the new engine; ``report`` holds the engine's checks."""
-    return _run_child("engine_one.py", dataset, workdir, "engine_run.json", "run.json")
+    """Run ``dataset`` through the new engine; ``report`` holds the engine's checks.
+
+    ``core`` is the ``Run`` of the core pack alone, as a dict.
+    """
+    return _run_child(
+        "engine_one.py",
+        dataset,
+        workdir,
+        "engine_run.json",
+        "run.json",
+        core_name="core_run.json",
+    )
 
 
 def _run_child(
@@ -47,6 +58,7 @@ def _run_child(
     workdir: Path,
     report_name: str,
     run_info_name: str,
+    core_name: str | None = None,
 ) -> GoldenRun:
     workdir = workdir.resolve()
     data_dir = workdir / "data"
@@ -88,8 +100,10 @@ def _run_child(
 
     report = json.loads((out_dir / report_name).read_text())
     run_info = json.loads((out_dir / run_info_name).read_text())
+    core = json.loads((out_dir / core_name).read_text()) if core_name else None
     return GoldenRun(
         report=report,
         run_info=run_info,
         roots=[str(out_dir), str(data_dir), str(workdir)],
+        core=core,
     )

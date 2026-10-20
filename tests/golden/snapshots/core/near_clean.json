@@ -1,0 +1,15 @@
+{
+ "checks": {
+  "zeros": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  }
+ },
+ "dataset": "near_clean",
+ "format": 1,
+ "shape": [
+  3000,
+  9
+ ]
+}

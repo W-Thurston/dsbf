@@ -17,7 +17,6 @@ import pytest
 
 from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
 from tests.golden.engine_compare import differences
-from tests.golden.runner import profile_with_engine
 
 DIFFERENCES = Path(__file__).parent / "engine_differences.json"
 
@@ -34,9 +33,9 @@ def _param(dataset: GoldenDataset):
 @pytest.mark.golden
 @pytest.mark.parametrize("dataset", [_param(d) for d in GOLDEN_DATASETS])
 def test_engine_run_matches_snapshot_but_for_the_listed_differences(
-    dataset: GoldenDataset, tmp_path: Path, request: pytest.FixtureRequest
+    dataset: GoldenDataset, engine_run, request: pytest.FixtureRequest
 ) -> None:
-    run = profile_with_engine(dataset, tmp_path)
+    run = engine_run(dataset)
     snapshot = json.loads(dataset.snapshot_path.read_text())
     actual = differences(snapshot, run.report, run.roots)
 

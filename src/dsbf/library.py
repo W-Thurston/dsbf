@@ -6,6 +6,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, cast
 
+from dsbf.checks import core_pack
 from dsbf.config import (
     DEFAULT_PACKS,
     Backend,
@@ -30,9 +31,15 @@ from dsbf.engine import (
     ResultCache,
     Selection,
     execute,
-    make_plan,
 )
-from dsbf.legacy import LEGACY_PACK, LegacySession, legacy_checks
+from dsbf.legacy import (
+    LEGACY_PACK,
+    SUPERSEDED_PACK,
+    LegacySession,
+    legacy_checks,
+    make_legacy_plan,
+    superseded_tasks,
+)
 from dsbf.model import Run
 from dsbf.profiling import profile_dataset
 from dsbf.utils.versioning import get_dsbf_version
@@ -78,8 +85,10 @@ def profile(
     filters still apply) and are restored afterwards, so another thread of yours
     may print a repeated warning more than once meanwhile.
 
-    ``packs`` are the packs whose checks are candidates (the ``legacy`` pack, which
-    holds every existing task, when unset). ``checks`` adjusts that by id: ``"+id"``
+    ``packs`` are the packs whose checks are candidates (``core`` and ``legacy``, the
+    tasks not yet migrated, when unset). A legacy task that a core check replaces is
+    left out while ``core`` is a candidate, and runs without its findings only when
+    another task needs its result. ``checks`` adjusts that by id: ``"+id"``
     or ``"id"`` adds a check, ``"-id"`` removes one, and a check that another needs
     is pulled in regardless. ``depth`` (``quick``, ``standard`` or ``deep``) is the
     most expensive kind of check to run. ``target`` and ``time_index`` name the
@@ -128,8 +137,11 @@ def profile(
     session = LegacySession(
         dataset, data_profile, config=_legacy_config(settings, dataset)
     )
-    registry = Registry(legacy_checks(session))
-    plan = make_plan(
+    registry = Registry()
+    registry.register_pack(core_pack())
+    superseded = superseded_tasks(settings.packs, registry.packs, settings.include)
+    registry.register(*legacy_checks(session, superseded=superseded))
+    plan = make_legacy_plan(
         registry,
         Selection(
             packs=settings.packs,
@@ -138,6 +150,7 @@ def profile(
             depth=settings.depth,
             plugins=settings.plugins,
         ),
+        superseded,
         profile=data_profile,
     )
     workers = settings.workers
@@ -156,13 +169,19 @@ def profile(
 
 
 def _default_workers(plan: Plan) -> int | None:
-    """One worker for a plan of legacy tasks only, else the executor's default.
+    """One worker for a plan of legacy tasks and rule checks, else the default.
 
     The legacy tasks are mostly Python holding the interpreter lock, so on threads
     they wait for each other: on the 4-core CI runner every task run at once took
-    3% (titanic) and 7% (kitchen5k) longer than one at a time.
+    3% (titanic) and 7% (kitchen5k) longer than one at a time. A rule check reads
+    the profile and takes microseconds, so it doesn't change that. A task superseded
+    by a core check is in its own pack but is still a legacy task.
     """
-    if plan.entries and all(LEGACY_PACK in e.check.spec.packs for e in plan.entries):
+    legacy = [
+        e for e in plan if {LEGACY_PACK, SUPERSEDED_PACK} & set(e.check.spec.packs)
+    ]
+    others = [e for e in plan if e not in legacy]
+    if legacy and all(e.check.spec.kind == "rule" for e in others):
         return 1
     return None
 

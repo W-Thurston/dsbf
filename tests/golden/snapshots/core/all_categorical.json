@@ -1,0 +1,15 @@
+{
+ "checks": {
+  "zeros": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  }
+ },
+ "dataset": "all_categorical",
+ "format": 1,
+ "shape": [
+  2000,
+  9
+ ]
+}

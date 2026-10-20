@@ -3,7 +3,7 @@
 
 import time
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from dsbf.data import Dataset
@@ -172,7 +172,7 @@ def execute(
         results=results.values(),
         run_id=uuid4(),
         started_at=started_at,
-        finished_at=datetime.now(UTC),
+        finished_at=started_at + timedelta(seconds=time.monotonic() - clock),
         dataset=_dataset_manifest(dataset),
         plan=_plan_manifest(plan, dsbf_version),
         profile=profile,

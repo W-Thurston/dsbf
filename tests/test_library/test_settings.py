@@ -39,7 +39,7 @@ class TestProfileConfig:
     def test_the_defaults(self):
         config = ProfileConfig()
 
-        assert config.packs == DEFAULT_PACKS == ("legacy",)
+        assert config.packs == DEFAULT_PACKS == ("core", "legacy")
         assert config.depth is Depth.STANDARD
         assert config.backend is Backend.PANDAS
         assert config.sample is None
@@ -124,15 +124,29 @@ class TestRefusedSettings:
 
 
 class TestDefaultWorkers:
-    """Legacy tasks run one at a time unless asked; anything else runs per core."""
+    """Legacy tasks and rule checks run one at a time; any other check, per core."""
 
     @staticmethod
-    def plan(*packs):
-        checks = [declare(f"c{i}", packs=pack) for i, pack in enumerate(packs)]
-        return _default_workers(plan_for(checks, profile_dataset(make_dataset())))
+    def plan(*checks):
+        declared = [
+            declare(f"c{i}", packs=packs, kind=kind)
+            for i, (packs, kind) in enumerate(checks)
+        ]
+        return _default_workers(plan_for(declared, profile_dataset(make_dataset())))
 
     def test_a_plan_of_legacy_tasks_runs_one_at_a_time(self):
-        assert self.plan(("legacy",), ("legacy",)) == 1
+        assert self.plan((("legacy",), "analysis"), (("legacy",), "analysis")) == 1
 
-    def test_a_plan_with_any_other_check_uses_the_executors_default(self):
-        assert self.plan(("legacy",), ("core",)) is None
+    def test_a_task_a_core_check_replaces_is_still_a_legacy_task(self):
+        legacy = (("legacy",), "analysis")
+        replaced = (("legacy_superseded",), "analysis")
+        assert self.plan(legacy, replaced) == 1
+
+    def test_core_rule_checks_beside_legacy_tasks_do_not_change_that(self):
+        assert self.plan((("legacy",), "analysis"), (("core",), "rule")) == 1
+
+    def test_any_other_check_beside_legacy_tasks_uses_the_executors_default(self):
+        assert self.plan((("legacy",), "analysis"), (("core",), "analysis")) is None
+
+    def test_a_plan_with_no_legacy_task_uses_the_executors_default(self):
+        assert self.plan((("core",), "rule")) is None

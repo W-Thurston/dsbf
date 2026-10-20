@@ -2,8 +2,11 @@
 
 The counterpart of ``profile_one.py``. It loads the file with ``dsbf.data``, profiles
 it, runs every adapted legacy task through ``execute`` and writes what each check
-ended with. A separate interpreter, because ``PYTHONHASHSEED`` can only be set before
-Python starts. It imports nothing from ``tests``.
+ended with (``engine_run.json``, ``run.json``), then runs the core pack alone and writes
+its ``Run`` as ``core_run.json``. The legacy tasks are planned on their own, so
+``engine_run.json`` stays the legacy tasks as they were. A separate interpreter,
+because ``PYTHONHASHSEED`` can only be set before Python starts. It imports nothing
+from ``tests``.
 
 Usage: python engine_one.py <name> <csv> <out_dir> [<time_series_column>]
 """
@@ -13,6 +16,7 @@ import os
 import sys
 from pathlib import Path
 
+from dsbf.checks import core_pack
 from dsbf.config import load_default_config
 from dsbf.data import load
 from dsbf.engine import Registry, Selection, execute, make_plan
@@ -55,6 +59,14 @@ def main() -> None:
     info = {"shape": [dataset.n_rows, len(dataset.columns)], "checks": checks}
     Path(out_dir, "engine_run.json").write_text(json.dumps(info, default=str))
     Path(out_dir, "run.json").write_text(run.model_dump_json())
+
+    core_registry = Registry()
+    core_registry.register_pack(core_pack())
+    core_plan = make_plan(
+        core_registry, Selection(depth="deep", entry_points=False), profile=profile
+    )
+    core_run = execute(core_plan, dataset, profile, dsbf_version="golden")
+    Path(out_dir, "core_run.json").write_text(core_run.model_dump_json())
 
 
 if __name__ == "__main__":

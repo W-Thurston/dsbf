@@ -1,0 +1,32 @@
+{
+ "checks": {
+  "zeros": {
+   "findings": [
+    {
+     "check": "zeros",
+     "code": "high_zero_rate",
+     "id": "77437c446f5a3b2c",
+     "metrics": {
+      "zero_count": 4981,
+      "zero_share": 0.948762
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "sparse_column"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  }
+ },
+ "dataset": "kitchen5k",
+ "format": 1,
+ "shape": [
+  5250,
+  60
+ ]
+}
