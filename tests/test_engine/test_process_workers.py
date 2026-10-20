@@ -59,6 +59,18 @@ def shared_frames():
 
 
 class TestRunsInAProcess:
+    def test_its_warnings_come_back_as_one_note(self, recwarn, capfd):
+        run = run_with([toys.py_warns])
+
+        result = run.results["py_warns"]
+        assert result.status is CheckStatus.OK
+        (note,) = result.notes
+        assert note.code == "python_warning"
+        assert note.message == "RuntimeWarning: constant input in a worker"
+        assert note.count == 2
+        assert len(recwarn) == 0
+        assert "constant input" not in capfd.readouterr().err
+
     def test_the_check_reads_the_data_in_another_process(self):
         dataset = make_dataset()
         expected = sum(float(v) for v in dataset.values("amount")) + sum(

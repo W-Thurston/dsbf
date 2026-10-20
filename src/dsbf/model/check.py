@@ -30,6 +30,12 @@ class Note(Contract):
     detail: str | None = Field(
         default=None, description="Technical detail, for example a traceback summary."
     )
+    count: int | None = Field(
+        default=None,
+        ge=1,
+        description="How many times it happened, for a note that can repeat, such "
+        "as a `python_warning`.",
+    )
 
 
 class CheckResult(Contract):

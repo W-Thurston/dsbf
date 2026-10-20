@@ -9,11 +9,12 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from dsbf.data import Dataset
+from dsbf.engine.capture import WarningLog, collecting
 from dsbf.engine.context import CheckContext
 from dsbf.engine.errors import CheckContractError
 from dsbf.engine.plan import PlanEntry
 from dsbf.engine.runner import run_check
-from dsbf.model import CheckResult, DatasetProfile
+from dsbf.model import CheckResult, DatasetProfile, Note
 
 
 @dataclass(frozen=True)
@@ -37,7 +38,11 @@ class Failure:
 
 @dataclass(frozen=True)
 class Attempt:
-    """How a check's turn ended: a result, a failure, or running out of time."""
+    """How a check's turn ended: a result, a failure, or running out of time.
+
+    ``notes`` are the ``python_warning`` notes of what the check raised, however its
+    turn ended.
+    """
 
     result: CheckResult | None = None
     failure: Failure | None = None
@@ -45,6 +50,7 @@ class Attempt:
     stopped: bool = False  # a thread after a timeout: it left within the grace
     killed: bool = False  # a worker process after a timeout: it was terminated
     cpu_seconds: float | None = None  # a worker process's own, when it finished
+    notes: tuple[Note, ...] = ()
 
 
 class Running(Protocol):
@@ -70,7 +76,8 @@ class ThreadRun:
     After ``deadline`` the context is cancelled, so a check that still uses it stops
     at its next call; ``grace`` seconds later the thread is abandoned, and
     ``Attempt.stopped`` says whether it had left by then. The thread puts itself on
-    ``finished`` when it ends, to wake the scheduler.
+    ``finished`` when it ends, to wake the scheduler. The warnings it raises are
+    logged for its result (see ``dsbf.engine.capture``).
     """
 
     def __init__(
@@ -91,6 +98,7 @@ class ThreadRun:
         self._timed_out = False
         self._outcome: list[CheckResult | BaseException] = []
         self._finished = finished
+        self._warnings = WarningLog()
         self._thread = threading.Thread(
             target=self._work,
             args=(entry, dataset, profile, upstream),
@@ -107,36 +115,38 @@ class ThreadRun:
         upstream: Mapping[str, CheckResult],
     ) -> None:
         try:
-            context = CheckContext(
-                entry.check.spec,
-                dataset,
-                profile,
-                entry.params,
-                upstream=upstream,
-                cancel=self._cancel,
-            )
-            self._outcome.append(run_check(entry.check, context))
+            with collecting(self._warnings):
+                context = CheckContext(
+                    entry.check.spec,
+                    dataset,
+                    profile,
+                    entry.params,
+                    upstream=upstream,
+                    cancel=self._cancel,
+                )
+                self._outcome.append(run_check(entry.check, context))
         except BaseException as error:
             self._outcome.append(error)
         finally:
             self._finished.put(self)
 
     def step(self, now: float) -> Attempt | None:
+        notes = self._warnings.notes
         if self._outcome:
             (done,) = self._outcome
             if self._timed_out:
-                return Attempt(timed_out=True, stopped=True)
+                return Attempt(timed_out=True, stopped=True, notes=notes())
             if isinstance(done, CheckResult):
-                return Attempt(result=done)
+                return Attempt(result=done, notes=notes())
             if isinstance(done, Exception):
-                return Attempt(failure=Failure.of(done))
+                return Attempt(failure=Failure.of(done), notes=notes())
             raise done
         if not self._timed_out and self._deadline is not None and now >= self._deadline:
             self._timed_out = True
             self._cancel.set()
             self.expires = now + self._grace
         if self._timed_out and self.expires is not None and now >= self.expires:
-            return Attempt(timed_out=True, stopped=False)
+            return Attempt(timed_out=True, stopped=False, notes=notes())
         return None
 
     def cancel(self) -> None:

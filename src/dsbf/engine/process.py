@@ -22,12 +22,13 @@ import polars as pl
 import pyarrow as pa
 
 from dsbf.data import Dataset
+from dsbf.engine.capture import WarningLog, capture_warnings, collecting
 from dsbf.engine.check import Check
 from dsbf.engine.context import CheckContext
 from dsbf.engine.plan import PlanEntry
 from dsbf.engine.runner import run_check
 from dsbf.engine.worker import Attempt, Failure
-from dsbf.model import CheckParams, CheckResult, DatasetProfile
+from dsbf.model import CheckParams, CheckResult, DatasetProfile, Note
 from dsbf.model.evidence import SamplingInfo
 from dsbf.model.manifest import SourceRef
 
@@ -107,31 +108,34 @@ class _Job:
 def _worker_main(connection: Connection, payload: bytes) -> None:
     """Entry point of a worker: run the job and send back one message.
 
-    The message is ``("result", CheckResult, cpu)`` or ``("failure", Failure, cpu)``,
-    with the CPU seconds the worker spent from the moment it had the job. A worker
-    that exits any other way sends nothing, and the executor reports that.
+    The message is ``("result", CheckResult, cpu, notes)`` or ``("failure", Failure,
+    cpu, notes)``, with the CPU seconds the worker spent from the moment it had the
+    job and the ``python_warning`` notes of what the check raised. A worker that
+    exits any other way sends nothing, and the executor reports that.
     """
     # The parent decides what a Ctrl-C does to a run; a worker ignores it.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     cpu = time.process_time()
-    message: tuple[str, Any, float]
+    raised = WarningLog()
+    outcome: tuple[str, Any]
     try:
-        job: _Job = pickle.loads(payload)
-        context = CheckContext(
-            job.check.spec,
-            job.frame.open(),
-            job.profile,
-            job.params,
-            upstream=job.upstream,
-        )
-        message = ("result", run_check(job.check, context), 0.0)
+        with capture_warnings(), collecting(raised):
+            job: _Job = pickle.loads(payload)
+            context = CheckContext(
+                job.check.spec,
+                job.frame.open(),
+                job.profile,
+                job.params,
+                upstream=job.upstream,
+            )
+            outcome = ("result", run_check(job.check, context))
     except Exception as error:
-        message = ("failure", Failure.of(error), 0.0)
-    message = (message[0], message[1], time.process_time() - cpu)
+        outcome = ("failure", Failure.of(error))
+    message = (*outcome, time.process_time() - cpu, raised.notes())
     try:
         connection.send(message)
     except Exception as error:  # a result that cannot be pickled
-        connection.send(("failure", Failure.of(error), message[2]))
+        connection.send(("failure", Failure.of(error), message[2], message[3]))
     finally:
         connection.close()
 
@@ -153,7 +157,7 @@ class ProcessRun:
         self._finished = finished
         self._closed = False
         self._arrived = threading.Event()
-        self._message: tuple[str, Any, float] | None = None
+        self._message: tuple[str, Any, float, tuple[Note, ...]] | None = None
         self._collector = threading.Thread(
             target=self._collect, name=f"dsbf-worker-{process.pid}", daemon=True
         )
@@ -181,10 +185,10 @@ class ProcessRun:
             self._close()
             if message is None:
                 return Attempt(failure=died)
-            kind, payload, cpu = message
+            kind, payload, cpu, notes = message
             if kind == "result":
-                return Attempt(result=payload, cpu_seconds=cpu)
-            return Attempt(failure=payload, cpu_seconds=cpu)
+                return Attempt(result=payload, cpu_seconds=cpu, notes=notes)
+            return Attempt(failure=payload, cpu_seconds=cpu, notes=notes)
         if self.expires is not None and now >= self.expires:
             self._kill()
             return Attempt(timed_out=True, killed=True)

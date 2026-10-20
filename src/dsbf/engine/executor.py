@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from dsbf.data import Dataset
 from dsbf.engine.cache import CacheSession, ResultCache
+from dsbf.engine.capture import capture_warnings
 from dsbf.engine.events import (
     CheckFinished,
     CheckStarted,
@@ -68,6 +69,16 @@ def execute(
     ``SystemExit`` are not caught. Apart from ``timing``, the run does not depend
     on ``workers``.
 
+    A Python warning a check raises does not reach ``warnings.showwarning``: the
+    check's result gets one ``python_warning`` note for each category and message,
+    with a ``count``, whatever status it ends with. For that, while the run lasts,
+    the process's warning filters show a warning every time it is raised instead of
+    once (``ignore`` and ``error`` filters hold) and are restored afterwards (see
+    ``dsbf.engine.capture``). The change is process-wide: the caller's other
+    threads see each repeat of their own warnings meanwhile, and a check or library
+    that calls ``warnings.catch_warnings`` changes the filters for every thread.
+    A warning from a thread a check starts itself is not routed to the check.
+
     A thread cannot be killed: a timed-out check on a thread that never calls back
     into its context keeps running in the background until it returns (see
     ``CheckContext.checkpoint``). A worker process is terminated instead. Each
@@ -125,6 +136,7 @@ def execute(
         return limits.run_budget_seconds - (time.monotonic() - clock)
 
     with (
+        capture_warnings(),
         Meter(memory_sample_seconds) as meter,
         Scheduler(
             workers=workers,
@@ -249,12 +261,15 @@ def _finish(
     entry = launch.entry
     if attempt.timed_out:
         assert launch.limit is not None
-        return _timeout_result(entry, window, limits, launch, attempt)
-    if attempt.failure is not None:
-        return _error_result(entry, attempt.failure, window)
-    assert attempt.result is not None
-    result = attempt.result.model_copy(update={"timing": window.timing})
-    if session is not None:
+        result = _timeout_result(entry, window, limits, launch, attempt)
+    elif attempt.failure is not None:
+        result = _error_result(entry, attempt.failure, window)
+    else:
+        assert attempt.result is not None
+        result = attempt.result.model_copy(update={"timing": window.timing})
+    if attempt.notes:
+        result = result.model_copy(update={"notes": (*result.notes, *attempt.notes)})
+    if session is not None and attempt.result is not None:
         session.store(entry, result)
     return result
 

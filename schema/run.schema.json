@@ -1488,6 +1488,19 @@
           ],
           "default": null,
           "description": "Technical detail, for example a traceback summary."
+        },
+        "count": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "How many times it happened, for a note that can repeat, such as a `python_warning`."
         }
       },
       "required": [
@@ -1497,7 +1510,8 @@
         "hint",
         "blocked_by",
         "exception_type",
-        "detail"
+        "detail",
+        "count"
       ],
       "title": "Note",
       "type": "object"
@@ -2546,7 +2560,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.6.0",
+      "default": "0.7.0",
       "type": "string"
     },
     "run_id": {

@@ -25,13 +25,14 @@ from dsbf.engine import (
     DiskCache,
     Hook,
     Limits,
+    Plan,
     Registry,
     ResultCache,
     Selection,
     execute,
     make_plan,
 )
-from dsbf.legacy import LegacySession, legacy_checks
+from dsbf.legacy import LEGACY_PACK, LegacySession, legacy_checks
 from dsbf.model import Run
 from dsbf.profiling import profile_dataset
 from dsbf.utils.versioning import get_dsbf_version
@@ -70,6 +71,13 @@ def profile(
     ``Run.render_health()`` says which and why. The ``Run`` can be megabytes on
     text-heavy data, because a check's output is kept whole.
 
+    A Python warning a check raises becomes a ``python_warning`` note on that
+    check's result, one per category and message with a ``count``, instead of
+    reaching stderr. While the call lasts, the process's warning filters show a
+    warning each time it is raised rather than once (your ``ignore`` and ``error``
+    filters still apply) and are restored afterwards, so another thread of yours
+    may print a repeated warning more than once meanwhile.
+
     ``packs`` are the packs whose checks are candidates (the ``legacy`` pack, which
     holds every existing task, when unset). ``checks`` adjusts that by id: ``"+id"``
     or ``"id"`` adds a check, ``"-id"`` removes one, and a check that another needs
@@ -79,8 +87,10 @@ def profile(
     ``Sample`` of the rows (or the first ``n`` rows, given a number) and the ``Run``
     records how they were chosen. ``backend`` is the frame library the legacy tasks
     are handed (``pandas`` unless set). ``limits`` bounds the time of a check and of
-    the run, ``workers`` is how many checks run at once, ``plugins`` are directories
-    of check plugins, and ``tasks`` maps a legacy task's name to its settings.
+    the run, ``workers`` is how many checks run at once (one when every planned
+    check is a legacy task, else one per core, at most 8), ``plugins`` are
+    directories of check plugins, and ``tasks`` maps a legacy task's name to its
+    settings.
 
     ``cache`` keeps results between runs: ``True`` uses the DSBF home directory and
     a ``ResultCache`` is used as given. A ``hook`` receives an event as each check
@@ -130,6 +140,9 @@ def profile(
         ),
         profile=data_profile,
     )
+    workers = settings.workers
+    if workers is None:
+        workers = _default_workers(plan)
     return execute(
         plan,
         dataset,
@@ -137,9 +150,21 @@ def profile(
         dsbf_version=get_dsbf_version(),
         limits=Limits(**settings.limits.model_dump()),
         hooks=hooks,
-        workers=settings.workers,
+        workers=workers,
         cache=DiskCache.default() if cache is True else cache or None,
     )
+
+
+def _default_workers(plan: Plan) -> int | None:
+    """One worker for a plan of legacy tasks only, else the executor's default.
+
+    The legacy tasks are mostly Python holding the interpreter lock, so on threads
+    they wait for each other: on the 4-core CI runner every task run at once took
+    3% (titanic) and 7% (kitchen5k) longer than one at a time.
+    """
+    if plan.entries and all(LEGACY_PACK in e.check.spec.packs for e in plan.entries):
+        return 1
+    return None
 
 
 def _settings(

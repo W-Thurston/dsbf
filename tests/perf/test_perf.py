@@ -3,7 +3,8 @@
 Run with ``uv run pytest -m perf``; see ``tests/perf/README.md``. Each run writes a
 results JSON (``--perf-results``), and fails when a stage, task, the total, the peak
 memory or a dashboard payload regressed against ``baseline.json``. The profile pass is
-also held to the absolute budgets in ``compare.PROFILE_BUDGETS``.
+also held to the absolute budgets in ``compare.PROFILE_BUDGETS``; the standard plan's
+targets in ``compare.ENGINE_BUDGETS`` are only reported.
 """
 
 from __future__ import annotations
@@ -13,7 +14,12 @@ from typing import Any
 
 import pytest
 
-from tests.perf.compare import TOLERANCE, check_budget, find_regressions
+from tests.perf.compare import (
+    TOLERANCE,
+    check_budget,
+    check_engine_budget,
+    find_regressions,
+)
 from tests.perf.harness import BASELINE_PATH, load_results, measure
 from tests.perf.scenarios import (
     ENGINE_SCENARIOS,
@@ -28,7 +34,7 @@ pytestmark = pytest.mark.perf
 
 
 def _param(scenario: Scenario | ProfileScenario | EngineScenario):
-    stem = scenario.name.removeprefix("profile-").removeprefix("engine-")
+    stem = scenario.name.split("-", 1)[-1] if "-" in scenario.name else scenario.name
     marks = [pytest.mark.slow] if stem.startswith(("kitchen", "wide")) else []
     return pytest.param(scenario, id=scenario.name, marks=marks)
 
@@ -111,6 +117,9 @@ def test_engine_run_within_baseline(
 
     # A check that errored or timed out did less work than the baseline's did.
     assert not result["failed_checks"], f"checks failed: {result['failed_checks']}"
+    # Reported in the summary and here, never failed on: Phase 4 works towards them.
+    for missed in check_engine_budget(scenario.name, result):
+        print(f"target missed: {missed}")
 
     if config.getoption("--update-perf-baseline") or config.getoption(
         "--perf-no-compare"

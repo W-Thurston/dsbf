@@ -140,18 +140,20 @@ retired set and the legacy stack's end were chosen by the user on 2026-10-19.
 The 49 superseded and 18 retired tasks account for all 67 registered legacy tasks.
 
 ### U4-00 · Plan Phase 4
-- **Status:** done (2026-10-19) · **Size:** M · **Depends on:** U3-12
+- **Status:** done (2026-10-19) · **Size:** M · **Depends on:** U3-12 · **PR:** #100 (`0ef2161`)
 - **Notes:** Phases 0–3 are now rows above, with their summaries and a 48-unit PR table in `docs/HISTORY.md`. Every finding in `docs/REVIEW_FINDINGS.md` has a dated status, checked against the code and probe runs. Phase 4 has 19 units, Phase 5 has `outline` units, and Phases 6–9 are sketched. A review before merging (2026-10-19) fixed U4-01's warning design, kept soft-read legacy inputs running, resized U4-02 and moved its per-check schema export to U5-03, and gave the text-heavy golden dataset to U4-09.
 - **Deviations:** scope was widened by the user before the unit started. The user also chose to delete the legacy stack, including the old store, API v1 and the dashboard's backend, in Phase 4, with a stopgap CLI, and to retire the 13 profile-restating summaries. API v1's removal moved from Phase 6, and some Phase 5 carry-ins moved to Phase 4 or became moot.
 - **Goal:** Break the Phase 4 batches into full units using Phase 3 learnings and golden-run evidence. Scope widened by the user on 2026-10-19: condense Phases 0–3 into the table above and `docs/HISTORY.md`; record a status for every finding in `docs/REVIEW_FINDINGS.md`, verified against the code and real runs; plan Phase 5 as `outline` units and sketch Phases 6–9.
 - **Commit:** `docs: plan the check migration and record finding status`
 
 ### U4-01 · Engine performance baseline and warnings as notes
-- **Status:** todo · **Size:** S · **Depends on:** U4-00
+- **Status:** done (2026-10-20) · **Size:** S · **Depends on:** U4-00
+- **Notes:** A check's warnings are `python_warning` notes with a count (`dsbf.engine.capture`, `Note.count`, schema 0.7.0), and titanic's default run prints nothing on stderr. #73's versions are in the lock, and the baseline, including the `engine-*` and new `standard-*` scenarios, comes from a perf run of this branch on the runner. Running checks in parallel was 3% slower on titanic and 7% slower on kitchen5k, so `dsbf.profile()` takes one worker for a plan of legacy tasks only. `standard-titanic` is 21.3 s; `standard-kitchen50k` is 266.7 s with a 2,318 MB peak.
+- **Deviations:** `ignore` and `error` filters still hold during a run (the goal said every warning reaches the hook), and filters a library adds during a run are kept. The engine child's peak memory now reads `VmHWM`: `ru_maxrss` survives `exec`, so every engine scenario had reported the harness's 959 MB. scipy 1.17.1 doubles `missingness_mechanism_analysis` on kitchen50k (7.5 → 17.1 s); the baseline records that instead of the task being patched.
 - **Note from U3-12:** record the `engine-*` perf baselines (serial and parallel, titanic and kitchen5k) from the CI runner with `--update-perf-baseline` before the first migration, so each Phase 4 unit is measured against them. Locally the parallel executor is slower than serial for the adapted tasks (titanic 24.7 s against 22.4 s, kitchen5k 120.3 s against 104.1 s), so use the CI figures to decide whether the default `workers` should be lower for adapted checks, and whether `fuzzy_duplicate_detection` (18.4 s of titanic's serial time, 74.3 s of kitchen5k's) should be `runs_in="process"`.
 - **Note from U3-12:** Python warnings from legacy tasks (`infer_types` date parsing, `scipy` constant input, `statsmodels` KPSS) reach the caller's stderr during `dsbf.profile()`, because they are not log records.
 - **Note from U4-00:** the `engine-*` scenarios arrived with #99, after the 2026-10-19 nightly; the first nightly perf artifact that measures them is 2026-10-20's, so promote from a nightly run on `main` rather than dispatching one. Under the default warning filters, Python shows an identical warning once per code location and remembers it for the life of the process (checked on 2026-10-19), so a hook on `warnings.showwarning` alone sees a repeat zero times, and a second `dsbf.profile()` in the same notebook sees nothing.
-- **Note from U4-00:** take Dependabot PR #73 (scipy 1.16.3 → 1.17.1, platformdirs, fastapi; open since 2026-10-17, fast gate green, golden suite never run) in this unit, after a golden run on it, so the baselines are recorded on the locked versions.
+- **Note from U4-00:** take Dependabot PR #73 (scipy 1.16.3 → 1.17.1, platformdirs, fastapi; open since 2026-10-17, fast gate green, golden suite never run) in this unit, so the baselines are recorded on the locked versions. Its golden run (2026-10-19, run 39309478411) failed only on `wide`: one `one_way_anova` p-value (`cont_clean_11` by `cat_bal_19`) moves from 0.643672 to 0.643673 in the sixth decimal, and nothing else changes, as a local run under both scipy versions confirmed. Regenerate `snapshots/wide.json` with `--update-golden` and explain that value in the PR; the engine parity test compares with the same snapshot. Don't merge #73 on its own, or the nightly golden run on `main` fails.
 - **Goal:**
   - Record the `engine-*` baselines from the CI runner.
   - Add `standard-titanic` and `standard-kitchen50k` scenarios: the default selection at the standard depth, with the Phase 4 budgets (under 5 s; under 60 s and 1 GB) reported but not enforced, so every migration reports its change (which rises until U4-15; see "How a migration works").
@@ -171,6 +173,8 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 ### U4-02 · Core pack, migration harness and the first rule check
 - **Status:** todo · **Size:** L · **Depends on:** U4-01 · **Resolves:** F-11 (mechanism and regression test)
 - **Note from U0-03:** the legacy guards only check that some column matches; tasks still loop over every numeric or object dtype column, not `matched_cols`, so they also analyse columns whose semantic type was excluded. Verified on 2026-10-19: a 0/1 integer column profiled `categorical` appears in nine continuous-only legacy checks' output.
+- **Note from U4-01:** `execute()` takes `Run.started_at` and `finished_at` from the wall clock, and `Run` rejects `started_at > finished_at`, so a clock that steps back during a run makes `dsbf.profile()` raise (seen as flaky test failures on a WSL machine whose clock steps back 0.5 s every 32 s). Derive `finished_at` from `started_at` plus the monotonic elapsed time.
+- **Note from U4-01:** two check conventions. A core check doesn't call `warnings.catch_warnings()`: the engine turns its warnings into notes, and while that block runs it silences every other running check's warnings. And it gives scipy numeric arrays, never object dtype: scipy 1.17 checks an object array for NaN one element at a time. Write both into the check-authoring rules.
 - **Goal:**
   - Create `src/dsbf/checks/` holding the `core` pack. `dsbf.profile()` and `dsbf plan` register it explicitly, never on import.
   - Add the supersedes mapping and the default selection rule from "How a migration works", including the superseded tasks a remaining legacy task reads through `UNDECLARED_READS`. The mapping lives in `dsbf.legacy`, so the engine stays free of legacy knowledge and the mapping is deleted with it.
@@ -256,6 +260,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 ### U4-07 · Analysis checks II: pairwise associations
 - **Status:** todo · **Size:** M · **Depends on:** U4-06 · **Resolves:** F-13, F-10 (pair subjects), F-26 (redundancy part), REVIEW_FINDINGS part 2 C (intervals, Cramér's V, comparable scale, multiple comparisons)
 - **Note from U0-09:** the leakage correlation scan uses `select_dtypes` (F-11).
+- **Note from U4-01:** on the runner, `compute_pairwise_associations` takes 33.6 s of `standard-kitchen50k`'s 266.7 s (one worker, `tests/perf/baseline.json`).
 - **Goal:**
   - `associations`: Pearson, Spearman and Kendall routing, with the small-sample Kendall's τ reachable (route before the gate); η for numeric–categorical pairs, so strengths compare on one scale; Fisher z intervals for r and τ; `n_used` per pair; pairs as `Subject.column_pair`; pairs tested next to pairs flagged; and near-duplicate features (|r| ≥ 0.99) as `redundancy` findings, which supersedes `detect_data_leakage`'s scan.
   - `contingency`: bias-corrected Cramér's V (Bergsma 2013) with a bootstrap interval and a category cap.
@@ -272,6 +277,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 ### U4-08 · Analysis checks III: group differences and collinearity
 - **Status:** todo · **Size:** M · **Depends on:** U4-07 · **Resolves:** F-32 (VIF part)
 - **Note from U0-09 and U0-16:** the collinearity check needs per-column VIF handling and `n_used` (F-32). Decide the VIF definition: centred with an intercept, as statsmodels 0.15 computes it, or the uncentred one the baselines record. The centred VIF is the diagonal of the inverse correlation matrix, so NumPy can compute it without statsmodels.
+- **Note from U4-01:** on the runner, `mann_whitney_u` takes 8.8 s, `kruskal_wallis` 3.4 s and `one_way_anova` 2.4 s of `standard-kitchen50k`. Run beside other checks on threads they inflate badly: on kitchen5k, `mann_whitney_u` went from 2.1 s serial to 64.2 s per core.
 - **Goal:** `group_differences`, one check with ANOVA, Kruskal–Wallis and Mann–Whitney as methods, effect sizes with intervals, and the number of tests run. `collinearity`, with VIF per column under its own missing-data strategy (drop sparse columns first, then rows), `n_used`, and a guard on rows below k + 1.
 - **Acceptance:**
   - Parity, or listed differences, explaining the four `clean` columns the statsmodels note names.
@@ -282,6 +288,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 - **Status:** todo · **Size:** M · **Depends on:** U4-08
 - **Note from U2-03:** a column that mixes date formats (kitchen5k's `inconsistent_datetime`) is typed `categorical`, so a check could report the mix. The identifier rule treats any string column over 90% distinct as `identifier`, so near-unique free text (kitchen50k's `long_text`) is not `text`; revisit the identifier-before-text order with the checks that consume the type.
 - **Note from U2-07 (was on U4-02):** no golden dataset produces `summarize_text_fields` output, and all ten plan `detect_regex_format_violations` and `summarize_text_fields` `not_applicable` today, so the text checks have no golden coverage.
+- **Note from U4-01:** `missingness_mechanism_analysis` passes object arrays to `pointbiserialr` (328 calls on kitchen50k), which scipy 1.17 makes twice as slow (7.5 → 17.1 s on the runner, of `standard-kitchen50k`'s 266.7 s). The core `missingness_mechanism` passes float arrays.
 - **Goal:**
   - `missingness_mechanism` (built on the profile's missingness pairs, with n per test), `mixed_types` (its null handling can be switched off, which F-07 found impossible), `encoded_columns`, `format_violations` (regex rules plus mixed date formats from pattern signatures) and `string_anomalies`.
   - Add a text-heavy golden dataset whose license allows vendoring, with its legacy and core snapshots.
@@ -295,6 +302,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 - **Status:** todo · **Size:** M · **Depends on:** U4-09 · **Resolves:** F-35
 - **Note from U3-11:** `fuzzy_duplicate_detection` puts its whole pair list in its output, 8.46 MB of an 8.93 MB titanic `Run` (2026-10-19).
 - **Note from U0-13:** it builds candidate pairs from a token index over sets of strings and stops at `max_candidates`, so which pairs it keeps (and the count) follows `PYTHONHASHSEED`. Make the order deterministic, so the golden runner no longer needs the pinned seed.
+- **Note from U4-01:** declare `fuzzy_duplicates` `runs_in="process"`. On the runner the legacy task is 84% of titanic's serial run (18.0 of 21.4 s) and 75% of kitchen5k's (68.4 of 90.6 s), and 71.5 s of `standard-kitchen50k`. Being pure-Python `difflib`, it holds the interpreter lock, so on threads it slows the checks beside it. An adapted task can't run in a process, because it's built at run time. Without a pinned seed, titanic's `Run` came out at 4.7, 5.3 and 9.8 MB in three processes.
 - **Goal:**
   - rapidfuzz (`text` extra) on row strings extracted once;
   - blocking on rare tokens (IDF-weighted or MinHash/LSH) that leaves low-cardinality categoricals out of the row string;
@@ -313,6 +321,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 ### U4-11 · Time-series checks redesigned
 - **Status:** todo · **Size:** L · **Depends on:** U4-10 · **Resolves:** F-39, N-A4 (data side)
 - **Note from U0-13:** on kitchen5k, `decompose_time_series` cannot infer a seasonal period (frequency `None` for a daily index with repeated dates), and the golden baseline records that.
+- **Note from U4-01:** `detect_stationarity` wraps calls in `warnings.catch_warnings()` with `simplefilter("ignore")`, which silences every other running check's warnings while it lasts; the core checks don't. It is the slowest check of `standard-kitchen50k` (83.6 s on the runner).
 - **Goal:**
   - `temporal_gaps`, `datetime_consistency` and `datetime_features` as rule checks on the datetime profile.
   - `stationarity` (ADF and KPSS), `autocorrelation` (ACF and PACF) and `seasonal_decomposition` on the series resampled to the inferred or configured frequency, with repeated timestamps aggregated, and with capped `maxlag` and series length. All three are recorded in the evidence. These checks are behind `timeseries` and take the index from `dsbf.profile(time_index=...)`.

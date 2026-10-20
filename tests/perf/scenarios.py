@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import polars as pl
@@ -15,6 +16,7 @@ from tests.golden.datasets import KITCHEN5K, TITANIC
 
 KITCHEN_SEED = 42
 KITCHEN_TIME_SERIES_COLUMN = "normal_date"
+PER_CORE: Literal["per-core"] = "per-core"
 
 
 @dataclass(frozen=True)
@@ -48,16 +50,21 @@ class ProfileScenario:
 class EngineScenario:
     """One timed ``dsbf.profile()`` call: the new engine over the adapted legacy tasks.
 
-    ``workers`` is how many checks run at once; ``None`` is the executor's default,
-    one per core. A serial and a parallel scenario on the same data show what the
-    parallel executor buys, so the pair is the measurement.
+    ``workers`` is how many checks run at once: a number, ``PER_CORE`` for the
+    executor's default (one per core, at most 8), or ``None`` for what
+    ``dsbf.profile()`` chooses when it is not given. A serial and a per-core scenario
+    on the same data show what the parallel executor buys, so the pair is the
+    measurement. ``depth`` is the plan's
+    depth: ``deep`` runs every check, ``standard`` is what ``dsbf.profile()`` runs
+    when no depth is given.
     """
 
     name: str
     write_csv: Callable[[Path], Path]
-    workers: int | None
+    workers: int | Literal["per-core"] | None
     time_series_column: str | None = None
     repeats: int = 1
+    depth: str = "deep"
 
 
 def _adversarial(directory: Path) -> Path:
@@ -114,13 +121,13 @@ PROFILE_SCENARIOS = [
 ]
 
 
-# The full legacy task set through ``dsbf.profile(depth="deep")``, serial and parallel.
-# Their baseline can only be recorded from the CI runner (see README.md), so until it
-# is, these run and write their numbers without a comparison.
+# The full legacy task set through ``dsbf.profile(depth="deep")``, serial and parallel,
+# then the default selection at the standard depth, which the Phase 4 budgets in
+# ``compare.ENGINE_BUDGETS`` are about.
 ENGINE_SCENARIOS = [
     EngineScenario("engine-titanic-serial", TITANIC.write_csv, workers=1, repeats=3),
     EngineScenario(
-        "engine-titanic-parallel", TITANIC.write_csv, workers=None, repeats=3
+        "engine-titanic-parallel", TITANIC.write_csv, workers=PER_CORE, repeats=3
     ),
     EngineScenario(
         "engine-kitchen5k-serial",
@@ -131,7 +138,21 @@ ENGINE_SCENARIOS = [
     EngineScenario(
         "engine-kitchen5k-parallel",
         KITCHEN5K.write_csv,
+        workers=PER_CORE,
+        time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+    ),
+    EngineScenario(
+        "standard-titanic",
+        TITANIC.write_csv,
+        workers=None,
+        repeats=3,
+        depth="standard",
+    ),
+    EngineScenario(
+        "standard-kitchen50k",
+        _kitchen(50_000, "kitchen50k"),
         workers=None,
         time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+        depth="standard",
     ),
 ]
