@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -10,12 +15,95 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "dtype_optimizations": {
+   "findings": [
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "5c97ca4abc226ff8",
+     "metrics": {
+      "current_dtype": "Int64",
+      "estimated_saving_bytes": 14000,
+      "n_unique": 34,
+      "suggested_dtype": "Int8"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "e1ea3931d8c9f612",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 22177,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "department"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "93abb082fccb9921",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 19355,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "f5979639fb37af87",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 14960,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "duplicate_columns": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
   "duplicate_rows": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "entropy": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -30,12 +118,32 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "kurtosis": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
   "null_rate": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

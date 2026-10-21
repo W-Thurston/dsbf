@@ -13,11 +13,17 @@ from dsbf.legacy.adapter import (
 from dsbf.legacy.context import LegacyContext
 from dsbf.legacy.result import LegacyTaskOutput
 from dsbf.legacy.session import LegacySession
-from dsbf.legacy.supersedes import SUPERSEDED_BY, make_legacy_plan, superseded_tasks
+from dsbf.legacy.supersedes import (
+    RETIRED_TASKS,
+    SUPERSEDED_BY,
+    make_legacy_plan,
+    superseded_tasks,
+)
 
 __all__ = [
     "EXCLUDED_TASKS",
     "LEGACY_PACK",
+    "RETIRED_TASKS",
     "SUPERSEDED_BY",
     "SUPERSEDED_PACK",
     "UNDECLARED_READS",

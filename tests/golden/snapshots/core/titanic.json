@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -62,6 +67,210 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "dtype_optimizations": {
+   "findings": [
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "860f34c5771424da",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 4797,
+      "n_unique": 2,
+      "suggested_dtype": "Boolean"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "alive"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "2f962b7428a7290f",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 7284,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "class"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "6e105b1205a1f626",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 3529,
+      "n_unique": 7,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "deck"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "3a900a4efadb43d6",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 12016,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embark_town"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "b5990662f9cf4b5d",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 3549,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embarked"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "276ce40ba46f8c6d",
+     "metrics": {
+      "current_dtype": "Int64",
+      "estimated_saving_bytes": 6237,
+      "n_unique": 7,
+      "suggested_dtype": "Int8"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "parch"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "92e28cb58ed2fba3",
+     "metrics": {
+      "current_dtype": "Int64",
+      "estimated_saving_bytes": 6237,
+      "n_unique": 3,
+      "suggested_dtype": "Int8"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "pclass"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "da8103866f17a530",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 6847,
+      "n_unique": 2,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sex"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "43c689ec81ef3b15",
+     "metrics": {
+      "current_dtype": "Int64",
+      "estimated_saving_bytes": 6237,
+      "n_unique": 7,
+      "suggested_dtype": "Int8"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sibsp"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "59a5f912c539fa4d",
+     "metrics": {
+      "current_dtype": "Int64",
+      "estimated_saving_bytes": 6237,
+      "n_unique": 2,
+      "suggested_dtype": "Boolean"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "survived"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "87a1b71ebd75e3fc",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 6030,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "who"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "duplicate_columns": {
    "findings": [],
    "status": "ok",
@@ -87,6 +296,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "high_cardinality": {
    "findings": [],
    "status": "ok",
@@ -94,6 +308,28 @@
   },
   "id_columns": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "kurtosis": {
+   "findings": [
+    {
+     "check": "kurtosis",
+     "code": "heavy_tails",
+     "id": "d92730f62808f509",
+     "metrics": {
+      "kurtosis": 33.3981,
+      "skewness": 4.78732
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "fare"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -132,6 +368,59 @@
      "subject": {
       "columns": [
        "deck"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [
+    {
+     "check": "sample_size",
+     "code": "too_few_rows_general_ml",
+     "id": "d1a9ed0db6537911",
+     "metrics": {
+      "n_features": 15,
+      "required_rows": 1000,
+      "rows": 891,
+      "rows_per_feature": 59.4,
+      "shortfall": 109
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [
+    {
+     "check": "skewness",
+     "code": "skewed",
+     "id": "8a28109c88e37fdc",
+     "metrics": {
+      "mean": 32.2042,
+      "median": 14.4542,
+      "min": 0.0,
+      "skewness": 4.78732,
+      "std": 49.6934
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "fare"
       ],
       "kind": "column"
      }

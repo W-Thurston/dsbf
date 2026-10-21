@@ -19,14 +19,21 @@ Conventions every core check follows:
   returns.
 """
 
+from dsbf.checks.class_imbalance import class_imbalance
 from dsbf.checks.constant_columns import constant_columns
 from dsbf.checks.dominant_value import dominant_value
+from dsbf.checks.dtype_optimizations import dtype_optimizations
 from dsbf.checks.duplicate_columns import duplicate_columns
 from dsbf.checks.duplicate_rows import duplicate_rows
+from dsbf.checks.entropy import entropy
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
+from dsbf.checks.kurtosis import kurtosis
 from dsbf.checks.near_zero_variance import near_zero_variance
 from dsbf.checks.null_rate import null_rate
+from dsbf.checks.sample_size import sample_size
+from dsbf.checks.schema import schema
+from dsbf.checks.skewness import skewness
 from dsbf.checks.text_encoding import text_encoding
 from dsbf.checks.zeros import zeros
 from dsbf.engine import Pack
@@ -51,5 +58,12 @@ def core_pack() -> Pack:
             duplicate_rows,
             duplicate_columns,
             text_encoding,
+            skewness,
+            kurtosis,
+            entropy,
+            dtype_optimizations,
+            sample_size,
+            class_imbalance,
+            schema,
         ),
     )

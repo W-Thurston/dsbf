@@ -293,3 +293,245 @@ high_cardinality_bucket_rare:
   method: bucket_rare_values
   message: >
     Collapse values that are rare into an Other bucket before encoding.
+
+# ===================
+# SKEWNESS
+# ===================
+
+skew_monitor:
+  condition:
+    all:
+      - {field: skewness, op: ">=", value: -1}
+      - {field: skewness, op: "<=", value: 1}
+  checks: [skewness]
+  codes: [skewed]
+  action: monitor
+  when: the column goes into a linear model
+  message: >
+    The skew is mild and most models cope. Check the residuals after fitting;
+    a transform may help a little. Tree-based models are unaffected.
+
+skew_log1p:
+  condition:
+    all:
+      - {field: skewness, op: ">", value: 1}
+      - {field: min, op: ">=", value: 0}
+  checks: [skewness]
+  codes: [skewed]
+  action: transform
+  method: log1p
+  when: the values are not negative and the model is linear or distance-based
+  message: >
+    A log of one plus the value pulls in a long right tail. It needs values of
+    zero or more.
+
+skew_sqrt:
+  condition:
+    all:
+      - {field: skewness, op: ">", value: 1}
+      - {field: skewness, op: "<=", value: 2}
+      - {field: min, op: ">=", value: 0}
+  checks: [skewness]
+  codes: [skewed]
+  action: transform
+  method: sqrt
+  when: the values are not negative
+  message: >
+    A square root pulls in a moderate right tail more gently than a log.
+
+skew_box_cox:
+  condition:
+    all:
+      - {field: skewness, op: ">", value: 2}
+      - {field: min, op: ">", value: 0}
+  checks: [skewness]
+  codes: [skewed]
+  action: transform
+  method: box_cox
+  when: every value is positive
+  message: >
+    A Box-Cox transform fits the power that makes the column closest to normal.
+    It needs values above zero.
+
+skew_reflect_then_log:
+  condition: {field: skewness, op: "<", value: -1}
+  checks: [skewness]
+  codes: [skewed]
+  action: transform
+  method: reflect_then_log
+  when: the tail is on the low side
+  message: >
+    Subtract each value from the maximum, then take a log, to pull in a long
+    left tail.
+
+skew_yeo_johnson:
+  condition:
+    any:
+      - {field: skewness, op: ">", value: 1}
+      - {field: skewness, op: "<", value: -1}
+  checks: [skewness]
+  codes: [skewed]
+  action: transform
+  method: yeo_johnson
+  message: >
+    A Yeo-Johnson transform handles zero and negative values, so it applies to
+    a column whatever its range.
+
+skew_winsorize:
+  condition:
+    any:
+      - {field: skewness, op: ">", value: 2}
+      - {field: skewness, op: "<", value: -2}
+  checks: [skewness]
+  codes: [skewed]
+  action: winsorize
+  when: the tail is made of a few extreme values
+  message: >
+    Cap the column at its 1st and 99th percentiles to reduce the pull of the tail.
+
+# ===================
+# TAILS
+# ===================
+
+heavy_tails_winsorize:
+  condition: {field: kurtosis, op: ">=", value: 3}
+  checks: [kurtosis]
+  codes: [heavy_tails]
+  action: winsorize
+  when: the model is distance-based or regularised
+  message: >
+    Fat tails make extreme values ordinary, not anomalous. Cap the column at its
+    1st and 99th percentiles before fitting a model that is sensitive to them.
+
+heavy_tails_transform:
+  condition: {field: kurtosis, op: ">=", value: 3}
+  checks: [kurtosis]
+  codes: [heavy_tails]
+  action: transform
+  method: log1p_or_box_cox
+  when: the values are not negative
+  message: >
+    A log or Box-Cox transform reduces the weight of the tails for linear and
+    distance-based models.
+
+heavy_tails_monitor:
+  condition:
+    all:
+      - {field: kurtosis, op: ">=", value: 1}
+      - {field: kurtosis, op: "<", value: 3}
+  checks: [kurtosis]
+  codes: [heavy_tails]
+  action: monitor
+  when: the model is linear
+  message: >
+    The tails are somewhat heavy. Check the residuals after fitting, and cap or
+    transform the column if extreme values drive the predictions.
+
+# ===================
+# SAMPLE SIZE
+# ===================
+
+more_rows:
+  condition: {field: shortfall, op: ">", value: 0}
+  checks: [sample_size]
+  action: collect_more_data
+  message: >
+    Acquire more rows. The finding says how many the rule of thumb asks for.
+
+fewer_features:
+  condition: {field: n_features, op: ">", value: 1}
+  checks: [sample_size]
+  action: reduce_features
+  message: >
+    Drop low-signal or redundant columns, or reduce them with PCA or feature
+    selection, to raise the rows per feature.
+
+cross_validate_small_data:
+  condition: {field: shortfall, op: ">", value: 0}
+  checks: [sample_size]
+  action: cross_validate
+  message: >
+    Use many folds, such as 10-fold or leave-one-out, to use every row for
+    training and evaluation.
+
+# ===================
+# TARGET CLASS IMBALANCE
+# ===================
+
+target_class_weight:
+  condition: {field: majority_share, op: ">=", value: 0.9}
+  checks: [class_imbalance]
+  codes: [class_imbalance]
+  action: class_weight
+  method: balanced
+  message: >
+    Weight the classes inversely to their frequency (`class_weight="balanced"` in
+    scikit-learn, `scale_pos_weight` in XGBoost).
+
+target_resample:
+  condition: {field: majority_share, op: ">=", value: 0.9}
+  checks: [class_imbalance]
+  codes: [class_imbalance]
+  action: resample
+  method: oversample_minority
+  when: only on the training split
+  message: >
+    Oversample the rarer classes, with SMOTE or random oversampling, in the
+    training split only, so the validation split does not leak into training.
+
+target_change_metric:
+  condition: {field: majority_share, op: ">=", value: 0.9}
+  checks: [class_imbalance]
+  codes: [class_imbalance]
+  action: change_metric
+  method: auc_pr_or_f1
+  message: >
+    Judge a model by precision, recall, F1 or AUC-PR, because accuracy is
+    uninformative when one class is nearly all the rows.
+
+# ===================
+# SMALLER DTYPES
+# ===================
+
+downcast_integer:
+  condition: {field: suggested_dtype, op: in, value: [Int8, Int16, Int32]}
+  checks: [dtype_optimizations]
+  codes: [smaller_dtype]
+  action: convert
+  method: narrower_integer
+  when: the range is known to be stable
+  message: >
+    Cast the column to the narrower integer type. New values outside its range
+    would overflow.
+
+downcast_to_boolean:
+  condition: {field: suggested_dtype, op: "==", value: Boolean}
+  checks: [dtype_optimizations]
+  codes: [smaller_dtype]
+  action: convert
+  method: boolean
+  message: >
+    Cast the column to a boolean, after confirming which value is true.
+
+downcast_to_categorical:
+  condition: {field: suggested_dtype, op: "==", value: Categorical}
+  checks: [dtype_optimizations]
+  codes: [smaller_dtype]
+  action: convert
+  method: categorical
+  message: >
+    Store the column as a categorical, which keeps each distinct value once and
+    one small code per row. Its order is that of the codes unless set.
+
+# ===================
+# MEAN-MEDIAN GAP
+# ===================
+
+gap_use_median:
+  condition: {field: gap_in_std, op: ">=", value: 1}
+  checks: [skewness]
+  codes: [mean_median_gap]
+  action: summarise
+  method: median
+  message: >
+    The mean no longer represents the centre. Summarise the column by its median.

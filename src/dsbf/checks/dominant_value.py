@@ -59,7 +59,9 @@ class DominantValueOutput(CheckOutputModel):
     )
 
 
-def _top(column: CategoricalProfile | BooleanProfile) -> tuple[str, int] | None:
+def most_frequent(
+    column: CategoricalProfile | BooleanProfile,
+) -> tuple[str, int] | None:
     """The most frequent value and its count, or None if the profile lacks it.
 
     A categorical column keeps no top value when its values are too long to list,
@@ -96,7 +98,7 @@ def dominant_value(ctx: CheckContext, params: DominantValueParams) -> CheckOutpu
     for column in ctx.profile.columns:
         if not isinstance(column, (CategoricalProfile, BooleanProfile)):
             continue
-        top = _top(column)
+        top = most_frequent(column)
         counts = column.counts
         if top is None or counts.non_null == 0:
             continue

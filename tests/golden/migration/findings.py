@@ -107,6 +107,31 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Exact Duplicate of ", "duplicate_columns"),
         (r"^Duplicate Column - ", "duplicate_columns"),
     ),
+    "detect_skewness": ((r"^(Mild|Moderate|Heavy) (Left|Right) Skew \(", "skewed"),),
+    "summarize_numeric": (
+        (r"^Near-Zero Variance", "near_zero_variance"),
+        (r"^(Mean-Median Gap|Distributional Asymmetry) \(", "mean_median_gap"),
+    ),
+    "compute_kurtosis": (
+        (r"^(Fat Tails|Fat-Tailed Feature|Slightly Heavy Tails)", "heavy_tails"),
+        (r"^Moderately Leptokurtic \(", "heavy_tails"),
+        (r"^Thin Tails|^Thin-Tailed Feature", "thin_tails"),
+    ),
+    # The task raised no finding.
+    "compute_entropy": (),
+    "suggest_dtype_optimizations": ((r"^Dtype Optimization: ", "smaller_dtype"),),
+    "sample_size_adequacy": (
+        (r"^Insufficient Data for Linear", "too_few_rows_linear_model"),
+        (r"^Insufficient Data for Tree", "too_few_rows_tree_model"),
+        (r"^Insufficient Data for General", "too_few_rows_general_ml"),
+    ),
+    "detect_class_imbalance": (
+        (r"^Class Imbalance - ", "class_imbalance"),
+        (r"^Severe Class Imbalance", "class_imbalance"),
+    ),
+    # Its findings were reliability warnings, which are not guidance, and it is off by
+    # default: the `schema` check raises findings of its own codes.
+    "schema_validation": (),
 }
 
 
