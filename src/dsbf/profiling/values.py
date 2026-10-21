@@ -6,6 +6,8 @@ reads that small frame and weights each distinct value by its count, so the cost
 the string statistics follows the number of distinct values, not the number of rows.
 """
 
+import math
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import polars as pl
@@ -47,6 +49,20 @@ def value_counts(series: pl.Series) -> pl.DataFrame:
         .group_by("value", maintain_order=True)
         .agg(pl.len().alias("count"))
     )
+
+
+def entropy_bits(counts: Iterable[int]) -> float | None:
+    """Shannon entropy, in bits, of a distribution given as value counts.
+
+    Zero counts take no part. ``None`` when nothing is counted; one value is 0.0.
+    """
+    present = [count for count in counts if count > 0]
+    total = sum(present)
+    if not total:
+        return None
+    bits = -sum(count / total * math.log2(count / total) for count in present)
+    # One value sums to -0.0; max returns its first argument when they are equal.
+    return max(0.0, bits)
 
 
 def top_values(

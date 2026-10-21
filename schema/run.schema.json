@@ -188,6 +188,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "boolean",
           "default": "boolean",
@@ -200,6 +243,19 @@
         "false_count": {
           "minimum": 0,
           "type": "integer"
+        },
+        "entropy_bits": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none."
         }
       },
       "required": [
@@ -209,9 +265,14 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type",
         "true_count",
-        "false_count"
+        "false_count",
+        "entropy_bits"
       ],
       "title": "BooleanProfile",
       "type": "object"
@@ -252,6 +313,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "categorical",
           "default": "categorical",
@@ -291,6 +395,19 @@
           ],
           "default": null,
           "description": "Present for string columns only."
+        },
+        "entropy_bits": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none."
         }
       },
       "required": [
@@ -300,11 +417,16 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type",
         "top_values",
         "lengths",
         "empty_strings",
-        "shape"
+        "shape",
+        "entropy_bits"
       ],
       "title": "CategoricalProfile",
       "type": "object"
@@ -659,6 +781,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "datetime",
           "default": "datetime",
@@ -743,6 +908,10 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type",
         "min",
         "max",
@@ -1141,6 +1310,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "identifier",
           "default": "identifier",
@@ -1154,6 +1366,10 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type"
       ],
       "title": "IdentifierProfile",
@@ -1584,6 +1800,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "numeric",
           "default": "numeric",
@@ -1630,6 +1889,10 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type",
         "zeros",
         "non_finite",
@@ -2273,6 +2536,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "text",
           "default": "text",
@@ -2324,6 +2630,19 @@
             }
           ],
           "default": null
+        },
+        "entropy_bits": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none."
         }
       },
       "required": [
@@ -2333,12 +2652,17 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type",
         "top_values",
         "lengths",
         "avg_word_length",
         "empty_strings",
-        "shape"
+        "shape",
+        "entropy_bits"
       ],
       "title": "TextProfile",
       "type": "object"
@@ -2505,6 +2829,49 @@
         "counts": {
           "$ref": "#/$defs/ColumnCounts"
         },
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype."
+        },
+        "name_encoding_damage": {
+          "default": false,
+          "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+          "type": "boolean"
+        },
+        "values_with_replacement_char": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings."
+        },
+        "values_with_nul": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings."
+        },
         "semantic_type": {
           "const": "unknown",
           "default": "unknown",
@@ -2518,6 +2885,10 @@
         "semantic_confidence",
         "semantic_sample_rows",
         "counts",
+        "content_hash",
+        "name_encoding_damage",
+        "values_with_replacement_char",
+        "values_with_nul",
         "semantic_type"
       ],
       "title": "UnknownProfile",
@@ -2560,7 +2931,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.7.0",
+      "default": "0.8.0",
       "type": "string"
     },
     "run_id": {

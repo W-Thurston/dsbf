@@ -259,6 +259,22 @@ export interface NumericProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "numeric";
   zeros: number;
   /**
@@ -368,6 +384,22 @@ export interface CategoricalProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "categorical";
   top_values: ValueCount[];
   lengths: LengthStats | null;
@@ -376,6 +408,10 @@ export interface CategoricalProfile {
    * Present for string columns only.
    */
   shape: TextShape | null;
+  /**
+   * Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.
+   */
+  entropy_bits: number | null;
 }
 /**
  * One value and how many rows hold it.
@@ -472,9 +508,29 @@ export interface BooleanProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "boolean";
   true_count: number;
   false_count: number;
+  /**
+   * Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.
+   */
+  entropy_bits: number | null;
 }
 /**
  * This interface was referenced by `Run`'s JSON-Schema
@@ -499,6 +555,22 @@ export interface DatetimeProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "datetime";
   min: string | null;
   max: string | null;
@@ -533,6 +605,22 @@ export interface TextProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "text";
   top_values: ValueCount[];
   lengths: LengthStats | null;
@@ -542,6 +630,10 @@ export interface TextProfile {
   avg_word_length: number | null;
   empty_strings: number;
   shape: TextShape | null;
+  /**
+   * Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.
+   */
+  entropy_bits: number | null;
 }
 /**
  * A column that names rows (for example a key); only the common fields apply.
@@ -568,6 +660,22 @@ export interface IdentifierProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "identifier";
 }
 /**
@@ -595,6 +703,22 @@ export interface UnknownProfile {
    */
   semantic_sample_rows: number | null;
   counts: ColumnCounts;
+  /**
+   * A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.
+   */
+  content_hash: string | null;
+  /**
+   * The name holds U+FFFD (a character that failed to decode) or NUL.
+   */
+  name_encoding_damage: boolean;
+  /**
+   * Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.
+   */
+  values_with_replacement_char: number | null;
+  /**
+   * Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.
+   */
+  values_with_nul: number | null;
   semantic_type: "unknown";
 }
 /**

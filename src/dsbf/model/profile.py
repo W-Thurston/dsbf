@@ -1,6 +1,8 @@
 # dsbf/model/profile.py
 """What the profiling pass learns about each column and about the dataset."""
 
+import math
+import re
 from datetime import datetime
 from typing import Annotated, Any, Literal, Self
 
@@ -222,6 +224,20 @@ def _check_top_values(top_values: tuple[ValueCount, ...], counts: ColumnCounts) 
         raise ValueError("top value counts add up to at most the non-null rows")
 
 
+_CONTENT_HASH = re.compile(r"[0-9a-f]{16}")
+# Entropy is a sum of floating-point terms, so it may exceed log2(distinct) by rounding.
+_ENTROPY_SLACK = 1e-9
+
+
+def _check_entropy(entropy_bits: float | None, counts: ColumnCounts) -> None:
+    if entropy_bits is None:
+        return
+    if not counts.non_null:
+        raise ValueError("a column with no values has no entropy")
+    if entropy_bits > math.log2(max(counts.distinct, 1)) + _ENTROPY_SLACK:
+        raise ValueError("entropy_bits is at most log2 of the distinct values")
+
+
 class _ColumnBase(Contract):
     """What every column profile carries, whatever the column holds."""
 
@@ -235,6 +251,48 @@ class _ColumnBase(Contract):
         default=None, ge=0, description="Rows the semantic type was inferred from."
     )
     counts: ColumnCounts
+    content_hash: str | None = Field(
+        default=None,
+        description=(
+            "A 64-bit digest of the column's values in row order, as 16 hex digits; "
+            "None when the values cannot be hashed. Equal hashes mark candidate "
+            "duplicates only: they also need equal `physical_dtype` and a "
+            "comparison of the values, because the digest is 64 bits and ignores "
+            "the dtype."
+        ),
+    )
+    name_encoding_damage: bool = Field(
+        default=False,
+        description="The name holds U+FFFD (a character that failed to decode) or NUL.",
+    )
+    values_with_replacement_char: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Values holding U+FFFD, the mark a lossy decode leaves; None unless the "
+            "column holds strings."
+        ),
+    )
+    values_with_nul: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; "
+            "None unless the column holds strings."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _check_common(self) -> Self:
+        if self.content_hash is not None and not _CONTENT_HASH.fullmatch(
+            self.content_hash
+        ):
+            raise ValueError("content_hash is 16 lowercase hex digits")
+        for name in ("values_with_replacement_char", "values_with_nul"):
+            value = getattr(self, name)
+            if value is not None and value > self.counts.non_null:
+                raise ValueError(f"{name} is at most the non-null rows")
+        return self
 
 
 class NumericProfile(_ColumnBase):
@@ -268,9 +326,18 @@ class CategoricalProfile(_ColumnBase):
     shape: TextShape | None = Field(
         default=None, description="Present for string columns only."
     )
+    entropy_bits: FiniteFloat | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Shannon entropy, in bits, of the whole distribution of non-null values "
+            "(not only the top values); None when there are none."
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_counts(self) -> Self:
+        _check_entropy(self.entropy_bits, self.counts)
         _check_top_values(self.top_values, self.counts)
         if self.empty_strings > self.counts.non_null:
             raise ValueError("empty_strings is at most the non-null rows")
@@ -283,9 +350,18 @@ class BooleanProfile(_ColumnBase):
     semantic_type: Literal["boolean"] = "boolean"
     true_count: int = Field(ge=0)
     false_count: int = Field(ge=0)
+    entropy_bits: FiniteFloat | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Shannon entropy, in bits, of the whole distribution of non-null values "
+            "(not only the top values); None when there are none."
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_counts(self) -> Self:
+        _check_entropy(self.entropy_bits, self.counts)
         if self.true_count + self.false_count != self.counts.non_null:
             raise ValueError("true_count and false_count add up to the non-null rows")
         return self
@@ -324,9 +400,18 @@ class TextProfile(_ColumnBase):
     )
     empty_strings: int = Field(default=0, ge=0)
     shape: TextShape | None = None
+    entropy_bits: FiniteFloat | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Shannon entropy, in bits, of the whole distribution of non-null values "
+            "(not only the top values); None when there are none."
+        ),
+    )
 
     @model_validator(mode="after")
     def _check_counts(self) -> Self:
+        _check_entropy(self.entropy_bits, self.counts)
         _check_top_values(self.top_values, self.counts)
         if self.empty_strings > self.counts.non_null:
             raise ValueError("empty_strings is at most the non-null rows")

@@ -68,6 +68,63 @@ def test_an_estimated_distinct_count_says_so():
     assert ColumnCounts(rows=3, nulls=1, distinct=2).non_null == 2
 
 
+# ── what the rule checks read ────────────────────────────────────────────────
+
+
+def test_a_column_starts_with_no_hash_and_no_encoding_damage():
+    column = UnknownProfile(**common())
+
+    assert column.content_hash is None
+    assert column.name_encoding_damage is False
+    assert column.values_with_replacement_char is None
+    assert column.values_with_nul is None
+
+
+@pytest.mark.parametrize("digest", ["", "abc", "0" * 15, "0" * 17, "A" * 16, "g" * 16])
+def test_a_content_hash_is_sixteen_lowercase_hex_digits(digest):
+    with pytest.raises(ValidationError, match="16 lowercase hex digits"):
+        UnknownProfile(**common(), content_hash=digest)
+
+    assert UnknownProfile(**common(), content_hash="0f" * 8).content_hash == "0f" * 8
+
+
+@pytest.mark.parametrize("field", ["values_with_replacement_char", "values_with_nul"])
+def test_damaged_values_are_at_most_the_non_null_rows(field):
+    fields: dict[str, Any] = common(rows=10, nulls=4)
+
+    with pytest.raises(ValidationError, match="at most the non-null rows"):
+        TextProfile.model_validate({**fields, field: 7})
+
+    assert getattr(TextProfile.model_validate({**fields, field: 6}), field) == 6
+
+
+def test_entropy_is_at_most_log2_of_the_distinct_values():
+    fields = common(rows=8, nulls=0, distinct=4)
+
+    assert CategoricalProfile(**fields, entropy_bits=2.0).entropy_bits == 2.0
+    with pytest.raises(ValidationError, match="at most log2"):
+        CategoricalProfile(**fields, entropy_bits=2.5)
+    with pytest.raises(ValidationError):
+        CategoricalProfile(**fields, entropy_bits=-0.5)
+
+
+def test_one_value_has_no_entropy_to_spare_and_no_values_have_none():
+    one = common(rows=5, nulls=0, distinct=1)
+    assert TextProfile(**one, entropy_bits=0.0).entropy_bits == 0.0
+    with pytest.raises(ValidationError, match="at most log2"):
+        TextProfile(**one, entropy_bits=0.1)
+    with pytest.raises(ValidationError, match="no values has no entropy"):
+        TextProfile(**common(rows=5, nulls=5), entropy_bits=0.0)
+
+
+def test_a_boolean_entropy_is_at_most_one_bit():
+    fields = {**common(rows=4, nulls=0, distinct=2), "true_count": 2, "false_count": 2}
+
+    assert BooleanProfile(**fields, entropy_bits=1.0).entropy_bits == 1.0
+    with pytest.raises(ValidationError, match="at most log2"):
+        BooleanProfile(**fields, entropy_bits=1.1)
+
+
 # ── numeric ──────────────────────────────────────────────────────────────────
 
 

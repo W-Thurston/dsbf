@@ -17,6 +17,8 @@ apart. Each heading below is a slug from that list.
 | Columns | `summarize_nulls`, `summarize_unique`, `summarize_numeric` | `test_column_parity.py` | Equal within `rel=1e-9`, except integer codes |
 | Values | `summarize_value_counts`, `categorical_length_stats` | `test_column_parity.py` | Equal except the rules below |
 | Dataset | `summarize_dataset_shape`, `detect_duplicates` | `test_dataset_parity.py` | Equal |
+| Entropy | `compute_entropy` | `test_rule_inputs_parity.py` | Equal on the same columns, within the six significant figures the snapshot keeps |
+| Duplicate columns | `detect_duplicate_columns` | `test_rule_inputs_parity.py` | Equal: a pair is equal hashes with equal dtypes |
 | Stage | `infer_stage` (snapshot `inferred_stage`) | `test_dataset_parity.py` | 9 of 10 differ, all listed |
 
 The golden datasets are `clean`, `tiny`, `near_clean`, `all_categorical`,
@@ -31,6 +33,11 @@ The golden datasets are `clean`, `tiny`, `near_clean`, `all_categorical`,
 - **Histograms and string shape.** The legacy plots and text tasks keep no comparable
   numbers: `summarize_text_fields` returns nothing on any golden dataset. Histogram counts
   are checked against `np.histogram` in `test_histogram.py`.
+- **Encoding damage.** No legacy task counts U+FFFD or NUL. The counts, and the flag on a
+  damaged column name, are checked on built frames and on a UTF-16 CSV read with
+  `utf8-lossy` in `test_columns.py`. `load` itself refuses a UTF-16 or Latin-1 CSV (polars
+  2.0.0: `invalid utf-8 sequence`), so the counts see U+FFFD and NUL that arrive in
+  Parquet, JSON, Excel and in-memory frames, or inside a UTF-8 CSV.
 - **Datetime profiles.** The legacy tasks report no frequency or range. The profile is
   checked against `pd.infer_freq` in `test_temporal.py`.
 
