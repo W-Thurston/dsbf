@@ -1,5 +1,164 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "f5513df681d73bc1",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 1599,
+      "top_share": 0.7995
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "is_churned"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [
+    {
+     "check": "duplicate_rows",
+     "code": "duplicate_rows",
+     "id": "cfc7e11d9121b3d1",
+     "metrics": {
+      "duplicate_rows": 11,
+      "duplicate_share": 0.0055
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "dfeb8f88e549b7fc",
+     "metrics": {
+      "null_count": 151,
+      "null_share": 0.0755
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "da6428c27fc6d072",
+     "metrics": {
+      "null_count": 825,
+      "null_share": 0.4125
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "device_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "c10ae6e0c98f7d35",
+     "metrics": {
+      "null_count": 492,
+      "null_share": 0.246
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "cdf7304203b9fa7d",
+     "metrics": {
+      "null_count": 1500,
+      "null_share": 0.75
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "notes"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "218604ec705970df",
+     "metrics": {
+      "null_count": 812,
+      "null_share": 0.406
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "premium_score"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [],
    "status": "ok",

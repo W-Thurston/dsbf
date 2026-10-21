@@ -199,10 +199,10 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 - **Commit:** `feat(checks): add the core check pack with a migration harness`
 
 ### U4-03 · Profile additions for rule checks
-- **Status:** done (2026-10-20) · **Size:** S · **Depends on:** U4-02
+- **Status:** done (2026-10-20) · **Size:** S · **Depends on:** U4-02 · **PR:** #103 (`97c9d6d`)
 - **Notes:** `ColumnProfile` gains `content_hash` (a row-order digest, same in every process, None for Object columns), `name_encoding_damage`, `values_with_replacement_char` and `values_with_nul`; categorical, boolean and text profiles gain `entropy_bits`. Schema 0.8.0. On the ten golden datasets entropy and the hash-and-dtype duplicate pairs equal the legacy outputs with no accepted difference. The pass costs 0.2 s more on kitchen50k and 0.4 s on wide1m.
 - **Deviations:** `load` refuses a non-UTF-8 CSV (`SourceReadError`) under polars 2.0.0, so the UTF-16 acceptance check reads the file with `utf8-lossy` first. No per-column memory field was added: `dtype_optimizations` estimates from dtype widths and string lengths.
-- **Note from U2-03:** `load` decodes a non-UTF-8 CSV lossily with no error (a UTF-16 file reads with U+FFFD and NUL characters in names and values); stale as of 2026-10-20, `load` now raises `SourceReadError`, see the notes).
+- **Note from U2-03:** `load` refuses a non-UTF-8 CSV with `SourceReadError` (checked 2026-10-20 on polars 2.0.0). The earlier note here said it decoded such a file lossily; that was wrong. U4-04 decided to keep refusing: a caller who reads with `utf8-lossy` gets U+FFFD and NUL characters in names and values, which `text_encoding` reports.
 - **Goal:** Add what the U4-04 and U4-05 rule checks need and the profile lacks:
   - Shannon entropy over the full value distribution for categorical, boolean and text columns;
   - a per-column content hash, so equal hashes mark duplicate-column candidates;
@@ -219,7 +219,9 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 - **Commit:** `feat(profile): add entropy, content hashes and encoding damage counts`
 
 ### U4-04 · Rule checks I: column health and declarative tips
-- **Status:** todo · **Size:** M · **Depends on:** U4-03 · **Resolves:** F-31 (`eval`), F-11 and F-07 for these checks
+- **Status:** done (2026-10-20) · **Size:** M · **Depends on:** U4-03 · **Resolves:** F-31 (`eval`), F-11 and F-07 for these checks
+- **Notes:** the `core` pack holds ten checks. Nine read the profile only (about 24 ms together on the kitchen50k profile): `null_rate`, `constant_columns`, `high_cardinality`, `id_columns`, `dominant_value`, `near_zero_variance`, `duplicate_rows`, `duplicate_columns` and `text_encoding`. Tips are declarative `{field, op, value}` conditions (`any`/`all` for the one compound tip), in `engine/tips.py`: validated when the library loads, attached after a check returns as `Action`s in `Guidance(phase="ml")` (no schema change), a failed lookup is a note, and the library digest is in the cache key. No `eval` remains in `src/`. `SUPERSEDED_BY` holds nine more tasks; parity comparators are keyed by task (`tests/golden/migration/column_health.py`), and a test maps every legacy finding title to a core code. `content_hash` became a `ProfileFeature`.
+- **Deviations:** `duplicate_columns` decides on the 64-bit digest plus `physical_dtype`, not a comparison of values (a rule check cannot read values), and reports one finding per group of equal columns where the legacy task reported pairs. `likely_identifier` is a warning, as the strongest legacy level. `constant_columns` also reports a column with no values. `summarize_numeric` stays unsuperseded until U4-05. The extra advice the legacy tasks gave (impute, indicator, stratified split, class weight, target encoding, zero handling) is now tips.
 - **Note from U0-07:** `get_recommendation_tip` (`utils/reco_engine.py`) still runs `eval` on the YAML `condition` strings (F-31). Replace it with a declarative condition format (`{"field": ..., "op": ">", "value": ...}`) when the tasks that call it migrate.
 - **Note from U2-05:** a categorical column with mostly unique strings lists first-seen one-off values as top values (text columns skip values seen once). Decide, with the checks that consume top values, whether categorical should also require a repeat.
 - **Note from U4-00:** an integer row number (`0..n-1`) is profiled `numeric`, not `identifier` (checked on 2026-10-19). `id_columns` decides whether such a column is an identifier.
@@ -239,6 +241,8 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 
 ### U4-05 · Rule checks II: distribution shape, types and data contracts
 - **Status:** todo · **Size:** M · **Depends on:** U4-04 · **Resolves:** F-07 (`schema_validation` keys)
+- **Note from U4-04:** `summarize_numeric` still raises its near-zero-variance finding beside `near_zero_variance`, because `SUPERSEDED_BY` maps one check per task. Superseding it needs the map to hold a set of checks (or a second entry), then both its near-zero-variance and mean–median findings go. Tips for the new checks are entries in `recommendation_library.yaml` with `checks` and `codes`; the metric names a condition reads are the finding's `evidence.metrics`.
+- **Note from U4-04:** `dominant_value` reads `top_values[0]` as the mode, but a string over 256 characters is never listed, so a column whose true mode is that long reports the next value's share, which is lower than the truth. Decide with the checks that consume `top_values` whether the profile should record the mode's count separately.
 - **Note from U4-03:** `schema` checks allowed values against the dataset, because the profile keeps ten top values; set its cost class accordingly (still cheap). `dtype_optimizations` has no per-column memory in the profile: estimate the saving from dtype widths and, for strings, `lengths.mean` (an accepted difference from the pandas memory the legacy task reads), and drop or rework the float32 clause that tests the smallest non-zero magnitude, which the profile lacks.
 - **Note from U2-07:** a categorical column of integer codes has no min and max, where the legacy `summarize_numeric` summarised it. `dtype_optimizations` decides whether to read such codes as numeric.
 - **Goal:** Rule checks `skewness`, `kurtosis`, `entropy`, `dtype_optimizations`, `sample_size`, `class_imbalance` (on the `target` setting) and `schema`. `schema` takes the expected columns, types, nullability, ranges and allowed values as params, and is `not_applicable` without them. Supersede the 13 retired summary tasks.
@@ -432,6 +436,7 @@ The 49 superseded and 18 retired tasks account for all 67 registered legacy task
 
 ### U4-19 · Lean base install and Phase 4 exit
 - **Status:** todo · **Size:** M · **Depends on:** U4-18
+- **Note from U4-04:** `LegacySession.frame()` panics (polars `NulError`) converting a frame with a NUL in a column name to pandas, so `dsbf.profile()` on a frame read from UTF-16 with `utf8-lossy` fails in the first legacy task, while the core `text_encoding` check runs. It goes with the legacy session; add a guard sooner only if it bites.
 - **Note from U0-15 (ADR 0009):** shrink the base install to the core dependency set, moving the rest behind extras and deleting the dependencies nothing imports (for example matplotlib, plotly, seaborn, networkx, graphviz, pydot and missingno, verified by grep).
 - **Note from U1-05:**
   1. Each extra needs a test that the core runs without it and reports `unavailable`.

@@ -13,13 +13,14 @@ from typing import Any, Protocol
 
 from dsbf.data import Dataset
 from dsbf.engine.plan import PlanEntry
+from dsbf.engine.tips import library_digest
 from dsbf.model import CheckResult, CheckStatus, DatasetProfile
 from dsbf.paths import dsbf_home
 
 logger = logging.getLogger(__name__)
 
 # Bump when what goes into a key changes, so older entries stop matching.
-KEY_SCHEME = 1
+KEY_SCHEME = 2
 _ENTRY_FORMAT = 1
 # Only these results are a function of the inputs. An error, timeout, skip or missing
 # extra depends on the machine, the clock and the limits; a "not applicable" result is
@@ -135,6 +136,7 @@ class CacheSession:
                 dataset.sampling.model_dump(mode="json") if dataset.sampling else None
             ),
             "profile": _digest(profile.model_dump(mode="json")),
+            "tips": library_digest(),
         }
         self._keys: dict[str, CacheKey] = {}
         self._digests: dict[str, str] = {}

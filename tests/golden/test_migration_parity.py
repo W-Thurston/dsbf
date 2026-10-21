@@ -11,6 +11,7 @@ import pytest
 
 from dsbf.legacy import SUPERSEDED_BY
 from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
+from tests.golden.migration.findings import unmapped_titles
 from tests.golden.migration.harness import compare, judge
 from tests.golden.migration.registry import ACCEPTED, COMPARATORS
 
@@ -31,20 +32,28 @@ def test_a_core_check_differs_from_its_task_only_where_accepted(
     problems: list[str] = []
     for task, check in sorted(SUPERSEDED_BY.items()):
         found = compare(
-            check,
-            COMPARATORS[check],
+            task,
+            COMPARATORS[task],
             run.report["checks"].get(task),
             run.core["results"][check],
         )
-        verdict = judge(check, dataset.name, found, ACCEPTED)
+        legacy = run.report["checks"].get(task)
+        if legacy and legacy["status"] == "ok":
+            problems += [
+                f"? {task}: the finding titled {title!r} maps to no core finding code"
+                for title in unmapped_titles(
+                    task, legacy["result"].get("guidance") or {}
+                )
+            ]
+        verdict = judge(task, dataset.name, found, ACCEPTED)
         problems += [
-            f"+ {check}: {d.describe()}  (add to accepted.py: "
-            f"Accepted({check!r}, {dataset.name!r}, {d.subject!r}, {d.kind!r}, "
+            f"+ {task}: {d.describe()}  (add to accepted.py: "
+            f"Accepted({task!r}, {dataset.name!r}, {d.subject!r}, {d.kind!r}, "
             f"{d.detail!r}, <reason>))"
             for d in verdict.unexpected
         ]
         problems += [
-            f"- {check}: {a.difference.describe()}  (accepted, no longer occurs)"
+            f"- {task}: {a.difference.describe()}  (accepted, no longer occurs)"
             for a in verdict.stale
         ]
     if problems:

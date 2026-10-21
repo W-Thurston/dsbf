@@ -18,6 +18,7 @@ _COLUMN_FEATURES: dict[str, Callable[[ColumnProfile], bool]] = {
     "top_values": lambda column: bool(getattr(column, "top_values", ())),
     "text_shape": lambda column: getattr(column, "shape", None) is not None,
     "datetime": lambda column: getattr(column, "min", None) is not None,
+    "content_hash": lambda column: column.content_hash is not None,
 }
 _DATASET_FEATURES: dict[str, Callable[[DatasetProfile], bool]] = {
     "missingness": lambda profile: profile.missingness is not None,

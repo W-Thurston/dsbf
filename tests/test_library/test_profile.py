@@ -9,6 +9,7 @@ import pyarrow as pa
 import pytest
 
 import dsbf
+from dsbf.checks import core_pack
 from dsbf.config import LimitsConfig
 from dsbf.engine import CheckFinished, DiskCache, PlanError
 from dsbf.model import CheckStatus, Run
@@ -146,7 +147,8 @@ class TestMigratedChecks:
     def test_a_check_in_its_own_pack_can_be_run_alone(self, sparse):
         run = dsbf.profile(sparse, packs=["core"])
 
-        assert tuple(run.results) == ("zeros",)
+        assert set(run.results) == {check.id for check in core_pack().checks}
+        assert not [r for r in run.results if r.startswith(("detect_", "summarize_"))]
 
 
 class TestSelection:

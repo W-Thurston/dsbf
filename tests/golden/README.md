@@ -100,11 +100,12 @@ moved them and explain the diff in the PR.
 
 **Migration parity.** `test_migration_parity.py` compares each core check with the legacy
 task it replaces (`dsbf.legacy.SUPERSEDED_BY`), using the task's result through the adapter
-in `engine_run.json`. The check's comparator (`migration/<check>.py`, listed in
-`migration/registry.py`) returns the differences: columns each side reads, counts, shares,
-severities and the findings each raises. Every difference must be in
-`migration/accepted.py` with the column, the kind, the exact detail and the reason the core
-check is right; one that is not listed fails, and so does a listed one that no longer
+in `engine_run.json`. The task's comparator (`migration/<check>.py` or
+`migration/column_health.py`, listed by task name in `migration/registry.py`) returns the
+differences: columns each side reads, counts, shares, severities and the findings each
+raises. Two tasks can share a core check, and each is judged against its own entries. Every
+difference must be in `migration/accepted.py` with the task, the column, the kind, the exact
+detail and the reason the core check is right; one that is not listed fails, and so does a listed one that no longer
 occurs. The failure prints the entry to add. Reasons are written by hand, so
 `--update-golden` leaves the file alone. A unit test checks that every entry has a reason
 and names a golden dataset and a registered comparator.

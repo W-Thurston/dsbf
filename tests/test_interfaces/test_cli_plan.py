@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from dsbf.checks import core_pack
 from dsbf.engine import extras
 from dsbf.interfaces.cli import app
 
@@ -238,9 +239,10 @@ def test_an_unknown_pack_is_an_error_with_a_suggestion(data, plugin):
 
 
 def test_with_every_check_excluded_the_plan_is_empty_and_says_why(data):
-    result = runner.invoke(
-        app, ["plan", str(data), "--no-entry-points", "--exclude", "zeros"]
-    )
+    excluded = [
+        argument for check in core_pack().checks for argument in ("--exclude", check.id)
+    ]
+    result = runner.invoke(app, ["plan", str(data), "--no-entry-points", *excluded])
 
     assert result.exit_code == 0
     assert "nothing to run" in result.stdout

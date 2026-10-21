@@ -13,6 +13,15 @@ from dsbf.model import DatasetProfile
 # here, and the mapping goes when the last task does.
 SUPERSEDED_BY: Mapping[str, str] = {
     "detect_zeros": "zeros",
+    "summarize_nulls": "null_rate",
+    "detect_constant_columns": "constant_columns",
+    "detect_high_cardinality": "high_cardinality",
+    "detect_id_columns": "id_columns",
+    "detect_single_dominant_value": "dominant_value",
+    "summarize_boolean_fields": "dominant_value",
+    "detect_near_zero_variance": "near_zero_variance",
+    "detect_duplicates": "duplicate_rows",
+    "detect_duplicate_columns": "duplicate_columns",
 }
 
 

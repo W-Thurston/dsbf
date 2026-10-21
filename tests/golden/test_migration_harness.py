@@ -6,6 +6,18 @@ import pytest
 
 from dsbf.legacy import SUPERSEDED_BY
 from tests.golden.datasets import GOLDEN_DATASETS
+from tests.golden.migration.column_health import (
+    compare_constant_columns,
+    compare_duplicate_columns,
+    compare_null_rate,
+)
+from tests.golden.migration.findings import (
+    LEGACY_FINDING_CODES,
+    compare_levels,
+    core_levels,
+    legacy_levels,
+    unmapped_titles,
+)
 from tests.golden.migration.harness import Accepted, Difference, compare, judge
 from tests.golden.migration.registry import ACCEPTED, COMPARATORS
 from tests.golden.migration.snapshot import core_snapshot
@@ -136,7 +148,7 @@ class TestTheVerdict:
 
 class TestTheRegistry:
     def test_every_replaced_task_has_a_comparator(self):
-        assert set(SUPERSEDED_BY.values()) <= set(COMPARATORS)
+        assert set(SUPERSEDED_BY) == set(COMPARATORS)
 
     def test_every_accepted_difference_has_a_reason_and_a_known_home(self):
         datasets = {d.name for d in GOLDEN_DATASETS}
@@ -209,3 +221,100 @@ class TestTheCoreSnapshot:
         assert render_snapshot(core_snapshot("demo", self.RUN)) == render_snapshot(
             core_snapshot("demo", self.RUN)
         )
+
+
+class TestTheColumnHealthComparators:
+    def legacy(self, data, guidance=None):
+        return {"status": "ok", "result": {"data": data, "guidance": guidance or {}}}
+
+    def core(self, output, findings=()) -> dict:
+        return {
+            "status": "ok",
+            "output": output,
+            "findings": [
+                {"subject": {"columns": columns}, "severity": level}
+                for columns, level in findings
+            ],
+        }
+
+    def test_the_strongest_level_of_a_columns_blurbs_is_its_level(self):
+        guidance = {"a": {"eda": [{"level": "info"}], "ml": [{"level": "warn"}]}}
+
+        assert legacy_levels(guidance) == {"a": "warn"}
+
+    def test_a_finding_about_a_group_counts_for_each_column(self):
+        findings: list[dict] = [
+            {"subject": {"columns": ["a", "b"]}, "severity": "warn"},
+            {"subject": {"columns": []}, "severity": "info"},
+        ]
+
+        assert core_levels(findings) == {
+            "a": "warn",
+            "b": "warn",
+            "__dataset__": "info",
+        }
+
+    def test_levels_are_compared_and_the_dataset_has_an_empty_subject(self):
+        legacy = self.legacy({}, {"__dataset__": {"ml": [{"level": "warn"}]}})
+        core = self.core({}, [([], "info")])
+
+        assert compare_levels(legacy, core) == [
+            Difference("", "severity", "legacy warn, core info")
+        ]
+
+    def test_levels_can_be_limited_to_the_columns_a_task_examined(self):
+        legacy = self.legacy({}, {})
+        core = self.core({}, [(["a"], "warn"), (["b"], "warn")])
+
+        assert compare_levels(legacy, core, columns={"a"}) == [
+            Difference("a", "finding", "core only (warn)")
+        ]
+
+    def test_equal_constant_columns_have_no_difference(self):
+        legacy = self.legacy(
+            {"constant_columns": ["x"]}, {"x": {"ml": [{"level": "error"}]}}
+        )
+        core = self.core({"constant_columns": ["x"]}, [(["x"], "error")])
+
+        assert compare_constant_columns(legacy, core) == []
+
+    def test_duplicate_groups_are_compared_as_pairs(self):
+        legacy = self.legacy({"duplicate_column_pairs": [["a", "b"], ["a", "c"]]})
+        core = self.core({"groups": [["a", "b", "c"]]})
+
+        assert compare_duplicate_columns(legacy, core) == [
+            Difference("b, c", "pair", "core only")
+        ]
+
+    def test_a_null_share_that_moved_is_reported(self):
+        legacy = self.legacy(
+            {
+                "null_counts": {"a": 5},
+                "null_percentages": {"a": 0.05},
+                "high_null_columns": [],
+            }
+        )
+        core = self.core(
+            {
+                "columns": {
+                    "a": {"null_count": 5, "null_share": 0.5, "mostly_missing": True}
+                }
+            }
+        )
+
+        kinds = {d.kind for d in compare_null_rate(legacy, core)}
+
+        assert kinds == {"null_share", "mostly_missing"}
+
+    def test_every_legacy_title_of_the_replaced_tasks_maps_to_a_code(self):
+        guidance = {
+            "a": {
+                "eda": [{"title": "Constant Column - Zero Information"}],
+                "ml": [{"title": "Something New"}],
+            }
+        }
+
+        assert unmapped_titles("detect_constant_columns", guidance) == ["Something New"]
+
+    def test_every_replaced_task_has_title_patterns(self):
+        assert set(LEGACY_FINDING_CODES) == set(SUPERSEDED_BY)

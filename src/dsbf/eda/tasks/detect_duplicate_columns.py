@@ -108,7 +108,7 @@ class DetectDuplicateColumns(BaseTask):
                 top_col1, top_col2 = duplicate_pairs[0]
                 tip: str | None = get_recommendation_tip(
                     self.name,
-                    {"correlation_with": 1.0},
+                    {"n_columns": 2},
                 )
                 self.set_ml_signals(
                     result=self.output,

@@ -19,6 +19,15 @@ Conventions every core check follows:
   returns.
 """
 
+from dsbf.checks.constant_columns import constant_columns
+from dsbf.checks.dominant_value import dominant_value
+from dsbf.checks.duplicate_columns import duplicate_columns
+from dsbf.checks.duplicate_rows import duplicate_rows
+from dsbf.checks.high_cardinality import high_cardinality
+from dsbf.checks.id_columns import id_columns
+from dsbf.checks.near_zero_variance import near_zero_variance
+from dsbf.checks.null_rate import null_rate
+from dsbf.checks.text_encoding import text_encoding
 from dsbf.checks.zeros import zeros
 from dsbf.engine import Pack
 
@@ -29,4 +38,18 @@ __all__ = ["CORE_PACK", "core_pack"]
 
 def core_pack() -> Pack:
     """The core checks, as a pack to register explicitly."""
-    return Pack(CORE_PACK, (zeros,))
+    return Pack(
+        CORE_PACK,
+        (
+            zeros,
+            null_rate,
+            constant_columns,
+            high_cardinality,
+            id_columns,
+            dominant_value,
+            near_zero_variance,
+            duplicate_rows,
+            duplicate_columns,
+            text_encoding,
+        ),
+    )
