@@ -79,7 +79,7 @@ def test_an_integer_coded_boolean_column_never_appears_in_zeros(
     # Half of each is zero, so the legacy task flagged them; the profile types them
     # categorical, so the check never reads them.
     assert {"flag_as_int", "flag_copy", "[/x]"}.isdisjoint(output["columns"])
-    assert {f.subject.columns[0] for f in adversarial_run.findings} == set()
+    assert adversarial_run.results["zeros"].findings == ()
     assert "price|usd" in output["columns"]
 
 

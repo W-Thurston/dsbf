@@ -35,8 +35,15 @@ class TestWhichTasksAreReplaced:
 
         assert superseded_tasks(("core",), CORE, mapping=mapping) == mapping
 
-    def test_the_first_migration_is_the_pilot_check(self):
-        assert SUPERSEDED_BY == {"detect_zeros": "zeros"}
+    def test_every_replacing_check_is_in_the_core_pack(self):
+        core = {check.id for check in core_pack().checks}
+
+        assert set(SUPERSEDED_BY.values()) <= core
+
+    def test_the_column_health_tasks_are_replaced(self):
+        assert SUPERSEDED_BY["detect_duplicates"] == "duplicate_rows"
+        assert SUPERSEDED_BY["summarize_boolean_fields"] == "dominant_value"
+        assert SUPERSEDED_BY["detect_single_dominant_value"] == "dominant_value"
 
 
 def plan_for(tmp_path: Path, superseded, *, include=(), exclude=(), packs=("core",)):
@@ -66,7 +73,9 @@ class TestThePlan:
     def test_a_replaced_task_nothing_requires_is_left_out(self, tmp_path):
         plan, _ = plan_for(tmp_path, {"detect_zeros": "zeros"})
 
-        assert plan.ids == ("zeros",)
+        assert "zeros" in plan
+        assert "detect_zeros" not in plan
+        assert set(plan.ids) == {check.id for check in core_pack().checks}
 
     def test_a_replaced_task_sits_in_its_own_pack(self, tmp_path):
         _, registry = plan_for(tmp_path, {"detect_zeros": "zeros"})

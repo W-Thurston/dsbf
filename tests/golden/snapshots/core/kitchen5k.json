@@ -1,5 +1,662 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [
+    {
+     "check": "constant_columns",
+     "code": "constant_column",
+     "id": "314bb659b7f5b581",
+     "metrics": {
+      "n_unique": 0,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "constant_null"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "constant_columns",
+     "code": "constant_column",
+     "id": "4170bed6be65e63b",
+     "metrics": {
+      "n_unique": 1,
+      "null_share": 0.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "constant_numeric"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "constant_columns",
+     "code": "constant_column",
+     "id": "063c01bbddc6a128",
+     "metrics": {
+      "n_unique": 1,
+      "null_share": 0.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "constant_string"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "constant_columns",
+     "code": "constant_column",
+     "id": "965548a1eff49ac3",
+     "metrics": {
+      "n_unique": 0,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "empty_vs_nan"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "constant_columns",
+     "code": "constant_column",
+     "id": "88115dd8aaaf414b",
+     "metrics": {
+      "n_unique": 0,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "mixed_null_types"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "baa8de18ff856fab",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 5146,
+      "top_share": 0.98019
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "control_character_text"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "785f3906e06b7cb5",
+     "metrics": {
+      "n_unique": 51,
+      "top_count": 5198,
+      "top_share": 0.990095
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "extremely_long_strings"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "d8873f0284e3b56f",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 4992,
+      "top_share": 0.950857
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "imbalanced_boolean"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "d401c0a101c4e965",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 5008,
+      "top_share": 0.953905
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "imbalanced_target"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "a64b1d6d408ce9b8",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 4734,
+      "top_share": 0.901714
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "mostly_zeros"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "63ea48c7d9dadd70",
+     "metrics": {
+      "n_unique": 11,
+      "top_count": 5240,
+      "top_share": 0.998095
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "near_zero_variance"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [
+    {
+     "check": "duplicate_columns",
+     "code": "duplicate_columns",
+     "id": "0b77b772a5640b71",
+     "metrics": {
+      "n_columns": 3,
+      "n_pairs": 3
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "constant_null",
+       "mixed_null_types",
+       "empty_vs_nan"
+      ],
+      "kind": "column_group"
+     }
+    },
+    {
+     "check": "duplicate_columns",
+     "code": "duplicate_columns",
+     "id": "299450caed5b4fa6",
+     "metrics": {
+      "n_columns": 3,
+      "n_pairs": 3
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "duplicate_col_1",
+       "duplicate_col_2",
+       "duplicate_col_3"
+      ],
+      "kind": "column_group"
+     }
+    },
+    {
+     "check": "duplicate_columns",
+     "code": "duplicate_columns",
+     "id": "f8d482330acba7e1",
+     "metrics": {
+      "n_columns": 2,
+      "n_pairs": 1
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "target_for_leakage",
+       "perfect_leakage"
+      ],
+      "kind": "column_group"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [
+    {
+     "check": "duplicate_rows",
+     "code": "duplicate_rows",
+     "id": "cfc7e11d9121b3d1",
+     "metrics": {
+      "duplicate_rows": 250,
+      "duplicate_share": 0.047619
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [
+    {
+     "check": "high_cardinality",
+     "code": "high_cardinality",
+     "id": "8d9042f5c32bbc7d",
+     "metrics": {
+      "distinct_share": 0.00971429,
+      "max_distinct": 50,
+      "n_unique": 51
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "extremely_long_strings"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "high_cardinality",
+     "code": "high_cardinality",
+     "id": "4fb6e85052062f1c",
+     "metrics": {
+      "distinct_share": 0.599619,
+      "max_distinct": 50,
+      "n_unique": 3148
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "high_cardinality_random"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "high_cardinality",
+     "code": "high_cardinality",
+     "id": "4fc963187bd8b8df",
+     "metrics": {
+      "distinct_share": 0.635238,
+      "max_distinct": 50,
+      "n_unique": 3335
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "unexpected_object_column"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "b54cc5585ec20a62",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "base64_encoded"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "57f1e90d40cf47d2",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "email_with_violations"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "28c068cac5a55918",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "hex_encoded"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "ea4902e620566e31",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "high_cardinality_uuid"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "9c217505942e1cc4",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "long_text"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "69ca971da675f831",
+     "metrics": {
+      "n_unique": 4500,
+      "unique_share": 0.952179
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "mixed_type_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "a764afabe604ae47",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "normal_text"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "ec8c343557b393cb",
+     "metrics": {
+      "n_unique": 4998,
+      "unique_share": 0.952
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "phone_with_violations"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "7731df8c6b615b8f",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "transaction_id"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "580295e4383a7cb3",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "user_id"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "b41e85a98561459d",
+     "metrics": {
+      "n_unique": 5000,
+      "unique_share": 0.952381
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "uuid_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "id_columns",
+     "code": "likely_identifier",
+     "id": "6174cba0b5e56b51",
+     "metrics": {
+      "n_unique": 4992,
+      "unique_share": 0.950857
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "variable_length_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "f759eb09668bacb6",
+     "metrics": {
+      "null_count": 5250,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "constant_null"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "a58bb5bca826eb7b",
+     "metrics": {
+      "null_count": 5250,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "empty_vs_nan"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "e88db44c722eb375",
+     "metrics": {
+      "null_count": 1005,
+      "null_share": 0.191429
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "inconsistent_datetime"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "d29486445ce7810e",
+     "metrics": {
+      "null_count": 5250,
+      "null_share": 1.0
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "mixed_null_types"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "0fe5fdb12b03a7cc",
+     "metrics": {
+      "null_count": 524,
+      "null_share": 0.0998095
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "mixed_type_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "5bd7374b5f840d11",
+     "metrics": {
+      "null_count": 1278,
+      "null_share": 0.243429
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "short_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [
+    {
+     "check": "text_encoding",
+     "code": "nul_characters",
+     "id": "b5acccbf36fcd4dc",
+     "metrics": {
+      "damaged_share": 0.0198095,
+      "damaged_values": 104
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "control_character_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [
     {

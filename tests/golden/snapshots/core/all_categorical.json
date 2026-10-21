@@ -1,5 +1,103 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "78bc229eb0c752d3",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 1935,
+      "top_share": 0.9675
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "dominant"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "baf21964d6fc24dc",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 1496,
+      "top_share": 0.748
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "is_premium"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [
+    {
+     "check": "high_cardinality",
+     "code": "high_cardinality",
+     "id": "58c930e06e5bfdec",
+     "metrics": {
+      "distinct_share": 0.2905,
+      "max_distinct": 50,
+      "n_unique": 581
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "tag"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [],
    "status": "not_applicable",

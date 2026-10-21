@@ -1,5 +1,150 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "b495ec145f14b56a",
+     "metrics": {
+      "n_unique": 3,
+      "top_count": 644,
+      "top_share": 0.724409
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embark_town"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "4cdaa3444bbe4b9e",
+     "metrics": {
+      "n_unique": 3,
+      "top_count": 644,
+      "top_share": 0.724409
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embarked"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "b17e5cfdc91c2487",
+     "metrics": {
+      "n_unique": 7,
+      "top_count": 678,
+      "top_share": 0.760943
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "parch"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [
+    {
+     "check": "duplicate_rows",
+     "code": "duplicate_rows",
+     "id": "cfc7e11d9121b3d1",
+     "metrics": {
+      "duplicate_rows": 107,
+      "duplicate_share": 0.12009
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "dfeb8f88e549b7fc",
+     "metrics": {
+      "null_count": 177,
+      "null_share": 0.198653
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "9a8ef639e869acbf",
+     "metrics": {
+      "null_count": 688,
+      "null_share": 0.772166
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "deck"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [],
    "status": "ok",

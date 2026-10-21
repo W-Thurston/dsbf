@@ -1,20 +1,42 @@
+# Recommendation tips.
+#
+# A tip advises a finding whose numbers meet its `condition`. A condition is a
+# comparison, {field, op, value} with op one of <, <=, >, >=, ==, != or in (in takes a
+# list), or {any: [...]} / {all: [...]} of conditions. Nothing here is evaluated as
+# code. `field` names a metric of the finding's evidence, or, for a legacy task, a
+# value the task passes.
+#
+#   checks         core check ids whose findings the tip advises
+#   codes          finding codes it is limited to (empty: every code of the check)
+#   applicable_to  legacy task names, until those tasks are deleted
+#   action         the verb of the step, with an optional `method`
+#   when           when the step applies, in words
+#   message        the advice
+
 # ===================
 # TRANSFORMATION
 # ===================
 
 mild_skew_transform:
-  condition: "skew > 1 or skew < -1"
+  condition:
+    any:
+      - {field: skew, op: ">", value: 1}
+      - {field: skew, op: "<", value: -1}
   applicable_to:
     - detect_skewness
     - suggest_numerical_binning
+  action: transform
   message: >
     This feature is moderately skewed. Consider log or power transforms
     to improve linear model performance or reduce sensitivity to outliers.
 
 high_cardinality_feature:
-  condition: "n_unique > 50"
+  condition: {field: n_unique, op: ">", value: 50}
+  checks: [high_cardinality]
   applicable_to:
     - detect_high_cardinality
+  action: encode
+  method: frequency_encoding
   message: >
     This feature has high cardinality. Consider using frequency encoding,
     target encoding, or dimensionality reduction to avoid sparse features.
@@ -24,32 +46,38 @@ high_cardinality_feature:
 # ===================
 
 drop_encoded_column:
-  condition: "match_type in ['base64', 'uuid', 'hex']"
+  condition: {field: match_type, op: in, value: [base64, uuid, hex]}
   applicable_to:
     - detect_encoded_columns
+  action: drop
   message: >
     This column appears to be encoded and is unlikely to generalize well.
     Drop it unless it has domain-specific meaning.
 
 drop_duplicate_column:
-  condition: "correlation_with == 1.0"
+  condition: {field: n_columns, op: ">=", value: 2}
+  checks: [duplicate_columns]
   applicable_to:
     - detect_duplicate_columns
+  action: drop
   message: >
     This column is a perfect duplicate of another - remove one to avoid redundant signals.
 
 leaky_feature:
-  condition: "correlation_with_target > 0.99"
+  condition: {field: correlation_with_target, op: ">", value: 0.99}
   applicable_to:
     - detect_data_leakage
+  action: drop
   message: >
     This feature is nearly identical to the target - likely due to leakage.
     Drop it unless it was intentionally derived from the target.
 
 drop_constant_column:
-  condition: "n_unique == 1"
+  condition: {field: n_unique, op: "<=", value: 1}
+  checks: [constant_columns]
   applicable_to:
     - detect_constant_columns
+  action: drop
   message: >
     This feature has the same value for all rows - drop it before modeling.
 
@@ -58,9 +86,11 @@ drop_constant_column:
 # ===================
 
 drop_zero_variance:
-  condition: "variance < 1e-4"
+  condition: {field: variance, op: "<=", value: 0.0001}
+  checks: [near_zero_variance]
   applicable_to:
     - detect_near_zero_variance
+  action: drop
   message: >
     This feature has near-zero variance and is unlikely to help model performance.
     Drop it unless it encodes rare but meaningful events.
@@ -70,9 +100,10 @@ drop_zero_variance:
 # ===================
 
 high_vif_feature:
-  condition: "vif > 10"
+  condition: {field: vif, op: ">", value: 10}
   applicable_to:
     - detect_collinear_features
+  action: drop
   message: >
     This feature has high collinearity with others, which may distort model coefficients.
     Consider dropping, combining, or using regularization.
@@ -82,9 +113,10 @@ high_vif_feature:
 # ===================
 
 severe_class_imbalance:
-  condition: "majority_ratio >= 0.9"
+  condition: {field: majority_ratio, op: ">=", value: 0.9}
   applicable_to:
     - detect_class_imbalance
+  action: resample
   message: >
     Your target is highly imbalanced. Use stratified sampling, up/down-sampling,
     or metrics like ROC-AUC instead of accuracy.
@@ -94,9 +126,170 @@ severe_class_imbalance:
 # ===================
 
 high_drift_score:
-  condition: "psi >= 0.2"
+  condition: {field: psi, op: ">=", value: 0.2}
   applicable_to:
     - detect_feature_drift
+  action: monitor
   message: >
     This feature shows significant drift vs. the reference dataset.
     Monitor closely or retrain your model periodically.
+
+# ===================
+# SPARSITY
+# ===================
+
+zeros_log1p:
+  condition: {field: zero_share, op: ">=", value: 0.3}
+  checks: [zeros]
+  codes: [high_zero_rate]
+  action: transform
+  method: log1p
+  when: zeros are genuine measurements
+  message: >
+    If zeros are genuine measurements, the column follows a zero-inflated
+    distribution: a log1p transform helps a model separate the non-zero values.
+
+zeros_indicator:
+  condition: {field: zero_share, op: ">=", value: 0.3}
+  checks: [zeros]
+  codes: [high_zero_rate]
+  action: add_indicator
+  method: is_zero
+  when: zeros are genuine measurements
+  message: >
+    Add a binary is_zero feature so a model can tell the zero mass from the
+    non-zero distribution.
+
+zeros_placeholder:
+  condition: {field: zero_share, op: ">=", value: 0.3}
+  checks: [zeros]
+  codes: [high_zero_rate]
+  action: replace_with_nan
+  when: zeros are missing-value placeholders
+  message: >
+    If zeros stand in for missing values, replace them with NaN before fitting,
+    so imputation does not treat them as measurements.
+
+# ===================
+# MISSING VALUES
+# ===================
+
+missing_drop:
+  condition: {field: null_share, op: ">=", value: 0.5}
+  checks: [null_rate]
+  codes: [high_null_rate]
+  action: drop
+  when: the missingness is not informative
+  message: >
+    At this share of missing values imputation adds more bias than signal. Drop
+    the column unless the pattern of missingness itself carries information.
+
+missing_indicator:
+  condition: {field: null_share, op: ">=", value: 0.2}
+  checks: [null_rate]
+  codes: [high_null_rate]
+  action: add_indicator
+  method: is_missing
+  when: the pattern of missingness is informative
+  message: >
+    Keep an is_missing indicator beside the column, so a model can use whether
+    the value was recorded.
+
+missing_impute_median:
+  condition:
+    all:
+      - {field: null_share, op: ">=", value: 0.05}
+      - {field: null_share, op: "<", value: 0.5}
+  checks: [null_rate]
+  codes: [high_null_rate]
+  action: impute
+  method: median
+  when: the distribution is skewed
+  message: >
+    Fill the gaps with the median, which a few extreme values do not move the way
+    they move the mean.
+
+missing_impute_model:
+  condition:
+    all:
+      - {field: null_share, op: ">=", value: 0.2}
+      - {field: null_share, op: "<", value: 0.5}
+  checks: [null_rate]
+  codes: [high_null_rate]
+  action: impute
+  method: model_based
+  when: values are missing not at random
+  message: >
+    If whether a value is missing depends on the value itself or on other
+    columns, predict it from the other columns instead of filling a constant.
+
+# ===================
+# IDENTIFIERS
+# ===================
+
+exclude_identifier:
+  condition: {field: unique_share, op: ">=", value: 0.95}
+  checks: [id_columns]
+  codes: [likely_identifier]
+  action: drop
+  when: the column is an identifier
+  message: >
+    A model given an identifier can memorise its rows and then fail on new
+    ones. Keep the column for joins and lookups, and out of the features.
+
+# ===================
+# DOMINANT VALUE
+# ===================
+
+dominant_value_stratify:
+  condition: {field: top_share, op: ">=", value: 0.7}
+  checks: [dominant_value]
+  codes: [dominant_value]
+  action: stratified_split
+  when: the column is a classification target
+  message: >
+    Split train and test sets on the column, so the rarer values appear in both.
+
+dominant_value_class_weight:
+  condition: {field: top_share, op: ">=", value: 0.7}
+  checks: [dominant_value]
+  codes: [dominant_value]
+  action: class_weight
+  when: the column is a classification target
+  message: >
+    Weight the rarer values up, or use a metric such as ROC-AUC, because always
+    predicting the common value already scores well on accuracy.
+
+dominant_value_drop:
+  condition: {field: top_share, op: ">=", value: 0.9}
+  checks: [dominant_value]
+  codes: [dominant_value]
+  action: drop
+  when: the column is a feature
+  message: >
+    The column is close to constant and gives a model little to learn from. Drop
+    it unless the rare values mark events that matter.
+
+# ===================
+# HIGH CARDINALITY
+# ===================
+
+high_cardinality_target_encoding:
+  condition: {field: n_unique, op: ">", value: 50}
+  checks: [high_cardinality]
+  codes: [high_cardinality]
+  action: encode
+  method: target_encoding
+  when: a target is available
+  message: >
+    Replace each value with the mean of the target, computed on the training
+    fold only, so the encoding does not leak the target.
+
+high_cardinality_bucket_rare:
+  condition: {field: n_unique, op: ">", value: 50}
+  checks: [high_cardinality]
+  codes: [high_cardinality]
+  action: group
+  method: bucket_rare_values
+  message: >
+    Collapse values that are rare into an Other bucket before encoding.

@@ -33,8 +33,9 @@ class Difference:
 class Accepted:
     """A difference that is intended, and why the core check is right.
 
-    ``dataset`` is a golden dataset name; ``subject`` is the column the difference is
-    about, or empty for the whole check.
+    ``check`` is the legacy task whose result differs: two tasks can share a core check,
+    and each is judged against its own entries. ``dataset`` is a golden dataset name;
+    ``subject`` is the column the difference is about, or empty for the whole check.
     """
 
     check: str

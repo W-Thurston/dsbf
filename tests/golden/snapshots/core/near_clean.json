@@ -1,5 +1,102 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "f5513df681d73bc1",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 2542,
+      "top_share": 0.847333
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "is_churned"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "ca5f521d50d8bd89",
+     "metrics": {
+      "n_unique": 3,
+      "top_count": 2123,
+      "top_share": 0.707667
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "c10ae6e0c98f7d35",
+     "metrics": {
+      "null_count": 191,
+      "null_share": 0.0636667
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [],
    "status": "ok",

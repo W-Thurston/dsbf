@@ -1,5 +1,197 @@
 {
  "checks": {
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [
+    {
+     "check": "high_cardinality",
+     "code": "high_cardinality",
+     "id": "7385b0065f43f532",
+     "metrics": {
+      "distinct_share": 0.247,
+      "max_distinct": 50,
+      "n_unique": 247
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "cat_hc"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "def28e9b5e5f14e4",
+     "metrics": {
+      "null_count": 101,
+      "null_share": 0.101
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_00"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "ee348139a6d837e2",
+     "metrics": {
+      "null_count": 99,
+      "null_share": 0.099
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_01"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "fe82fbc02c3b1b07",
+     "metrics": {
+      "null_count": 113,
+      "null_share": 0.113
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_02"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "3ed67620904cd11d",
+     "metrics": {
+      "null_count": 106,
+      "null_share": 0.106
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_03"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "17f133416ae78e38",
+     "metrics": {
+      "null_count": 120,
+      "null_share": 0.12
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_04"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "f024d7723c93a96b",
+     "metrics": {
+      "null_count": 120,
+      "null_share": 0.12
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_05"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "686453eb9ea6c468",
+     "metrics": {
+      "null_count": 103,
+      "null_share": 0.103
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_06"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "null_rate",
+     "code": "high_null_rate",
+     "id": "dc3630628740dafe",
+     "metrics": {
+      "null_count": 113,
+      "null_share": 0.113
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_07"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "zeros": {
    "findings": [],
    "status": "ok",

@@ -128,7 +128,7 @@ and `identify_bottleneck_tasks`, which return failed results instead of raising.
 - [x] Separately, about 60 tasks repeat the same `try/except: if self.context: raise / else make_failure_result` block. Move it into a template method on `BaseTask` (see [N-B3](#b-engine-architecture)).
 
 ### F-07 Documented config keys are silently ignored
-**Status (2026-10-19): Partial.** Checks declare their parameters, and the planner rejects an unknown key or a value out of bounds (U1-09 #77, U3-04 #91). Adapted legacy tasks still take their config as a free dict (`LegacyParams.task`), so the ignored keys in the table, `ignore_null_type ... or True` (`detect_mixed_type_columns.py:72`) and 43 `get_task_param(x) or default` calls remain until each task migrates (U4-04 to U4-15). `dsbf.profile(target=...)` (U3-12 #99) is one setting, but it fills only the `target_column` keys, so `detect_target_drift` (which reads `target`) never sees it; the target-aware checks take the one setting in U4-12 and U4-14.
+**Status (2026-10-19): Partial.** Checks declare their parameters, and the planner rejects an unknown key or a value out of bounds (U1-09 #77, U3-04 #91). Adapted legacy tasks still take their config as a free dict (`LegacyParams.task`), so the ignored keys in the table, `ignore_null_type ... or True` (`detect_mixed_type_columns.py:72`) and 43 `get_task_param(x) or default` calls remain until each task migrates (U4-05 to U4-15; the nine column health checks of U4-04 take their bounded params from `CheckParams`). `dsbf.profile(target=...)` (U3-12 #99) is one setting, but it fills only the `target_column` keys, so `detect_target_drift` (which reads `target`) never sees it; the target-aware checks take the one setting in U4-12 and U4-14.
 
 **(verified)** A script cross-checked `default_config.yaml` against the keys each task reads:
 
@@ -174,7 +174,7 @@ silently mis-attributes the pair instead.
 - [x] Store pairs as `{"a": ..., "b": ..., ...}` records, or use a nested `{col1: {col2: ...}}` map, instead of encoded string keys.
 
 ### F-11 Semantic-type filtering is still bypassed in places
-**Status (2026-10-20): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's first check, `zeros`, does (U4-02). The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; U4-04 decides that with `id_columns`.
+**Status (2026-10-20): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's checks do: `zeros` (U4-02) and the nine column health checks (U4-04), which declare `applies_to` and read `ctx.profile` only; the adversarial test runs all ten. The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; `id_columns` (U4-04) reads a numeric integer column with no repeat and no gap as a row number.
 
 v0.20.0 fixed tasks iterating over `df.columns` instead of `matched_cols`. The same bug class
 remains: `detect_data_leakage.py:73` computes correlations over
@@ -367,7 +367,7 @@ generator at 5k and 50k rows, and an adversarial frame. The stage-by-stage measu
 [`WALKTHROUGH.md`](WALKTHROUGH.md). Everything below is **verified**.
 
 ### F-31 Tasks crash when run outside the repo root
-**Status (2026-10-19): Partial.** U0-07 (#50) loads package data with `importlib.resources` and makes a failed tip lookup return no tip. `eval` on the YAML conditions remains (`utils/reco_engine.py:54`) until U4-04. A CI job that installs the wheel and runs from a temporary directory is U5-09; U1-05 (#72) checked this by hand.
+**Status (2026-10-19): Partial.** U0-07 (#50) loads package data with `importlib.resources` and makes a failed tip lookup return no tip. U4-04 replaced `eval` with declarative `{field, op, value}` conditions (`engine/tips.py`), validated when the library loads; core checks get tips after they return, and a failed lookup is a note. A CI job that installs the wheel and runs from a temporary directory is U5-09; U1-05 (#72) checked this by hand.
 
 `dsbf/utils/reco_engine.py:7` opens `Path("dsbf/static_metadata/recommendation_library.yaml")`
 relative to the CWD. Twelve tasks call `get_recommendation_tip()` inside their main `try` block, so
@@ -377,7 +377,7 @@ Readiness tab are empty**, as are `transformation_preview` and `normality_qq_plo
 every pip-installed user and anyone running from a different directory.
 - [x] Load package data with `importlib.resources.files("dsbf.static_metadata")`. Audit every other `Path("dsbf/...")` / `open("dsbf/...")` call.
 - [x] Make enrichment non-fatal: a missing tip should produce no tip, not a failed task.
-- [ ] `get_recommendation_tip()` runs `eval(condition, {}, context_vars)` on YAML strings (`reco_engine.py:28`). With empty globals, Python still injects builtins. Replace it with a small declarative condition format (`{"field": ..., "op": ">", "value": ...}`).
+- [x] `get_recommendation_tip()` ran `eval(condition, {}, context_vars)` on YAML strings (`reco_engine.py:28`). With empty globals, Python still injects builtins. Replace it with a small declarative condition format (`{"field": ..., "op": ">", "value": ...}`).
 - [ ] Add a CI job that runs one profile from a temp directory against an installed wheel.
 
 ### F-32 Listwise deletion across all numeric columns

@@ -30,6 +30,7 @@ ProfileFeature = Literal[
     "top_values",
     "text_shape",
     "datetime",
+    "content_hash",
     "missingness",
     "duplicate_rows",
 ]
