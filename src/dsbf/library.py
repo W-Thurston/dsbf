@@ -151,6 +151,7 @@ def profile(
             plugins=settings.plugins,
         ),
         superseded,
+        params=_target_params(registry, settings),
         profile=data_profile,
     )
     workers = settings.workers
@@ -166,6 +167,22 @@ def profile(
         workers=workers,
         cache=DiskCache.default() if cache is True else cache or None,
     )
+
+
+def _target_params(
+    registry: Registry, settings: ProfileConfig
+) -> dict[str, dict[str, Any]]:
+    """The ``target`` setting, as the ``target`` parameter of each check that has one.
+
+    The legacy tasks read it from their own ``target_column`` keys (``_legacy_config``).
+    """
+    if settings.target is None:
+        return {}
+    return {
+        check.spec.id: {"target": settings.target}
+        for check in registry
+        if "target" in check.spec.params.model_fields
+    }
 
 
 def _default_workers(plan: Plan) -> int | None:

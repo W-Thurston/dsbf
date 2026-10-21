@@ -50,8 +50,8 @@ def to_output(
     A task that returns ``failed`` or ``skipped`` instead of raising ends the check
     ``error`` or ``skipped`` with a note taken from its result; anything else is
     ``ok``, the output is the result itself and each guidance blurb becomes a finding.
-    A task superseded by a core check keeps its output and records no findings, with
-    a note that says which check reports them.
+    A task superseded by core checks keeps its output and records no findings, with a
+    note that says what reports them.
     """
     message = str(result.summary.get("message") or "")
     if result.status == "failed":
@@ -78,8 +78,8 @@ def to_output(
     else:
         ctx.note(
             "findings_superseded",
-            f"{ctx.spec.id} ran as an input of another task; its findings are "
-            f"reported by {superseded_by}.",
+            f"{ctx.spec.id} ran as an input of another task; what it reports is "
+            f"now reported by {superseded_by}.",
         )
     return ctx.output(LegacyTaskOutput(result=stored))
 

@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -8,6 +13,11 @@
   "dominant_value": {
    "findings": [],
    "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "dtype_optimizations": {
+   "findings": [],
+   "status": "ok",
    "version": "1.0.0"
   },
   "duplicate_columns": {
@@ -20,12 +30,22 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "entropy": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "high_cardinality": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
   },
   "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "kurtosis": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -54,6 +74,21 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },

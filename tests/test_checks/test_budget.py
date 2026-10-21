@@ -1,4 +1,4 @@
-"""The column health checks cost next to nothing, because they read the profile."""
+"""The rule checks cost next to nothing, because they read the profile."""
 
 import pytest
 
@@ -21,24 +21,51 @@ COLUMN_HEALTH = (
     "duplicate_columns",
     "text_encoding",
 )
+SHAPE_AND_TYPES = (
+    "skewness",
+    "kurtosis",
+    "entropy",
+    "dtype_optimizations",
+    "sample_size",
+    "class_imbalance",
+)
 BUDGET_SECONDS = 0.05
 
 
-def test_the_nine_checks_take_under_50_ms_together_on_kitchen50k() -> None:
+@pytest.fixture(scope="module")
+def kitchen50k():
     frame = DSBFTestDataGenerator(n_rows=50_000, random_seed=42).generate()
     dataset = load(frame, name="kitchen50k")
-    profile = profile_dataset(dataset)
+    return dataset, profile_dataset(dataset)
+
+
+def total_seconds(kitchen50k, check_ids: tuple[str, ...], **params) -> float:
+    dataset, profile = kitchen50k
     plan = make_plan(
         Registry(core_pack().checks),
-        Selection(include=COLUMN_HEALTH),
+        Selection(include=check_ids),
+        params=params or None,
         profile=profile,
     )
 
     run = execute(plan, dataset, profile, dsbf_version="test", workers=1)
 
-    results = [run.results[check_id] for check_id in COLUMN_HEALTH]
-    assert [r.status.value for r in results] == ["ok"] * len(COLUMN_HEALTH)
+    results = [run.results[check_id] for check_id in check_ids]
+    assert [r.status.value for r in results] == ["ok"] * len(check_ids)
     total = sum(r.timing.wall_seconds for r in results)
     assert total < BUDGET_SECONDS, {
         r.check_id: round(r.timing.wall_seconds, 4) for r in results
     }
+    return total
+
+
+def test_the_nine_checks_take_under_50_ms_together_on_kitchen50k(kitchen50k) -> None:
+    total_seconds(kitchen50k, COLUMN_HEALTH)
+
+
+def test_the_six_shape_and_type_checks_take_under_50_ms_on_kitchen50k(
+    kitchen50k,
+) -> None:
+    total_seconds(
+        kitchen50k, SHAPE_AND_TYPES, class_imbalance={"target": "balanced_target"}
+    )

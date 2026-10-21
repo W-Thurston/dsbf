@@ -1,11 +1,21 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
   "dominant_value": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dtype_optimizations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -20,6 +30,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "high_cardinality": {
    "findings": [],
    "status": "ok",
@@ -30,6 +45,28 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "kurtosis": {
+   "findings": [
+    {
+     "check": "kurtosis",
+     "code": "heavy_tails",
+     "id": "6bea91ebdd23ca87",
+     "metrics": {
+      "kurtosis": 1.19214,
+      "skewness": -0.783489
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "z"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
@@ -37,6 +74,93 @@
   },
   "null_rate": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [
+    {
+     "check": "sample_size",
+     "code": "too_few_rows_general_ml",
+     "id": "d1a9ed0db6537911",
+     "metrics": {
+      "n_features": 5,
+      "required_rows": 1000,
+      "rows": 25,
+      "rows_per_feature": 5.0,
+      "shortfall": 975
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    },
+    {
+     "check": "sample_size",
+     "code": "too_few_rows_linear_model",
+     "id": "88c24e70f7d5264c",
+     "metrics": {
+      "n_features": 5,
+      "required_rows": 100,
+      "rows": 25,
+      "rows_per_feature": 5.0,
+      "shortfall": 75
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    },
+    {
+     "check": "sample_size",
+     "code": "too_few_rows_tree_model",
+     "id": "b0b50e56338dfb81",
+     "metrics": {
+      "n_features": 5,
+      "required_rows": 100,
+      "rows": 25,
+      "rows_per_feature": 5.0,
+      "shortfall": 75
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [
+    {
+     "check": "skewness",
+     "code": "skewed",
+     "id": "d77d5229263d6510",
+     "metrics": {
+      "mean": 20.5656,
+      "median": 20.7,
+      "min": 4.05,
+      "skewness": -0.783489,
+      "std": 5.86363
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "z"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },

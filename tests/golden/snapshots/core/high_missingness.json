@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -20,6 +25,102 @@
      "subject": {
       "columns": [
        "is_churned"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dtype_optimizations": {
+   "findings": [
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "7b50dab0477073b3",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 15189,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "channel"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "02272b618b500571",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 18704,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "device_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "a59848c96068f8e7",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 33764,
+      "n_unique": 6,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "notes"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "93abb082fccb9921",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 19027,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "f5979639fb37af87",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 14989,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
       ],
       "kind": "column"
      }
@@ -53,12 +154,22 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "high_cardinality": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
   "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "kurtosis": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -151,6 +262,21 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },

@@ -5,45 +5,81 @@ from collections.abc import Collection, Mapping
 from dataclasses import replace
 from typing import Any
 
+from dsbf.checks import CORE_PACK
 from dsbf.engine import Plan, Registry, Selection, make_plan
 from dsbf.legacy.adapter import UNDECLARED_READS
 from dsbf.model import DatasetProfile
 
-# Legacy task to the core check that replaces it. A unit that migrates a task adds it
-# here, and the mapping goes when the last task does.
-SUPERSEDED_BY: Mapping[str, str] = {
-    "detect_zeros": "zeros",
-    "summarize_nulls": "null_rate",
-    "detect_constant_columns": "constant_columns",
-    "detect_high_cardinality": "high_cardinality",
-    "detect_id_columns": "id_columns",
-    "detect_single_dominant_value": "dominant_value",
-    "summarize_boolean_fields": "dominant_value",
-    "detect_near_zero_variance": "near_zero_variance",
-    "detect_duplicates": "duplicate_rows",
-    "detect_duplicate_columns": "duplicate_columns",
+# Legacy task to the core checks that replace it. A unit that migrates a task adds it
+# here, and the mapping goes when the last task does. A task whose findings are
+# several checks' (`summarize_numeric` raised a near-zero-variance and a mean–median
+# finding) is replaced only when all of them are selected, or a finding would vanish.
+SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
+    "detect_zeros": ("zeros",),
+    "summarize_nulls": ("null_rate",),
+    "detect_constant_columns": ("constant_columns",),
+    "detect_high_cardinality": ("high_cardinality",),
+    "detect_id_columns": ("id_columns",),
+    "detect_single_dominant_value": ("dominant_value",),
+    "summarize_boolean_fields": ("dominant_value",),
+    "detect_near_zero_variance": ("near_zero_variance",),
+    "detect_duplicates": ("duplicate_rows",),
+    "detect_duplicate_columns": ("duplicate_columns",),
+    "detect_skewness": ("skewness",),
+    "summarize_numeric": ("near_zero_variance", "skewness"),
+    "compute_kurtosis": ("kurtosis",),
+    "compute_entropy": ("entropy",),
+    "suggest_dtype_optimizations": ("dtype_optimizations",),
+    "sample_size_adequacy": ("sample_size",),
+    "detect_class_imbalance": ("class_imbalance",),
+    "schema_validation": ("schema",),
 }
+
+# Tasks that restate the profile and raise no finding of their own. No check replaces
+# them: the profile holds what they computed, so they are replaced whenever the core
+# pack is selected.
+RETIRED_TASKS: frozenset[str] = frozenset(
+    {
+        "summarize_unique",
+        "summarize_value_counts",
+        "summarize_modes",
+        "summarize_text_fields",
+        "summarize_dataset_shape",
+        "categorical_length_stats",
+        "missingness_heatmap",
+        "infer_types",
+        "sample_head",
+        "sample_tail",
+    }
+)
+
+PROFILE = "the profile"
 
 
 def superseded_tasks(
     packs: Collection[str],
     core_checks: Mapping[str, Collection[str]],
     include: Collection[str] = (),
-    mapping: Mapping[str, str] = SUPERSEDED_BY,
+    mapping: Mapping[str, tuple[str, ...]] = SUPERSEDED_BY,
+    retired: Collection[str] = RETIRED_TASKS,
 ) -> dict[str, str]:
-    """The tasks replaced in a run that selects ``packs``, with the check for each.
+    """The tasks replaced in a run that selects ``packs``, with what replaces each.
 
     ``core_checks`` maps a pack name to the ids of its checks (``Registry.packs``). A
-    task is replaced when the check that supersedes it is in a selected pack, unless
+    task is replaced when every check that supersedes it is in a selected pack, unless
     the caller named the task in ``include``: asking for a task by id gets the task as
-    it was, findings and all.
+    it was, findings and all. A retired task is replaced by the profile whenever the
+    core pack is selected.
     """
     selected = {check for pack in packs for check in core_checks.get(pack, ())}
-    return {
-        task: check
-        for task, check in mapping.items()
-        if check in selected and task not in include
+    replaced = {
+        task: " and ".join(checks)
+        for task, checks in mapping.items()
+        if set(checks) <= selected and task not in include
     }
+    if CORE_PACK in packs:
+        replaced.update({task: PROFILE for task in retired if task not in include})
+    return replaced
 
 
 def make_legacy_plan(

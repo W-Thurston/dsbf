@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -45,12 +50,149 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "dtype_optimizations": {
+   "findings": [
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "2242f60e7403d009",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 7970,
+      "n_unique": 6,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "category"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "69905a5dcb06ea43",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 14968,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "color"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "26f8c41d8929e38b",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 21781,
+      "n_unique": 2,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "dominant"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "8453bdde80c69f1b",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 16708,
+      "n_unique": 5,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "material"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "f5979639fb37af87",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 14962,
+      "n_unique": 4,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "e50bbc4e07dc05a9",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 16643,
+      "n_unique": 3,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "size"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "45df643dd16c8259",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 11609,
+      "n_unique": 581,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "tag"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "duplicate_columns": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
   "duplicate_rows": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "entropy": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -83,6 +225,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "kurtosis": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "not_applicable",
@@ -91,6 +238,21 @@
   "null_rate": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "text_encoding": {

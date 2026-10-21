@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from dsbf.checks import core_pack
 from dsbf.engine import tips
 from dsbf.model import (
     Confidence,
@@ -103,6 +104,13 @@ def test_the_packaged_library_is_valid_and_every_tip_names_who_it_advises():
     assert library
     for name, tip in library.items():
         assert tip.checks or tip.applicable_to, name
+
+
+def test_every_check_a_tip_advises_is_in_the_core_pack():
+    core = {check.id for check in core_pack().checks}
+
+    for name, tip in tips.load_library().items():
+        assert set(tip.checks) <= core, name
 
 
 def test_no_code_in_the_package_calls_eval():

@@ -144,6 +144,28 @@ class TestMigratedChecks:
         assert run.results["detect_zeros"].findings
         assert run.results["zeros"].findings
 
+    def test_the_target_setting_drives_class_imbalance(self, frame):
+        run = dsbf.profile(frame, depth="quick", target="flag")
+
+        planned = {c.check_id: c for c in run.plan.checks}["class_imbalance"]
+        assert planned.params["target"] == "flag"
+        output = run.results["class_imbalance"].output
+        assert output is not None
+        assert output["target"] == "flag"
+
+    def test_without_a_target_class_imbalance_is_not_applicable(self, frame):
+        run = dsbf.profile(frame, depth="quick")
+
+        assert run.results["class_imbalance"].status is CheckStatus.NOT_APPLICABLE
+        assert run.results["schema"].status is CheckStatus.NOT_APPLICABLE
+
+    def test_a_retired_task_runs_only_for_the_scorer_that_reads_it(self, frame):
+        run = dsbf.profile(frame, depth="quick")
+
+        for task in ("summarize_unique", "sample_head", "compute_entropy"):
+            assert task not in run.results or run.results[task].findings == ()
+        assert run.results["infer_types"].findings == ()
+
     def test_a_check_in_its_own_pack_can_be_run_alone(self, sparse):
         run = dsbf.profile(sparse, packs=["core"])
 
@@ -199,10 +221,10 @@ class TestSelection:
         )
 
         params = {c.check_id: c.params for c in run.plan.checks}
-        assert params["detect_class_imbalance"]["task"]["target_column"] == "flag"
         assert params["compute_mutual_information"]["task"]["target_column"] == "flag"
-        assert params["detect_class_imbalance"]["shared"]["time_series"] == {
-            **params["detect_class_imbalance"]["shared"]["time_series"],
+        assert params["class_imbalance"]["target"] == "flag"
+        assert params["compute_mutual_information"]["shared"]["time_series"] == {
+            **params["compute_mutual_information"]["shared"]["time_series"],
             "enabled": True,
             "datetime_index_column": "when",
         }

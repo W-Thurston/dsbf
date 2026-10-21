@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import pytest
 
-from dsbf.legacy import SUPERSEDED_BY
+from dsbf.legacy import RETIRED_TASKS, SUPERSEDED_BY
 from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
+from tests.golden.migration.distribution import merge_core
 from tests.golden.migration.findings import unmapped_titles
 from tests.golden.migration.harness import compare, judge
 from tests.golden.migration.registry import ACCEPTED, COMPARATORS
@@ -30,12 +31,12 @@ def test_a_core_check_differs_from_its_task_only_where_accepted(
     run = engine_run(dataset)
     assert run.core is not None
     problems: list[str] = []
-    for task, check in sorted(SUPERSEDED_BY.items()):
+    for task, checks in sorted(SUPERSEDED_BY.items()):
         found = compare(
             task,
             COMPARATORS[task],
             run.report["checks"].get(task),
-            run.core["results"][check],
+            merge_core(run.core["results"], checks),
         )
         legacy = run.report["checks"].get(task)
         if legacy and legacy["status"] == "ok":
@@ -62,3 +63,20 @@ def test_a_core_check_differs_from_its_task_only_where_accepted(
             "other than as accepted.\n" + "\n".join(problems),
             pytrace=False,
         )
+
+
+@pytest.mark.parametrize("dataset", [_param(d) for d in GOLDEN_DATASETS])
+def test_a_retired_task_raises_no_finding_for_a_core_check_to_carry(
+    dataset: GoldenDataset, engine_run
+) -> None:
+    """The tasks that restate the profile are dropped, so each said nothing."""
+    run = engine_run(dataset)
+    spoken = {
+        task: unmapped_titles(task, entry["result"].get("guidance") or {})
+        for task in sorted(RETIRED_TASKS)
+        if (entry := run.report["checks"].get(task))
+        and entry["status"] == "ok"
+        and entry["result"].get("guidance")
+    }
+
+    assert spoken == {}, f"{dataset.name}: a retired task raised findings: {spoken}"

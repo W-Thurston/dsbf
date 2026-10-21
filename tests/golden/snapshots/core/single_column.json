@@ -1,5 +1,10 @@
 {
  "checks": {
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -8,6 +13,11 @@
   "dominant_value": {
    "findings": [],
    "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "dtype_optimizations": {
+   "findings": [],
+   "status": "ok",
    "version": "1.0.0"
   },
   "duplicate_columns": {
@@ -35,6 +45,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "entropy": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "high_cardinality": {
    "findings": [],
    "status": "not_applicable",
@@ -45,6 +60,28 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "kurtosis": {
+   "findings": [
+    {
+     "check": "kurtosis",
+     "code": "heavy_tails",
+     "id": "a9c1f8d9e33c69eb",
+     "metrics": {
+      "kurtosis": 7.21226,
+      "skewness": 2.14027
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
@@ -52,6 +89,59 @@
   },
   "null_rate": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [
+    {
+     "check": "sample_size",
+     "code": "too_few_rows_general_ml",
+     "id": "d1a9ed0db6537911",
+     "metrics": {
+      "n_features": 1,
+      "required_rows": 1000,
+      "rows": 500,
+      "rows_per_feature": 500.0,
+      "shortfall": 500
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [
+    {
+     "check": "skewness",
+     "code": "skewed",
+     "id": "2aaff121f3fcdcf7",
+     "metrics": {
+      "mean": 38.878,
+      "median": 33.18,
+      "min": 7.1,
+      "skewness": 2.14027,
+      "std": 24.9758
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
