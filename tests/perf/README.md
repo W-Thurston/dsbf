@@ -42,7 +42,7 @@ An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`.
 | `engine-titanic-parallel` | titanic | 3, median kept | `deep` | the executor's default (one per core, at most 8) | |
 | `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | `deep` | 1 | |
 | `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | `deep` | one per core | |
-| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one, for legacy tasks only) | under 5 s |
+| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one, while a legacy task is in the plan) | under 5 s |
 | `standard-kitchen50k` | kitchen50k, `normal_date` as the time index | 1 | `standard` | `dsbf.profile()`'s choice | under 60 s and 1 GB peak |
 
 ## Run it

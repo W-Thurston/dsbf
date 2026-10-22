@@ -96,8 +96,8 @@ def profile(
     ``Sample`` of the rows (or the first ``n`` rows, given a number) and the ``Run``
     records how they were chosen. ``backend`` is the frame library the legacy tasks
     are handed (``pandas`` unless set). ``limits`` bounds the time of a check and of
-    the run, ``workers`` is how many checks run at once (one when every planned
-    check is a legacy task, else one per core, at most 8), ``plugins`` are
+    the run, ``workers`` is how many checks run at once (one while a legacy
+    task is planned, else one per core, at most 8), ``plugins`` are
     directories of check plugins, and ``tasks`` maps a legacy task's name to its
     settings.
 
@@ -186,21 +186,19 @@ def _target_params(
 
 
 def _default_workers(plan: Plan) -> int | None:
-    """One worker for a plan of legacy tasks and rule checks, else the default.
+    """One worker for a plan that has any legacy task, else the default.
 
     The legacy tasks are mostly Python holding the interpreter lock, so on threads
     they wait for each other: on the 4-core CI runner every task run at once took
-    3% (titanic) and 7% (kitchen5k) longer than one at a time. A rule check reads
-    the profile and takes microseconds, so it doesn't change that. A task superseded
-    by a core check is in its own pack but is still a legacy task.
+    3% (titanic) and 7% (kitchen5k) longer than one at a time, and each task's own
+    wall time grew many times over once the analysis checks ran beside them (a
+    `kruskal_wallis` that takes 0.05 s alone took 1.7 s). A core check beside them
+    is as cheap run in turn as in parallel, so the legacy tasks keep the interpreter
+    to themselves until the last of them leaves the default selection. A task
+    superseded by a core check is in its own pack but is still a legacy task.
     """
-    legacy = [
-        e for e in plan if {LEGACY_PACK, SUPERSEDED_PACK} & set(e.check.spec.packs)
-    ]
-    others = [e for e in plan if e not in legacy]
-    if legacy and all(e.check.spec.kind == "rule" for e in others):
-        return 1
-    return None
+    legacy = any({LEGACY_PACK, SUPERSEDED_PACK} & set(e.check.spec.packs) for e in plan)
+    return 1 if legacy else None
 
 
 def _settings(

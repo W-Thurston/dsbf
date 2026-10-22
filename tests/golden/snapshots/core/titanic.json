@@ -1,5 +1,10 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -333,8 +338,109 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [
+    {
+     "check": "multivariate_outliers",
+     "code": "multivariate_anomalies",
+     "id": "d44a433a5ece8920",
+     "metrics": {
+      "contamination": 0.05,
+      "example_rows": [
+       679,
+       258,
+       737,
+       438,
+       299,
+       305,
+       311,
+       27,
+       742,
+       297,
+       88,
+       341,
+       689,
+       700,
+       118,
+       380,
+       779,
+       716,
+       268,
+       195
+      ],
+      "max_anomaly_score": 0.760383,
+      "n_features": 2,
+      "n_flagged": 45
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "fare"
+      ],
+      "kind": "row_set"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "normality": {
+   "findings": [
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "840a00c56c317e95",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 8.32406e-05,
+      "jarque_bera_statistic": 18.7876,
+      "mean_abs_deviation_in_std": 0.104725,
+      "min": 0.42,
+      "primary_p_value": 7.33735e-08,
+      "primary_statistic": 0.981458,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "left_tail",
+      "skewness": 0.389108
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "15cefa706344b571",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 44323.2,
+      "mean_abs_deviation_in_std": 0.580687,
+      "min": 0.0,
+      "primary_p_value": 1.08404e-43,
+      "primary_statistic": 0.521891,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "heavy_tails",
+      "skewness": 4.78732
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -368,6 +474,93 @@
      "subject": {
       "columns": [
        "deck"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "f563e593a6d0fbaf",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 11,
+      "lower_fence": -6.6875,
+      "mad_count": 1,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.0154062,
+      "top_values": [
+       80.0,
+       74.0,
+       71.0,
+       71.0,
+       70.5,
+       70.0,
+       70.0,
+       66.0,
+       65.0,
+       65.0
+      ],
+      "upper_fence": 64.8125,
+      "zscore_count": 2
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "fb0cf09d5273cdc9",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 116,
+      "lower_fence": -26.724,
+      "mad_count": 160,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.179574,
+      "top_values": [
+       512.329,
+       512.329,
+       512.329,
+       263.0,
+       263.0,
+       263.0,
+       263.0,
+       262.375,
+       262.375,
+       247.521
+      ],
+      "upper_fence": 65.6344,
+      "zscore_count": 20
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "fare"
       ],
       "kind": "column"
      }

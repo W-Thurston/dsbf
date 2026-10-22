@@ -1,29 +1,34 @@
-Plan for data (6 × 4): 23 checks
-  will run 20 · not applicable 1 · unavailable 1 · skipped 1
+Plan for data (6 × 4): 28 checks
+  will run 25 · not applicable 1 · unavailable 1 · skipped 1
 
 level 0
-  ✓ will run        class_imbalance       reads 2 columns
-  ✓ will run        constant_columns      reads 4 columns
-  – not applicable  date_gaps             No column is of a type date_gaps applies to (datetime).
-  ✓ will run        dominant_value        reads 2 columns
-  ✓ will run        dtype_optimizations   reads 4 columns
-  ✓ will run        duplicate_columns     reads 4 columns
+  ✓ will run        bimodality             reads 2 columns
+  ✓ will run        class_imbalance        reads 2 columns
+  ✓ will run        constant_columns       reads 4 columns
+  – not applicable  date_gaps              No column is of a type date_gaps applies to (datetime).
+  ✓ will run        dominant_value         reads 2 columns
+  ✓ will run        dtype_optimizations    reads 4 columns
+  ✓ will run        duplicate_columns      reads 4 columns
   ✓ will run        duplicate_rows
-  ✓ will run        entropy               reads 2 columns
-  ✓ will run        high_cardinality      reads 2 columns
-  ✓ will run        id_columns            reads 4 columns
-  ✓ will run        kurtosis              reads 2 columns
-  ✓ will run        near_zero_variance    reads 2 columns
-  ✓ will run        null_rate             reads 4 columns
-  ✓ will run        null_share            reads 4 columns · required by quality_summary
-  ✓ will run        numeric_spread        reads 2 columns
-  ✓ will run        sample_size           reads 4 columns
-  ✓ will run        schema                reads 4 columns
-  ✓ will run        skewness              reads 2 columns
-  ⦸ unavailable     stationarity          Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`. · required by trend_summary
-  ✓ will run        text_encoding         reads 4 columns
-  ✓ will run        zeros                 reads 2 columns
+  ✓ will run        entropy                reads 2 columns
+  ✓ will run        high_cardinality       reads 2 columns
+  ✓ will run        id_columns             reads 4 columns
+  ✓ will run        kurtosis               reads 2 columns
+  ✓ will run        multivariate_outliers  reads 2 columns
+  ✓ will run        near_zero_variance     reads 2 columns
+  ✓ will run        normality              reads 2 columns
+  ✓ will run        null_rate              reads 4 columns
+  ✓ will run        null_share             reads 4 columns · required by quality_summary
+  ✓ will run        numeric_spread         reads 2 columns
+  ✓ will run        out_of_bounds          reads 2 columns
+  ✓ will run        outliers               reads 2 columns
+  ✓ will run        sample_size            reads 4 columns
+  ✓ will run        schema                 reads 4 columns
+  ✓ will run        skewness               reads 2 columns
+  ⦸ unavailable     stationarity           Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`. · required by trend_summary
+  ✓ will run        text_encoding          reads 4 columns
+  ✓ will run        zeros                  reads 2 columns
 
 level 1
-  ✓ will run        quality_summary       requires null_share · after numeric_spread
-  ↷ skipped         trend_summary         Requires 'stationarity' (unavailable), which cannot run.
+  ✓ will run        quality_summary        requires null_share · after numeric_spread
+  ↷ skipped         trend_summary          Requires 'stationarity' (unavailable), which cannot run.

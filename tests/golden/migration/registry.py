@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from tests.golden.migration.accepted import ACCEPTED
+from tests.golden.migration.accepted import ACCEPTED as _ACCEPTED
+from tests.golden.migration.accepted_analysis import ACCEPTED_ANALYSIS
+from tests.golden.migration.analysis import (
+    compare_bimodality,
+    compare_normality,
+    compare_outliers,
+    compare_qq,
+)
 from tests.golden.migration.column_health import (
     compare_boolean_fields,
     compare_constant_columns,
@@ -26,6 +33,8 @@ from tests.golden.migration.distribution import (
 from tests.golden.migration.harness import Accepted, Comparator
 from tests.golden.migration.zeros import compare_zeros
 
+ACCEPTED = (*_ACCEPTED, *ACCEPTED_ANALYSIS)
+
 # Legacy task to its comparator. The core check that replaces the task is
 # ``dsbf.legacy.SUPERSEDED_BY``'s value for it; two tasks can share a check, and a
 # task can be replaced by several.
@@ -48,6 +57,11 @@ COMPARATORS: dict[str, Comparator] = {
     "sample_size_adequacy": compare_sample_size,
     "detect_class_imbalance": compare_not_run,
     "schema_validation": compare_not_run,
+    "detect_outliers": compare_outliers,
+    "normality_tests": compare_normality,
+    "normality_qq_plots": compare_qq,
+    "detect_bimodal_distribution": compare_bimodality,
+    "detect_out_of_bounds": compare_not_run,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "Accepted"]

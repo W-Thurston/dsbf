@@ -33,6 +33,11 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "sample_size_adequacy": ("sample_size",),
     "detect_class_imbalance": ("class_imbalance",),
     "schema_validation": ("schema",),
+    "detect_outliers": ("outliers", "multivariate_outliers"),
+    "normality_tests": ("normality",),
+    "normality_qq_plots": ("normality",),
+    "detect_bimodal_distribution": ("bimodality",),
+    "detect_out_of_bounds": ("out_of_bounds",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

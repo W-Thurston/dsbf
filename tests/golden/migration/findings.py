@@ -10,7 +10,7 @@ import re
 from collections.abc import Collection, Mapping, Sequence
 from typing import Any
 
-from tests.golden.migration.harness import Difference
+from tests.golden.migration.harness import Difference, Result
 
 # The legacy guidance key for the dataset as a whole, and the core subject for it.
 LEGACY_DATASET = "__dataset__"
@@ -75,6 +75,21 @@ def compare_levels(
     return found
 
 
+def columns_read(old: Collection[str], new: Collection[str]) -> list[Difference]:
+    """The columns only one of them read."""
+    return [
+        Difference(
+            column, "column_read", "legacy only" if column in old else "core only"
+        )
+        for column in sorted(set(old) ^ set(new))
+    ]
+
+
+def only_codes(core: Result, codes: Collection[str]) -> Result:
+    """The core result with just the findings of the given codes."""
+    return {**core, "findings": [f for f in core["findings"] if f["code"] in codes]}
+
+
 # Each legacy blurb title (a pattern) to the core finding code that carries it. A task
 # raises an `eda` and an `ml` blurb for each case, and the core check raises one
 # finding with the `ml` advice as tips on it, so both map to the same code. A blurb
@@ -132,6 +147,22 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
     # Its findings were reliability warnings, which are not guidance, and it is off by
     # default: the `schema` check raises findings of its own codes.
     "schema_validation": (),
+    "detect_outliers": (
+        (r"^Outliers: \d+ method\(s\) agree", "outliers_detected"),
+        (r"^Outlier Sensitivity \(", "outliers_detected"),
+        (r"^Multivariate Anomalies: ", "multivariate_anomalies"),
+    ),
+    "normality_tests": (
+        (r"^Non-Normal Distribution \(", "non_normal"),
+        (r"^Normality Assumption May Not Hold", "non_normal"),
+    ),
+    # The plot's pattern is part of the `non_normal` message and its Q-Q data.
+    "normality_qq_plots": ((r"^QQ Plot: ", "non_normal"),),
+    "detect_bimodal_distribution": (
+        (r"^Bimodal Distribution \(", "bimodal"),
+        (r"^Non-Gaussian Shape - Two Peaks", "bimodal"),
+    ),
+    "detect_out_of_bounds": ((r"^Out-of-Bounds Values", "out_of_bounds"),),
 }
 
 

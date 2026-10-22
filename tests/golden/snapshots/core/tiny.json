@@ -1,5 +1,10 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -67,12 +72,75 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [
+    {
+     "check": "multivariate_outliers",
+     "code": "multivariate_anomalies",
+     "id": "8615a969eba02326",
+     "metrics": {
+      "contamination": 0.05,
+      "example_rows": [
+       24,
+       6,
+       13,
+       12,
+       19,
+       14,
+       23,
+       20,
+       3,
+       22,
+       15,
+       2,
+       9,
+       21,
+       8,
+       1,
+       10,
+       7,
+       18,
+       16
+      ],
+      "max_anomaly_score": 0.633801,
+      "n_features": 3,
+      "n_flagged": 2
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "x",
+       "y",
+       "z"
+      ],
+      "kind": "row_set"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
+  "normality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "null_rate": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

@@ -535,3 +535,157 @@ gap_use_median:
   method: median
   message: >
     The mean no longer represents the centre. Summarise the column by its median.
+
+# ===================
+# OUTLIERS
+# ===================
+
+outliers_winsorize:
+  condition: {field: consensus, op: "==", value: true}
+  checks: [outliers]
+  codes: [outliers_detected]
+  action: winsorize
+  method: iqr_fences
+  when: the extremes are errors, or the model is linear or distance-based
+  message: >
+    Several rules agree these values are far from the rest. Cap them at the
+    fences in the finding, or at the 1st and 99th percentiles, once you have
+    checked they are not real.
+
+outliers_robust_scale:
+  condition: {field: outlier_share, op: ">", value: 0}
+  checks: [outliers]
+  codes: [outliers_detected]
+  action: scale
+  method: robust_scaler
+  when: the model is distance-based or uses gradient descent
+  message: >
+    Scale the column by its median and interquartile range, which a few extreme
+    values do not stretch the way they stretch the mean and standard deviation.
+
+outliers_verify_single_rule:
+  condition: {field: consensus, op: "==", value: false}
+  checks: [outliers]
+  codes: [outliers_detected]
+  action: investigate
+  message: >
+    Only one rule flags these values, and each rule makes assumptions the column
+    may not meet. Look at them before treating them as errors.
+
+multivariate_anomalies_review:
+  condition: {field: n_flagged, op: ">", value: 0}
+  checks: [multivariate_outliers]
+  codes: [multivariate_anomalies]
+  action: investigate
+  message: >
+    Look at the rows in `example_rows`. A row can be ordinary in every column and
+    unusual in their combination: a merged record, a sensor fault, or a rare case.
+
+# ===================
+# NORMALITY
+# ===================
+
+non_normal_yeo_johnson:
+  condition:
+    all:
+      - {field: mean_abs_deviation_in_std, op: ">=", value: 0.15}
+      - {field: min, op: "<", value: 0}
+  checks: [normality]
+  codes: [non_normal]
+  action: transform
+  method: yeo_johnson
+  when: the model assumes normal inputs
+  message: >
+    A Yeo-Johnson power transform handles negative values and pulls the column
+    toward a normal.
+
+non_normal_box_cox:
+  condition:
+    all:
+      - {field: mean_abs_deviation_in_std, op: ">=", value: 0.15}
+      - {field: min, op: ">", value: 0}
+  checks: [normality]
+  codes: [non_normal]
+  action: transform
+  method: box_cox
+  when: the model assumes normal inputs
+  message: >
+    A Box-Cox transform fits the power that makes the column closest to normal. It
+    needs values above zero.
+
+non_normal_judge_residuals:
+  condition: {field: alpha, op: ">", value: 0}
+  checks: [normality]
+  codes: [non_normal]
+  action: monitor
+  when: the model is linear
+  message: >
+    Linear models assume normal residuals, not normal inputs. Fit first, and
+    transform only if the residuals are far from normal.
+
+# ===================
+# BIMODALITY
+# ===================
+
+bimodal_segment:
+  condition: {field: bic_delta, op: ">", value: 0}
+  checks: [bimodality]
+  codes: [bimodal]
+  action: segment
+  when: a group column that splits the two peaks is known
+  message: >
+    Two peaks often mean two populations. Split by the column that separates them,
+    or add it, with an interaction, to the model.
+
+bimodal_cluster_indicator:
+  condition: {field: separation, op: ">=", value: 3}
+  checks: [bimodality]
+  codes: [bimodal]
+  action: add_feature
+  method: gmm_cluster_indicator
+  when: no known column explains the peaks
+  message: >
+    The peaks are cleanly apart. Add the cluster each value belongs to, from the
+    two-component mixture, as a feature.
+
+bimodal_tree_model:
+  condition: {field: bic_delta, op: ">", value: 0}
+  checks: [bimodality]
+  codes: [bimodal]
+  action: use_tree_model
+  message: >
+    Tree-based models split on thresholds and cope with two peaks without a
+    transform; linear and Gaussian models do not.
+
+# ===================
+# OUT OF BOUNDS
+# ===================
+
+out_of_bounds_investigate:
+  condition: {field: violation_count, op: ">", value: 0}
+  checks: [out_of_bounds]
+  codes: [out_of_bounds]
+  action: investigate
+  message: >
+    Find out whether the values outside the range are errors, a unit mismatch or
+    real cases the range does not allow for.
+
+out_of_bounds_cap:
+  condition: {field: violation_count, op: ">", value: 0}
+  checks: [out_of_bounds]
+  codes: [out_of_bounds]
+  action: winsorize
+  method: clip_to_bounds
+  when: the values are errors and the rows must be kept
+  message: >
+    Clip the column to its declared range.
+
+out_of_bounds_remove_rows:
+  condition: {field: violation_count, op: ">", value: 0}
+  checks: [out_of_bounds]
+  codes: [out_of_bounds]
+  action: remove_rows
+  when: the values are confirmed entry errors
+  message: >
+    Drop the rows with values outside the range. They would distort what a model
+    learns at the edges.

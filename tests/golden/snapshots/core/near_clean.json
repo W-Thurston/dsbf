@@ -1,5 +1,10 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -193,8 +198,160 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [
+    {
+     "check": "multivariate_outliers",
+     "code": "multivariate_anomalies",
+     "id": "f3f272888d67e05b",
+     "metrics": {
+      "contamination": 0.05,
+      "example_rows": [
+       678,
+       479,
+       2400,
+       859,
+       596,
+       1472,
+       802,
+       1720,
+       1517,
+       1301,
+       1369,
+       1327,
+       2389,
+       191,
+       1441,
+       1315,
+       684,
+       954,
+       1852,
+       2838
+      ],
+      "max_anomaly_score": 0.669273,
+      "n_features": 5,
+      "n_flagged": 150
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "income",
+       "purchase_amount",
+       "tenure_months",
+       "satisfaction"
+      ],
+      "kind": "row_set"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "normality": {
+   "findings": [
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "840a00c56c317e95",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 7.58889e-05,
+      "jarque_bera_statistic": 18.9725,
+      "mean_abs_deviation_in_std": 0.0571899,
+      "min": 28.0,
+      "primary_p_value": 2.33658e-08,
+      "primary_statistic": 0.995151,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "heavy_tails",
+      "skewness": -0.0246894
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "c769997b9f349f48",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 6118.53,
+      "mean_abs_deviation_in_std": 0.339973,
+      "min": 0.04,
+      "primary_p_value": 4.51197e-50,
+      "primary_statistic": 0.816978,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "heavy_tails",
+      "skewness": 1.98377
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "purchase_amount"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "9842d664f21dc03f",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 8.89365e-07,
+      "jarque_bera_statistic": 27.8655,
+      "mean_abs_deviation_in_std": 0.0509327,
+      "min": 1.7,
+      "primary_p_value": 1.65913e-07,
+      "primary_statistic": 0.99578,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0222517
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "satisfaction"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "8ce8a5b74c94a892",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 6.75925e-14,
+      "jarque_bera_statistic": 60.6506,
+      "mean_abs_deviation_in_std": 0.0792082,
+      "min": 2.0,
+      "primary_p_value": 2.1596e-14,
+      "primary_statistic": 0.98911,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "left_tail",
+      "skewness": 0.147222
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "tenure_months"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -212,6 +369,123 @@
      "subject": {
       "columns": [
        "income"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "f563e593a6d0fbaf",
+     "metrics": {
+      "consensus": false,
+      "iqr_count": 5,
+      "lower_fence": 29.0,
+      "mad_count": 0,
+      "methods_flagging": [
+       "iqr"
+      ],
+      "outlier_share": 0.00166667,
+      "top_values": [
+       62.0,
+       28.0,
+       28.0,
+       62.0,
+       62.0
+      ],
+      "upper_fence": 61.0,
+      "zscore_count": 0
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "1ce2b99b8b30ba5a",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 16,
+      "lower_fence": 20223.1,
+      "mad_count": 0,
+      "methods_flagging": [
+       "iqr",
+       "zscore"
+      ],
+      "outlier_share": 0.00569598,
+      "top_values": [
+       104486.0,
+       15000.0,
+       15000.0,
+       15000.0,
+       15000.0,
+       15000.0,
+       15685.4,
+       16453.2,
+       102266.0,
+       101017.0
+      ],
+      "upper_fence": 99185.2,
+      "zscore_count": 1
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "d1d565fa526c6d51",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 155,
+      "lower_fence": -68.7613,
+      "mad_count": 125,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.0516667,
+      "top_values": [
+       421.55,
+       366.97,
+       365.85,
+       361.94,
+       352.98,
+       328.82,
+       328.2,
+       320.3,
+       319.55,
+       302.13
+      ],
+      "upper_fence": 152.529,
+      "zscore_count": 52
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "purchase_amount"
       ],
       "kind": "column"
      }

@@ -5,7 +5,11 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import Any
 
-from tests.golden.migration.findings import compare_levels
+from tests.golden.migration.findings import (
+    columns_read,
+    compare_levels,
+    only_codes,
+)
 from tests.golden.migration.harness import Difference, Result
 
 # The relative gap between the profile's bias-corrected skewness and the legacy
@@ -29,25 +33,10 @@ _DTYPES = {
 }
 
 
-def _read(old: Collection[str], new: Collection[str]) -> list[Difference]:
-    """The columns only one of them read."""
-    return [
-        Difference(
-            column, "column_read", "legacy only" if column in old else "core only"
-        )
-        for column in sorted(set(old) ^ set(new))
-    ]
-
-
-def _only(core: Result, codes: Collection[str]) -> Result:
-    """The core result with just the findings of the given codes."""
-    return {**core, "findings": [f for f in core["findings"] if f["code"] in codes]}
-
-
 def compare_skewness(legacy: Result, core: Result) -> list[Difference]:
     old = legacy["result"]["data"]
     columns = core["output"]["columns"]
-    found = _read(old, columns)
+    found = columns_read(old, columns)
     for column in sorted(set(old) & set(columns)):
         was, now = old[column], columns[column]["skewness"]
         if now is None:
@@ -56,20 +45,20 @@ def compare_skewness(legacy: Result, core: Result) -> list[Difference]:
             found.append(
                 Difference(column, "skewness", f"legacy {was:.4f}, core {now:.4f}")
             )
-    return found + compare_levels(legacy, _only(core, {"skewed"}))
+    return found + compare_levels(legacy, only_codes(core, {"skewed"}))
 
 
 def compare_summarize_numeric(legacy: Result, core: Result) -> list[Difference]:
     """The task's two kinds of finding, which two checks raise between them."""
     return compare_levels(
-        legacy, _only(core, {"near_zero_variance", "mean_median_gap"})
+        legacy, only_codes(core, {"near_zero_variance", "mean_median_gap"})
     )
 
 
 def compare_kurtosis(legacy: Result, core: Result) -> list[Difference]:
     old = legacy["result"]["data"]
     columns = core["output"]["columns"]
-    found = _read(old, columns)
+    found = columns_read(old, columns)
     for column in sorted(set(old) & set(columns)):
         was, now = old[column], columns[column]
         if now["kurtosis"] is None:
@@ -97,7 +86,7 @@ def compare_kurtosis(legacy: Result, core: Result) -> list[Difference]:
 def compare_entropy(legacy: Result, core: Result) -> list[Difference]:
     old = legacy["result"]["data"]
     columns = core["output"]["columns"]
-    found = _read(old, columns)
+    found = columns_read(old, columns)
     for column in sorted(set(old) & set(columns)):
         was, now = old[column], columns[column]["entropy_bits"]
         if abs(was - now) > _ENTROPY_TOLERANCE:

@@ -13,12 +13,16 @@ Conventions every core check follows:
   check raises as a ``python_warning`` note with a count; the block would also hide
   the warnings of the other checks running beside it.
 - A check gives scipy numeric arrays, never object dtype: scipy checks an object
-  array for NaN one element at a time.
+  array for NaN one element at a time. It fits scikit-learn models on float64:
+  `GaussianMixture` mis-scores integer input, differently in 1.7 and 1.8.
+- A check that computes with extreme values skips a column whose arithmetic
+  overflows, saying why, and never puts a NaN or an infinity in its output.
 - A check states ``n_used`` and the method on every finding's evidence, declares the
   bounds of each parameter, and leaves recommendations to the tips attached after it
   returns.
 """
 
+from dsbf.checks.bimodality import bimodality
 from dsbf.checks.class_imbalance import class_imbalance
 from dsbf.checks.constant_columns import constant_columns
 from dsbf.checks.dominant_value import dominant_value
@@ -29,8 +33,12 @@ from dsbf.checks.entropy import entropy
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
 from dsbf.checks.kurtosis import kurtosis
+from dsbf.checks.multivariate_outliers import multivariate_outliers
 from dsbf.checks.near_zero_variance import near_zero_variance
+from dsbf.checks.normality import normality
 from dsbf.checks.null_rate import null_rate
+from dsbf.checks.out_of_bounds import out_of_bounds
+from dsbf.checks.outliers import outliers
 from dsbf.checks.sample_size import sample_size
 from dsbf.checks.schema import schema
 from dsbf.checks.skewness import skewness
@@ -65,5 +73,10 @@ def core_pack() -> Pack:
             sample_size,
             class_imbalance,
             schema,
+            outliers,
+            multivariate_outliers,
+            normality,
+            bimodality,
+            out_of_bounds,
         ),
     )

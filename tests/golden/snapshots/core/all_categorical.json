@@ -1,5 +1,10 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -230,7 +235,17 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "normality": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
@@ -238,6 +253,16 @@
   "null_rate": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "sample_size": {
