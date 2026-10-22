@@ -5,6 +5,9 @@ from __future__ import annotations
 from tests.golden.migration.accepted import ACCEPTED as _ACCEPTED
 from tests.golden.migration.accepted_analysis import ACCEPTED_ANALYSIS
 from tests.golden.migration.accepted_associations import ACCEPTED_ASSOCIATIONS
+from tests.golden.migration.accepted_group_differences import (
+    ACCEPTED_GROUP_DIFFERENCES,
+)
 from tests.golden.migration.analysis import (
     compare_bimodality,
     compare_normality,
@@ -36,10 +39,21 @@ from tests.golden.migration.distribution import (
     compare_skewness,
     compare_summarize_numeric,
 )
+from tests.golden.migration.group_differences import (
+    compare_collinear_features,
+    compare_kruskal_wallis,
+    compare_mann_whitney_u,
+    compare_one_way_anova,
+)
 from tests.golden.migration.harness import Accepted, Comparator
 from tests.golden.migration.zeros import compare_zeros
 
-ACCEPTED = (*_ACCEPTED, *ACCEPTED_ANALYSIS, *ACCEPTED_ASSOCIATIONS)
+ACCEPTED = (
+    *_ACCEPTED,
+    *ACCEPTED_ANALYSIS,
+    *ACCEPTED_ASSOCIATIONS,
+    *ACCEPTED_GROUP_DIFFERENCES,
+)
 
 # Tasks whose checks cover different parts of what the task did: the task is compared
 # wherever any of its checks ran.
@@ -75,6 +89,10 @@ COMPARATORS: dict[str, Comparator] = {
     "compute_pairwise_associations": compare_pairwise_associations,
     "contingency_tables": compare_contingency_tables,
     "detect_data_leakage": compare_data_leakage,
+    "one_way_anova": compare_one_way_anova,
+    "kruskal_wallis": compare_kruskal_wallis,
+    "mann_whitney_u": compare_mann_whitney_u,
+    "detect_collinear_features": compare_collinear_features,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

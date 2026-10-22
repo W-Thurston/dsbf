@@ -1,8 +1,9 @@
 # dsbf/checks/pairs.py
 """What the pairwise checks share: missing values, codes, bands and intervals.
 
-This module holds no check. ``associations`` and ``contingency`` import it, so the
-two read a pair the same way and put its strength on one scale.
+This module holds no check. ``associations``, ``contingency``, ``group_differences``
+and ``collinearity`` import it, so they read a pair the same way and put its
+strength on one scale.
 """
 
 from typing import Literal
@@ -35,6 +36,32 @@ _FISHER: dict[str, tuple[float, int]] = {
 }
 
 _BELOW_ONE = 1 - 1e-12
+
+
+class Undefined(Exception):
+    """A statistic that does not exist for these values; the reason is the message."""
+
+
+def unit_column(values: np.ndarray) -> np.ndarray:
+    """``values`` centred and scaled to length 1; correlation is a dot product.
+
+    The column is divided by its largest magnitude first, so values near 1e308 do not
+    overflow. Raises ``Undefined`` for a column with no spread or one that overflows.
+    """
+    with np.errstate(all="ignore"):
+        biggest = float(np.max(np.abs(values)))
+        if not np.isfinite(biggest):
+            raise Undefined("overflow")
+        if biggest == 0:
+            raise Undefined("no_variation")
+        scaled = values / biggest
+        centred = scaled - scaled.mean()
+        length = float(np.sqrt(np.sum(centred * centred)))
+    if not np.isfinite(length):
+        raise Undefined("overflow")
+    if length == 0:
+        raise Undefined("no_variation")
+    return centred / length
 
 
 def strength_band(value: float, metric: Metric) -> Band:
@@ -156,3 +183,30 @@ def chi2_p_value(chi2: float, table: np.ndarray) -> float:
     """The upper-tail probability of the chi-squared statistic of a table."""
     dof = (table.shape[0] - 1) * (table.shape[1] - 1)
     return float(chi2_distribution.sf(chi2, dof)) if dof > 0 else 1.0
+
+
+Correction = Literal["fdr_bh", "bonferroni", "holm", "none"]
+
+
+def adjust_p_values(p_values: np.ndarray, method: Correction) -> np.ndarray:
+    """The p-values adjusted for the number of tests, in the order given, at most 1.
+
+    ``fdr_bh`` is Benjamini-Hochberg (the false discovery rate), ``bonferroni`` and
+    ``holm`` control the chance of any false positive, and ``none`` returns them as
+    they are.
+    """
+    p = np.asarray(p_values, dtype=np.float64)
+    n = p.size
+    if method == "none" or n <= 1:
+        return p.copy()
+    if method == "bonferroni":
+        return np.minimum(p * n, 1.0)
+    order = np.argsort(p, kind="stable")
+    ranked = p[order]
+    if method == "holm":
+        stepped = np.maximum.accumulate(ranked * (n - np.arange(n)))
+    else:
+        stepped = np.minimum.accumulate((ranked * n / np.arange(1, n + 1))[::-1])[::-1]
+    adjusted = np.empty(n)
+    adjusted[order] = np.minimum(stepped, 1.0)
+    return adjusted

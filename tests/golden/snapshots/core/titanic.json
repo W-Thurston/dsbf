@@ -100,6 +100,11 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "collinearity": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "constant_columns": {
    "findings": [],
    "status": "ok",
@@ -1699,6 +1704,746 @@
   },
   "entropy": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "group_differences": {
+   "findings": [
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "5f7c218dbb507d0d",
+     "metrics": {
+      "anova_p_adjusted": 4.6599e-14,
+      "bottom_group": "False",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0771895,
+      "epsilon_squared": 0.0663791,
+      "eta_squared": 0.0785835,
+      "f_statistic": 60.7233,
+      "h_statistic": 47.3283,
+      "interval_high": 0.114845,
+      "interval_low": 0.0424909,
+      "kruskal_p_adjusted": 8.67232e-12,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0771895,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.18348,
+      "smallest_group": 301,
+      "top_group": "True"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "adult_male"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "ddd036497a42e6ea",
+     "metrics": {
+      "anova_p_adjusted": 1.32955e-07,
+      "bottom_group": "False",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0379106,
+      "epsilon_squared": 0.0279871,
+      "eta_squared": 0.039311,
+      "f_statistic": 29.1347,
+      "h_statistic": 19.9548,
+      "interval_high": 0.067527,
+      "interval_low": 0.0166121,
+      "kruskal_p_adjusted": 1.03084e-05,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0379106,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.22753,
+      "smallest_group": 310,
+      "top_group": "True"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "alone"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "7e5dee9d24ee9375",
+     "metrics": {
+      "anova_p_adjusted": 3.89375e-23,
+      "bottom_group": "Third",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.13652,
+      "epsilon_squared": 0.134635,
+      "eta_squared": 0.139107,
+      "f_statistic": 57.4435,
+      "h_statistic": 95.9948,
+      "interval_high": 0.185723,
+      "interval_low": 0.0927829,
+      "kruskal_p_adjusted": 3.71509e-21,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.13652,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.18466,
+      "smallest_group": 173,
+      "top_group": "First"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "class"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "ec3c806f01612983",
+     "metrics": {
+      "anova_p_adjusted": 0.00327187,
+      "bottom_group": "F",
+      "contrasts": 15,
+      "correction": "fdr_bh",
+      "effect": 0.0725301,
+      "epsilon_squared": 0.0794582,
+      "eta_squared": 0.0988023,
+      "f_statistic": 3.81528,
+      "h_statistic": 14.223,
+      "interval_high": 0.180675,
+      "interval_low": 0.0229464,
+      "kruskal_p_adjusted": 0.0176468,
+      "method": "anova",
+      "n_groups": 6,
+      "omega_squared": 0.0725301,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.60214,
+      "smallest_group": 11,
+      "top_group": "A"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "deck"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "64305f7b6e23b2b6",
+     "metrics": {
+      "anova_p_adjusted": 1.92219e-17,
+      "bottom_group": "2",
+      "contrasts": 10,
+      "correction": "fdr_bh",
+      "effect": 0.111584,
+      "epsilon_squared": 0.105633,
+      "eta_squared": 0.116742,
+      "f_statistic": 23.2624,
+      "h_statistic": 74.7882,
+      "interval_high": 0.162826,
+      "interval_low": 0.0766799,
+      "kruskal_p_adjusted": 3.82916e-15,
+      "method": "anova",
+      "n_groups": 5,
+      "omega_squared": 0.111584,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 16.6901,
+      "smallest_group": 5,
+      "top_group": "5"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "parch"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "cef2bebf81e00f71",
+     "metrics": {
+      "anova_p_adjusted": 3.89375e-23,
+      "bottom_group": "3",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.13652,
+      "epsilon_squared": 0.134635,
+      "eta_squared": 0.139107,
+      "f_statistic": 57.4435,
+      "h_statistic": 95.9948,
+      "interval_high": 0.18695,
+      "interval_low": 0.0941857,
+      "kruskal_p_adjusted": 3.71509e-21,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.13652,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.18466,
+      "smallest_group": 173,
+      "top_group": "1"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "pclass"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "f5e625bd1f9651e2",
+     "metrics": {
+      "anova_p_adjusted": 3.82873e-16,
+      "bottom_group": "4",
+      "contrasts": 15,
+      "correction": "fdr_bh",
+      "effect": 0.104978,
+      "epsilon_squared": 0.104217,
+      "eta_squared": 0.111386,
+      "f_statistic": 17.7492,
+      "h_statistic": 74.3069,
+      "interval_high": 0.135797,
+      "interval_low": 0.0843899,
+      "kruskal_p_adjusted": 1.985e-14,
+      "method": "anova",
+      "n_groups": 6,
+      "omega_squared": 0.104978,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 3.00767,
+      "smallest_group": 5,
+      "top_group": "0"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "sibsp"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "d0fd5e9b881df8ba",
+     "metrics": {
+      "anova_p_adjusted": 3.4706e-64,
+      "bottom_group": "child",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.33888,
+      "epsilon_squared": 0.308965,
+      "eta_squared": 0.341048,
+      "f_statistic": 183.993,
+      "h_statistic": 220.292,
+      "interval_high": 0.365323,
+      "interval_low": 0.312885,
+      "kruskal_p_adjusted": 9.48554e-48,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.33888,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 2.72927,
+      "smallest_group": 83,
+      "top_group": "man"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age",
+       "who"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "7343f7f8babdb9a9",
+     "metrics": {
+      "anova_p_adjusted": 6.82551e-08,
+      "bottom_group": "True",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0320102,
+      "epsilon_squared": 0.0954154,
+      "eta_squared": 0.0331326,
+      "f_statistic": 30.4643,
+      "h_statistic": 84.9197,
+      "interval_high": 0.0660486,
+      "interval_low": 0.011217,
+      "kruskal_p_adjusted": 7.34455e-20,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0320102,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.26014,
+      "smallest_group": 354,
+      "top_group": "False"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "adult_male"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "c62430df69c39489",
+     "metrics": {
+      "anova_p_adjusted": 1.32604e-14,
+      "bottom_group": "no",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0650879,
+      "epsilon_squared": 0.104805,
+      "eta_squared": 0.0662066,
+      "f_statistic": 63.0308,
+      "h_statistic": 93.2765,
+      "interval_high": 0.101904,
+      "interval_low": 0.0409856,
+      "kruskal_p_adjusted": 1.47795e-21,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0650879,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 2.12172,
+      "smallest_group": 342,
+      "top_group": "yes"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "alive"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "7494ca571e56b639",
+     "metrics": {
+      "anova_p_adjusted": 3.82873e-16,
+      "bottom_group": "True",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0727753,
+      "epsilon_squared": 0.282463,
+      "eta_squared": 0.0738928,
+      "f_statistic": 70.9321,
+      "h_statistic": 251.392,
+      "interval_high": 0.122442,
+      "interval_low": 0.0351066,
+      "kruskal_p_adjusted": 1.1191e-55,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0727753,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.30988,
+      "smallest_group": 354,
+      "top_group": "False"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "alone"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "1fed61d36cd51fd4",
+     "metrics": {
+      "anova_p_adjusted": 1.34079e-83,
+      "bottom_group": "Third",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.351381,
+      "epsilon_squared": 0.492184,
+      "eta_squared": 0.353094,
+      "f_statistic": 242.344,
+      "h_statistic": 438.044,
+      "interval_high": 0.425631,
+      "interval_low": 0.299173,
+      "kruskal_p_adjusted": 9.86193e-95,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.351381,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 6.65473,
+      "smallest_group": 184,
+      "top_group": "First"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "class"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "e527f9891f7a5f93",
+     "metrics": {
+      "anova_p_adjusted": 2.66337e-07,
+      "bottom_group": "F",
+      "contrasts": 15,
+      "correction": "fdr_bh",
+      "effect": 0.161683,
+      "epsilon_squared": 0.281238,
+      "eta_squared": 0.183519,
+      "f_statistic": 8.67607,
+      "h_statistic": 55.6851,
+      "interval_high": 0.239274,
+      "interval_low": 0.113007,
+      "kruskal_p_adjusted": 1.29108e-10,
+      "method": "anova",
+      "n_groups": 6,
+      "omega_squared": 0.161683,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 9.31953,
+      "smallest_group": 13,
+      "top_group": "B"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "deck"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "08b2cda48eafb035",
+     "metrics": {
+      "anova_p_adjusted": 3.82873e-16,
+      "bottom_group": "Queenstown",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.0771121,
+      "epsilon_squared": 0.0837887,
+      "eta_squared": 0.0792707,
+      "f_statistic": 38.1403,
+      "h_statistic": 74.4044,
+      "interval_high": 0.109661,
+      "interval_low": 0.0436618,
+      "kruskal_p_adjusted": 1.2946e-16,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.0771121,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 5.91434,
+      "smallest_group": 77,
+      "top_group": "Cherbourg"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "embark_town"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "05ba444cce79881c",
+     "metrics": {
+      "anova_p_adjusted": 3.82873e-16,
+      "bottom_group": "Q",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.0771121,
+      "epsilon_squared": 0.0837887,
+      "eta_squared": 0.0792707,
+      "f_statistic": 38.1403,
+      "h_statistic": 74.4044,
+      "interval_high": 0.117921,
+      "interval_low": 0.0454957,
+      "kruskal_p_adjusted": 1.2946e-16,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.0771121,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 5.91434,
+      "smallest_group": 77,
+      "top_group": "C"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "embarked"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "d66e1d1bc67d676c",
+     "metrics": {
+      "anova_p_adjusted": 1.13722e-11,
+      "bottom_group": "0",
+      "contrasts": 10,
+      "correction": "fdr_bh",
+      "effect": 0.0598151,
+      "epsilon_squared": 0.165689,
+      "eta_squared": 0.0641277,
+      "f_statistic": 15.0919,
+      "h_statistic": 146.635,
+      "interval_high": 0.114976,
+      "interval_low": 0.0301418,
+      "kruskal_p_adjusted": 4.64092e-30,
+      "method": "anova",
+      "n_groups": 5,
+      "omega_squared": 0.0598151,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 16.0914,
+      "smallest_group": 5,
+      "top_group": "5"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "parch"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "40b4cdca2422248f",
+     "metrics": {
+      "anova_p_adjusted": 1.34079e-83,
+      "bottom_group": "3",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.351381,
+      "epsilon_squared": 0.492184,
+      "eta_squared": 0.353094,
+      "f_statistic": 242.344,
+      "h_statistic": 438.044,
+      "interval_high": 0.430865,
+      "interval_low": 0.302705,
+      "kruskal_p_adjusted": 9.86193e-95,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.351381,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 6.65473,
+      "smallest_group": 184,
+      "top_group": "1"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "pclass"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "30fe8261896d23a4",
+     "metrics": {
+      "anova_p_adjusted": 6.82551e-08,
+      "bottom_group": "male",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0321229,
+      "epsilon_squared": 0.0673888,
+      "eta_squared": 0.0332453,
+      "f_statistic": 30.5714,
+      "h_statistic": 59.976,
+      "interval_high": 0.0685925,
+      "interval_low": 0.011723,
+      "kruskal_p_adjusted": 1.56033e-14,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0321229,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.34446,
+      "smallest_group": 314,
+      "top_group": "female"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "sex"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "70d12a0ecd491ba5",
+     "metrics": {
+      "anova_p_adjusted": 4.29583e-07,
+      "bottom_group": "0",
+      "contrasts": 21,
+      "correction": "fdr_bh",
+      "effect": 0.0383835,
+      "epsilon_squared": 0.203781,
+      "eta_squared": 0.0449075,
+      "f_statistic": 6.92747,
+      "h_statistic": 181.365,
+      "interval_high": 0.111143,
+      "interval_low": 0.0122302,
+      "kruskal_p_adjusted": 9.04956e-36,
+      "method": "anova",
+      "n_groups": 7,
+      "omega_squared": 0.0383835,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "smallest_group": 5,
+      "top_group": "8"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "sibsp"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "50c1a9f5c84f4989",
+     "metrics": {
+      "anova_p_adjusted": 1.32604e-14,
+      "bottom_group": "0",
+      "contrasts": 1,
+      "correction": "fdr_bh",
+      "effect": 0.0650879,
+      "epsilon_squared": 0.104805,
+      "eta_squared": 0.0662066,
+      "f_statistic": 63.0308,
+      "h_statistic": 93.2765,
+      "interval_high": 0.0981047,
+      "interval_low": 0.0420965,
+      "kruskal_p_adjusted": 1.47795e-21,
+      "method": "anova",
+      "n_groups": 2,
+      "omega_squared": 0.0650879,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 2.12172,
+      "smallest_group": 342,
+      "top_group": "1"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "survived"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "group_differences",
+     "code": "group_difference",
+     "id": "bd363a46908b1ae4",
+     "metrics": {
+      "anova_p_adjusted": 4.39571e-08,
+      "bottom_group": "man",
+      "contrasts": 3,
+      "correction": "fdr_bh",
+      "effect": 0.0364216,
+      "epsilon_squared": 0.0963464,
+      "eta_squared": 0.0386263,
+      "f_statistic": 17.8392,
+      "h_statistic": 85.7483,
+      "interval_high": 0.0737596,
+      "interval_low": 0.0107743,
+      "kruskal_p_adjusted": 5.19729e-19,
+      "method": "anova",
+      "n_groups": 3,
+      "omega_squared": 0.0364216,
+      "pairs_flagged": 21,
+      "pairs_tested": 26,
+      "sd_ratio": 1.80237,
+      "smallest_group": 83,
+      "top_group": "child"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare",
+       "who"
+      ],
+      "kind": "column_pair"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },

@@ -10,10 +10,12 @@ from scipy.stats import kendalltau, rankdata
 
 from dsbf.checks.pairs import (
     Band,
+    Undefined,
     finite,
     fisher_interval,
     level_codes,
     strength_band,
+    unit_column,
 )
 from dsbf.engine import (
     CheckContext,
@@ -147,41 +149,15 @@ class _Numeric:
     def unit(self, rank: bool) -> np.ndarray:
         """The centred, unit-length column (or its ranks), for a complete column.
 
-        Raises ``_Undefined`` when the column has no spread or overflows.
+        Raises ``Undefined`` when the column has no spread or overflows.
         """
         if rank:
             if self._rank_unit is None:
-                self._rank_unit = _unit(rankdata(self.values))
+                self._rank_unit = unit_column(rankdata(self.values))
             return self._rank_unit
         if self._unit is None:
-            self._unit = _unit(self.values)
+            self._unit = unit_column(self.values)
         return self._unit
-
-
-class _Undefined(Exception):
-    """A pair whose statistic does not exist; the reason is the message."""
-
-
-def _unit(values: np.ndarray) -> np.ndarray:
-    """``values`` centred and scaled to length 1; correlation is a dot product.
-
-    The column is divided by its largest magnitude first, so values near 1e308 do not
-    overflow.
-    """
-    with np.errstate(all="ignore"):
-        biggest = float(np.max(np.abs(values)))
-        if not np.isfinite(biggest):
-            raise _Undefined("overflow")
-        if biggest == 0:
-            raise _Undefined("no_variation")
-        scaled = values / biggest
-        centred = scaled - scaled.mean()
-        length = float(np.sqrt(np.sum(centred * centred)))
-    if not np.isfinite(length):
-        raise _Undefined("overflow")
-    if length == 0:
-        raise _Undefined("no_variation")
-    return centred / length
 
 
 def _correlation(first: np.ndarray, second: np.ndarray) -> float:
@@ -269,7 +245,7 @@ def associations(ctx: CheckContext, params: AssociationsParams) -> CheckOutput:
         ctx.checkpoint()
         try:
             pairs.append(measure(first, second, left, right, params))
-        except _Undefined as why:
+        except Undefined as why:
             untested[str(why)] = untested.get(str(why), 0) + 1
 
     for position, first in enumerate(numeric_names):
@@ -320,13 +296,13 @@ def _numeric_pair(
     both = left.ok & right.ok
     n_used = int(np.count_nonzero(both))
     if n_used < params.min_n:
-        raise _Undefined("too_few_rows")
+        raise Undefined("too_few_rows")
     clean = left.complete and right.complete
     pearson = _correlation(
         *(
             (left.unit(False), right.unit(False))
             if clean
-            else (_unit(left.values[both]), _unit(right.values[both]))
+            else (unit_column(left.values[both]), unit_column(right.values[both]))
         )
     )
     metric: PairMetric
@@ -342,8 +318,8 @@ def _numeric_pair(
                 (left.unit(True), right.unit(True))
                 if clean
                 else (
-                    _unit(rankdata(left.values[both])),
-                    _unit(rankdata(right.values[both])),
+                    unit_column(rankdata(left.values[both])),
+                    unit_column(rankdata(right.values[both])),
                 )
             )
         )
@@ -375,7 +351,7 @@ def _kendall(first: np.ndarray, second: np.ndarray) -> float:
     """Kendall's τ-b, which corrects for ties."""
     tau = kendalltau(first, second).statistic
     if not np.isfinite(tau):
-        raise _Undefined("no_variation")
+        raise Undefined("no_variation")
     return float(np.clip(tau, -1.0, 1.0))
 
 
@@ -394,16 +370,16 @@ def _eta_pair(
     big = counts[g] >= 2
     x, g = x[big], g[big]
     if np.count_nonzero(counts >= 2) < 2:
-        raise _Undefined("too_few_groups")
+        raise Undefined("too_few_groups")
     n_used = int(x.size)
     if n_used < params.min_n:
-        raise _Undefined("too_few_rows")
+        raise Undefined("too_few_rows")
     with np.errstate(all="ignore"):
         biggest = float(np.max(np.abs(x)))
         if not np.isfinite(biggest):
-            raise _Undefined("overflow")
+            raise Undefined("overflow")
         if biggest == 0:
-            raise _Undefined("no_variation")
+            raise Undefined("no_variation")
         x = x / biggest
         x = x - x.mean()
         counts = np.bincount(g, minlength=n_levels)
@@ -412,9 +388,9 @@ def _eta_pair(
         between = float(np.sum(sums[present] ** 2 / counts[present]))
         total = float(np.sum(x * x))
     if not np.isfinite(total):
-        raise _Undefined("overflow")
+        raise Undefined("overflow")
     if total == 0:
-        raise _Undefined("no_variation")
+        raise Undefined("no_variation")
     value = float(np.sqrt(np.clip(between / total, 0.0, 1.0)))
     return PairAssociation(
         first=first,

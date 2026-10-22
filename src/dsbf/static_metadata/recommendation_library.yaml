@@ -101,12 +101,38 @@ drop_zero_variance:
 
 high_vif_feature:
   condition: {field: vif, op: ">", value: 10}
+  checks: [collinearity]
+  codes: [multicollinearity]
   applicable_to:
     - detect_collinear_features
   action: drop
+  when: the column adds nothing a model needs beyond the columns it correlates with
   message: >
     This feature has high collinearity with others, which may distort model coefficients.
     Consider dropping, combining, or using regularization.
+
+high_vif_feature_regularise:
+  condition: {field: vif, op: ">", value: 10}
+  checks: [collinearity]
+  codes: [multicollinearity]
+  action: regularise
+  method: ridge_or_elastic_net
+  when: a linear model must keep every column
+  message: >
+    Regularisation stabilises the coefficients of columns that move together. A
+    tree-based model is not harmed, but it splits importance between them.
+
+high_vif_feature_decorrelate:
+  condition: {field: vif, op: ">", value: 20}
+  checks: [collinearity]
+  codes: [multicollinearity]
+  action: transform
+  method: pca
+  when: the columns are measurements of one underlying quantity
+  message: >
+    Replace the group of correlated columns with principal components, which are
+    uncorrelated by construction. The two partners named in the finding are where
+    to start.
 
 # ===================
 # CLASS IMBALANCE
@@ -741,3 +767,29 @@ categorical_association_inspect_table:
   message: >
     Read the table for the combinations that occur more or less often than
     independence predicts; they say what the link is.
+
+# ===================
+# GROUP DIFFERENCES
+# ===================
+
+group_difference_inspect_groups:
+  condition: {field: effect, op: ">=", value: 0.01}
+  checks: [group_differences]
+  codes: [group_difference]
+  action: investigate
+  message: >
+    Compare the groups' distributions, starting with the highest and the lowest
+    named in the finding. A difference this size can be a real effect, a different
+    mix of customers or sources, or a column that records the outcome of the
+    other.
+
+group_difference_use_grouping_column:
+  condition: {field: effect, op: ">=", value: 0.14}
+  checks: [group_differences]
+  codes: [group_difference]
+  action: encode
+  when: the grouping column is known when a prediction is made
+  message: >
+    The grouping column explains a large part of the numeric column, so it is a
+    useful feature for predicting it. Check it is available at prediction time,
+    and consider fitting a model per group if the groups behave differently.
