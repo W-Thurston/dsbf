@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# A newer run for the same pull request replaces an older one. Pushes to main,
+# scheduled and manual runs are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Every job only reads the repository (artifact upload uses the runtime token).
 permissions:
   contents: read
