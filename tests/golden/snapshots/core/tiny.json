@@ -1,5 +1,53 @@
 {
  "checks": {
+  "associations": {
+   "findings": [
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "fe583e5421f68903",
+     "metrics": {
+      "abs_value": 0.489274,
+      "metric": "eta",
+      "pairs_flagged": 2,
+      "pairs_tested": 9,
+      "strength": "strong",
+      "value": 0.489274
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "x",
+       "category"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "0d873d073d5ea002",
+     "metrics": {
+      "abs_value": 0.520354,
+      "metric": "eta",
+      "pairs_flagged": 2,
+      "pairs_tested": 9,
+      "strength": "strong",
+      "value": 0.520354
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "y",
+       "category"
+      ],
+      "kind": "column_pair"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [],
    "status": "ok",
@@ -11,6 +59,11 @@
    "version": "1.0.0"
   },
   "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "contingency": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

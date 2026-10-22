@@ -163,6 +163,19 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Non-Gaussian Shape - Two Peaks", "bimodal"),
     ),
     "detect_out_of_bounds": ((r"^Out-of-Bounds Values", "out_of_bounds"),),
+    # The task stored values and reliability warnings, and raised no finding.
+    "compute_pairwise_associations": (),
+    "contingency_tables": (
+        (r"^Associated with ", "categorical_association"),
+        (
+            r"^(Strong|Moderate|Weak) Categorical Association with ",
+            "categorical_association",
+        ),
+    ),
+    "detect_data_leakage": (
+        (r"^Near-Perfect Correlation with ", "redundant_columns"),
+        (r"^Possible Data Leakage - Perfect Correlation with ", "redundant_columns"),
+    ),
 }
 
 

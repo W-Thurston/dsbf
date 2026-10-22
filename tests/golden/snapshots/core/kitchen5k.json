@@ -1,5 +1,366 @@
 {
  "checks": {
+  "associations": {
+   "findings": [
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "044019663b48433a",
+     "metrics": {
+      "abs_pearson_r": 0.999452,
+      "abs_value": 0.999452,
+      "interval_high": 0.999481,
+      "interval_low": 0.999421,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 0.999452,
+      "strength": "strong",
+      "value": 0.999452
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "corr_base",
+       "highly_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "ff08a4c2e6c8385a",
+     "metrics": {
+      "abs_pearson_r": 0.837068,
+      "abs_value": 0.837068,
+      "interval_high": 0.844986,
+      "interval_low": 0.828784,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 0.837068,
+      "strength": "strong",
+      "value": 0.837068
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "corr_base",
+       "moderately_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "c4479f62960b2373",
+     "metrics": {
+      "abs_pearson_r": 0.949219,
+      "abs_value": 0.949219,
+      "interval_high": -0.94647,
+      "interval_low": -0.951829,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": -0.949219,
+      "strength": "strong",
+      "value": -0.949219
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "corr_base",
+       "negatively_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "3ab1e2313a54a0b2",
+     "metrics": {
+      "abs_pearson_r": 1.0,
+      "abs_value": 1.0,
+      "interval_high": 1.0,
+      "interval_low": 1.0,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 1.0,
+      "strength": "strong",
+      "value": 1.0
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "duplicate_col_1",
+       "duplicate_col_2"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "dd756f5e320004be",
+     "metrics": {
+      "abs_pearson_r": 1.0,
+      "abs_value": 1.0,
+      "interval_high": 1.0,
+      "interval_low": 1.0,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 1.0,
+      "strength": "strong",
+      "value": 1.0
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "duplicate_col_1",
+       "duplicate_col_3"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "6944c9566151457b",
+     "metrics": {
+      "abs_pearson_r": 1.0,
+      "abs_value": 1.0,
+      "interval_high": 1.0,
+      "interval_low": 1.0,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 1.0,
+      "strength": "strong",
+      "value": 1.0
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "duplicate_col_2",
+       "duplicate_col_3"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "edd1a744daeb32f2",
+     "metrics": {
+      "abs_pearson_r": 0.836762,
+      "abs_value": 0.836762,
+      "interval_high": 0.844694,
+      "interval_low": 0.828464,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 0.836762,
+      "strength": "strong",
+      "value": 0.836762
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "highly_correlated",
+       "moderately_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "431da5f92de24afd",
+     "metrics": {
+      "abs_pearson_r": 0.948572,
+      "abs_value": 0.948572,
+      "interval_high": -0.94579,
+      "interval_low": -0.951215,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": -0.948572,
+      "strength": "strong",
+      "value": -0.948572
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "highly_correlated",
+       "negatively_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "eecf4806127c07a8",
+     "metrics": {
+      "abs_pearson_r": 0.795355,
+      "abs_value": 0.795355,
+      "interval_high": -0.785198,
+      "interval_low": -0.805085,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": -0.795355,
+      "strength": "strong",
+      "value": -0.795355
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "moderately_correlated",
+       "negatively_correlated"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "1c55f1a52b1c2844",
+     "metrics": {
+      "abs_pearson_r": 0.999942,
+      "abs_value": 0.999942,
+      "interval_high": 0.999945,
+      "interval_low": 0.999938,
+      "metric": "pearson_r",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "pearson_r": 0.999942,
+      "strength": "strong",
+      "value": 0.999942
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "partial_duplicate_1",
+       "partial_duplicate_2"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "7a09b6f30f3a8234",
+     "metrics": {
+      "abs_value": 0.375233,
+      "metric": "eta",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "strength": "strong",
+      "value": 0.375233
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sequential_id",
+       "imbalanced_boolean"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "83a1623c405e01de",
+     "metrics": {
+      "abs_value": 0.51612,
+      "metric": "eta",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "strength": "strong",
+      "value": 0.51612
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sequential_id",
+       "mostly_zeros"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "20e943d1049f1301",
+     "metrics": {
+      "abs_value": 0.994237,
+      "metric": "eta",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "strength": "strong",
+      "value": 0.994237
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage",
+       "future_leakage"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "01c4092643d1a803",
+     "metrics": {
+      "abs_value": 0.994222,
+      "metric": "eta",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "strength": "strong",
+      "value": 0.994222
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage",
+       "perfect_leakage"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "c0d1bfec102f7a99",
+     "metrics": {
+      "abs_value": 0.994222,
+      "metric": "eta",
+      "pairs_flagged": 15,
+      "pairs_tested": 561,
+      "strength": "strong",
+      "value": 0.994222
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage",
+       "target_for_leakage"
+      ],
+      "kind": "column_pair"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [
     {
@@ -141,6 +502,168 @@
        "mixed_null_types"
       ],
       "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "contingency": {
+   "findings": [
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "ef805e7d18dd4367",
+     "metrics": {
+      "chi2": 2489.33,
+      "cramers_v": 0.688592,
+      "cramers_v_corrected": 0.688519,
+      "dof": 1,
+      "interval_high": 0.718825,
+      "interval_low": 0.653626,
+      "p_value": 0.0,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.0,
+      "strength": "strong"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "mostly_zeros",
+       "imbalanced_boolean"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "9cbc893621590142",
+     "metrics": {
+      "chi2": 193.858,
+      "cramers_v": 0.192159,
+      "cramers_v_corrected": 0.187155,
+      "dof": 10,
+      "interval_high": 0.247951,
+      "interval_low": 0.11702,
+      "p_value": 3.07651e-36,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.909091,
+      "strength": "weak"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "near_zero_variance",
+       "imbalanced_boolean"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "cbc8380d647039cd",
+     "metrics": {
+      "chi2": 91.9193,
+      "cramers_v": 0.132319,
+      "cramers_v_corrected": 0.124925,
+      "dof": 10,
+      "interval_high": 0.167554,
+      "interval_low": 0.0831534,
+      "p_value": 2.22785e-15,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.909091,
+      "strength": "weak"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "near_zero_variance",
+       "mostly_zeros"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "0436cb0e663b19eb",
+     "metrics": {
+      "chi2": 5250.0,
+      "cramers_v": 1.0,
+      "cramers_v_corrected": 0.998284,
+      "dof": 19,
+      "interval_high": 0.998284,
+      "interval_low": 0.998284,
+      "p_value": 0.0,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.0,
+      "strength": "strong"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "perfect_leakage",
+       "future_leakage"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "1673312458f7ee66",
+     "metrics": {
+      "chi2": 5250.0,
+      "cramers_v": 1.0,
+      "cramers_v_corrected": 0.998284,
+      "dof": 19,
+      "interval_high": 0.998284,
+      "interval_low": 0.998284,
+      "p_value": 0.0,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.0,
+      "strength": "strong"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "target_for_leakage",
+       "future_leakage"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "contingency",
+     "code": "categorical_association",
+     "id": "2c45fc2e99f9809f",
+     "metrics": {
+      "chi2": 5250.0,
+      "cramers_v": 1.0,
+      "cramers_v_corrected": 1.0,
+      "dof": 1,
+      "interval_high": 1.0,
+      "interval_low": 1.0,
+      "p_value": 0.0,
+      "pairs_flagged": 6,
+      "pairs_tested": 120,
+      "sparse_share": 0.0,
+      "strength": "strong"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "target_for_leakage",
+       "perfect_leakage"
+      ],
+      "kind": "column_pair"
      }
     }
    ],
