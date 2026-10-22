@@ -1,5 +1,61 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [
+    {
+     "check": "bimodality",
+     "code": "bimodal",
+     "id": "df2f2db0b3ea60b4",
+     "metrics": {
+      "bic_1_component": 50768.3,
+      "bic_2_components": 39089.0,
+      "bic_delta": 11679.3,
+      "bic_delta_per_value": 2.22463,
+      "mean_high": 80.041,
+      "mean_low": 20.0603,
+      "n_finite": 5250,
+      "separation": 12.0303,
+      "valley_ratio": 0.0,
+      "weight_high": 0.500571,
+      "weight_low": 0.499429
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "bimodal_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "bimodality",
+     "code": "bimodal",
+     "id": "25c8db9423a8705e",
+     "metrics": {
+      "bic_1_component": 55214.4,
+      "bic_2_components": 38269.1,
+      "bic_delta": 16945.3,
+      "bic_delta_per_value": 3.22768,
+      "mean_high": 100.097,
+      "mean_low": -0.0304304,
+      "n_finite": 5250,
+      "separation": 19.8456,
+      "valley_ratio": 0.0,
+      "weight_high": 0.306476,
+      "weight_low": 0.693524
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -1290,8 +1346,489 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [
+    {
+     "check": "multivariate_outliers",
+     "code": "multivariate_anomalies",
+     "id": "84b0aac4e141de4b",
+     "metrics": {
+      "contamination": 0.05,
+      "example_rows": [
+       263,
+       725,
+       2807,
+       4239,
+       1351,
+       5049,
+       1534,
+       3712,
+       226,
+       3690,
+       4100,
+       4593,
+       4257,
+       4570,
+       1323,
+       5,
+       3348,
+       4729,
+       4793,
+       1705
+      ],
+      "max_anomaly_score": 0.582067,
+      "n_features": 22,
+      "n_flagged": 263
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "normal_numeric_int",
+       "normal_numeric_float",
+       "duplicate_col_1",
+       "duplicate_col_2",
+       "duplicate_col_3",
+       "partial_duplicate_1",
+       "partial_duplicate_2",
+       "sequential_id",
+       "outlier_column",
+       "right_skewed",
+       "left_skewed",
+       "extreme_skew",
+       "bimodal_column",
+       "sparse_column",
+       "corr_base",
+       "highly_correlated",
+       "moderately_correlated",
+       "negatively_correlated",
+       "subtle_leakage",
+       "age_with_bounds_issues",
+       "percentage_out_of_bounds",
+       "negative_counts"
+      ],
+      "kind": "row_set"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "normality": {
+   "findings": [
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "5b5bbb7917845f5d",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 18850000.0,
+      "mean_abs_deviation_in_std": 0.639581,
+      "min": -5.0,
+      "primary_p_value": 0.0,
+      "primary_statistic": 0.284019,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 15.8847
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age_with_bounds_issues"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "3de26d160992488f",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 2.3812e-171,
+      "jarque_bera_statistic": 785.749,
+      "mean_abs_deviation_in_std": 0.438491,
+      "min": 3.26649,
+      "primary_p_value": 5.28348e-265,
+      "primary_statistic": 0.239282,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "right_tail",
+      "skewness": -0.00195858
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "bimodal_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "566f2f484fe4a02c",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 3.14231e-70,
+      "jarque_bera_statistic": 320.072,
+      "mean_abs_deviation_in_std": 0.182579,
+      "min": 1.0,
+      "primary_p_value": 1.82161e-22,
+      "primary_statistic": 0.0694548,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0243528
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "duplicate_col_1"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "312744b6800a9704",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 3.14231e-70,
+      "jarque_bera_statistic": 320.072,
+      "mean_abs_deviation_in_std": 0.182579,
+      "min": 1.0,
+      "primary_p_value": 1.82161e-22,
+      "primary_statistic": 0.0694548,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0243528
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "duplicate_col_2"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "71de480e76a559d3",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 3.14231e-70,
+      "jarque_bera_statistic": 320.072,
+      "mean_abs_deviation_in_std": 0.182579,
+      "min": 1.0,
+      "primary_p_value": 1.82161e-22,
+      "primary_statistic": 0.0694548,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0243528
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "duplicate_col_3"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "c2c85fffa1d27def",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 1503880000.0,
+      "mean_abs_deviation_in_std": 1.27202,
+      "min": 0.00321394,
+      "primary_p_value": 0.0,
+      "primary_statistic": 0.507215,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "right_tail",
+      "skewness": 51.2201
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "extreme_skew"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "f1b6c328179a606a",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 8282.53,
+      "mean_abs_deviation_in_std": 0.336454,
+      "min": -17.0057,
+      "primary_p_value": 3.59509e-113,
+      "primary_statistic": 0.156778,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": -1.8893
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "left_skewed"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "4e152acf621c3a07",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 1.32733e-67,
+      "jarque_bera_statistic": 307.98,
+      "mean_abs_deviation_in_std": 0.174963,
+      "min": -10.0,
+      "primary_p_value": 1.21533e-20,
+      "primary_statistic": 0.06652,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": -0.0202812
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "negative_counts"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "8bba56576bb1818d",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 9.63821e-69,
+      "jarque_bera_statistic": 313.225,
+      "mean_abs_deviation_in_std": 0.177541,
+      "min": 1.0,
+      "primary_p_value": 2.08414e-19,
+      "primary_statistic": 0.0644584,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0374676
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "normal_numeric_int"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "556b6f9796de285c",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 954329.0,
+      "mean_abs_deviation_in_std": 0.765781,
+      "min": -500.0,
+      "primary_p_value": 0.0,
+      "primary_statistic": 0.410377,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 5.36109
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "outlier_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "5ef01b79f4a5db03",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 6.20488e-72,
+      "jarque_bera_statistic": 327.922,
+      "mean_abs_deviation_in_std": 0.182693,
+      "min": 0.0,
+      "primary_p_value": 6.8569e-20,
+      "primary_statistic": 0.0652727,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0212288
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "partial_duplicate_1"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "8368bd24c20368bc",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 5.54001e-72,
+      "jarque_bera_statistic": 328.148,
+      "mean_abs_deviation_in_std": 0.182654,
+      "min": -1.43595,
+      "primary_p_value": 6.91625e-20,
+      "primary_statistic": 0.0652664,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.0213981
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "partial_duplicate_2"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "90539e0fea34d166",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 4.00515e-66,
+      "jarque_bera_statistic": 301.166,
+      "mean_abs_deviation_in_std": 0.170123,
+      "min": -49.9968,
+      "primary_p_value": 5.493e-16,
+      "primary_statistic": 0.0583638,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": -0.00121773
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "percentage_out_of_bounds"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "00707f77c48d3cef",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 11360.8,
+      "mean_abs_deviation_in_std": 0.371937,
+      "min": 0.000406372,
+      "primary_p_value": 5.07599e-120,
+      "primary_statistic": 0.161444,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 2.02886
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "right_skewed"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "d4187d61bdc7f214",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 5.13923e-69,
+      "jarque_bera_statistic": 314.483,
+      "mean_abs_deviation_in_std": 0.176418,
+      "min": 1.0,
+      "primary_p_value": 9.24264e-16,
+      "primary_statistic": 0.0579385,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 0.00108692
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sequential_id"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "8221de4cbce61ac9",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 129635.0,
+      "mean_abs_deviation_in_std": 0.838657,
+      "min": -0.258787,
+      "primary_p_value": 0.0,
+      "primary_statistic": 0.535891,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "heavy_tails",
+      "skewness": 4.74601
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sparse_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "b209b5843695507f",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 2.44227e-206,
+      "jarque_bera_statistic": 946.879,
+      "mean_abs_deviation_in_std": 0.525769,
+      "min": -18.5258,
+      "primary_p_value": 0.0,
+      "primary_statistic": 0.355117,
+      "primary_test": "ks_fitted_normal",
+      "qq_pattern": "left_tail",
+      "skewness": 0.827317
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -1389,6 +1926,469 @@
      "subject": {
       "columns": [
        "short_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "6d9fac5227ae2e26",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 38,
+      "lower_fence": -13.5,
+      "mad_count": 38,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.0072381,
+      "top_values": [
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0,
+       999.0
+      ],
+      "upper_fence": 110.5,
+      "zscore_count": 13
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "age_with_bounds_issues"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "f45c4f59147e4aae",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 27,
+      "lower_fence": 8.92461,
+      "mad_count": 1,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.00514286,
+      "top_values": [
+       -12.366,
+       102.073,
+       0.0800696,
+       99.0486,
+       2.0397,
+       98.466,
+       2.15405,
+       2.15405,
+       4.48314,
+       95.2395
+      ],
+      "upper_fence": 91.3869,
+      "zscore_count": 9
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "corr_base"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "fdf4227689d222a8",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 1202,
+      "lower_fence": -1175110.0,
+      "mad_count": 2159,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.411238,
+      "top_values": [
+       1.54548e+37,
+       1.54548e+37,
+       1.62032e+33,
+       4.0427e+29,
+       2.26308e+29,
+       2.36223e+28,
+       2.36223e+28,
+       1.77056e+28,
+       1.69661e+27,
+       1.69661e+27
+      ],
+      "upper_fence": 1958560.0,
+      "zscore_count": 2
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "extreme_skew"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "b81a587c9a280f67",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 24,
+      "lower_fence": 17.3983,
+      "mad_count": 1,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.00457143,
+      "top_values": [
+       -24.8664,
+       203.063,
+       -1.30983,
+       198.622,
+       4.38976,
+       4.72621,
+       4.72621,
+       195.789,
+       7.20572,
+       191.484
+      ],
+      "upper_fence": 183.046,
+      "zscore_count": 10
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "highly_correlated"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "b9e4c6ec9527a7be",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 223,
+      "lower_fence": -6.36096,
+      "mad_count": 206,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.0424762,
+      "top_values": [
+       -17.0057,
+       -14.5222,
+       -14.1329,
+       -13.7849,
+       -13.391,
+       -13.2793,
+       -13.2534,
+       -13.0566,
+       -12.8237,
+       -12.7934
+      ],
+      "upper_fence": 2.86697,
+      "zscore_count": 102
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "left_skewed"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "d33fb0e6f4522b07",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 23,
+      "lower_fence": 1.15284,
+      "mad_count": 1,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.00438095,
+      "top_values": [
+       114.101,
+       112.062,
+       111.292,
+       110.208,
+       -9.51325,
+       105.484,
+       -4.92505,
+       -3.76899,
+       -3.42173,
+       102.787
+      ],
+      "upper_fence": 99.1893,
+      "zscore_count": 7
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "moderately_correlated"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "d71d4b5323f24015",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 35,
+      "lower_fence": -93.0275,
+      "mad_count": 1,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.00666667,
+      "top_values": [
+       7.43392,
+       3.2437,
+       -103.584,
+       3.03426,
+       -101.707,
+       1.02578,
+       -101.29,
+       -1.77196,
+       -97.2364,
+       -3.30184
+      ],
+      "upper_fence": -7.50472,
+      "zscore_count": 8
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "negatively_correlated"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "6d189e414c4ce87f",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 34,
+      "lower_fence": 9.09606,
+      "mad_count": 2,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.00647619,
+      "top_values": [
+       110.788,
+       -5.44933,
+       -2.00356,
+       101.213,
+       -0.0925027,
+       0.556205,
+       1.20712,
+       1.20712,
+       98.392,
+       3.02384
+      ],
+      "upper_fence": 91.2579,
+      "zscore_count": 14
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "normal_numeric_float"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "d2f1b0267f31a829",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 132,
+      "lower_fence": 22.312,
+      "mad_count": 112,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.0251429,
+      "top_values": [
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0,
+       1000.0
+      ],
+      "upper_fence": 77.4536,
+      "zscore_count": 109
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "outlier_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "58362f8203fb6757",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 275,
+      "lower_fence": -2.59621,
+      "mad_count": 236,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.052381,
+      "top_values": [
+       18.4144,
+       18.4144,
+       14.9346,
+       14.2285,
+       14.189,
+       13.7504,
+       13.4928,
+       13.0602,
+       12.4114,
+       12.1567
+      ],
+      "upper_fence": 5.90558,
+      "zscore_count": 99
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "right_skewed"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "b023c3cab64fa65a",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 269,
+      "lower_fence": 0.0,
+      "methods_flagging": [
+       "iqr",
+       "zscore"
+      ],
+      "outlier_share": 0.0512381,
+      "top_values": [
+       19.6399,
+       18.0954,
+       17.5558,
+       17.1212,
+       17.0566,
+       16.5821,
+       16.5358,
+       16.1647,
+       16.1267,
+       15.8873
+      ],
+      "upper_fence": 0.0,
+      "zscore_count": 210
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "sparse_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "2d346dac7bde4941",
+     "metrics": {
+      "consensus": false,
+      "iqr_count": 0,
+      "lower_fence": -147.603,
+      "mad_count": 1609,
+      "methods_flagging": [
+       "mad"
+      ],
+      "outlier_share": 0.306476,
+      "top_values": [
+       117.972,
+       116.467,
+       114.361,
+       114.337,
+       113.62,
+       113.487,
+       113.207,
+       112.99,
+       112.858,
+       112.844
+      ],
+      "upper_fence": 241.374,
+      "zscore_count": 0
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
       ],
       "kind": "column"
      }

@@ -80,3 +80,21 @@ def test_a_retired_task_raises_no_finding_for_a_core_check_to_carry(
     }
 
     assert spoken == {}, f"{dataset.name}: a retired task raised findings: {spoken}"
+
+
+@pytest.mark.parametrize("dataset", [_param(d) for d in GOLDEN_DATASETS])
+def test_the_default_bounds_of_the_legacy_task_flagged_nothing(
+    dataset: GoldenDataset, engine_run
+) -> None:
+    """`out_of_bounds` takes no bounds by default, so none of this is lost.
+
+    The task checked columns named ``age``, ``temperature``, ``percent`` and ``score``
+    against fixed ranges; if it had flagged one on a golden dataset, dropping the
+    defaults would have dropped a finding.
+    """
+    entry = engine_run(dataset).report["checks"]["detect_out_of_bounds"]
+
+    result = entry["result"] or {}  # none when the task had no column to read
+    assert entry["status"] in {"ok", "not_applicable"}
+    assert not result.get("data")
+    assert not result.get("guidance")

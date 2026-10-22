@@ -124,7 +124,7 @@ class TestRefusedSettings:
 
 
 class TestDefaultWorkers:
-    """Legacy tasks and rule checks run one at a time; any other check, per core."""
+    """A plan with a legacy task runs one check at a time; any other, per core."""
 
     @staticmethod
     def plan(*checks):
@@ -142,11 +142,10 @@ class TestDefaultWorkers:
         replaced = (("legacy_superseded",), "analysis")
         assert self.plan(legacy, replaced) == 1
 
-    def test_core_rule_checks_beside_legacy_tasks_do_not_change_that(self):
-        assert self.plan((("legacy",), "analysis"), (("core",), "rule")) == 1
-
-    def test_any_other_check_beside_legacy_tasks_uses_the_executors_default(self):
-        assert self.plan((("legacy",), "analysis"), (("core",), "analysis")) is None
+    def test_core_checks_beside_legacy_tasks_do_not_change_that(self):
+        legacy = (("legacy",), "analysis")
+        assert self.plan(legacy, (("core",), "rule")) == 1
+        assert self.plan(legacy, (("core",), "analysis")) == 1
 
     def test_a_plan_with_no_legacy_task_uses_the_executors_default(self):
         assert self.plan((("core",), "rule")) is None

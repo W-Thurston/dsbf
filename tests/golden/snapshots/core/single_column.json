@@ -1,5 +1,10 @@
 {
  "checks": {
+  "bimodality": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -82,13 +87,97 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "multivariate_outliers": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
+  "normality": {
+   "findings": [
+    {
+     "check": "normality",
+     "code": "non_normal",
+     "id": "5931d058ebb106ff",
+     "metrics": {
+      "alpha": 0.05,
+      "jarque_bera_p_value": 0.0,
+      "jarque_bera_statistic": 1438.06,
+      "mean_abs_deviation_in_std": 0.304767,
+      "min": 7.1,
+      "primary_p_value": 7.94949e-23,
+      "primary_statistic": 0.827265,
+      "primary_test": "shapiro_wilk",
+      "qq_pattern": "heavy_tails",
+      "skewness": 2.14027
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "null_rate": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [
+    {
+     "check": "outliers",
+     "code": "outliers_detected",
+     "id": "0077bfbf3768c80e",
+     "metrics": {
+      "consensus": true,
+      "iqr_count": 29,
+      "lower_fence": -15.1763,
+      "mad_count": 17,
+      "methods_flagging": [
+       "iqr",
+       "zscore",
+       "mad"
+      ],
+      "outlier_share": 0.058,
+      "top_values": [
+       190.25,
+       189.24,
+       157.37,
+       149.98,
+       133.83,
+       119.7,
+       118.81,
+       118.76,
+       116.27,
+       115.14
+      ],
+      "upper_fence": 84.4738,
+      "zscore_count": 10
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
