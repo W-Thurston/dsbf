@@ -158,19 +158,25 @@ def compare_not_run(legacy: Result, core: Result) -> list[Difference]:
     return compare_levels(legacy, core)
 
 
-def merge_core(results: dict[str, Any], checks: tuple[str, ...]) -> Result:
+def merge_core(
+    results: dict[str, Any], checks: tuple[str, ...], *, any_ok: bool = False
+) -> Result:
     """One core result for a task replaced by several checks.
 
-    Its status is ``ok`` only if every check's is; its findings are all of theirs and
-    its output is theirs by check id.
+    Its status is ``ok`` only if every check's is (with ``any_ok``, if one is: the
+    checks cover different parts of the task, so a dataset with no categorical column
+    leaves ``contingency`` not applicable but the numeric pairs still comparable);
+    its findings are all of theirs and its output is theirs by check id.
     """
     if len(checks) == 1:
         return results[checks[0]]
     statuses = [results[check]["status"] for check in checks]
+    if set(statuses) == {"ok"} or (any_ok and "ok" in statuses):
+        status = "ok"
+    else:
+        status = next(s for s in statuses if s != "ok")
     return {
-        "status": "ok"
-        if set(statuses) == {"ok"}
-        else next(s for s in statuses if s != "ok"),
+        "status": status,
         "findings": [f for check in checks for f in results[check]["findings"]],
         "output": {check: results[check].get("output") for check in checks},
     }

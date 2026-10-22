@@ -14,7 +14,7 @@ from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
 from tests.golden.migration.distribution import merge_core
 from tests.golden.migration.findings import unmapped_titles
 from tests.golden.migration.harness import compare, judge
-from tests.golden.migration.registry import ACCEPTED, COMPARATORS
+from tests.golden.migration.registry import ACCEPTED, COMPARATORS, PARTIAL_COVERAGE
 
 pytestmark = pytest.mark.golden
 
@@ -36,7 +36,7 @@ def test_a_core_check_differs_from_its_task_only_where_accepted(
             task,
             COMPARATORS[task],
             run.report["checks"].get(task),
-            merge_core(run.core["results"], checks),
+            merge_core(run.core["results"], checks, any_ok=task in PARTIAL_COVERAGE),
         )
         legacy = run.report["checks"].get(task)
         if legacy and legacy["status"] == "ok":

@@ -22,9 +22,11 @@ Conventions every core check follows:
   returns.
 """
 
+from dsbf.checks.associations import associations
 from dsbf.checks.bimodality import bimodality
 from dsbf.checks.class_imbalance import class_imbalance
 from dsbf.checks.constant_columns import constant_columns
+from dsbf.checks.contingency import contingency
 from dsbf.checks.dominant_value import dominant_value
 from dsbf.checks.dtype_optimizations import dtype_optimizations
 from dsbf.checks.duplicate_columns import duplicate_columns
@@ -78,5 +80,7 @@ def core_pack() -> Pack:
             normality,
             bimodality,
             out_of_bounds,
+            associations,
+            contingency,
         ),
     )

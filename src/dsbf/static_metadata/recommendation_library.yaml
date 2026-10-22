@@ -689,3 +689,55 @@ out_of_bounds_remove_rows:
   message: >
     Drop the rows with values outside the range. They would distort what a model
     learns at the edges.
+
+# ===================
+# ASSOCIATIONS
+# ===================
+
+redundant_columns_drop_one:
+  condition: {field: abs_pearson_r, op: ">=", value: 0.99}
+  checks: [associations]
+  codes: [redundant_columns]
+  action: drop
+  when: the two columns hold the same information, and one is not needed for reporting
+  message: >
+    Keep one of the two columns. A near-exact copy adds no signal, and in a linear
+    model it makes the coefficients unstable.
+
+redundant_columns_trace_source:
+  condition: {field: abs_pearson_r, op: ">=", value: 0.99}
+  checks: [associations]
+  codes: [redundant_columns]
+  action: investigate
+  message: >
+    Find out how the columns relate: a unit conversion, a ratio, a running total or
+    a join that repeated a measure. Keep the one closest to the source.
+
+strong_association_check_derivation:
+  condition: {field: abs_value, op: ">=", value: 0.7}
+  checks: [associations]
+  codes: [strong_association]
+  action: investigate
+  message: >
+    Check whether one of the columns is derived from the other before using both
+    as features. If neither is, a strong link is a relationship worth modelling.
+
+categorical_association_combine:
+  condition: {field: cramers_v_corrected, op: ">=", value: 0.5}
+  checks: [contingency]
+  codes: [categorical_association]
+  action: combine
+  method: interaction_feature
+  when: a linear model uses both columns as features
+  message: >
+    The second column adds little beyond the first. Encode only one of them, or
+    combine the two into a single interaction feature.
+
+categorical_association_inspect_table:
+  condition: {field: cramers_v_corrected, op: ">=", value: 0.1}
+  checks: [contingency]
+  codes: [categorical_association]
+  action: investigate
+  message: >
+    Read the table for the combinations that occur more or less often than
+    independence predicts; they say what the link is.

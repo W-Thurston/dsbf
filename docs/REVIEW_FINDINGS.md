@@ -31,8 +31,8 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
 | Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-36, F-37 |
-| Mostly resolved or partial | F-07, F-10, F-11 (U4-06 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
-| Open, owned by Phase 4 | F-13 (U4-07), F-26 (U4-07, U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
+| Mostly resolved or partial | F-07, F-10 (U4-08), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
+| Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
 ---
@@ -165,7 +165,7 @@ any ordered file.
 - [x] Branch on backend, and either implement stratified sampling or reject it with a clear error.
 
 ### F-10 Column names containing `|` crash pair-based tasks
-**Status (2026-10-19): Partial.** The contracts key pairs by `Subject.column_pair` (U1-06 #74), and U0-09 (#52) stopped the leakage crash: a frame with columns `a|b` and `c|d` runs to a complete `Run` (checked on 2026-10-19). Seven legacy tasks still key pairs as `"a|b"`, and API v1 splits on the first `|`. The pair checks move to subjects in U4-07 and U4-08, and API v1 is deleted in U4-18.
+**Status (2026-10-19): Partial.** The contracts key pairs by `Subject.column_pair` (U1-06 #74), and U0-09 (#52) stopped the leakage crash: a frame with columns `a|b` and `c|d` runs to a complete `Run` (checked on 2026-10-19). Seven legacy tasks still key pairs as `"a|b"`, and API v1 splits on the first `|`. `associations` and `contingency` (U4-07) report every pair as a `Subject.column_pair` and a record with `first` and `second` (a frame with columns `a|b` and `c|d` gets the right subjects, tested). The pair checks of U4-08 still move, and API v1 is deleted in U4-18.
 
 **(verified)** Pair results are keyed as `"col1|col2"` and split with `split("|")`. A column named
 `a|b` makes `detect_data_leakage` raise `ValueError: too many values to unpack`
@@ -174,7 +174,7 @@ silently mis-attributes the pair instead.
 - [x] Store pairs as `{"a": ..., "b": ..., ...}` records, or use a nested `{col1: {col2: ...}}` map, instead of encoded string keys.
 
 ### F-11 Semantic-type filtering is still bypassed in places
-**Status (2026-10-21): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's checks do: `zeros` (U4-02) and the nine column health checks (U4-04) and the seven rule checks of U4-05, which declare `applies_to` and read `ctx.profile` only (`schema` also reads the values it names), and the five distribution analysis checks of U4-06, which read `ctx.values` for the columns they apply to; the adversarial test runs all twenty-two. The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; `id_columns` (U4-04) reads a numeric integer column with no repeat and no gap as a row number.
+**Status (2026-10-21): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's checks do: `zeros` (U4-02) and the nine column health checks (U4-04) and the seven rule checks of U4-05, which declare `applies_to` and read `ctx.profile` only (`schema` also reads the values it names), and the five distribution analysis checks of U4-06 and the two pairwise checks of U4-07 (`associations`, `contingency`), which read `ctx.values` for the columns they apply to; the adversarial test runs all twenty-four. The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; `id_columns` (U4-04) reads a numeric integer column with no repeat and no gap as a row number.
 
 v0.20.0 fixed tasks iterating over `df.columns` instead of `matched_cols`. The same bug class
 remains: `detect_data_leakage.py:73` computes correlations over
@@ -195,7 +195,7 @@ choice, not the data. A uniform distribution would look peaked. Given the projec
 - [ ] As a stopgap, plot density (`count / width`) on a value axis instead of a category axis.
 
 ### F-13 The "Kendall's τ for n < 30" routing is unreachable with defaults
-**Status (2026-10-19): Open, verified on 2026-10-19.** On a 20-row frame `compute_pairwise_associations` computes 0 associations. Fixed in U4-07.
+**Status (2026-10-22): Resolved in the new engine (legacy copy deleted in U4-18).** On a 20-row frame `compute_pairwise_associations` computed 0 associations (verified on 2026-10-19 and again on 2026-10-22). `associations` (U4-07) gates only on `min_n` (8) and routes after it, so the same frame gets Kendall's τ-b for every numeric pair (`test_a_20_row_frame_gets_kendalls_tau`).
 
 **(verified)** `compute_pairwise_associations.py:517` skips pairs with
 `valid_n < min_sample_size` (default 30) *before* method routing at `:298`, so the
@@ -316,7 +316,7 @@ RSS is process-wide and rarely shrinks. It also mixes units (`/1e6` vs `* 1024`)
 - [ ] `frontend/src/api.js`: `getDataset`, `listRuns` and `getTask` don't `encodeURIComponent` their path params, so names containing spaces, `/` or `#` break routing.
 
 ### F-26 "Leakage" is mislabeled
-**Status (2026-10-19): Open.** The feature–feature check moves to Redundancy in U4-07, the target-based leakage check is U4-14, and the quality dimensions show Leakage as not assessed without a target in U4-15.
+**Status (2026-10-22): Partial.** The feature–feature check is now Redundancy: `associations` (U4-07) raises `redundant_columns` (warning, redundancy dimension) for |Pearson r| ≥ 0.99 and says it is no statement about a target. The target-based leakage check is U4-14, and the quality dimensions show Leakage as not assessed without a target in U4-15.
 
 The Leakage dimension is driven by `detect_data_leakage`, which flags *feature–feature* pairs with
 |r| ≥ 0.99. That's redundancy or duplication. Target leakage means a feature encodes information
@@ -500,10 +500,10 @@ in U4-19.
 This is the project's core differentiator, so these items deserve priority after the P0 fixes.
 
 - [ ] **Real histograms** (F-12): equal-width bins computed server-side, with the binning rule recorded in metadata. **Status:** partial: the profile has them (U2-05); the dashboard draws them in Phase 6.
-- [ ] **Uncertainty on associations:** confidence intervals (Fisher z for r and τ, bootstrap for η² and V) and the n behind each estimate. Display "weak (95% CI 0.05–0.41, n=48)" instead of a bare label. **Status:** U4-07 (associations and contingency) and U4-08 (group differences).
-- [ ] **Bias-corrected Cramér's V** (Bergsma 2013). The uncorrected V currently inflates on small samples and high-cardinality pairs. **Status:** U4-07.
-- [ ] **A comparable association scale** across metric types (F-25). For example, convert η² to η, or rank by strength band and never by raw value across types. **Status:** U4-07.
-- [ ] **Multiple-comparison awareness** in pairwise scans on wide data. Report how many pairs were tested next to the number flagged. **Status:** U4-07 and U4-08.
+- [ ] **Uncertainty on associations (partial, 2026-10-22):** confidence intervals (Fisher z for r and τ, bootstrap for η² and V) and the n behind each estimate. Display "weak (95% CI 0.05–0.41, n=48)" instead of a bare label. **Status:** `associations` has Fisher z intervals for r, ρ and τ with `n_used` per pair, and `contingency` a percentile bootstrap interval for V̄ (U4-07). η has none yet: the η² bootstrap is U4-08 (group differences).
+- [x] **Bias-corrected Cramér's V** (Bergsma 2013). The uncorrected V currently inflates on small samples and high-cardinality pairs. **Status:** resolved in `contingency` (U4-07); the plain V is kept beside it.
+- [x] **A comparable association scale** across metric types (F-25). For example, convert η² to η, or rank by strength band and never by raw value across types. **Status:** resolved in the checks (U4-07): η replaces η² and point-biserial r, and every pair has a band on its own metric's scale. The API v1 ordering is deleted in U4-18.
+- [ ] **Multiple-comparison awareness** in pairwise scans on wide data. Report how many pairs were tested next to the number flagged. **Status:** partial: `associations` and `contingency` state `pairs_tested` and `pairs_flagged` in the output and in each finding (U4-07); U4-08 does the same for the group tests.
 - [ ] **Target-aware leakage detection** (F-26) built on a single `target_column`. **Status:** U4-14, on the one `target` setting of `dsbf.profile()` (U3-12).
 - [ ] **Calibration suite:** extend `tests/validation/` with datasets that have *known* ground truth (planted leakage, planted MAR or MNAR, planted bimodality), and track false-positive and false-negative rates per task across releases. **Status:** U4-16 rebuilds `tests/validation/` on the new engine as the calibration suite.
 

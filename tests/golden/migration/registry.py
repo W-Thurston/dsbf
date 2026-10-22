@@ -4,11 +4,17 @@ from __future__ import annotations
 
 from tests.golden.migration.accepted import ACCEPTED as _ACCEPTED
 from tests.golden.migration.accepted_analysis import ACCEPTED_ANALYSIS
+from tests.golden.migration.accepted_associations import ACCEPTED_ASSOCIATIONS
 from tests.golden.migration.analysis import (
     compare_bimodality,
     compare_normality,
     compare_outliers,
     compare_qq,
+)
+from tests.golden.migration.associations import (
+    compare_contingency_tables,
+    compare_data_leakage,
+    compare_pairwise_associations,
 )
 from tests.golden.migration.column_health import (
     compare_boolean_fields,
@@ -33,7 +39,11 @@ from tests.golden.migration.distribution import (
 from tests.golden.migration.harness import Accepted, Comparator
 from tests.golden.migration.zeros import compare_zeros
 
-ACCEPTED = (*_ACCEPTED, *ACCEPTED_ANALYSIS)
+ACCEPTED = (*_ACCEPTED, *ACCEPTED_ANALYSIS, *ACCEPTED_ASSOCIATIONS)
+
+# Tasks whose checks cover different parts of what the task did: the task is compared
+# wherever any of its checks ran.
+PARTIAL_COVERAGE = frozenset({"compute_pairwise_associations"})
 
 # Legacy task to its comparator. The core check that replaces the task is
 # ``dsbf.legacy.SUPERSEDED_BY``'s value for it; two tasks can share a check, and a
@@ -62,6 +72,9 @@ COMPARATORS: dict[str, Comparator] = {
     "normality_qq_plots": compare_qq,
     "detect_bimodal_distribution": compare_bimodality,
     "detect_out_of_bounds": compare_not_run,
+    "compute_pairwise_associations": compare_pairwise_associations,
+    "contingency_tables": compare_contingency_tables,
+    "detect_data_leakage": compare_data_leakage,
 }
 
-__all__ = ["ACCEPTED", "COMPARATORS", "Accepted"]
+__all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

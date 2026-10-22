@@ -1,5 +1,261 @@
 {
  "checks": {
+  "associations": {
+   "findings": [
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "ef9192f0de84be0f",
+     "metrics": {
+      "abs_pearson_r": 0.979179,
+      "abs_value": 0.979179,
+      "interval_high": 0.980911,
+      "interval_low": 0.977291,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.979179,
+      "strength": "strong",
+      "value": 0.979179
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "base",
+       "combo"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "redundant_columns",
+     "id": "73e17ec022831821",
+     "metrics": {
+      "abs_pearson_r": 0.990268,
+      "abs_value": 0.990268,
+      "interval_high": 0.991082,
+      "interval_low": 0.98938,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.990268,
+      "strength": "strong",
+      "value": 0.990268
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "base",
+       "copy_a"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "858b3f4c3f1cdca9",
+     "metrics": {
+      "abs_pearson_r": 0.959321,
+      "abs_value": 0.959321,
+      "interval_high": 0.962673,
+      "interval_low": 0.955674,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.959321,
+      "strength": "strong",
+      "value": 0.959321
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "base",
+       "copy_b"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "4611b188fe50dc81",
+     "metrics": {
+      "abs_pearson_r": 0.984703,
+      "abs_value": 0.984703,
+      "interval_high": 0.985978,
+      "interval_low": 0.983312,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.984703,
+      "strength": "strong",
+      "value": 0.984703
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "copy_a",
+       "combo"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "5e1e09d84c8de879",
+     "metrics": {
+      "abs_pearson_r": 0.951729,
+      "abs_value": 0.951729,
+      "interval_high": 0.955693,
+      "interval_low": 0.94742,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.951729,
+      "strength": "strong",
+      "value": 0.951729
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "copy_a",
+       "copy_b"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "bbe11c396cf42166",
+     "metrics": {
+      "abs_pearson_r": 0.964893,
+      "abs_value": 0.964893,
+      "interval_high": 0.967794,
+      "interval_low": 0.961736,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.964893,
+      "strength": "strong",
+      "value": 0.964893
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "copy_b",
+       "combo"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "b1aa5f629c264e72",
+     "metrics": {
+      "abs_pearson_r": 0.971503,
+      "abs_value": 0.971503,
+      "interval_high": 0.973865,
+      "interval_low": 0.968931,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.971503,
+      "strength": "strong",
+      "value": 0.971503
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_x",
+       "factor_y"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "f9c212a64324dd70",
+     "metrics": {
+      "abs_pearson_r": 0.982335,
+      "abs_value": 0.982335,
+      "interval_high": 0.983806,
+      "interval_low": 0.980731,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.982335,
+      "strength": "strong",
+      "value": 0.982335
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_x",
+       "factor_z"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "791e391277d561e5",
+     "metrics": {
+      "abs_pearson_r": 0.968427,
+      "abs_value": 0.968427,
+      "interval_high": 0.97104,
+      "interval_low": 0.965582,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.968427,
+      "strength": "strong",
+      "value": 0.968427
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_y",
+       "factor_z"
+      ],
+      "kind": "column_pair"
+     }
+    },
+    {
+     "check": "associations",
+     "code": "strong_association",
+     "id": "d5b48da3c172d594",
+     "metrics": {
+      "abs_pearson_r": 0.985955,
+      "abs_value": 0.985955,
+      "interval_high": 0.987855,
+      "interval_low": 0.98376,
+      "metric": "pearson_r",
+      "pairs_flagged": 10,
+      "pairs_tested": 55,
+      "pearson_r": 0.985955,
+      "strength": "strong",
+      "value": 0.985955
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "signal",
+       "sparse_c"
+      ],
+      "kind": "column_pair"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [],
    "status": "ok",
@@ -13,6 +269,11 @@
   "constant_columns": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "contingency": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "dominant_value": {

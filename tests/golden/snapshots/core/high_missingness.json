@@ -1,5 +1,10 @@
 {
  "checks": {
+  "associations": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [],
    "status": "ok",
@@ -11,6 +16,11 @@
    "version": "1.0.0"
   },
   "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "contingency": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

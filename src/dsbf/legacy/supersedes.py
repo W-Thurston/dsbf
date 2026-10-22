@@ -38,6 +38,9 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "normality_qq_plots": ("normality",),
     "detect_bimodal_distribution": ("bimodality",),
     "detect_out_of_bounds": ("out_of_bounds",),
+    "compute_pairwise_associations": ("associations", "contingency"),
+    "contingency_tables": ("contingency",),
+    "detect_data_leakage": ("associations",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces
