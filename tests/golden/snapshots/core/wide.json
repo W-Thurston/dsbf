@@ -537,7 +537,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -898,6 +908,193 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "7febfa4e95a2d6a6",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 101,
+      "null_share": 0.101,
+      "strongest_effect": 0.157634,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_00"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "f1ff3f932fb4cdbc",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 99,
+      "null_share": 0.099,
+      "strongest_effect": 0.15591,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_01"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "e7425345b759c74a",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 113,
+      "null_share": 0.113,
+      "strongest_effect": 0.171733,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_02"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "de274e9861b84c5a",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 106,
+      "null_share": 0.106,
+      "strongest_effect": 0.156408,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_03"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "b39b04cf610e40f2",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 120,
+      "null_share": 0.12,
+      "strongest_effect": 0.14017,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_04"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "9bd4b39a30daa6b3",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 120,
+      "null_share": 0.12,
+      "strongest_effect": 0.146563,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_05"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "c9092e3ad03315c1",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 103,
+      "null_share": 0.103,
+      "strongest_effect": 0.1878,
+      "strongest_p_adjusted": 0.645592,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_06"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "973c83ea0c4a8f8d",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 113,
+      "null_share": 0.113,
+      "strongest_effect": 0.119634,
+      "strongest_p_adjusted": 0.800972,
+      "tests_flagged": 0,
+      "tests_run": 98
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "null_07"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -4159,6 +4356,11 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },

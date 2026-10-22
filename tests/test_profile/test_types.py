@@ -230,6 +230,21 @@ class TestStringShapes:
     def test_nearly_all_distinct_strings_are_identifiers(self):
         assert _kind([f"user {i}" for i in range(100)]).semantic_type == "identifier"
 
+    def test_nearly_all_distinct_prose_is_text(self):
+        values = [
+            f"message number {i} says that the meeting moved to room {i}"
+            for i in range(100)
+        ]
+        result = _kind(values)
+        assert (result.semantic_type, result.reason) == (
+            "text",
+            "long strings of several words",
+        )
+
+    def test_long_strings_without_spaces_stay_identifiers(self):
+        values = [f"https://example.com/orders/{i}/items/{i * 7}" for i in range(100)]
+        assert _kind(values).semantic_type == "identifier"
+
     def test_repeated_long_strings_are_text(self):
         sentence = "a sentence that is a good deal longer than thirty characters"
         values = [f"{sentence} {i % 3}" for i in range(300)]

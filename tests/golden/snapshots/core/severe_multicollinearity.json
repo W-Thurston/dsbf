@@ -463,7 +463,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
@@ -486,6 +496,39 @@
   "kurtosis": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "e675c2d30cd82353",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 1279,
+      "null_share": 0.6395,
+      "strongest_effect": 0.0300523,
+      "strongest_p_adjusted": 0.856714,
+      "tests_flagged": 0,
+      "tests_run": 10
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sparse_c"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "multivariate_outliers": {
@@ -1008,6 +1051,11 @@
   "skewness": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "text_encoding": {

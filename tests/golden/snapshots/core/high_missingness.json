@@ -174,7 +174,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -195,6 +205,127 @@
    "version": "1.0.0"
   },
   "kurtosis": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "1f05e5d906b4ccdf",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 151,
+      "null_share": 0.0755,
+      "strongest_effect": 0.154814,
+      "strongest_p_adjusted": 0.0607667,
+      "tests_flagged": 0,
+      "tests_run": 8
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "883b3b65271ec242",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.890061,
+      "n_missing": 825,
+      "null_share": 0.4125,
+      "strongest_effect": 0.890061,
+      "strongest_p_adjusted": 0.0,
+      "tests_flagged": 1,
+      "tests_run": 8
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "device_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "9143796a58567182",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 492,
+      "null_share": 0.246,
+      "strongest_effect": 0.0309561,
+      "strongest_p_adjusted": 0.716537,
+      "tests_flagged": 0,
+      "tests_run": 8
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "d93f0c73d815cc02",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 1500,
+      "null_share": 0.75,
+      "strongest_effect": 0.0528458,
+      "strongest_p_adjusted": 0.506942,
+      "tests_flagged": 0,
+      "tests_run": 8
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "notes"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "77c1574b6b93ce95",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.847445,
+      "n_missing": 812,
+      "null_share": 0.406,
+      "strongest_effect": 0.847445,
+      "strongest_p_adjusted": 0.0,
+      "tests_flagged": 1,
+      "tests_run": 8
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "premium_score"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -496,6 +627,11 @@
    "version": "1.0.0"
   },
   "skewness": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

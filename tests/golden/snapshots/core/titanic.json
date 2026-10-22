@@ -1702,7 +1702,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -2479,6 +2489,61 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "6946e36353ac762f",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.344394,
+      "n_missing": 177,
+      "null_share": 0.198653,
+      "strongest_effect": 0.344394,
+      "strongest_p_adjusted": 2.77233e-23,
+      "tests_flagged": 9,
+      "tests_run": 14
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "8ab51c03a05bdfd3",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.786544,
+      "n_missing": 688,
+      "null_share": 0.772166,
+      "strongest_effect": 0.786544,
+      "strongest_p_adjusted": 1.41349e-119,
+      "tests_flagged": 13,
+      "tests_run": 14
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "deck"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -2760,6 +2825,11 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },

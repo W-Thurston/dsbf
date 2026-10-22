@@ -103,6 +103,21 @@ class TestColumnScope:
 
         assert [(p.a, p.b) for p in context.profile.null_pairs] == [("a", "b")]
 
+    def test_coerced_columns_name_only_scoped_columns(self):
+        pd = pytest.importorskip("pandas")
+        frame = pd.DataFrame(
+            {"mixed": ["a", 1.5] * 20, "amount": [float(i) for i in range(40)]}
+        )
+        dataset = load(frame)
+        profile = profile_dataset(dataset)
+        assert set(dataset.coerced) == {"mixed"}
+
+        everything = CheckContext(null_share.spec, dataset, profile)
+        numbers = CheckContext(numeric_spread.spec, dataset, profile)
+
+        assert everything.coerced == {"mixed": "mixed types, converted to text"}
+        assert numbers.coerced == {}
+
     def test_a_profile_of_another_dataset_is_refused(self):
         other = make_dataset(pl.DataFrame({"z": range(5)}))
 

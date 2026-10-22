@@ -588,4 +588,28 @@ ACCEPTED_GROUP_DIFFERENCES: tuple[Accepted, ...] = (
             ("", "status", "legacy ok, core not_applicable"),
         ],
     ),
+    *_group(
+        "kruskal_wallis",
+        "sms_spam",
+        NO_PAIR,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
+    *_group(
+        "mann_whitney_u",
+        "sms_spam",
+        NO_PAIR,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
+    *_group(
+        "one_way_anova",
+        "sms_spam",
+        NO_PAIR,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
 )

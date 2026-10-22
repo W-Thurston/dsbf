@@ -38,6 +38,11 @@ STAGES: dict[str, tuple[str, Stage, str | None]] = {
         "high-cardinality-counts-categorical-columns-only",
     ),
     "single_column": ("model_ready", Stage.MODELING, "stage-names"),
+    "sms_spam": (
+        "exploratory",
+        Stage.CLEANED,
+        "high-cardinality-counts-categorical-columns-only",
+    ),
     "tiny": ("cleaned", Stage.CLEANED, None),
     "titanic": (
         "exploratory",

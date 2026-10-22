@@ -8,6 +8,9 @@ its ``Run`` as ``core_run.json``. The legacy tasks are planned on their own, so
 because ``PYTHONHASHSEED`` can only be set before Python starts. It imports nothing
 from ``tests``.
 
+Parameters for the core checks that need them come from the environment variable
+``DSBF_GOLDEN_CORE_PARAMS``, a JSON mapping of check id to parameters.
+
 Usage: python engine_one.py <name> <csv> <out_dir> [<time_series_column>]
 """
 
@@ -63,7 +66,10 @@ def main() -> None:
     core_registry = Registry()
     core_registry.register_pack(core_pack())
     core_plan = make_plan(
-        core_registry, Selection(depth="deep", entry_points=False), profile=profile
+        core_registry,
+        Selection(depth="deep", entry_points=False),
+        params=json.loads(os.environ.get("DSBF_GOLDEN_CORE_PARAMS", "{}")) or None,
+        profile=profile,
     )
     core_run = execute(core_plan, dataset, profile, dsbf_version="golden")
     Path(out_dir, "core_run.json").write_text(core_run.model_dump_json())
