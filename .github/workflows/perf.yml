@@ -15,6 +15,16 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, labeled]
 
+# A newer run for the same pull request replaces an older one (the label added twice
+# at creation started the run five times). A label other than `perf` gets a group of
+# its own and its job is skipped, so it cannot cancel a run in progress. Scheduled and
+# manual runs are never cancelled.
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}-${{
+    github.event.action == 'labeled' && github.event.label.name != 'perf' && github.run_id || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # The job only reads the repository and uploads an artifact.
 permissions:
   contents: read
@@ -24,7 +34,8 @@ jobs:
     name: Performance
     if: >-
       github.event_name != 'pull_request' ||
-      contains(github.event.pull_request.labels.*.name, 'perf')
+      (contains(github.event.pull_request.labels.*.name, 'perf') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'perf'))
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
