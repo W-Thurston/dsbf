@@ -1,10 +1,11 @@
 """Entropy and column hashes agree with the committed legacy golden snapshots.
 
 ``compute_entropy`` and ``detect_duplicate_columns`` are compared by what they
-reported on each golden dataset. The two agree everywhere, so there is no accepted
-difference. The same columns have an entropy, within the six significant figures the
-snapshots keep, and the columns the legacy task called duplicates are the ones whose
-hash and dtype match.
+reported on each golden dataset. The same columns have an entropy, within the six
+significant figures the snapshots keep, and the columns the legacy task called
+duplicates are the ones whose hash and dtype match. The one accepted difference is a
+column of prose: the legacy types called it an identifier and measured no entropy, and
+the profile types it `text` and does.
 """
 
 import itertools
@@ -34,7 +35,11 @@ def test_entropy_matches_compute_entropy(dataset: GoldenDataset, tmp_path):
         if getattr(column, "entropy_bits", None) is not None
     }
 
-    assert set(profiled) == set(legacy)
+    prose = {
+        column.name for column in profile.columns if column.semantic_type == "text"
+    }
+    assert set(profiled) - set(legacy) <= prose
+    assert set(legacy) <= set(profiled)
     for name, bits in legacy.items():
         assert profiled[name] == pytest.approx(bits, rel=1e-5, abs=1e-6), name
 

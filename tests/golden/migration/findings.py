@@ -183,6 +183,27 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^(Moderate|High|Severe) Multicollinearity \(", "multicollinearity"),
         (r"^VIF = .* - Collinearity Impact on Models", "multicollinearity"),
     ),
+    "missingness_mechanism_analysis": (
+        (
+            r"^Missingness Mechanism: consistent with (MAR|MCAR / MAR)",
+            "missingness_depends_on_observed",
+        ),
+        (
+            r"^Missingness Mechanism: consistent with (MCAR|Indeterminate)",
+            "missingness_unexplained",
+        ),
+    ),
+    "detect_mixed_type_columns": ((r"^Mixed Value Types \(", "mixed_value_types"),),
+    "detect_encoded_columns": ((r"^Likely Encoded Column \(", "encoded_values"),),
+    "detect_regex_format_violations": (
+        (r"^Regex Format Violations \(", "format_violations"),
+    ),
+    "detect_string_anomalies": (
+        (r"^Mixed Case - ", "mixed_case"),
+        (r"^Whitespace Padding - ", "edge_whitespace"),
+        (r"^Invisible Characters - ", "invisible_characters"),
+        (r"^Length Outliers - ", "length_outliers"),
+    ),
 }
 
 

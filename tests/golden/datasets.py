@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import csv
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from tests.generators.dsbf_test_dataset_generator import (
     GENERATORS,
@@ -26,6 +28,8 @@ class GoldenDataset:
     name: str
     write_csv: Callable[[Path], Path]
     time_series_column: str | None = None
+    core_params: dict[str, dict[str, Any]] = field(default_factory=dict)
+    """Parameters for the core checks that have no default to run on this dataset."""
 
     @property
     def snapshot_path(self) -> Path:
@@ -50,6 +54,17 @@ def _titanic(_directory: Path) -> Path:
     return DATA_DIR / "titanic.csv"
 
 
+def _sms_spam(directory: Path) -> Path:
+    """The vendored tab-separated corpus, with a header row, as a CSV."""
+    path = directory / "sms_spam.csv"
+    lines = (DATA_DIR / "SMSSpamCollection").read_text(encoding="utf-8").split("\n")
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["label", "text"])
+        writer.writerows(line.split("\t", 1) for line in lines if line)
+    return path
+
+
 def _kitchen5k(directory: Path) -> Path:
     path = directory / "kitchen5k.csv"
     generator = DSBFTestDataGenerator(n_rows=KITCHEN_ROWS, random_seed=KITCHEN_SEED)
@@ -62,5 +77,18 @@ def _kitchen5k(directory: Path) -> Path:
 ARCHETYPES = [_archetype(name) for name in GENERATORS if name != "comprehensive"]
 TITANIC = GoldenDataset("titanic", _titanic)
 KITCHEN5K = GoldenDataset("kitchen5k", _kitchen5k, time_series_column="normal_date")
+# A message is plain text: it names no link, and a label is one of the two classes.
+SMS_SPAM = GoldenDataset(
+    "sms_spam",
+    _sms_spam,
+    core_params={
+        "format_violations": {
+            "rules": [
+                {"column": "label", "pattern": "ham|spam"},
+                {"column": "text", "pattern": r"(?!.*(?:https?://|www\.)).*"},
+            ]
+        }
+    },
+)
 
-GOLDEN_DATASETS = [*ARCHETYPES, TITANIC, KITCHEN5K]
+GOLDEN_DATASETS = [*ARCHETYPES, TITANIC, KITCHEN5K, SMS_SPAM]

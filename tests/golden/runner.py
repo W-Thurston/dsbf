@@ -74,6 +74,8 @@ def _run_child(
         "DSBF_DB_PATH": str(workdir / "dsbf.db"),
         "DSBF_HOME": str(workdir / "home"),
     }
+    if dataset.core_params:
+        env["DSBF_GOLDEN_CORE_PARAMS"] = json.dumps(dataset.core_params)
     command = [
         sys.executable,
         str(GOLDEN_DIR / script),

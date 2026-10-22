@@ -23,7 +23,10 @@ RENAMED = {"continuous": "numeric", "id": "identifier"}
 # Differences by dataset and column: (legacy, new). A Boolean column is not listed one
 # by one; see ``_boolean_difference``. The reasons are in ``accepted``.
 ACCEPTED = {
-    cell: ("identifier", "datetime") for cell in cells("datetime-past-pandas-range")
+    **{
+        cell: ("identifier", "datetime") for cell in cells("datetime-past-pandas-range")
+    },
+    **{cell: ("identifier", "text") for cell in cells("prose-is-text-not-a-key")},
 }
 
 

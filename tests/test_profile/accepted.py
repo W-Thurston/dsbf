@@ -93,6 +93,18 @@ ACCEPTED_DIFFERENCES: tuple[Accepted, ...] = (
         ("kitchen5k", "datetime_with_gaps"),
     ),
     _entry(
+        "prose-is-text-not-a-key",
+        "types",
+        "identifier",
+        "text",
+        "Several-word strings longer than 30 characters are free text even when "
+        "nearly every value is distinct. The legacy task tested the distinct share "
+        "first and called prose a key; `id_columns` and `high_cardinality` would "
+        "then have flagged it.",
+        ("kitchen5k", "long_text"),
+        ("sms_spam", "text"),
+    ),
+    _entry(
         "fixed-date-format-list",
         "types",
         "any format dateutil parses",
@@ -220,8 +232,9 @@ ACCEPTED_DIFFERENCES: tuple[Accepted, ...] = (
         "every column with over 50 distinct values",
         "categorical columns with over 50 distinct values",
         "Counting continuous and identifier columns kept `clean`, `near_clean`, "
-        "`severe_multicollinearity` and `titanic` from being `cleaned`, though none "
-        "has a high-cardinality categorical column. They are `cleaned` now.",
+        "`severe_multicollinearity`, `sms_spam` and `titanic` from being `cleaned`, "
+        "though none has a high-cardinality categorical column. They are `cleaned` "
+        "now.",
     ),
     _entry(
         "stage-inference-honours-the-configured-thresholds",

@@ -176,7 +176,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -215,6 +225,39 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "9143796a58567182",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 191,
+      "null_share": 0.0636667,
+      "strongest_effect": 0.0557389,
+      "strongest_p_adjusted": 0.654173,
+      "tests_flagged": 0,
+      "tests_run": 8
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -546,6 +589,11 @@
      }
     }
    ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },

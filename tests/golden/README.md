@@ -9,6 +9,7 @@ threshold or the engine shows up as a reviewable diff instead of a silent shift.
 | `clean`, `tiny`, `near_clean`, `all_categorical`, `high_missingness`, `severe_multicollinearity`, `single_column`, `wide` | The eight archetype generators in `tests/generators`, seed 42, rebuilt on every run |
 | `titanic` | `data/titanic.csv` (vendored; see `data/README.md`) |
 | `kitchen5k` | `DSBFTestDataGenerator(n_rows=5000, random_seed=42)` with `normal_date` as the time-series column |
+| `sms_spam` | `data/SMSSpamCollection` (vendored, CC BY 4.0; see `data/README.md`), written as a CSV with the header `label,text` |
 
 ## Run them
 
@@ -112,6 +113,11 @@ and names a golden dataset and a registered comparator.
 
 To migrate another task, add it to `SUPERSEDED_BY`, write its comparator, run the suite,
 and list each difference with its reason.
+
+A core check that does nothing without parameters (`format_violations` runs only the rules it is
+given, besides its scan for mixed date formats) gets them from `GoldenDataset.core_params`;
+`sms_spam` sets the two rules its snapshots exercise. The runner passes them to
+`engine_one.py` in `DSBF_GOLDEN_CORE_PARAMS`, and only the core run uses them.
 
 ## Determinism
 

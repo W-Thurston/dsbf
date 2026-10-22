@@ -45,6 +45,11 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "kruskal_wallis": ("group_differences",),
     "mann_whitney_u": ("group_differences",),
     "detect_collinear_features": ("collinearity",),
+    "missingness_mechanism_analysis": ("missingness_mechanism",),
+    "detect_mixed_type_columns": ("mixed_types",),
+    "detect_encoded_columns": ("encoded_columns",),
+    "detect_regex_format_violations": ("format_violations",),
+    "detect_string_anomalies": ("string_anomalies",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

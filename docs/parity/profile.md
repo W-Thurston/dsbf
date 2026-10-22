@@ -12,18 +12,18 @@ apart. Each heading below is a slug from that list.
 
 | Area | Legacy output | Test | Result |
 |---|---|---|---|
-| Load | `pd.read_csv`: shape, names, null counts | `test_load_parity.py` | Equal on all 10 datasets |
+| Load | `pd.read_csv`: shape, names, null counts | `test_load_parity.py` | Equal on all 11 datasets |
 | Types | `infer_types` | `test_type_parity.py` | Equal except the types below |
 | Columns | `summarize_nulls`, `summarize_unique`, `summarize_numeric` | `test_column_parity.py` | Equal within `rel=1e-9`, except integer codes |
 | Values | `summarize_value_counts`, `categorical_length_stats` | `test_column_parity.py` | Equal except the rules below |
 | Dataset | `summarize_dataset_shape`, `detect_duplicates` | `test_dataset_parity.py` | Equal |
 | Entropy | `compute_entropy` | `test_rule_inputs_parity.py` | Equal on the same columns, within the six significant figures the snapshot keeps |
 | Duplicate columns | `detect_duplicate_columns` | `test_rule_inputs_parity.py` | Equal: a pair is equal hashes with equal dtypes |
-| Stage | `infer_stage` (snapshot `inferred_stage`) | `test_dataset_parity.py` | 9 of 10 differ, all listed |
+| Stage | `infer_stage` (snapshot `inferred_stage`) | `test_dataset_parity.py` | 10 of 11 differ, all listed |
 
 The golden datasets are `clean`, `tiny`, `near_clean`, `all_categorical`,
-`high_missingness`, `severe_multicollinearity`, `single_column`, `wide`, `titanic` and
-`kitchen5k` (see `tests/golden/README.md`).
+`high_missingness`, `severe_multicollinearity`, `single_column`, `wide`, `titanic`,
+`kitchen5k` and `sms_spam` (see `tests/golden/README.md`).
 
 ## Not compared
 
@@ -79,6 +79,14 @@ called it `categorical`.
 Kitchen5k's `datetime_with_gaps` has years up to 2259, past pandas' nanosecond limit. The
 legacy parse reads 89% of it and misses its 90% line, so legacy said `identifier`.
 
+#### `prose-is-text-not-a-key`
+
+A string of several words longer than 30 characters is `text` even when nearly every value
+is distinct. The legacy rule tested the distinct share first and called prose an `id`, so
+kitchen5k's `long_text` was an `identifier`, which `id_columns` and `high_cardinality`
+would have flagged as a key. URLs, hashes and other long strings without spaces stay
+identifiers.
+
 #### `fixed-date-format-list`
 
 The legacy dateutil fallback is replaced by a list of 19 formats, which cut inference on
@@ -88,7 +96,7 @@ out because eight-digit identifiers parse under it. No golden dataset reaches th
 ## Counts and numeric statistics (`columns`)
 
 Null counts, distinct counts, and the count, min, max, mean, std and seven percentiles of
-every numeric column equal the legacy tasks within `rel=1e-9` on all 10 datasets, with one
+every numeric column equal the legacy tasks within `rel=1e-9` on all 11 datasets, with one
 exception.
 
 #### `categorical-integer-codes-have-no-statistics`
@@ -158,7 +166,7 @@ A series with no dominant step gets no frequency and no gap count.
 ## Dataset (`dataset`)
 
 Shape, duplicate rows and null cells equal `summarize_dataset_shape` and
-`detect_duplicates` on all 10 datasets.
+`detect_duplicates` on all 11 datasets.
 
 #### `null-cell-share-is-a-fraction`
 
@@ -168,8 +176,8 @@ rounds it to four places, as the legacy task does.
 
 ## Stage (`stage`)
 
-Nine of ten golden datasets get a different name from the legacy function. Five are the same
-answer in the new vocabulary (the first four rows and `single_column`) and four are a changed
+Ten of eleven golden datasets get a different name from the legacy function. Five are the same
+answer in the new vocabulary (the first four rows and `single_column`) and five are a changed
 answer. `tiny` (`cleaned`) is the only dataset with the same name.
 
 | Dataset | Legacy | Profile | Why |
@@ -182,6 +190,7 @@ answer. `tiny` (`cleaned`) is the only dataset with the same name.
 | `near_clean` | `exploratory` | `cleaned` | `high-cardinality-counts-categorical-columns-only` |
 | `severe_multicollinearity` | `exploratory` | `cleaned` | `high-cardinality-counts-categorical-columns-only` |
 | `titanic` | `exploratory` | `cleaned` | `high-cardinality-counts-categorical-columns-only` |
+| `sms_spam` | `exploratory` | `cleaned` | `high-cardinality-counts-categorical-columns-only` |
 | `single_column` | `model_ready` | `modeling` | `stage-names` |
 | `tiny` | `cleaned` | `cleaned` | none |
 
@@ -192,8 +201,8 @@ answer. `tiny` (`cleaned`) is the only dataset with the same name.
 #### `high-cardinality-counts-categorical-columns-only`
 
 The legacy function counted every column with over 50 distinct values, so continuous and
-identifier columns kept `clean`, `near_clean`, `severe_multicollinearity` and `titanic`
-from being `cleaned`. They have no high-cardinality categorical column and are `cleaned`.
+identifier columns kept `clean`, `near_clean`, `severe_multicollinearity`, `sms_spam` and
+`titanic` from being `cleaned`. They have no high-cardinality categorical column and are `cleaned`.
 
 #### `stage-inference-honours-the-configured-thresholds`
 

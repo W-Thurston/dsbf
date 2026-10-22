@@ -4,6 +4,7 @@
 import threading
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -137,6 +138,13 @@ class CheckContext:
     def sampling(self) -> SamplingInfo | None:
         """How the dataset was sampled, or None if the check sees all of it."""
         return self._dataset.sampling
+
+    @property
+    def coerced(self) -> Mapping[str, str]:
+        """The columns in scope that had to change type to load, with the reason."""
+        return MappingProxyType(
+            {c: why for c, why in self._dataset.coerced.items() if c in self._scope}
+        )
 
     @property
     def findings(self) -> tuple[Finding, ...]:

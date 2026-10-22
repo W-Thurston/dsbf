@@ -793,3 +793,163 @@ group_difference_use_grouping_column:
     The grouping column explains a large part of the numeric column, so it is a
     useful feature for predicting it. Check it is available at prediction time,
     and consider fitting a model per group if the groups behave differently.
+
+# ===================
+# MISSINGNESS MECHANISM
+# ===================
+
+missingness_impute_with_predictors:
+  condition: {field: tests_flagged, op: ">=", value: 1}
+  checks: [missingness_mechanism]
+  codes: [missingness_depends_on_observed]
+  action: impute
+  method: multiple_imputation
+  when: the columns named in the finding are kept as predictors of the imputation
+  message: >
+    The nulls follow other columns, so a median or a mode fills them with a value
+    that is wrong in a known direction. Impute from those columns (for example
+    with chained equations), or let a tree-based model handle the nulls itself.
+
+missingness_dropping_rows_biases:
+  condition:
+    all:
+      - {field: tests_flagged, op: ">=", value: 1}
+      - {field: null_share, op: ">=", value: 0.1}
+  checks: [missingness_mechanism]
+  codes: [missingness_depends_on_observed]
+  action: investigate
+  message: >
+    Dropping the rows with a null removes more of some kinds of row than others,
+    so the rows that remain are not typical. Compare the kept and dropped rows
+    before choosing to drop them, and ask how the column was collected.
+
+missingness_indicator:
+  condition:
+    all:
+      - {field: tests_flagged, op: ">=", value: 1}
+      - {field: null_share, op: ">=", value: 0.05}
+  checks: [missingness_mechanism]
+  codes: [missingness_depends_on_observed]
+  action: add_indicator
+  method: is_missing
+  when: the pattern of missingness is informative
+  message: >
+    Keep an is_missing indicator beside the column, so a model can use that the
+    value was not recorded for rows of the kind named in the finding.
+
+missingness_simple_imputation:
+  condition: {field: null_share, op: ">=", value: 0.05}
+  checks: [missingness_mechanism]
+  codes: [missingness_unexplained]
+  action: impute
+  method: median_or_mode
+  when: the column is known to be collected the same way for every row
+  message: >
+    No other column explains the nulls, so a simple imputation or dropping the
+    rows costs little bias if they fall at random. Confirm how the column was
+    collected, because nulls that depend on their own value cannot be seen here.
+
+# ===================
+# STRING ANOMALIES
+# ===================
+
+string_case_normalise:
+  condition: {field: affected_rows, op: ">=", value: 1}
+  checks: [string_anomalies]
+  codes: [mixed_case]
+  action: transform
+  method: str.lower
+  message: >
+    Fold the values to one case (or map each variant to its most frequent
+    spelling) before counting, grouping or encoding the column.
+
+string_whitespace_strip:
+  condition: {field: affected_rows, op: ">=", value: 1}
+  checks: [string_anomalies]
+  codes: [edge_whitespace]
+  action: transform
+  method: str.strip
+  message: >
+    Strip leading and trailing whitespace when the data is read, so a padded
+    value is the same category as its trimmed form.
+
+string_invisible_normalise:
+  condition: {field: affected_rows, op: ">=", value: 1}
+  checks: [string_anomalies]
+  codes: [invisible_characters]
+  action: transform
+  method: unicode_normalise_and_strip
+  message: >
+    Remove zero-width, no-break and control characters (and apply Unicode NFKC
+    normalisation if the text is meant to be compared), then compare again.
+
+string_long_values_inspect:
+  condition: {field: affected_rows, op: ">=", value: 1}
+  checks: [string_anomalies]
+  codes: [length_outliers]
+  action: investigate
+  message: >
+    Read the longest and the shortest values. A long value in a label column is
+    often several fields joined, an error message or markup, and may need
+    splitting, truncating or excluding.
+
+# ===================
+# ENCODED COLUMNS
+# ===================
+
+encoded_column_drop:
+  condition: {field: encoded_share, op: ">=", value: 0.9}
+  checks: [encoded_columns]
+  codes: [encoded_values]
+  action: drop
+  when: the column is a key or a fingerprint, not a measurement
+  message: >
+    A column of hashes or UUIDs names a record and carries no signal a model can
+    generalise from; as a feature it only lets the model memorise rows. Keep it
+    as a key and leave it out of the features.
+
+encoded_column_decode:
+  condition: {field: kind, op: "==", value: base64}
+  checks: [encoded_columns]
+  codes: [encoded_values]
+  action: transform
+  method: base64_decode
+  when: the encoded text holds something meaningful
+  message: >
+    Base64 only changes how text or bytes are written. Decode it and see whether
+    the result is a field worth keeping.
+
+# ===================
+# MIXED TYPES AND FORMATS
+# ===================
+
+mixed_types_coerce:
+  condition: {field: kinds, op: ">=", value: 2}
+  checks: [mixed_types]
+  codes: [mixed_value_types]
+  action: convert
+  method: coerce_and_flag
+  message: >
+    Decide what the column should hold, convert the values that fit and set the
+    others to null (keeping them in a separate column if they mean something,
+    such as a code for "unknown").
+
+format_violations_review:
+  condition: {field: violations, op: ">=", value: 1}
+  checks: [format_violations]
+  codes: [format_violations]
+  action: investigate
+  message: >
+    Read the examples. Violations that differ only by padding, case or a missing
+    separator can be normalised; the rest need a decision about the source.
+
+date_formats_unify:
+  condition: {field: formats, op: ">=", value: 2}
+  checks: [format_violations]
+  codes: [mixed_date_formats]
+  action: convert
+  method: parse_each_format_to_iso8601
+  message: >
+    Parse each format with its own pattern and write all of them as ISO 8601. Do
+    not rely on a parser that guesses: a day-first and a month-first date read
+    the same digits differently.

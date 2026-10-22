@@ -62,6 +62,11 @@ EMPTY_RESULT = (
     "The task returned an empty successful result where there was nothing to pair "
     "(one column, or no numeric columns); the check ends not applicable and says so."
 )
+ONE_CATEGORICAL = (
+    "The dataset has one column a pair statistic reads (`label`, two-valued); the "
+    "other is free text, which none of them reads. The task returned an empty "
+    "successful result; the check ends not applicable and says so."
+)
 
 
 def _group(
@@ -1091,6 +1096,30 @@ ACCEPTED_ASSOCIATIONS: tuple[Accepted, ...] = (
         "detect_data_leakage",
         "single_column",
         EMPTY_RESULT,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
+    *_group(
+        "compute_pairwise_associations",
+        "sms_spam",
+        ONE_CATEGORICAL,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
+    *_group(
+        "contingency_tables",
+        "sms_spam",
+        ONE_CATEGORICAL,
+        [
+            ("", "status", "legacy ok, core not_applicable"),
+        ],
+    ),
+    *_group(
+        "detect_data_leakage",
+        "sms_spam",
+        ONE_CATEGORICAL,
         [
             ("", "status", "legacy ok, core not_applicable"),
         ],

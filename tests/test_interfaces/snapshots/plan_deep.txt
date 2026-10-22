@@ -1,5 +1,5 @@
-Plan for data (6 × 4): 32 checks
-  will run 29 · not applicable 1 · unavailable 1 · skipped 1
+Plan for data (6 × 4): 37 checks
+  will run 34 · not applicable 1 · unavailable 1 · skipped 1
 
 level 0
   ✓ will run        associations           reads 4 columns
@@ -13,11 +13,15 @@ level 0
   ✓ will run        dtype_optimizations    reads 4 columns
   ✓ will run        duplicate_columns      reads 4 columns
   ✓ will run        duplicate_rows
+  ✓ will run        encoded_columns        reads 2 columns
   ✓ will run        entropy                reads 2 columns
+  ✓ will run        format_violations      reads 4 columns
   ✓ will run        group_differences      reads 4 columns
   ✓ will run        high_cardinality       reads 2 columns
   ✓ will run        id_columns             reads 4 columns
   ✓ will run        kurtosis               reads 2 columns
+  ✓ will run        missingness_mechanism  reads 4 columns
+  ✓ will run        mixed_types            reads 2 columns
   ✓ will run        multivariate_outliers  reads 2 columns
   ✓ will run        near_zero_variance     reads 2 columns
   ✓ will run        normality              reads 2 columns
@@ -30,6 +34,7 @@ level 0
   ✓ will run        schema                 reads 4 columns
   ✓ will run        skewness               reads 2 columns
   ⦸ unavailable     stationarity           Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`. · required by trend_summary
+  ✓ will run        string_anomalies       reads 2 columns
   ✓ will run        text_encoding          reads 4 columns
   ✓ will run        zeros                  reads 2 columns
 

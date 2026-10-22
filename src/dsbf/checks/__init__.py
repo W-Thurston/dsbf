@@ -32,11 +32,15 @@ from dsbf.checks.dominant_value import dominant_value
 from dsbf.checks.dtype_optimizations import dtype_optimizations
 from dsbf.checks.duplicate_columns import duplicate_columns
 from dsbf.checks.duplicate_rows import duplicate_rows
+from dsbf.checks.encoded_columns import encoded_columns
 from dsbf.checks.entropy import entropy
+from dsbf.checks.format_violations import format_violations
 from dsbf.checks.group_differences import group_differences
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
 from dsbf.checks.kurtosis import kurtosis
+from dsbf.checks.missingness_mechanism import missingness_mechanism
+from dsbf.checks.mixed_types import mixed_types
 from dsbf.checks.multivariate_outliers import multivariate_outliers
 from dsbf.checks.near_zero_variance import near_zero_variance
 from dsbf.checks.normality import normality
@@ -46,6 +50,7 @@ from dsbf.checks.outliers import outliers
 from dsbf.checks.sample_size import sample_size
 from dsbf.checks.schema import schema
 from dsbf.checks.skewness import skewness
+from dsbf.checks.string_anomalies import string_anomalies
 from dsbf.checks.text_encoding import text_encoding
 from dsbf.checks.zeros import zeros
 from dsbf.engine import Pack
@@ -86,5 +91,10 @@ def core_pack() -> Pack:
             contingency,
             group_differences,
             collinearity,
+            string_anomalies,
+            encoded_columns,
+            mixed_types,
+            format_violations,
+            missingness_mechanism,
         ),
     )

@@ -22,8 +22,10 @@ The rules, in order:
 5. Text (``String``, ``Categorical``, ``Enum``) is ``datetime`` if one known format
    parses over 90% of the sample and of the column; else ``categorical`` if it is
    mostly period labels such as ``FY2024``; else ``identifier`` if it is mostly
-   hex-like or over 90% distinct; else ``text`` if the mean length is over 30; else
-   ``categorical``.
+   hex-like; else ``text`` if the mean length is over 30 and over half the values
+   hold whitespace (prose is nearly unique, but it is not a key); else
+   ``identifier`` if it is over 90% distinct; else ``text`` if the mean length is
+   over 30; else ``categorical``.
 """
 
 from dataclasses import dataclass
@@ -43,6 +45,7 @@ _DATE_SHARE = 0.9  # of the values a format must parse, in the sample and the co
 _FIRM_DATE_SHARE = 0.99
 _ID_SHARE = 0.8
 _ID_UNIQUE_SHARE = 0.9
+_PROSE_SHARE = 0.5  # of long values that hold a space, for free text to beat a key
 _PERIOD_LABEL_SHARE = 0.5
 _PERIOD_LABEL_MAX_DISTINCT = 100
 _TEXT_MEAN_LENGTH = 30
@@ -57,7 +60,7 @@ _EPOCH_RANGES: dict[Literal["s", "ms"], tuple[int, int]] = {
 # Fixed list, tried in order; the earlier format wins a tie, so a slash date whose
 # days are all under 13 reads month-first, as pandas assumes. `%Y%m%d` is left out on
 # purpose: eight-digit identifiers parse as dates under it.
-_DATE_FORMATS = (
+DATE_FORMATS = (
     "%Y-%m-%d",
     "%Y-%m-%dT%H:%M:%S%.f",
     "%Y-%m-%dT%H:%M:%S%.fZ",
@@ -271,14 +274,14 @@ def _text(present: pl.Series, sample_rows: int) -> ColumnType:
         and _share(sample.str.contains(_PERIOD_LABEL)) > _PERIOD_LABEL_SHARE
     ):
         return result("categorical", Confidence.MODERATE, "period labels")
-    if (
-        _share(sample.str.contains(_HEX_LIKE)) > _ID_SHARE
-        or distinct / count > _ID_UNIQUE_SHARE
-    ):
-        return result(
-            "identifier", Confidence.MODERATE, "hex-like or nearly all distinct"
-        )
-    if cast("float", sample.str.len_chars().mean()) > _TEXT_MEAN_LENGTH:
+    if _share(sample.str.contains(_HEX_LIKE)) > _ID_SHARE:
+        return result("identifier", Confidence.MODERATE, "hex-like")
+    long_values = cast("float", sample.str.len_chars().mean()) > _TEXT_MEAN_LENGTH
+    if long_values and _share(sample.str.contains(r"\s")) > _PROSE_SHARE:
+        return result("text", Confidence.MODERATE, "long strings of several words")
+    if distinct / count > _ID_UNIQUE_SHARE:
+        return result("identifier", Confidence.MODERATE, "nearly all distinct")
+    if long_values:
         return result("text", Confidence.MODERATE, "long strings")
     return result("categorical", Confidence.MODERATE, "repeated strings")
 
@@ -301,7 +304,7 @@ def _date_format(
     sample, and then over 90% of the whole column.
     """
     best_format, best_hits = None, 0
-    for fmt in _DATE_FORMATS:
+    for fmt in DATE_FORMATS:
         hits = sample.len() - parse_dates(sample, fmt).null_count()
         if hits > best_hits:
             best_format, best_hits = fmt, hits

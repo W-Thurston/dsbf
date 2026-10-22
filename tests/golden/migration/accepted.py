@@ -170,6 +170,14 @@ ACCEPTED: tuple[Accepted, ...] = (
         "core only (warn)",
         TWO_VALUE_STRINGS,
     ),
+    _entry(
+        "summarize_boolean_fields",
+        "sms_spam",
+        "label",
+        "finding",
+        "core only (info)",
+        TWO_VALUE_STRINGS,
+    ),
     *(
         _entry("detect_id_columns", dataset, "", "status", status, NO_CATEGORICAL_OR_ID)
         for dataset, status in (
@@ -274,6 +282,7 @@ ACCEPTED: tuple[Accepted, ...] = (
             "near_clean",
             "severe_multicollinearity",
             "single_column",
+            "sms_spam",
             "tiny",
             "titanic",
             "wide",

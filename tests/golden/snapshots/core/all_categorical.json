@@ -212,7 +212,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -253,6 +263,16 @@
   "kurtosis": {
    "findings": [],
    "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
+   "status": "ok",
    "version": "1.0.0"
   },
   "multivariate_outliers": {
@@ -298,6 +318,11 @@
   "skewness": {
    "findings": [],
    "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [],
+   "status": "ok",
    "version": "1.0.0"
   },
   "text_encoding": {

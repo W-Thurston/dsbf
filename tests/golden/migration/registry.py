@@ -8,6 +8,9 @@ from tests.golden.migration.accepted_associations import ACCEPTED_ASSOCIATIONS
 from tests.golden.migration.accepted_group_differences import (
     ACCEPTED_GROUP_DIFFERENCES,
 )
+from tests.golden.migration.accepted_missingness_strings import (
+    ACCEPTED_MISSINGNESS_STRINGS,
+)
 from tests.golden.migration.analysis import (
     compare_bimodality,
     compare_normality,
@@ -46,6 +49,13 @@ from tests.golden.migration.group_differences import (
     compare_one_way_anova,
 )
 from tests.golden.migration.harness import Accepted, Comparator
+from tests.golden.migration.missingness_strings import (
+    compare_encoded_columns,
+    compare_missingness_mechanism,
+    compare_mixed_types,
+    compare_regex_violations,
+    compare_string_anomalies,
+)
 from tests.golden.migration.zeros import compare_zeros
 
 ACCEPTED = (
@@ -53,6 +63,7 @@ ACCEPTED = (
     *ACCEPTED_ANALYSIS,
     *ACCEPTED_ASSOCIATIONS,
     *ACCEPTED_GROUP_DIFFERENCES,
+    *ACCEPTED_MISSINGNESS_STRINGS,
 )
 
 # Tasks whose checks cover different parts of what the task did: the task is compared
@@ -93,6 +104,11 @@ COMPARATORS: dict[str, Comparator] = {
     "kruskal_wallis": compare_kruskal_wallis,
     "mann_whitney_u": compare_mann_whitney_u,
     "detect_collinear_features": compare_collinear_features,
+    "missingness_mechanism_analysis": compare_missingness_mechanism,
+    "detect_mixed_type_columns": compare_mixed_types,
+    "detect_encoded_columns": compare_encoded_columns,
+    "detect_regex_format_violations": compare_regex_violations,
+    "detect_string_anomalies": compare_string_anomalies,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

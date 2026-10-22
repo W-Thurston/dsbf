@@ -1,0 +1,271 @@
+{
+ "checks": {
+  "associations": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "bimodality": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "class_imbalance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "collinearity": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "constant_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "contingency": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "dominant_value": {
+   "findings": [
+    {
+     "check": "dominant_value",
+     "code": "dominant_value",
+     "id": "1ecd238310b76552",
+     "metrics": {
+      "n_unique": 2,
+      "top_count": 4827,
+      "top_share": 0.865985
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "label"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "dtype_optimizations": {
+   "findings": [
+    {
+     "check": "dtype_optimizations",
+     "code": "smaller_dtype",
+     "id": "61806eb605257e8d",
+     "metrics": {
+      "current_dtype": "String",
+      "estimated_saving_bytes": 34176,
+      "n_unique": 2,
+      "suggested_dtype": "Categorical"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "label"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "duplicate_rows": {
+   "findings": [
+    {
+     "check": "duplicate_rows",
+     "code": "duplicate_rows",
+     "id": "cfc7e11d9121b3d1",
+     "metrics": {
+      "duplicate_rows": 403,
+      "duplicate_share": 0.0723
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [],
+      "kind": "dataset"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "encoded_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "entropy": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
+   "findings": [
+    {
+     "check": "format_violations",
+     "code": "format_violations",
+     "id": "363b55f93bf2e96d",
+     "metrics": {
+      "distinct_violations": 89,
+      "mode": "fullmatch",
+      "violation_share": 0.0190169,
+      "violations": 106
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "group_differences": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "high_cardinality": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "kurtosis": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "multivariate_outliers": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "near_zero_variance": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "normality": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "null_rate": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "out_of_bounds": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "outliers": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "sample_size": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "schema": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "skewness": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [
+    {
+     "check": "string_anomalies",
+     "code": "edge_whitespace",
+     "id": "fde39ed3c6a44db9",
+     "metrics": {
+      "affected_rows": 187,
+      "affected_share": 0.0335486,
+      "values": 187
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "text"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "string_anomalies",
+     "code": "invisible_characters",
+     "id": "61c07bfa498109ee",
+     "metrics": {
+      "affected_rows": 35,
+      "affected_share": 0.00627915,
+      "values": 35
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "zeros": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  }
+ },
+ "dataset": "sms_spam",
+ "format": 1,
+ "shape": [
+  5574,
+  2
+ ]
+}

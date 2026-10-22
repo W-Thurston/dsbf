@@ -1521,8 +1521,97 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "encoded_columns": {
+   "findings": [
+    {
+     "check": "encoded_columns",
+     "code": "encoded_values",
+     "id": "34441d2898e795d4",
+     "metrics": {
+      "distinct": 5000,
+      "encoded_share": 0.998095,
+      "kind": "base64",
+      "length_std": 0.174408,
+      "mean_length": 11.9924,
+      "share_base64": 0.998095
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "base64_encoded"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "encoded_columns",
+     "code": "encoded_values",
+     "id": "fb69396d60898f6a",
+     "metrics": {
+      "distinct": 5000,
+      "encoded_share": 1.0,
+      "kind": "uuid",
+      "length_std": 0.0,
+      "mean_length": 36.0,
+      "share_uuid": 1.0
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "high_cardinality_uuid"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "encoded_columns",
+     "code": "encoded_values",
+     "id": "fe0e4feda2d69d04",
+     "metrics": {
+      "distinct": 5000,
+      "encoded_share": 1.0,
+      "kind": "uuid",
+      "length_std": 0.0,
+      "mean_length": 36.0,
+      "share_uuid": 1.0
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "uuid_column"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "entropy": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "format_violations": {
+   "findings": [
+    {
+     "check": "format_violations",
+     "code": "mixed_date_formats",
+     "id": "880ee40a643975b1",
+     "metrics": {
+      "date_share": 1.0,
+      "formats": 4,
+      "smallest_share": 0.237927
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "inconsistent_datetime"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -2232,6 +2321,160 @@
      "subject": {
       "columns": [
        "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "missingness_mechanism": {
+   "findings": [
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "447fc3376d73d1bc",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 1.0,
+      "n_missing": 104,
+      "null_share": 0.0198095,
+      "strongest_effect": 1.0,
+      "strongest_p_adjusted": 0.0,
+      "tests_flagged": 1,
+      "tests_run": 38
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "datetime_with_gaps"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "1316f2f98c80793f",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 1005,
+      "null_share": 0.191429,
+      "strongest_effect": 0.0540682,
+      "strongest_p_adjusted": 0.222592,
+      "tests_flagged": 0,
+      "tests_run": 37
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "inconsistent_datetime"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_depends_on_observed",
+     "id": "ed6a51c90d30f4b4",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.426754,
+      "n_missing": 524,
+      "null_share": 0.0998095,
+      "strongest_effect": 0.426754,
+      "strongest_p_adjusted": 3.08281e-208,
+      "tests_flagged": 1,
+      "tests_run": 38
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "mixed_type_column"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "missingness_mechanism",
+     "code": "missingness_unexplained",
+     "id": "9e688dd832eb2871",
+     "metrics": {
+      "correction": "fdr_bh",
+      "max_effect": 0.0,
+      "n_missing": 1278,
+      "null_share": 0.243429,
+      "strongest_effect": 0.0365197,
+      "strongest_p_adjusted": 0.351219,
+      "tests_flagged": 0,
+      "tests_run": 37
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "short_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "mixed_types": {
+   "findings": [
+    {
+     "check": "mixed_types",
+     "code": "mixed_value_types",
+     "id": "2cf4955af8e9e274",
+     "metrics": {
+      "kinds": 2,
+      "share_boolean": 0.67181,
+      "share_number": 0.32819,
+      "source": "content"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "ambiguous_booleans"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "mixed_types",
+     "code": "mixed_value_types",
+     "id": "776c0ec03ad7f9d6",
+     "metrics": {
+      "kinds": 2,
+      "share_boolean": 0.738857,
+      "share_number": 0.261143,
+      "source": "content"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "mixed_boolean_types"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "mixed_types",
+     "code": "mixed_value_types",
+     "id": "5b09c9a5dcf0515f",
+     "metrics": {
+      "kinds": 2,
+      "share_number": 0.859501,
+      "share_text": 0.140499,
+      "source": "content"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "mixed_type_column"
       ],
       "kind": "column"
      }
@@ -3470,6 +3713,48 @@
      "subject": {
       "columns": [
        "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "string_anomalies": {
+   "findings": [
+    {
+     "check": "string_anomalies",
+     "code": "invisible_characters",
+     "id": "364b3b25a271163b",
+     "metrics": {
+      "affected_rows": 104,
+      "affected_share": 0.0198095,
+      "values": 1
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "control_character_text"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "string_anomalies",
+     "code": "mixed_case",
+     "id": "ac3bd848e4bd105c",
+     "metrics": {
+      "affected_rows": 2,
+      "affected_share": 0.000380952,
+      "groups": 1,
+      "minority_rows": 1,
+      "values": 2
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "variable_length_text"
       ],
       "kind": "column"
      }
