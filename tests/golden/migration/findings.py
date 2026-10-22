@@ -176,6 +176,13 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Near-Perfect Correlation with ", "redundant_columns"),
         (r"^Possible Data Leakage - Perfect Correlation with ", "redundant_columns"),
     ),
+    "one_way_anova": ((r"^ANOVA: ", "group_difference"),),
+    "kruskal_wallis": ((r"^Kruskal-Wallis: ", "group_difference"),),
+    "mann_whitney_u": ((r"^Mann-Whitney: ", "group_difference"),),
+    "detect_collinear_features": (
+        (r"^(Moderate|High|Severe) Multicollinearity \(", "multicollinearity"),
+        (r"^VIF = .* - Collinearity Impact on Models", "multicollinearity"),
+    ),
 }
 
 

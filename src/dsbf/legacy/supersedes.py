@@ -41,6 +41,10 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "compute_pairwise_associations": ("associations", "contingency"),
     "contingency_tables": ("contingency",),
     "detect_data_leakage": ("associations",),
+    "one_way_anova": ("group_differences",),
+    "kruskal_wallis": ("group_differences",),
+    "mann_whitney_u": ("group_differences",),
+    "detect_collinear_features": ("collinearity",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

@@ -25,6 +25,7 @@ Conventions every core check follows:
 from dsbf.checks.associations import associations
 from dsbf.checks.bimodality import bimodality
 from dsbf.checks.class_imbalance import class_imbalance
+from dsbf.checks.collinearity import collinearity
 from dsbf.checks.constant_columns import constant_columns
 from dsbf.checks.contingency import contingency
 from dsbf.checks.dominant_value import dominant_value
@@ -32,6 +33,7 @@ from dsbf.checks.dtype_optimizations import dtype_optimizations
 from dsbf.checks.duplicate_columns import duplicate_columns
 from dsbf.checks.duplicate_rows import duplicate_rows
 from dsbf.checks.entropy import entropy
+from dsbf.checks.group_differences import group_differences
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
 from dsbf.checks.kurtosis import kurtosis
@@ -82,5 +84,7 @@ def core_pack() -> Pack:
             out_of_bounds,
             associations,
             contingency,
+            group_differences,
+            collinearity,
         ),
     )

@@ -1,10 +1,11 @@
-Plan for data (6 × 4): 30 checks
-  will run 27 · not applicable 1 · unavailable 1 · skipped 1
+Plan for data (6 × 4): 32 checks
+  will run 29 · not applicable 1 · unavailable 1 · skipped 1
 
 level 0
   ✓ will run        associations           reads 4 columns
   ✓ will run        bimodality             reads 2 columns
   ✓ will run        class_imbalance        reads 2 columns
+  ✓ will run        collinearity           reads 2 columns
   ✓ will run        constant_columns       reads 4 columns
   ✓ will run        contingency            reads 2 columns
   – not applicable  date_gaps              No column is of a type date_gaps applies to (datetime).
@@ -13,6 +14,7 @@ level 0
   ✓ will run        duplicate_columns      reads 4 columns
   ✓ will run        duplicate_rows
   ✓ will run        entropy                reads 2 columns
+  ✓ will run        group_differences      reads 4 columns
   ✓ will run        high_cardinality       reads 2 columns
   ✓ will run        id_columns             reads 4 columns
   ✓ will run        kurtosis               reads 2 columns

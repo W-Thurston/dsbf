@@ -31,7 +31,7 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
 | Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-36, F-37 |
-| Mostly resolved or partial | F-07, F-10 (U4-08), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
+| Mostly resolved or partial | F-07, F-10 (U4-18), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
 | Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
@@ -165,7 +165,7 @@ any ordered file.
 - [x] Branch on backend, and either implement stratified sampling or reject it with a clear error.
 
 ### F-10 Column names containing `|` crash pair-based tasks
-**Status (2026-10-19): Partial.** The contracts key pairs by `Subject.column_pair` (U1-06 #74), and U0-09 (#52) stopped the leakage crash: a frame with columns `a|b` and `c|d` runs to a complete `Run` (checked on 2026-10-19). Seven legacy tasks still key pairs as `"a|b"`, and API v1 splits on the first `|`. `associations` and `contingency` (U4-07) report every pair as a `Subject.column_pair` and a record with `first` and `second` (a frame with columns `a|b` and `c|d` gets the right subjects, tested). The pair checks of U4-08 still move, and API v1 is deleted in U4-18.
+**Status (2026-10-19): Partial.** The contracts key pairs by `Subject.column_pair` (U1-06 #74), and U0-09 (#52) stopped the leakage crash: a frame with columns `a|b` and `c|d` runs to a complete `Run` (checked on 2026-10-19). Seven legacy tasks still key pairs as `"a|b"`, and API v1 splits on the first `|`. `associations` and `contingency` (U4-07) report every pair as a `Subject.column_pair` and a record with `first` and `second` (a frame with columns `a|b` and `c|d` gets the right subjects, tested). `group_differences` (U4-08) does the same for a numeric and a categorical column, so every pair-based core check is done and the seven legacy tasks go with U4-18, with API v1.
 
 **(verified)** Pair results are keyed as `"col1|col2"` and split with `split("|")`. A column named
 `a|b` makes `detect_data_leakage` raise `ValueError: too many values to unpack`
@@ -381,13 +381,13 @@ every pip-installed user and anyone running from a different directory.
 - [ ] Add a CI job that runs one profile from a temp directory against an installed wheel.
 
 ### F-32 Listwise deletion across all numeric columns
-**Status (2026-10-19): Partial.** The profile computes statistics on each column's own non-null values (U2-04 #83), and U0-09 (#52) added the VIF crash guard. The legacy `compute_reliability_flags` still deletes rows listwise, and VIF with per-column handling and `n_used` is U4-08.
+**Status (2026-10-22): Partial.** The profile computes statistics on each column's own non-null values (U2-04 #83), and U0-09 (#52) added the VIF crash guard. `collinearity` (U4-08) leaves out a column more than 40% missing before it drops any row, then drops the sparsest column until there are at least k + 1 (and 10) complete rows, states `n_used`, the columns left out and the columns dropped for rows, and uses the centred VIF (the diagonal of the inverse correlation matrix). On kitchen5k the legacy task had no row to fit; on `severe_multicollinearity` the check reads 2 000 rows where the task read 721. The legacy `compute_reliability_flags` still deletes rows listwise, until U4-15 takes the scorers out.
 
 `numeric_df = df.select_dtypes("number").dropna()` drops every row with *any* null in *any*
 numeric column:
 - `compute_reliability_flags` (`dsbf/utils/reliability_stats.py:18`) used **0 rows** on kitchen5k and adversarial, and 714 of 891 on titanic. Global reliability flags are computed on an empty or biased frame.
 - `detect_collinear_features.py:85` crashes on `zero-size array` because the guard checks the column count, not the row count. This is the crash the `data_quality_scorer` comment works around (F-21).
-- [ ] Compute per-column statistics on per-column non-null values. For multivariate methods (VIF), drop columns above a missingness threshold first, then rows, and record `n_used` in the result.
+- [x] Compute per-column statistics on per-column non-null values. For multivariate methods (VIF), drop columns above a missingness threshold first, then rows, and record `n_used` in the result. (`collinearity`, U4-08)
 - [ ] Guard on `n_rows < k + 1`, not only on column count. Grep for the pattern in all tasks.
 
 ### F-33 Crashes on all-null columns and `None` values
@@ -500,10 +500,10 @@ in U4-19.
 This is the project's core differentiator, so these items deserve priority after the P0 fixes.
 
 - [ ] **Real histograms** (F-12): equal-width bins computed server-side, with the binning rule recorded in metadata. **Status:** partial: the profile has them (U2-05); the dashboard draws them in Phase 6.
-- [ ] **Uncertainty on associations (partial, 2026-10-22):** confidence intervals (Fisher z for r and τ, bootstrap for η² and V) and the n behind each estimate. Display "weak (95% CI 0.05–0.41, n=48)" instead of a bare label. **Status:** `associations` has Fisher z intervals for r, ρ and τ with `n_used` per pair, and `contingency` a percentile bootstrap interval for V̄ (U4-07). η has none yet: the η² bootstrap is U4-08 (group differences).
+- [x] **Uncertainty on associations (2026-10-22):** confidence intervals (Fisher z for r and τ, bootstrap for η² and V) and the n behind each estimate. Display "weak (95% CI 0.05–0.41, n=48)" instead of a bare label. **Status:** `associations` has Fisher z intervals for r, ρ and τ with `n_used` per pair, and `contingency` a percentile bootstrap interval for V̄ (U4-07). `group_differences` (U4-08) adds percentile bootstrap intervals for ω² and ε² (the rank test's effect size) and for a flagged pair's rank-biserial contrasts; η of `associations` keeps no interval, because the group tests report the same pair with one.
 - [x] **Bias-corrected Cramér's V** (Bergsma 2013). The uncorrected V currently inflates on small samples and high-cardinality pairs. **Status:** resolved in `contingency` (U4-07); the plain V is kept beside it.
 - [x] **A comparable association scale** across metric types (F-25). For example, convert η² to η, or rank by strength band and never by raw value across types. **Status:** resolved in the checks (U4-07): η replaces η² and point-biserial r, and every pair has a band on its own metric's scale. The API v1 ordering is deleted in U4-18.
-- [ ] **Multiple-comparison awareness** in pairwise scans on wide data. Report how many pairs were tested next to the number flagged. **Status:** partial: `associations` and `contingency` state `pairs_tested` and `pairs_flagged` in the output and in each finding (U4-07); U4-08 does the same for the group tests.
+- [x] **Multiple-comparison awareness** in pairwise scans on wide data. Report how many pairs were tested next to the number flagged. **Status:** done: `associations` and `contingency` state `pairs_tested` and `pairs_flagged` in the output and in each finding (U4-07); `group_differences` (U4-08) states `pairs_tested`, `pairs_flagged` and `tests_run`, adjusts each method's p-values over every pair (Benjamini–Hochberg by default) and a flagged pair's contrasts by Holm, and flags only a pair whose effect reaches `min_effect`.
 - [ ] **Target-aware leakage detection** (F-26) built on a single `target_column`. **Status:** U4-14, on the one `target` setting of `dsbf.profile()` (U3-12).
 - [ ] **Calibration suite:** extend `tests/validation/` with datasets that have *known* ground truth (planted leakage, planted MAR or MNAR, planted bimodality), and track false-positive and false-negative rates per task across releases. **Status:** U4-16 rebuilds `tests/validation/` on the new engine as the calibration suite.
 
