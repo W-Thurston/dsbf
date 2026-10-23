@@ -110,7 +110,8 @@
       "cardinality": 2,
       "rarest_level_count": 342,
       "rows_per_level": 445.5,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -128,7 +129,8 @@
       "cardinality": 3,
       "rarest_level_count": 184,
       "rows_per_level": 297.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -146,7 +148,8 @@
       "cardinality": 7,
       "rarest_level_count": 4,
       "rows_per_level": 29.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -164,7 +167,8 @@
       "cardinality": 3,
       "rarest_level_count": 77,
       "rows_per_level": 296.333,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -182,7 +186,8 @@
       "cardinality": 3,
       "rarest_level_count": 77,
       "rows_per_level": 296.333,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -200,7 +205,8 @@
       "cardinality": 7,
       "rarest_level_count": 1,
       "rows_per_level": 127.286,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -218,7 +224,8 @@
       "cardinality": 3,
       "rarest_level_count": 184,
       "rows_per_level": 297.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -236,7 +243,8 @@
       "cardinality": 2,
       "rarest_level_count": 314,
       "rows_per_level": 445.5,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -254,7 +262,8 @@
       "cardinality": 7,
       "rarest_level_count": 5,
       "rows_per_level": 127.286,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -272,7 +281,8 @@
       "cardinality": 2,
       "rarest_level_count": 342,
       "rows_per_level": 445.5,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -290,7 +300,8 @@
       "cardinality": 3,
       "rarest_level_count": 83,
       "rows_per_level": 297.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -302,7 +313,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -2860,6 +2871,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "mutual_information": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
@@ -3161,6 +3177,11 @@
   "string_anomalies": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "temporal_gaps": {

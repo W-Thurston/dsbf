@@ -64,6 +64,7 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "suggest_numerical_binning": ("numeric_binning",),
     "transformation_preview": ("transformations",),
     "imputation_strategy_suggestions": ("imputation",),
+    "compute_mutual_information": ("mutual_information",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

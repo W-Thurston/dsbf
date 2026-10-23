@@ -222,14 +222,16 @@ class TestSelection:
         )
 
         params = {c.check_id: c.params for c in run.plan.checks}
-        assert params["compute_mutual_information"]["task"]["target_column"] == "flag"
-        assert params["class_imbalance"]["target"] == "flag"
+        # A superseded task is planned only where a remaining task needs it.
+        assert params["suggest_categorical_encoding"]["task"]["target_column"] == "flag"
+        for check in ("class_imbalance", "target_leakage", "mutual_information"):
+            assert params[check]["target"] == "flag"
         for check in ("stationarity", "autocorrelation", "seasonal_decomposition"):
             assert params[check]["time_index"] == "when"
         assert "time_index" not in params["temporal_gaps"]
         assert "target" not in params["stationarity"]
-        assert params["compute_mutual_information"]["shared"]["time_series"] == {
-            **params["compute_mutual_information"]["shared"]["time_series"],
+        assert params["suggest_categorical_encoding"]["shared"]["time_series"] == {
+            **params["suggest_categorical_encoding"]["shared"]["time_series"],
             "enabled": True,
             "datetime_index_column": "when",
         }

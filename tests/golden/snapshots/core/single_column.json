@@ -18,7 +18,7 @@
   "categorical_encoding": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -158,6 +158,11 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "mutual_information": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
@@ -346,6 +351,11 @@
    "version": "1.0.0"
   },
   "string_anomalies": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"

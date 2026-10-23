@@ -76,7 +76,16 @@ def _kitchen5k(directory: Path) -> Path:
 # generator pinned to a seed, so it is not listed twice.
 ARCHETYPES = [_archetype(name) for name in GENERATORS if name != "comprehensive"]
 TITANIC = GoldenDataset("titanic", _titanic)
-KITCHEN5K = GoldenDataset("kitchen5k", _kitchen5k, time_series_column="normal_date")
+# The generator plants a target and the columns that leak it; no other dataset has one.
+KITCHEN5K = GoldenDataset(
+    "kitchen5k",
+    _kitchen5k,
+    time_series_column="normal_date",
+    core_params={
+        "target_leakage": {"target": "target_for_leakage"},
+        "mutual_information": {"target": "target_for_leakage"},
+    },
+)
 # A message is plain text: it names no link, and a label is one of the two classes.
 SMS_SPAM = GoldenDataset(
     "sms_spam",

@@ -248,6 +248,10 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Skewed Distribution - No Transform Applicable", "no_effective_transform"),
     ),
     "imputation_strategy_suggestions": ((r"^Imputation: ", "imputation_strategy"),),
+    "compute_mutual_information": (
+        (r"^Mutual Information with ", "informative_feature"),
+        (r"^Feature Signal: ", "informative_feature"),
+    ),
 }
 
 

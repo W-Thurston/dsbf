@@ -458,7 +458,7 @@ class TestImputation:
 
 class TestActionVocabulary:
     def test_every_method_the_checks_emit_is_declared(self):
-        assert set(ENCODE_METHODS) == {"binary", "one_hot", "frequency"}
+        assert set(ENCODE_METHODS) == {"binary", "one_hot", "frequency", "target"}
         assert set(BIN_METHODS) == {"quantile", "equal_width"}
         assert set(TRANSFORM_METHODS) == {
             "log1p",

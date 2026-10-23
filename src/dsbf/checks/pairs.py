@@ -123,6 +123,45 @@ def level_codes(values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return codes, levels
 
 
+def correlation_ratio(
+    x: np.ndarray, groups: np.ndarray, n_levels: int, *, min_n: int
+) -> tuple[float, int]:
+    """η of a numeric column on a grouping, and the rows it used.
+
+    ``x`` holds finite values and ``groups`` their integer codes in ``[0, n_levels)``.
+    A group of one row is fitted exactly, which inflates η, so such groups are left
+    out. Raises ``Undefined`` for fewer than two groups of two or more rows
+    (``too_few_groups``), fewer than ``min_n`` rows left (``too_few_rows``), no
+    spread (``no_variation``) or an overflow (``overflow``).
+    """
+    counts = np.bincount(groups, minlength=n_levels)
+    big = counts[groups] >= 2
+    x, groups = x[big], groups[big]
+    if np.count_nonzero(counts >= 2) < 2:
+        raise Undefined("too_few_groups")
+    n_used = int(x.size)
+    if n_used < min_n:
+        raise Undefined("too_few_rows")
+    with np.errstate(all="ignore"):
+        biggest = float(np.max(np.abs(x)))
+        if not np.isfinite(biggest):
+            raise Undefined("overflow")
+        if biggest == 0:
+            raise Undefined("no_variation")
+        x = x / biggest
+        x = x - x.mean()
+        counts = np.bincount(groups, minlength=n_levels)
+        sums = np.bincount(groups, weights=x, minlength=n_levels)
+        present = counts > 0
+        between = float(np.sum(sums[present] ** 2 / counts[present]))
+        total = float(np.sum(x * x))
+    if not np.isfinite(total):
+        raise Undefined("overflow")
+    if total == 0:
+        raise Undefined("no_variation")
+    return float(np.sqrt(np.clip(between / total, 0.0, 1.0))), n_used
+
+
 def contingency_table(
     first: np.ndarray, second: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

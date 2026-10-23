@@ -25,7 +25,8 @@
       "cardinality": 3,
       "rarest_level_count": 435,
       "rows_per_level": 1000.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -43,7 +44,8 @@
       "cardinality": 4,
       "rarest_level_count": 727,
       "rows_per_level": 750.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -61,7 +63,8 @@
       "cardinality": 3,
       "rarest_level_count": 903,
       "rows_per_level": 1000.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -73,7 +76,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -415,6 +418,11 @@
     }
    ],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "mutual_information": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "near_zero_variance": {
@@ -822,6 +830,11 @@
   "string_anomalies": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "temporal_gaps": {
