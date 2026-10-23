@@ -48,6 +48,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "autocorrelation": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [],
    "status": "ok",
@@ -70,6 +75,48 @@
   },
   "contingency": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "datetime_consistency": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "datetime_features": {
+   "findings": [
+    {
+     "check": "datetime_features",
+     "code": "extractable_features",
+     "id": "74b4ab9726cf4109",
+     "metrics": {
+      "cyclic_features": [
+       "day_of_week_sin_cos"
+      ],
+      "distinct_hours": 1,
+      "distinct_months": 1,
+      "distinct_weekdays": 7,
+      "distinct_years": 1,
+      "features": [
+       "days_since_epoch",
+       "day_of_week",
+       "is_weekend",
+       "day_of_week_sin_cos"
+      ],
+      "n_cyclic": 1,
+      "n_features": 4,
+      "range_days": 24.0,
+      "time_of_day": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "signup"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -295,6 +342,11 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "seasonal_decomposition": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "skewness": {
    "findings": [
     {
@@ -320,7 +372,17 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "stationarity": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "string_anomalies": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "temporal_gaps": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

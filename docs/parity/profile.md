@@ -154,6 +154,10 @@ keeps the whole value.
 
 Compared with `pd.infer_freq` on regular series in `test_temporal.py`.
 
+The fields the datetime checks read (`format`, `epoch_unit`, `unparsed`, `time_of_day` and
+the distinct years, months, weekdays and hours) have no legacy counterpart. The checks that
+read them are compared with their tasks in `tests/golden/migration/time_series.py`.
+
 #### `frequency-names-the-spacing`
 
 The profile's frequency names the spacing, not the anchor: `W` is any weekday and

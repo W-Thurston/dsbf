@@ -117,7 +117,11 @@ and list each difference with its reason.
 A core check that does nothing without parameters (`format_violations` runs only the rules it is
 given, besides its scan for mixed date formats) gets them from `GoldenDataset.core_params`;
 `sms_spam` sets the two rules its snapshots exercise. The runner passes them to
-`engine_one.py` in `DSBF_GOLDEN_CORE_PARAMS`, and only the core run uses them.
+`engine_one.py` in `DSBF_GOLDEN_CORE_PARAMS`, and only the core run uses them. The
+dataset's time-series column is passed the way `dsbf.profile(time_index=...)` does, as the
+`time_index` parameter of each core check that has one (`stationarity`, `autocorrelation`
+and `seasonal_decomposition`); kitchen5k is the only dataset with one, and the tasks'
+disabled results on the others are accepted differences.
 
 ## Determinism
 

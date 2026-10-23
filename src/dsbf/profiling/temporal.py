@@ -17,7 +17,7 @@ record which weekday or month the series is anchored to.
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 import polars as pl
@@ -46,6 +46,14 @@ class DatetimeStats:
     inferred_frequency: str | None = None
     n_gaps: int | None = None
     largest_gap_seconds: float | None = None
+    format: str | None = None
+    epoch_unit: Literal["s", "ms"] | None = None
+    unparsed: int = 0
+    time_of_day: bool | None = None
+    distinct_years: int | None = None
+    distinct_months: int | None = None
+    distinct_weekdays: int | None = None
+    distinct_hours: int | None = None
 
 
 def datetime_stats(series: pl.Series, column_type: ColumnType) -> DatetimeStats:
@@ -53,30 +61,87 @@ def datetime_stats(series: pl.Series, column_type: ColumnType) -> DatetimeStats:
     instants = _instants(series, column_type)
     if instants is None:
         return DatetimeStats()
+    present = _present(series)
     instants = instants.drop_nulls()
+    unparsed = present - instants.len()
+    source = _source(series, column_type)
     if instants.is_empty():
-        return DatetimeStats()
+        return (
+            DatetimeStats(unparsed=unparsed, **source) if unparsed else DatetimeStats()
+        )
     timezone = getattr(instants.dtype, "time_zone", None)
     low, high = _bounds(instants)
     distinct = instants.unique().sort()
     gaps = _gaps(distinct)
-    return DatetimeStats(min=low, max=high, timezone=timezone, **gaps)
+    return DatetimeStats(
+        min=low,
+        max=high,
+        timezone=timezone,
+        unparsed=unparsed,
+        **source,
+        **_components(instants),
+        **gaps,
+    )
+
+
+def _present(series: pl.Series) -> int:
+    """Values that are neither null nor NaN: what could have been an instant."""
+    series = series.drop_nulls()
+    if series.dtype.is_float():
+        series = series.drop_nans()
+    return series.len()
+
+
+def _source(series: pl.Series, column_type: ColumnType) -> dict[str, Any]:
+    """The format or epoch unit the instants were read with, as the profile keeps it."""
+    dtype = series.dtype
+    if dtype in (pl.String, pl.Categorical, pl.Enum) and column_type.datetime_format:
+        return {"format": column_type.datetime_format}
+    if dtype.is_numeric() and column_type.epoch_unit:
+        return {"epoch_unit": column_type.epoch_unit}
+    return {}
+
+
+def _components(instants: pl.Series) -> dict[str, Any]:
+    """Whether any instant has a time of day, and which calendar parts vary."""
+    return {
+        "time_of_day": bool((instants.dt.truncate("1d") != instants).any()),
+        "distinct_years": instants.dt.year().n_unique(),
+        "distinct_months": instants.dt.month().n_unique(),
+        "distinct_weekdays": instants.dt.weekday().n_unique(),
+        "distinct_hours": instants.dt.hour().n_unique(),
+    }
 
 
 def _instants(series: pl.Series, column_type: ColumnType) -> pl.Series | None:
+    return instants(
+        series, format=column_type.datetime_format, epoch_unit=column_type.epoch_unit
+    )
+
+
+def instants(
+    series: pl.Series, *, format: str | None, epoch_unit: str | None
+) -> pl.Series | None:
+    """The column as ``Datetime("us")`` instants; a value that does not read is null.
+
+    ``format`` reads text, ``epoch_unit`` reads Unix timestamps, and a date or
+    datetime column needs neither. None for a column that is none of these. A check
+    reads a column the profile typed datetime through this, with the profile's own
+    ``format`` and ``epoch_unit``, so it sees the instants the profile did.
+    """
     dtype = series.dtype
     if dtype == pl.Date:
         return series.cast(pl.Datetime("us"))
     if isinstance(dtype, pl.Datetime):
         return series.dt.cast_time_unit("us")
-    if dtype in (pl.String, pl.Categorical, pl.Enum) and column_type.datetime_format:
+    if dtype in (pl.String, pl.Categorical, pl.Enum) and format:
         text = series.cast(pl.String).str.strip_chars()
-        parsed = parse_dates(text, column_type.datetime_format)
-        if column_type.datetime_format.endswith("Z"):
+        parsed = parse_dates(text, format)
+        if format.endswith("Z"):
             parsed = parsed.dt.replace_time_zone("UTC")
         return parsed
-    if dtype.is_numeric() and column_type.epoch_unit:
-        scale = 1_000_000 if column_type.epoch_unit == "s" else 1_000
+    if dtype.is_numeric() and epoch_unit:
+        scale = 1_000_000 if epoch_unit == "s" else 1_000
         micros = (series.cast(pl.Float64) * scale).cast(pl.Int64, strict=False)
         return micros.cast(pl.Datetime("us"))
     return None

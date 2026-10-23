@@ -23,11 +23,14 @@ Conventions every core check follows:
 """
 
 from dsbf.checks.associations import associations
+from dsbf.checks.autocorrelation import autocorrelation
 from dsbf.checks.bimodality import bimodality
 from dsbf.checks.class_imbalance import class_imbalance
 from dsbf.checks.collinearity import collinearity
 from dsbf.checks.constant_columns import constant_columns
 from dsbf.checks.contingency import contingency
+from dsbf.checks.datetime_consistency import datetime_consistency
+from dsbf.checks.datetime_features import datetime_features
 from dsbf.checks.dominant_value import dominant_value
 from dsbf.checks.dtype_optimizations import dtype_optimizations
 from dsbf.checks.duplicate_columns import duplicate_columns
@@ -50,8 +53,11 @@ from dsbf.checks.out_of_bounds import out_of_bounds
 from dsbf.checks.outliers import outliers
 from dsbf.checks.sample_size import sample_size
 from dsbf.checks.schema import schema
+from dsbf.checks.seasonal_decomposition import seasonal_decomposition
 from dsbf.checks.skewness import skewness
+from dsbf.checks.stationarity import stationarity
 from dsbf.checks.string_anomalies import string_anomalies
+from dsbf.checks.temporal_gaps import temporal_gaps
 from dsbf.checks.text_encoding import text_encoding
 from dsbf.checks.zeros import zeros
 from dsbf.engine import Pack
@@ -98,5 +104,11 @@ def core_pack() -> Pack:
             format_violations,
             missingness_mechanism,
             fuzzy_duplicates,
+            stationarity,
+            autocorrelation,
+            seasonal_decomposition,
+            datetime_consistency,
+            temporal_gaps,
+            datetime_features,
         ),
     )

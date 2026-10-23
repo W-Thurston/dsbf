@@ -51,6 +51,12 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "detect_regex_format_violations": ("format_violations",),
     "detect_string_anomalies": ("string_anomalies",),
     "fuzzy_duplicate_detection": ("fuzzy_duplicates",),
+    "temporal_gap_detection": ("temporal_gaps",),
+    "check_datetime_consistency": ("datetime_consistency",),
+    "extract_datetime_features": ("datetime_features",),
+    "detect_stationarity": ("stationarity",),
+    "compute_acf_pacf": ("autocorrelation",),
+    "decompose_time_series": ("seasonal_decomposition",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

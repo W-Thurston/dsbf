@@ -151,7 +151,7 @@ def profile(
             plugins=settings.plugins,
         ),
         superseded,
-        params=_target_params(registry, settings),
+        params=_setting_params(registry, settings),
         profile=data_profile,
     )
     workers = settings.workers
@@ -169,20 +169,29 @@ def profile(
     )
 
 
-def _target_params(
+def _setting_params(
     registry: Registry, settings: ProfileConfig
 ) -> dict[str, dict[str, Any]]:
-    """The ``target`` setting, as the ``target`` parameter of each check that has one.
+    """``target`` and ``time_index``, as the parameter of that name of each check.
 
-    The legacy tasks read it from their own ``target_column`` keys (``_legacy_config``).
+    A check takes a setting only if it declares a parameter called the same. The
+    legacy tasks read them from their own keys (``_legacy_config``).
     """
-    if settings.target is None:
-        return {}
-    return {
-        check.spec.id: {"target": settings.target}
-        for check in registry
-        if "target" in check.spec.params.model_fields
+    given = {
+        name: value
+        for name, value in (
+            ("target", settings.target),
+            ("time_index", settings.time_index),
+        )
+        if value is not None
     }
+    params: dict[str, dict[str, Any]] = {}
+    for check in registry:
+        fields = check.spec.params.model_fields
+        wanted = {name: value for name, value in given.items() if name in fields}
+        if wanted:
+            params[check.spec.id] = wanted
+    return params
 
 
 def _default_workers(plan: Plan) -> int | None:

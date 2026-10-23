@@ -9,7 +9,8 @@ because ``PYTHONHASHSEED`` can only be set before Python starts. It imports noth
 from ``tests``.
 
 Parameters for the core checks that need them come from the environment variable
-``DSBF_GOLDEN_CORE_PARAMS``, a JSON mapping of check id to parameters.
+``DSBF_GOLDEN_CORE_PARAMS``, a JSON mapping of check id to parameters; the time
+series column, if there is one, is each check's ``time_index``.
 
 Usage: python engine_one.py <name> <csv> <out_dir> [<time_series_column>]
 """
@@ -65,10 +66,18 @@ def main() -> None:
 
     core_registry = Registry()
     core_registry.register_pack(core_pack())
+    core_params = json.loads(os.environ.get("DSBF_GOLDEN_CORE_PARAMS", "{}"))
+    if time_series_column is not None:
+        # As `dsbf.profile(time_index=...)` does: to each check with that parameter.
+        for registered in core_registry:
+            if "time_index" in registered.spec.params.model_fields:
+                core_params.setdefault(registered.spec.id, {})["time_index"] = (
+                    time_series_column
+                )
     core_plan = make_plan(
         core_registry,
         Selection(depth="deep", entry_points=False),
-        params=json.loads(os.environ.get("DSBF_GOLDEN_CORE_PARAMS", "{}")) or None,
+        params=core_params or None,
         profile=profile,
     )
     core_run = execute(core_plan, dataset, profile, dsbf_version="golden")
