@@ -25,6 +25,7 @@ Conventions every core check follows:
 from dsbf.checks.associations import associations
 from dsbf.checks.autocorrelation import autocorrelation
 from dsbf.checks.bimodality import bimodality
+from dsbf.checks.categorical_encoding import categorical_encoding
 from dsbf.checks.class_imbalance import class_imbalance
 from dsbf.checks.collinearity import collinearity
 from dsbf.checks.constant_columns import constant_columns
@@ -42,6 +43,7 @@ from dsbf.checks.fuzzy_duplicates import fuzzy_duplicates
 from dsbf.checks.group_differences import group_differences
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
+from dsbf.checks.imputation import imputation
 from dsbf.checks.kurtosis import kurtosis
 from dsbf.checks.missingness_mechanism import missingness_mechanism
 from dsbf.checks.mixed_types import mixed_types
@@ -49,6 +51,7 @@ from dsbf.checks.multivariate_outliers import multivariate_outliers
 from dsbf.checks.near_zero_variance import near_zero_variance
 from dsbf.checks.normality import normality
 from dsbf.checks.null_rate import null_rate
+from dsbf.checks.numeric_binning import numeric_binning
 from dsbf.checks.out_of_bounds import out_of_bounds
 from dsbf.checks.outliers import outliers
 from dsbf.checks.reference_drift import reference_drift
@@ -60,6 +63,7 @@ from dsbf.checks.stationarity import stationarity
 from dsbf.checks.string_anomalies import string_anomalies
 from dsbf.checks.temporal_gaps import temporal_gaps
 from dsbf.checks.text_encoding import text_encoding
+from dsbf.checks.transformations import transformations
 from dsbf.checks.zeros import zeros
 from dsbf.engine import Pack
 
@@ -112,5 +116,9 @@ def core_pack() -> Pack:
             temporal_gaps,
             datetime_features,
             reference_drift,
+            categorical_encoding,
+            numeric_binning,
+            transformations,
+            imputation,
         ),
     )

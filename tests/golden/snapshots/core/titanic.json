@@ -100,6 +100,210 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "fbc8ac5819b86767",
+     "metrics": {
+      "cardinality": 2,
+      "rarest_level_count": 342,
+      "rows_per_level": 445.5,
+      "strategy": "binary"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "alive"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "78de8fa0e5bc2ff9",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 184,
+      "rows_per_level": 297.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "class"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "5634733eb20dcfba",
+     "metrics": {
+      "cardinality": 7,
+      "rarest_level_count": 4,
+      "rows_per_level": 29.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "deck"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "53be439b55c10e02",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 77,
+      "rows_per_level": 296.333,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embark_town"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "bd1d2606cf5039f6",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 77,
+      "rows_per_level": 296.333,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "embarked"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "a27ebd37589725fe",
+     "metrics": {
+      "cardinality": 7,
+      "rarest_level_count": 1,
+      "rows_per_level": 127.286,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "parch"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "bc326f742fac7cb1",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 184,
+      "rows_per_level": 297.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "pclass"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "fa740f5c686e401e",
+     "metrics": {
+      "cardinality": 2,
+      "rarest_level_count": 314,
+      "rows_per_level": 445.5,
+      "strategy": "binary"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sex"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "be3f92b2cf8b769d",
+     "metrics": {
+      "cardinality": 7,
+      "rarest_level_count": 5,
+      "rows_per_level": 127.286,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sibsp"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "3a759f49dcc9e844",
+     "metrics": {
+      "cardinality": 2,
+      "rarest_level_count": 342,
+      "rows_per_level": 445.5,
+      "strategy": "binary"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "survived"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "f9c2f024f49501d7",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 83,
+      "rows_per_level": 297.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "who"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -2487,6 +2691,51 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "7f7c380f37594363",
+     "metrics": {
+      "mechanism": "depends_on_observed",
+      "null_count": 177,
+      "null_share": 0.198653,
+      "skewness": 0.389108,
+      "strategy": "iterative",
+      "tier": "moderate"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "ca6340afd204b46f",
+     "metrics": {
+      "mechanism": "depends_on_observed",
+      "null_count": 688,
+      "null_share": 0.772166,
+      "strategy": "indicator_and_drop",
+      "tier": "severe"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "deck"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [
     {
@@ -2708,6 +2957,52 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "f22d2d925a905435",
+     "metrics": {
+      "core_span": 0.815155,
+      "distinct": 88,
+      "n_bins": 10,
+      "skewness": 0.389108,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "cc4de0f6d82ef4aa",
+     "metrics": {
+      "core_span": 0.486028,
+      "distinct": 248,
+      "n_bins": 10,
+      "skewness": 4.78732,
+      "spike_share": null,
+      "strategy": "quantile"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "out_of_bounds": {
    "findings": [],
    "status": "not_applicable",
@@ -2875,6 +3170,31 @@
   },
   "text_encoding": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
+   "findings": [
+    {
+     "check": "transformations",
+     "code": "transform_suggested",
+     "id": "f7af712d4905a8af",
+     "metrics": {
+      "lambda": null,
+      "reduction": 0.917505,
+      "skewness_after": 0.394928,
+      "skewness_before": 4.78732,
+      "transform": "log1p"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "fare"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },

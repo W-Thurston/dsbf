@@ -1,11 +1,12 @@
-Plan for data (6 × 4): 45 checks
-  will run 35 · not applicable 5 · unavailable 4 · skipped 1
+Plan for data (6 × 4): 49 checks
+  will run 39 · not applicable 5 · unavailable 4 · skipped 1
 
 level 0
   ✓ will run        associations            reads 4 columns
   ⦸ unavailable     autocorrelation         Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`.
   ✓ will run        bimodality              reads 2 columns
   – not applicable  calendar_gaps           No column is of a type calendar_gaps applies to (datetime).
+  ✓ will run        categorical_encoding    reads 2 columns
   ✓ will run        class_imbalance         reads 2 columns
   ✓ will run        collinearity            reads 2 columns
   ✓ will run        constant_columns        reads 4 columns
@@ -29,8 +30,9 @@ level 0
   ✓ will run        multivariate_outliers   reads 2 columns
   ✓ will run        near_zero_variance      reads 2 columns
   ✓ will run        normality               reads 2 columns
-  ✓ will run        null_rate               reads 4 columns
+  ✓ will run        null_rate               reads 4 columns · required by imputation
   ✓ will run        null_share              reads 4 columns · required by quality_summary
+  ✓ will run        numeric_binning         reads 2 columns
   ✓ will run        numeric_spread          reads 2 columns
   ✓ will run        out_of_bounds           reads 2 columns
   ✓ will run        outliers                reads 2 columns
@@ -43,9 +45,11 @@ level 0
   ✓ will run        string_anomalies        reads 2 columns
   – not applicable  temporal_gaps           No column is of a type temporal_gaps applies to (datetime).
   ✓ will run        text_encoding           reads 4 columns
+  ✓ will run        transformations         reads 2 columns
   ⦸ unavailable     unit_root               Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`. · required by trend_summary
   ✓ will run        zeros                   reads 2 columns
 
 level 1
-  ✓ will run        quality_summary         requires null_share · after numeric_spread
+  ✓ will run        imputation              reads 4 columns · requires null_rate · after missingness_mechanism
+  ✓ will run        quality_summary         reads 4 columns · requires null_share · after numeric_spread
   ↷ skipped         trend_summary           Requires 'unit_root' (unavailable), which cannot run.

@@ -12,6 +12,7 @@ from tests.golden.migration.accepted_group_differences import (
 from tests.golden.migration.accepted_missingness_strings import (
     ACCEPTED_MISSINGNESS_STRINGS,
 )
+from tests.golden.migration.accepted_ml_prep import ACCEPTED_ML_PREP
 from tests.golden.migration.accepted_reference_drift import ACCEPTED_REFERENCE_DRIFT
 from tests.golden.migration.accepted_time_series import ACCEPTED_TIME_SERIES
 from tests.golden.migration.analysis import (
@@ -60,6 +61,12 @@ from tests.golden.migration.missingness_strings import (
     compare_regex_violations,
     compare_string_anomalies,
 )
+from tests.golden.migration.ml_prep import (
+    compare_categorical_encoding,
+    compare_imputation,
+    compare_numeric_binning,
+    compare_transformations,
+)
 from tests.golden.migration.reference_drift import (
     compare_compare_with_reference_dataset,
     compare_detect_feature_drift,
@@ -81,6 +88,7 @@ ACCEPTED = (
     *ACCEPTED_ASSOCIATIONS,
     *ACCEPTED_FUZZY_DUPLICATES,
     *ACCEPTED_GROUP_DIFFERENCES,
+    *ACCEPTED_ML_PREP,
     *ACCEPTED_MISSINGNESS_STRINGS,
     *ACCEPTED_REFERENCE_DRIFT,
     *ACCEPTED_TIME_SERIES,
@@ -139,6 +147,10 @@ COMPARATORS: dict[str, Comparator] = {
     "compare_with_reference_dataset": compare_compare_with_reference_dataset,
     "detect_feature_drift": compare_detect_feature_drift,
     "detect_target_drift": compare_detect_target_drift,
+    "suggest_categorical_encoding": compare_categorical_encoding,
+    "suggest_numerical_binning": compare_numeric_binning,
+    "transformation_preview": compare_transformations,
+    "imputation_strategy_suggestions": compare_imputation,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

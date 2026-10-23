@@ -15,6 +15,138 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "aca90476d8888f1d",
+     "metrics": {
+      "cardinality": 6,
+      "rarest_level_count": 308,
+      "rows_per_level": 333.333,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "category"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "69a580c0b5ccd75b",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 468,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "color"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "378dd9154636e1fd",
+     "metrics": {
+      "cardinality": 2,
+      "rarest_level_count": 65,
+      "rows_per_level": 1000.0,
+      "strategy": "binary"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "dominant"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "58cba6bfe7b00d1a",
+     "metrics": {
+      "cardinality": 5,
+      "rarest_level_count": 369,
+      "rows_per_level": 400.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "material"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b7a648c27167c117",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 480,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "26e6700a3ac874f5",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 643,
+      "rows_per_level": 666.667,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "size"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "9903083da017e5a3",
+     "metrics": {
+      "cardinality": 581,
+      "rarest_level_count": null,
+      "rows_per_level": 3.44234,
+      "strategy": "frequency"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "tag"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -280,6 +412,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [],
    "status": "not_applicable",
@@ -313,6 +450,11 @@
   "null_rate": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "numeric_binning": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "out_of_bounds": {
@@ -368,6 +510,11 @@
   "text_encoding": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "zeros": {

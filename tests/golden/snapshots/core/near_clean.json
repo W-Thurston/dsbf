@@ -15,6 +15,66 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b1f61ffb3b53840e",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 435,
+      "rows_per_level": 1000.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b7a648c27167c117",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 727,
+      "rows_per_level": 750.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b22a71ede5276de3",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 903,
+      "rows_per_level": 1000.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "segment"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -223,6 +283,32 @@
   },
   "id_columns": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "imputation": {
+   "findings": [
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "7d8ff38046b32b0e",
+     "metrics": {
+      "mechanism": "no_dependence_found",
+      "null_count": 191,
+      "null_share": 0.0636667,
+      "skewness": -0.0496105,
+      "strategy": "mean",
+      "tier": "moderate"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -460,6 +546,112 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "f22d2d925a905435",
+     "metrics": {
+      "core_span": 0.765,
+      "distinct": 35,
+      "n_bins": 10,
+      "skewness": -0.0246894,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "92fc5532a1f0b2f3",
+     "metrics": {
+      "core_span": 0.773562,
+      "distinct": 2803,
+      "n_bins": 10,
+      "skewness": -0.0496105,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "038841a1e6741dcc",
+     "metrics": {
+      "core_span": 0.540489,
+      "distinct": 2610,
+      "n_bins": 10,
+      "skewness": 1.98377,
+      "spike_share": null,
+      "strategy": "quantile"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "purchase_amount"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "d598d858e2604a39",
+     "metrics": {
+      "core_span": 0.779559,
+      "distinct": 68,
+      "n_bins": 10,
+      "skewness": 0.0222517,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "satisfaction"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "76b119bec6e427d7",
+     "metrics": {
+      "core_span": 0.811321,
+      "distinct": 53,
+      "n_bins": 10,
+      "skewness": 0.147222,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "tenure_months"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "out_of_bounds": {
    "findings": [],
    "status": "not_applicable",
@@ -639,6 +831,31 @@
   },
   "text_encoding": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
+   "findings": [
+    {
+     "check": "transformations",
+     "code": "transform_suggested",
+     "id": "99da873119cbde0a",
+     "metrics": {
+      "lambda": 0.268299,
+      "reduction": 0.977659,
+      "skewness_after": -0.0443191,
+      "skewness_before": 1.98377,
+      "transform": "box_cox"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "purchase_amount"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },

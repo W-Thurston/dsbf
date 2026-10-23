@@ -266,6 +266,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -513,6 +518,32 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "a008d61533208574",
+     "metrics": {
+      "mechanism": "no_dependence_found",
+      "null_count": 1279,
+      "null_share": 0.6395,
+      "skewness": -0.0146046,
+      "strategy": "indicator_and_drop",
+      "tier": "severe"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "sparse_c"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [],
    "status": "ok",
@@ -628,6 +659,232 @@
       "null_share": 0.6395
      },
      "severity": "error",
+     "subject": {
+      "columns": [
+       "sparse_c"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "bcb1d9a72ec332fd",
+     "metrics": {
+      "core_span": 0.684934,
+      "distinct": 1999,
+      "n_bins": 10,
+      "skewness": -0.047855,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "base"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "4eff6d5f8c58cdd8",
+     "metrics": {
+      "core_span": 0.635299,
+      "distinct": 1953,
+      "n_bins": 10,
+      "skewness": 0.107439,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "click_rate"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "fc826da90839f95f",
+     "metrics": {
+      "core_span": 0.724351,
+      "distinct": 1998,
+      "n_bins": 10,
+      "skewness": -0.0256228,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "combo"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "5e5ff5eb41893415",
+     "metrics": {
+      "core_span": 0.714763,
+      "distinct": 2000,
+      "n_bins": 10,
+      "skewness": -0.0405602,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "copy_a"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "2dbd6c91697a3a8a",
+     "metrics": {
+      "core_span": 0.70409,
+      "distinct": 1999,
+      "n_bins": 10,
+      "skewness": -0.0362425,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "copy_b"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "d6f8c050c4fd8b0c",
+     "metrics": {
+      "core_span": 0.647676,
+      "distinct": 2000,
+      "n_bins": 10,
+      "skewness": 0.0141087,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_x"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "8e2e859755c7f540",
+     "metrics": {
+      "core_span": 0.619281,
+      "distinct": 2000,
+      "n_bins": 10,
+      "skewness": 0.0466249,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_y"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "9fdbc34c03e69ca5",
+     "metrics": {
+      "core_span": 0.671992,
+      "distinct": 1999,
+      "n_bins": 10,
+      "skewness": 0.0419514,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "factor_z"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "ff92c58d65dddafe",
+     "metrics": {
+      "core_span": 0.628613,
+      "distinct": 2000,
+      "n_bins": 10,
+      "skewness": 0.0043274,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "revenue"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "ee1f0cf4da22aa05",
+     "metrics": {
+      "core_span": 0.683945,
+      "distinct": 1995,
+      "n_bins": 10,
+      "skewness": -0.0105415,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "signal"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "deab73b3e196bf7e",
+     "metrics": {
+      "core_span": 0.713483,
+      "distinct": 721,
+      "n_bins": 10,
+      "skewness": -0.0146046,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
      "subject": {
       "columns": [
        "sparse_c"
@@ -1099,6 +1356,11 @@
    "version": "1.0.0"
   },
   "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

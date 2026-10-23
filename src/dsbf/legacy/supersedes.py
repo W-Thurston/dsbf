@@ -60,6 +60,10 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "compare_with_reference_dataset": ("reference_drift",),
     "detect_feature_drift": ("reference_drift",),
     "detect_target_drift": ("reference_drift",),
+    "suggest_categorical_encoding": ("categorical_encoding",),
+    "suggest_numerical_binning": ("numeric_binning",),
+    "transformation_preview": ("transformations",),
+    "imputation_strategy_suggestions": ("imputation",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

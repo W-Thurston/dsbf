@@ -204,7 +204,8 @@ class CheckSpec:
         if self.kind == "synthesis":
             if self.applies_to is not None:
                 raise CheckDefinitionError(
-                    f"{self.id}: a synthesis check reads other checks, not columns; "
+                    f"{self.id}: a synthesis check reads other checks and the "
+                    "profile of every column, not a type of column; "
                     "set applies_to=None"
                 )
             if not (self.requires.checks or self.after):

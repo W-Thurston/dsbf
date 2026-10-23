@@ -95,7 +95,7 @@ def test_decorating_returns_a_callable_check():
         ),
         (
             {"kind": "synthesis", "after": ["a"]},
-            "a synthesis check reads other checks, not columns",
+            "a synthesis check reads other checks and the profile of every column",
         ),
     ],
 )
