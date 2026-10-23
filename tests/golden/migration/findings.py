@@ -204,6 +204,7 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Invisible Characters - ", "invisible_characters"),
         (r"^Length Outliers - ", "length_outliers"),
     ),
+    "fuzzy_duplicate_detection": ((r"^Near-Duplicate Rows: ", "near_duplicate_rows"),),
 }
 
 

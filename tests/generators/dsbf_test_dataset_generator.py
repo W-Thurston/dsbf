@@ -47,8 +47,14 @@ class DSBFTestDataGenerator:
     task category. Retained from the original generator with no changes.
     """
 
-    def __init__(self, n_rows: int = 5000, random_seed: int = 42):
+    def __init__(
+        self, n_rows: int = 5000, random_seed: int = 42, near_duplicates: int = 0
+    ):
         self.n_rows = n_rows
+        self.near_duplicates = near_duplicates
+        # The copies appended by ``generate``: (source row, copy row, edit kind).
+        self.planted_near_duplicates: list[tuple[int, int, str]] = []
+        self._random_seed = random_seed
         _seed(random_seed)
         # A separate stream keeps uuids reproducible without shifting the values the
         # global generators produce for the other columns.
@@ -89,7 +95,54 @@ class DSBFTestDataGenerator:
         # Add ~5% duplicate rows
         dup_idx = np.random.choice(df.index, size=int(0.05 * len(df)), replace=False)
         df = pd.concat([df, df.iloc[dup_idx]], ignore_index=True)
+        if self.near_duplicates:
+            df = self._append_near_duplicates(df)
         return df
+
+    # Text columns the edits land in; each holds a name-like value per row.
+    _EDITED_COLUMNS = (
+        "long_text",
+        "high_cardinality_random",
+        "unexpected_object_column",
+    )
+    _EDITS = ("case", "padding", "typo", "transposition", "dropped_character")
+
+    def _append_near_duplicates(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Append copies of original rows with one small edit in a text column.
+
+        Appended after the exact duplicates, from a stream of its own, so every earlier
+        row and every other column's values are the same as without them. The copies
+        are listed in ``planted_near_duplicates``.
+        """
+        rng = np.random.default_rng(self._random_seed + 1)
+        sources = rng.choice(self.n_rows, size=self.near_duplicates, replace=False)
+        copies = df.iloc[sources].copy().reset_index(drop=True)
+        self.planted_near_duplicates = []
+        for k, source in enumerate(sources.tolist()):
+            column = str(rng.choice(self._EDITED_COLUMNS))
+            kind = self._EDITS[k % len(self._EDITS)]
+            value = copies.at[k, column]
+            if not isinstance(value, str) or len(value) < 4:
+                column, value = "long_text", copies.at[k, "long_text"]
+            edited = self._edit(str(value), kind, rng)
+            if edited == value:  # a swap of equal neighbours, say
+                kind, edited = "typo", self._edit(str(value), "typo", rng)
+            copies.at[k, column] = edited
+            self.planted_near_duplicates.append((source, len(df) + k, kind))
+        return pd.concat([df, copies], ignore_index=True)
+
+    @staticmethod
+    def _edit(value: str, kind: str, rng: np.random.Generator) -> str:
+        at = int(rng.integers(1, len(value) - 2))
+        if kind == "case":
+            return value.upper() if value != value.upper() else value.lower()
+        if kind == "padding":
+            return f" {value} "
+        if kind == "typo":
+            return value[:at] + ("x" if value[at] != "x" else "y") + value[at + 1 :]
+        if kind == "transposition":
+            return value[:at] + value[at + 1] + value[at] + value[at + 2 :]
+        return value[:at] + value[at + 1 :]
 
     # ── internal generators (unchanged from original) ──────────────────────────
 

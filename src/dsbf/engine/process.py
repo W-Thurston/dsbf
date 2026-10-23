@@ -69,6 +69,8 @@ def _map_frame(path: str) -> pl.DataFrame:
     table = pa.ipc.open_file(pa.memory_map(path)).read_all()
     frame = pl.from_arrow(table)
     assert isinstance(frame, pl.DataFrame)
+    # Polars renames a column whose name is empty to "column_0" on the way in.
+    frame.columns = table.column_names
     return frame
 
 

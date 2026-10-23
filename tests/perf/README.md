@@ -114,8 +114,10 @@ kind, so shared-runner noise on small values doesn't fail the job:
 Endpoints that answered 200 in the baseline and no longer do also fail. API milliseconds are
 recorded but not gated. A task or stage that is not in the baseline is not compared.
 
-`PYTHONHASHSEED=0` is pinned for every run: `fuzzy_duplicate_detection` walks sets of strings,
-and its amount of work (and so its time) depends on the iteration order.
+`PYTHONHASHSEED=0` is pinned for every run: the legacy `fuzzy_duplicate_detection` walks sets of
+strings, and its amount of work (and so its time) depends on the iteration order. The
+`fuzzy_duplicates` check that replaces it does not, but the legacy task still runs in the
+`deep` scenarios and the legacy-engine ones until it is deleted with the legacy pack.
 
 ## Update the baseline
 

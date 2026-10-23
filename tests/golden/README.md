@@ -125,7 +125,7 @@ Each dataset runs in a fresh child process (`profile_one.py`) with `PYTHONHASHSE
 temporary database and a temporary working directory, and the snapshot is built from that
 run's own `report.json`. The hash seed is needed because some tasks walk sets of strings.
 `fuzzy_duplicate_detection` stops at a candidate cap while doing so, so without the seed it
-reports a different pair count on every run (titanic gave 7,102 and 20,029 on two runs).
+reports a different pair count on every run (titanic gave 7,102 and 20,029 on two runs). That task still runs in these legacy-engine runs, so the pin stays until the legacy pack is deleted; the `fuzzy_duplicates` check that replaces it gives the same output under every seed (`tests/test_checks/test_fuzzy_duplicates.py` runs it under three).
 A snapshot can still differ across platforms or major library versions (BLAS builds,
 scikit-learn and SciPy releases); when CI disagrees with a local run, compare the diff before
 updating.

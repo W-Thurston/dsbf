@@ -167,7 +167,8 @@ class TestMigratedChecks:
         assert run.results["infer_types"].findings == ()
 
     def test_a_check_in_its_own_pack_can_be_run_alone(self, sparse):
-        run = dsbf.profile(sparse, packs=["core"])
+        # `fuzzy_duplicates` is a heavy check, which only the deep depth runs.
+        run = dsbf.profile(sparse, packs=["core"], depth="deep")
 
         assert set(run.results) == {check.id for check in core_pack().checks}
         assert not [r for r in run.results if r.startswith(("detect_", "summarize_"))]

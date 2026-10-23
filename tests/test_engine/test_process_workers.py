@@ -173,6 +173,15 @@ class TestSharedData:
         assert opened.frame.equals(frame, null_equal=True)
         assert opened.name == dataset.name and opened.source == dataset.source
 
+    def test_a_column_with_an_empty_name_keeps_it(self):
+        frame = pl.DataFrame({"": ["a", "b"], "x": [1, 2], " ": ["c", "d"]})
+
+        with WorkerHost(make_dataset(frame)) as host:
+            opened = host.share_frame().open()
+
+        assert opened.frame.columns == ["", "x", " "]
+        assert opened.frame.equals(frame)
+
 
 class TestTimeoutKillsTheWorker:
     def test_a_sleeping_worker_is_killed_and_the_run_completes(self, tmp_path):

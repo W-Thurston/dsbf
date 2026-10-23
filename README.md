@@ -90,7 +90,7 @@ cd dsbf
 uv sync
 ```
 
-**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries everything the legacy tasks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install.
+**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries everything the legacy tasks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install. The exception is `text`: `fuzzy_duplicates`, which runs at the `deep` depth, needs `rapidfuzz`, and without it ends `unavailable` with an install hint.
 
 **Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard) · Graphviz (the `dot` executable, for the task-graph image)
 
@@ -139,7 +139,7 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 | `hooks`, `plugins` | Functions that receive an event as each check starts and finishes; directories of check plugins |
 | `config` | The path of a settings file with the same names. An argument here overrides the file, and `DSBF__SECTION__KEY` environment variables sit between the two. No file is read unless you name it |
 
-A `Run` can be megabytes on text-heavy data, because a check's output is kept whole: the titanic `Run` is 8.4 MB, 7.9 MB of it from `fuzzy_duplicate_detection`.
+A `Run` can be megabytes on data with many columns, because a check's output is kept whole: the titanic `Run` is 0.56 MB (the largest outputs are `group_differences` at 52 KB and `contingency` at 44 KB). It was 8.9 MB until `fuzzy_duplicates`, which lists its 20 closest pairs and counts the rest, replaced `fuzzy_duplicate_detection`'s whole pair list.
 
 ### Python API (the original `EDA` class)
 
