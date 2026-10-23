@@ -20,6 +20,7 @@ from dsbf.engine.expectation import Expected
 from dsbf.engine.limits import Limits
 from dsbf.engine.meter import DEFAULT_SAMPLE_SECONDS, Meter, Window
 from dsbf.engine.plan import Plan, PlanEntry
+from dsbf.engine.reference import Reference
 from dsbf.engine.scheduler import Launch, Scheduler, default_workers
 from dsbf.engine.worker import Attempt, Failure
 from dsbf.model import (
@@ -52,6 +53,7 @@ def execute(
     memory_sample_seconds: float | None = DEFAULT_SAMPLE_SECONDS,
     workers: int | None = None,
     cache: ResultCache | None = None,
+    reference: Reference | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
@@ -101,7 +103,9 @@ def execute(
     changed result. Only ``ok`` results are stored, and a hit is served even after the
     run budget is used up. A cache that fails is logged once and ignored.
 
-    ``profile`` must be the profile of ``dataset``.
+    ``profile`` must be the profile of ``dataset``. ``reference`` is the dataset the
+    checks that require one compare with; no other check can read it, and the
+    cache key of one that does covers it.
 
     Raises:
         ValueError: ``profile`` is not the profile of ``dataset``,
@@ -125,7 +129,9 @@ def execute(
             (entry for level in plan.levels for entry in level), start=1
         )
     }
-    session = None if cache is None else CacheSession(cache, dataset, profile)
+    session = (
+        None if cache is None else CacheSession(cache, dataset, profile, reference)
+    )
     started_at = datetime.now(UTC)
     clock = time.monotonic()
     results: dict[str, CheckResult] = {}
@@ -144,6 +150,7 @@ def execute(
             profile=profile,
             grace=limits.cancel_grace_seconds,
             meter=meter,
+            reference=reference,
         ) as scheduler,
     ):
         for level in plan.levels:

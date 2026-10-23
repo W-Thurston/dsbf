@@ -29,6 +29,7 @@ from dsbf.engine.expectation import Expectation, Expected
 from dsbf.engine.limits import Limits
 from dsbf.engine.pack import Pack
 from dsbf.engine.plan import Plan, PlanEntry, make_plan
+from dsbf.engine.reference import Reference
 from dsbf.engine.registry import Registry
 from dsbf.engine.render import format_plan
 from dsbf.engine.runner import run_check
@@ -63,6 +64,7 @@ __all__ = [
     "PlanError",
     "ProfileFeature",
     "ProfileView",
+    "Reference",
     "Registry",
     "RegistryError",
     "Requires",

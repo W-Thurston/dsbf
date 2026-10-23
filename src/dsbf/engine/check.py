@@ -102,14 +102,20 @@ class Requires:
     """What a check cannot run without.
 
     ``profile`` names the parts of the profile it reads. ``checks`` are checks whose
-    results it needs: if one does not complete, this check is skipped.
+    results it needs: if one does not complete, this check is skipped. ``reference``
+    is set for a check that compares the dataset with a reference one; without a
+    reference it is not applicable.
     """
 
     profile: tuple[ProfileFeature, ...]
     checks: tuple[str, ...]
+    reference: bool
 
     def __init__(
-        self, profile: Iterable[ProfileFeature] = (), checks: Iterable[str] = ()
+        self,
+        profile: Iterable[ProfileFeature] = (),
+        checks: Iterable[str] = (),
+        reference: bool = False,
     ) -> None:
         known = get_args(ProfileFeature)
         features = _unique(profile)
@@ -124,6 +130,7 @@ class Requires:
             _require_name("requires.checks", check_id)
         object.__setattr__(self, "profile", features)
         object.__setattr__(self, "checks", ids)
+        object.__setattr__(self, "reference", reference)
 
 
 @dataclass(frozen=True)

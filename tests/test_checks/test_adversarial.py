@@ -11,12 +11,12 @@ import zoneinfo
 import pandas as pd
 import polars as pl
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
 from dsbf.checks import core_pack
 from dsbf.data import load
-from dsbf.engine import Registry, Selection, execute, make_plan
+from dsbf.engine import Reference, Registry, Selection, execute, make_plan
 from dsbf.model import CheckStatus, Run
 from dsbf.profiling import profile_dataset
 from tests.fixtures.adversarial import build_adversarial_frame
@@ -34,10 +34,18 @@ def run_core(
     frame: pd.DataFrame | pl.DataFrame,
     name: str = "adversarial",
     time_index: str | None = None,
+    reference: pd.DataFrame | pl.DataFrame | None = None,
 ) -> Run:
-    """Run every core check; ``time_index`` goes to each check that takes one."""
+    """Run every core check; ``time_index`` goes to each check that takes one.
+
+    ``reference`` is the dataset the checks that compare with one are given.
+    """
     dataset = load(frame, name=name)
     profile = profile_dataset(dataset)
+    compared = None
+    if reference is not None:
+        loaded = load(reference, name="reference")
+        compared = Reference.of_data(loaded, profile_dataset(loaded))
     params = (
         {c.id: {"time_index": time_index} for c in CHECKS if _takes_time_index(c)}
         if time_index is not None
@@ -48,8 +56,11 @@ def run_core(
         Selection(depth="deep", entry_points=False),
         params=params,
         profile=profile,
+        has_reference=compared is not None,
     )
-    return execute(plan, dataset, profile, dsbf_version="test", workers=2)
+    return execute(
+        plan, dataset, profile, dsbf_version="test", workers=2, reference=compared
+    )
 
 
 def _takes_time_index(check) -> bool:
@@ -111,6 +122,20 @@ def test_the_time_series_checks_run_on_the_adversarial_frame_with_a_time_index()
         assert result.output["frequency"] == "h"
         assert "inf_col" in result.output["columns"]
         assert "all_nan_float" not in result.output["columns"]
+    strict_loads(run.model_dump_json())
+
+
+def test_reference_drift_compares_the_adversarial_frame_with_itself() -> None:
+    frame = pl.from_pandas(build_adversarial_frame())
+
+    run = run_core(frame, reference=frame)
+
+    assert trouble(run) == {}
+    result = run.results["reference_drift"]
+    assert result.status is CheckStatus.OK, [n.message for n in result.notes]
+    assert result.findings == ()
+    assert result.output is not None
+    assert result.output["columns_added"] == result.output["columns_dropped"] == []
     strict_loads(run.model_dump_json())
 
 
@@ -247,4 +272,26 @@ def test_the_time_series_checks_survive_a_generated_index(frame: pd.DataFrame) -
     run = run_core(frame, name="generated", time_index=index)
 
     assert trouble(run) == {}
+    strict_loads(run.model_dump_json())
+
+
+@settings(
+    max_examples=60,
+    deadline=None,
+    derandomize=True,
+    database=None,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+@given(frame=frames())
+def test_reference_drift_survives_a_generated_frame_and_reference(
+    frame: pd.DataFrame,
+) -> None:
+    # The profile fails on a column named `*` beside an all-null one, with or without
+    # a reference; that is not what this test is about.
+    assume("*" not in frame.columns)
+    reference = frame.iloc[: max(1, len(frame) // 2)]
+    run = run_core(frame, name="generated", reference=reference)
+
+    assert trouble(run) == {}
+    assert run.results["reference_drift"].status is CheckStatus.OK
     strict_loads(run.model_dump_json())

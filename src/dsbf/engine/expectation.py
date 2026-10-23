@@ -39,13 +39,15 @@ def expect(
     check: Check,
     profile: DatasetProfile | None,
     upstream: Mapping[str, Expectation],
+    *,
+    has_reference: bool = False,
 ) -> Expectation:
     """The status ``check`` is expected to end with.
 
     A missing extra comes first, then a hard requirement that cannot run (``upstream``
     holds the expectations of the checks already judged), then a profile with
-    nothing for the check to read. Without a ``profile`` only the first two are
-    judged.
+    nothing for the check to read, or a reference it needs and ``has_reference`` is
+    false. Without a ``profile`` only the first two are judged.
     """
     spec = check.spec
     missing = missing_extras(spec.extras)
@@ -72,11 +74,13 @@ def expect(
         )
     if profile is None:
         return Expectation(Expected.WILL_RUN)
-    return _from_profile(check, profile)
+    return _from_profile(check, profile, has_reference)
 
 
-def _from_profile(check: Check, profile: DatasetProfile) -> Expectation:
-    eligible = eligibility(check.spec, profile)
+def _from_profile(
+    check: Check, profile: DatasetProfile, has_reference: bool
+) -> Expectation:
+    eligible = eligibility(check.spec, profile, has_reference=has_reference)
     if not eligible.applicable:
         return Expectation(
             Expected.NOT_APPLICABLE, reason=eligible.reason, columns=eligible.columns

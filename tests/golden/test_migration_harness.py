@@ -154,7 +154,8 @@ class TestTheRegistry:
         datasets = {d.name for d in GOLDEN_DATASETS}
         for entry in ACCEPTED:
             assert entry.reason.strip(), entry
-            assert entry.dataset in datasets, entry
+            # `<dataset>+reference` is the run against a perturbed copy.
+            assert entry.dataset.removesuffix("+reference") in datasets, entry
             assert entry.check in COMPARATORS, entry
 
     def test_an_entry_is_listed_once(self):

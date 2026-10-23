@@ -44,13 +44,22 @@ class Eligibility:
         return self.reason is None
 
 
-def eligibility(spec: CheckSpec, profile: DatasetProfile) -> Eligibility:
+def eligibility(
+    spec: CheckSpec, profile: DatasetProfile, *, has_reference: bool = False
+) -> Eligibility:
     """The columns ``spec`` reads from ``profile``, or why it has none.
 
     A column is eligible when it is of a type the check applies to and the profile
     holds the column features the check requires. A dataset-level feature the profile
-    lacks makes the whole check not applicable.
+    lacks, or a reference the check requires and the run was not given, makes the
+    whole check not applicable.
     """
+    if spec.requires.reference and not has_reference:
+        return Eligibility(
+            None,
+            reason=f"No reference dataset was given, which {spec.id} compares with.",
+            code="no_reference",
+        )
     for feature in spec.requires.profile:
         if feature in _DATASET_FEATURES and not _DATASET_FEATURES[feature](profile):
             return Eligibility(

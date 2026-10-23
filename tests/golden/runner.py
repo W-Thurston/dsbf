@@ -52,6 +52,16 @@ def profile_with_engine(dataset: GoldenDataset, workdir: Path) -> GoldenRun:
     )
 
 
+def profile_against_reference(dataset: GoldenDataset, workdir: Path) -> dict[str, Any]:
+    """Run the drift tasks and ``reference_drift`` on ``dataset`` and a perturbed copy.
+
+    Returns what ``reference_one.py`` wrote: the ``target`` it chose, the ``legacy``
+    entries of the three tasks and the ``core`` ``Run``, as dicts.
+    """
+    out_dir, _ = _run_script("reference_one.py", dataset, workdir, time_series=False)
+    return json.loads((out_dir / "reference_run.json").read_text())
+
+
 def _run_child(
     script: str,
     dataset: GoldenDataset,
@@ -60,6 +70,23 @@ def _run_child(
     run_info_name: str,
     core_name: str | None = None,
 ) -> GoldenRun:
+    out_dir, data_dir = _run_script(script, dataset, workdir)
+    workdir = workdir.resolve()
+    report = json.loads((out_dir / report_name).read_text())
+    run_info = json.loads((out_dir / run_info_name).read_text())
+    core = json.loads((out_dir / core_name).read_text()) if core_name else None
+    return GoldenRun(
+        report=report,
+        run_info=run_info,
+        roots=[str(out_dir), str(data_dir), str(workdir)],
+        core=core,
+    )
+
+
+def _run_script(
+    script: str, dataset: GoldenDataset, workdir: Path, *, time_series: bool = True
+) -> tuple[Path, Path]:
+    """Run a child script on ``dataset`` and return its output and data directories."""
     workdir = workdir.resolve()
     data_dir = workdir / "data"
     out_dir = workdir / "out"
@@ -83,7 +110,7 @@ def _run_child(
         str(csv_path),
         str(out_dir),
     ]
-    if dataset.time_series_column:
+    if time_series and dataset.time_series_column:
         command.append(dataset.time_series_column)
 
     completed = subprocess.run(
@@ -99,13 +126,4 @@ def _run_child(
             f"Profiling {dataset.name} exited with {completed.returncode}:\n"
             f"{completed.stderr[-4000:]}"
         )
-
-    report = json.loads((out_dir / report_name).read_text())
-    run_info = json.loads((out_dir / run_info_name).read_text())
-    core = json.loads((out_dir / core_name).read_text()) if core_name else None
-    return GoldenRun(
-        report=report,
-        run_info=run_info,
-        roots=[str(out_dir), str(data_dir), str(workdir)],
-        core=core,
-    )
+    return out_dir, data_dir

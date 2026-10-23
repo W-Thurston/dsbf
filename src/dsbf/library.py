@@ -27,6 +27,7 @@ from dsbf.engine import (
     Hook,
     Limits,
     Plan,
+    Reference,
     Registry,
     ResultCache,
     Selection,
@@ -59,6 +60,7 @@ def profile(
     depth: Depth | str | None = None,
     target: str | None = None,
     time_index: str | None = None,
+    reference: object | None = None,
     sample: Sample | int | None = None,
     backend: Backend | str | None = None,
     limits: LimitsConfig | None = None,
@@ -92,7 +94,11 @@ def profile(
     or ``"id"`` adds a check, ``"-id"`` removes one, and a check that another needs
     is pulled in regardless. ``depth`` (``quick``, ``standard`` or ``deep``) is the
     most expensive kind of check to run. ``target`` and ``time_index`` name the
-    columns the checks that need a target or a time axis use. ``sample`` profiles a
+    columns the checks that need a target or a time axis use. ``reference`` is the
+    dataset the checks that compare with one (``reference_drift``) are given: any
+    source ``dsbf.data.load`` accepts, profiled like the data (with the same
+    ``sample``), or a ``Run`` whose stored profile is used as it is. Without one,
+    those checks are not applicable. ``sample`` profiles a
     ``Sample`` of the rows (or the first ``n`` rows, given a number) and the ``Run``
     records how they were chosen. ``backend`` is the frame library the legacy tasks
     are handed (``pandas`` unless set). ``limits`` bounds the time of a check and of
@@ -111,7 +117,8 @@ def profile(
     Raises:
         ConfigError: a setting is invalid, such as an unknown task or a ``target``
             that is not a column; every problem is listed.
-        SourceError: the data cannot be read (see ``dsbf.data.load``).
+        SourceError: the data or the ``reference`` cannot be read (see
+            ``dsbf.data.load``).
         SamplingError: the sample cannot be drawn as asked.
         PlanError: the selection cannot be planned, such as an unknown pack.
     """
@@ -134,6 +141,7 @@ def profile(
     if settings.sample is not None:
         dataset = _sampled(dataset, settings.sample)
     data_profile = profile_dataset(dataset)
+    reference_data = _reference(reference, settings)
     session = LegacySession(
         dataset, data_profile, config=_legacy_config(settings, dataset)
     )
@@ -153,6 +161,7 @@ def profile(
         superseded,
         params=_setting_params(registry, settings),
         profile=data_profile,
+        has_reference=reference_data is not None,
     )
     workers = settings.workers
     if workers is None:
@@ -166,7 +175,20 @@ def profile(
         hooks=hooks,
         workers=workers,
         cache=DiskCache.default() if cache is True else cache or None,
+        reference=reference_data,
     )
+
+
+def _reference(source: object | None, settings: ProfileConfig) -> Reference | None:
+    """The reference to compare with: a ``Run``'s profile, or a profiled table."""
+    if source is None:
+        return None
+    if isinstance(source, Run):
+        return Reference.of_run(source)
+    dataset = load(source)
+    if settings.sample is not None:
+        dataset = _sampled(dataset, settings.sample)
+    return Reference.of_data(dataset, profile_dataset(dataset))
 
 
 def _setting_params(

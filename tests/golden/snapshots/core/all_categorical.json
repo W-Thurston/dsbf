@@ -325,6 +325,11 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "reference_drift": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "sample_size": {
    "findings": [],
    "status": "ok",

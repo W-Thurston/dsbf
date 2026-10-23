@@ -13,6 +13,7 @@ from typing import Any, Protocol
 
 from dsbf.data import Dataset
 from dsbf.engine.plan import PlanEntry
+from dsbf.engine.reference import Reference
 from dsbf.engine.tips import library_digest
 from dsbf.model import CheckResult, CheckStatus, DatasetProfile
 from dsbf.paths import dsbf_home
@@ -126,7 +127,11 @@ class CacheSession:
     """
 
     def __init__(
-        self, cache: ResultCache, dataset: Dataset, profile: DatasetProfile
+        self,
+        cache: ResultCache,
+        dataset: Dataset,
+        profile: DatasetProfile,
+        reference: Reference | None = None,
     ) -> None:
         self._cache: ResultCache | None = cache
         self._scope = {
@@ -138,6 +143,22 @@ class CacheSession:
             "profile": _digest(profile.model_dump(mode="json")),
             "tips": library_digest(),
         }
+        self._reference = (
+            None
+            if reference is None
+            else _digest(
+                {
+                    "profile": reference.profile.model_dump(mode="json"),
+                    "n_rows": reference.n_rows,
+                    "fingerprint": reference.fingerprint,
+                    "sampling": (
+                        reference.sampling.model_dump(mode="json")
+                        if reference.sampling
+                        else None
+                    ),
+                }
+            )
+        )
         self._keys: dict[str, CacheKey] = {}
         self._digests: dict[str, str] = {}
         self.failure: str | None = None
@@ -172,6 +193,8 @@ class CacheSession:
             "params": entry.params.model_dump(mode="json"),
             "upstream": upstream,
         }
+        if entry.check.spec.requires.reference:
+            components["reference"] = self._reference
         return CacheKey(entry.id, _digest(components), components)
 
     def _digest_of(self, result: CheckResult) -> str:

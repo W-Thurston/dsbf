@@ -26,6 +26,7 @@ from dsbf.engine.capture import WarningLog, capture_warnings, collecting
 from dsbf.engine.check import Check
 from dsbf.engine.context import CheckContext
 from dsbf.engine.plan import PlanEntry
+from dsbf.engine.reference import Reference
 from dsbf.engine.runner import run_check
 from dsbf.engine.worker import Attempt, Failure
 from dsbf.model import CheckParams, CheckResult, DatasetProfile, Note
@@ -104,6 +105,7 @@ class _Job:
     params: CheckParams
     profile: DatasetProfile
     upstream: dict[str, CheckResult]
+    reference: Reference | None
     frame: SharedFrame
 
 
@@ -129,6 +131,7 @@ def _worker_main(connection: Connection, payload: bytes) -> None:
                 job.profile,
                 job.params,
                 upstream=job.upstream,
+                reference=job.reference,
             )
             outcome = ("result", run_check(job.check, context))
     except Exception as error:
@@ -270,6 +273,7 @@ class WorkerHost:
         entry: PlanEntry,
         profile: DatasetProfile,
         upstream: Mapping[str, CheckResult],
+        reference: Reference | None = None,
     ) -> bytes:
         """Everything a worker needs to run ``entry``, ready to send.
 
@@ -281,6 +285,7 @@ class WorkerHost:
             params=entry.params,
             profile=profile,
             upstream=dict(upstream),
+            reference=reference if entry.check.spec.requires.reference else None,
             frame=self.share_frame(),
         )
         try:

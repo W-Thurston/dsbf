@@ -51,6 +51,7 @@ from dsbf.checks.normality import normality
 from dsbf.checks.null_rate import null_rate
 from dsbf.checks.out_of_bounds import out_of_bounds
 from dsbf.checks.outliers import outliers
+from dsbf.checks.reference_drift import reference_drift
 from dsbf.checks.sample_size import sample_size
 from dsbf.checks.schema import schema
 from dsbf.checks.seasonal_decomposition import seasonal_decomposition
@@ -110,5 +111,6 @@ def core_pack() -> Pack:
             datetime_consistency,
             temporal_gaps,
             datetime_features,
+            reference_drift,
         ),
     )
