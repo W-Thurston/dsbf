@@ -63,7 +63,7 @@ def numeric_spread(ctx, params):
 
 
 @check(
-    id="stationarity",
+    id="unit_root",
     version="1.0.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
@@ -72,7 +72,7 @@ def numeric_spread(ctx, params):
     cost=Cost.HEAVY,
     packs=["timeseries"],
 )
-def stationarity(ctx, params):
+def unit_root(ctx, params):
     """Unit-root test."""
 
 
@@ -82,7 +82,7 @@ def stationarity(ctx, params):
     kind="synthesis",
     applies_to=None,
     dimensions=["usability"],
-    requires=Requires(checks=["stationarity"]),
+    requires=Requires(checks=["unit_root"]),
     packs=["timeseries"],
 )
 def trend_summary(ctx, params):
@@ -90,14 +90,14 @@ def trend_summary(ctx, params):
 
 
 @check(
-    id="date_gaps",
+    id="calendar_gaps",
     version="1.0.0",
     kind="analysis",
     applies_to=SemanticTypes("datetime"),
     dimensions=["completeness"],
     packs=["core"],
 )
-def date_gaps(ctx, params):
+def calendar_gaps(ctx, params):
     """Gaps between dates."""
 
 
@@ -221,13 +221,13 @@ def test_selection_options_narrow_the_plan(data, plugin):
         plugin,
         *("--pack", "timeseries"),
         *("--depth", "deep"),
-        *("--include", "date_gaps"),
+        *("--include", "calendar_gaps"),
         *("--exclude", "trend_summary"),
     )
 
     assert result.exit_code == 0
-    assert "date_gaps" in result.stdout
-    assert "stationarity" in result.stdout
+    assert "calendar_gaps" in result.stdout
+    assert "unit_root" in result.stdout
     assert "trend_summary" not in result.stdout
 
 

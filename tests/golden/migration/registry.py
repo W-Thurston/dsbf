@@ -12,6 +12,7 @@ from tests.golden.migration.accepted_group_differences import (
 from tests.golden.migration.accepted_missingness_strings import (
     ACCEPTED_MISSINGNESS_STRINGS,
 )
+from tests.golden.migration.accepted_time_series import ACCEPTED_TIME_SERIES
 from tests.golden.migration.analysis import (
     compare_bimodality,
     compare_normality,
@@ -58,6 +59,14 @@ from tests.golden.migration.missingness_strings import (
     compare_regex_violations,
     compare_string_anomalies,
 )
+from tests.golden.migration.time_series import (
+    compare_autocorrelation,
+    compare_datetime_consistency,
+    compare_datetime_features,
+    compare_seasonal_decomposition,
+    compare_stationarity,
+    compare_temporal_gaps,
+)
 from tests.golden.migration.zeros import compare_zeros
 
 ACCEPTED = (
@@ -67,6 +76,7 @@ ACCEPTED = (
     *ACCEPTED_FUZZY_DUPLICATES,
     *ACCEPTED_GROUP_DIFFERENCES,
     *ACCEPTED_MISSINGNESS_STRINGS,
+    *ACCEPTED_TIME_SERIES,
 )
 
 # Tasks whose checks cover different parts of what the task did: the task is compared
@@ -113,6 +123,12 @@ COMPARATORS: dict[str, Comparator] = {
     "detect_regex_format_violations": compare_regex_violations,
     "detect_string_anomalies": compare_string_anomalies,
     "fuzzy_duplicate_detection": compare_fuzzy_duplicates,
+    "temporal_gap_detection": compare_temporal_gaps,
+    "check_datetime_consistency": compare_datetime_consistency,
+    "extract_datetime_features": compare_datetime_features,
+    "detect_stationarity": compare_stationarity,
+    "compute_acf_pacf": compare_autocorrelation,
+    "decompose_time_series": compare_seasonal_decomposition,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

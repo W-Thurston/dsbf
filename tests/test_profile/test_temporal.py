@@ -236,3 +236,68 @@ class TestInProfile:
         (profile,) = profile_columns(load(frame))
         assert isinstance(profile, DatetimeProfile)
         assert profile.inferred_frequency == "h"
+
+
+class TestSourceAndCalendar:
+    def test_text_values_outside_the_format_are_unparsed(self):
+        stats = _stats(
+            ["2024-01-01", "2024-01-02", "bad", "2024-13-45", None],
+            datetime_format="%Y-%m-%d",
+        )
+        assert (stats.format, stats.epoch_unit, stats.unparsed) == (
+            "%Y-%m-%d",
+            None,
+            2,
+        )
+
+    def test_values_that_all_fail_to_parse_are_still_counted(self):
+        stats = _stats(["x", "y"], datetime_format="%Y-%m-%d")
+        assert (stats.unparsed, stats.min, stats.format) == (2, None, "%Y-%m-%d")
+
+    def test_a_native_datetime_column_has_no_format_and_nothing_unparsed(self):
+        stats = _stats(_days(datetime(2024, 1, 1), 5))
+        assert (stats.format, stats.epoch_unit, stats.unparsed) == (None, None, 0)
+
+    def test_an_epoch_column_records_its_unit_and_ignores_nan(self):
+        start = 1_700_000_000
+        values = [float(start + 60 * i) for i in range(5)] + [float("nan"), None]
+        stats = _stats(values, epoch_unit="s")
+        assert (stats.epoch_unit, stats.format, stats.unparsed) == ("s", None, 0)
+
+    def test_midnight_instants_have_no_time_of_day(self):
+        stats = _stats(_days(datetime(2024, 1, 1), 10))
+        assert stats.time_of_day is False
+        assert stats.distinct_hours == 1
+
+    def test_one_instant_off_midnight_gives_a_time_of_day(self):
+        stats = _stats([datetime(2024, 1, 1), datetime(2024, 1, 2, 0, 0, 1)])
+        assert stats.time_of_day is True
+
+    def test_distinct_calendar_parts_are_counted_over_the_instants(self):
+        stats = _stats(
+            _days(datetime(2023, 12, 30), 6, step=timedelta(hours=18)),
+        )
+        assert (
+            stats.distinct_years,
+            stats.distinct_months,
+            stats.distinct_weekdays,
+            stats.distinct_hours,
+        ) == (2, 2, 4, 4)
+
+    def test_a_date_column_has_calendar_parts_and_no_time_of_day(self):
+        stats = _stats([date(2024, 3, 1), date(2024, 3, 5)])
+        assert (stats.time_of_day, stats.distinct_months, stats.distinct_hours) == (
+            False,
+            1,
+            1,
+        )
+
+    def test_the_fields_reach_the_column_profile(self):
+        frame = pl.DataFrame(
+            {"t": _days(datetime(2024, 1, 1), 50, step=timedelta(hours=7))}
+        )
+        (profile,) = profile_columns(load(frame))
+        assert isinstance(profile, DatetimeProfile)
+        assert profile.time_of_day is True
+        assert profile.distinct_hours == 24
+        assert profile.unparsed == 0

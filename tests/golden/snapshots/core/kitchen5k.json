@@ -361,6 +361,103 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "autocorrelation": {
+   "findings": [
+    {
+     "check": "autocorrelation",
+     "code": "autocorrelated",
+     "id": "2f7cf12c8e5b4f59",
+     "metrics": {
+      "acf_lag1": -0.039351,
+      "aggregate": "mean",
+      "alpha": 0.05,
+      "flagged_acf": [
+       2
+      ],
+      "flagged_pacf": [
+       2
+      ],
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "max_periods": 2000,
+      "maxlag": 40,
+      "min_abs": 0.2,
+      "n_flagged_acf": 1,
+      "n_flagged_pacf": 1,
+      "pacf_lag1": -0.039351,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "rows_used": 5250,
+      "series_start": "2023-01-01T00:00:00",
+      "strongest_acf": -0.21202,
+      "strongest_lag": 2,
+      "truncated": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "left_skewed"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "autocorrelation",
+     "code": "autocorrelated",
+     "id": "d9accadad2e24e32",
+     "metrics": {
+      "acf_lag1": 0.422025,
+      "aggregate": "mean",
+      "alpha": 0.05,
+      "flagged_acf": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "flagged_pacf": [
+       1,
+       2,
+       3
+      ],
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "max_periods": 2000,
+      "maxlag": 40,
+      "min_abs": 0.2,
+      "n_flagged_acf": 23,
+      "n_flagged_pacf": 3,
+      "pacf_lag1": 0.422025,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "rows_used": 5250,
+      "series_start": "2023-01-01T00:00:00",
+      "strongest_acf": 0.422025,
+      "strongest_lag": 1,
+      "truncated": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "sequential_id"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [
     {
@@ -854,6 +951,96 @@
        "perfect_leakage"
       ],
       "kind": "column_pair"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "datetime_consistency": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "datetime_features": {
+   "findings": [
+    {
+     "check": "datetime_features",
+     "code": "extractable_features",
+     "id": "6f3cdcd8093f1864",
+     "metrics": {
+      "cyclic_features": [
+       "month_sin_cos",
+       "day_of_week_sin_cos"
+      ],
+      "distinct_hours": 1,
+      "distinct_months": 12,
+      "distinct_weekdays": 7,
+      "distinct_years": 378,
+      "features": [
+       "days_since_epoch",
+       "year",
+       "month",
+       "quarter",
+       "week_of_year",
+       "month_sin_cos",
+       "day_of_week",
+       "is_weekend",
+       "day_of_week_sin_cos",
+       "day_of_month",
+       "is_month_start",
+       "is_month_end"
+      ],
+      "n_cyclic": 2,
+      "n_features": 12,
+      "range_days": 148856.0,
+      "time_of_day": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "datetime_with_gaps"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "datetime_features",
+     "code": "extractable_features",
+     "id": "a55e0b8a44bc6e6c",
+     "metrics": {
+      "cyclic_features": [
+       "month_sin_cos",
+       "day_of_week_sin_cos"
+      ],
+      "distinct_hours": 1,
+      "distinct_months": 12,
+      "distinct_weekdays": 7,
+      "distinct_years": 1,
+      "features": [
+       "days_since_epoch",
+       "month",
+       "quarter",
+       "week_of_year",
+       "month_sin_cos",
+       "day_of_week",
+       "is_weekend",
+       "day_of_week_sin_cos",
+       "day_of_month",
+       "is_month_start",
+       "is_month_end"
+      ],
+      "n_cyclic": 2,
+      "n_features": 11,
+      "range_days": 364.0,
+      "time_of_day": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "normal_date"
+      ],
+      "kind": "column"
      }
     }
    ],
@@ -3549,6 +3736,74 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "seasonal_decomposition": {
+   "findings": [
+    {
+     "check": "seasonal_decomposition",
+     "code": "seasonal",
+     "id": "ceb7ddfa62a60d95",
+     "metrics": {
+      "aggregate": "mean",
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "max_periods": 2000,
+      "min_strength": 0.4,
+      "period": 7,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "remainder_share": 3.15889e-06,
+      "robust": true,
+      "rows_used": 5250,
+      "seasonal_strength": 0.999996,
+      "series_start": "2023-01-01T00:00:00",
+      "trend_strength": 0.999978,
+      "truncated": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "extreme_skew"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "seasonal_decomposition",
+     "code": "trend",
+     "id": "2acc1fc6db82485f",
+     "metrics": {
+      "aggregate": "mean",
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "max_periods": 2000,
+      "min_strength": 0.4,
+      "period": 7,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "remainder_share": 3.15889e-06,
+      "robust": true,
+      "rows_used": 5250,
+      "seasonal_strength": 0.999996,
+      "series_start": "2023-01-01T00:00:00",
+      "trend_strength": 0.999978,
+      "truncated": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "extreme_skew"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "skewness": {
    "findings": [
     {
@@ -3726,6 +3981,80 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "stationarity": {
+   "findings": [
+    {
+     "check": "stationarity",
+     "code": "non_stationary",
+     "id": "58a7202ece13dfbe",
+     "metrics": {
+      "adf_lags": 7,
+      "adf_p_value": 0.0726695,
+      "adf_statistic": -2.70797,
+      "aggregate": "mean",
+      "alpha": 0.05,
+      "assessment": "consistent_with_non_stationary",
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "kpss_lags": 17,
+      "kpss_p_value": 0.01,
+      "kpss_statistic": 0.972646,
+      "max_periods": 2000,
+      "maxlag": 24,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "rows_used": 5250,
+      "series_start": "2023-01-01T00:00:00",
+      "truncated": false
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "sequential_id"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "stationarity",
+     "code": "ambiguous_stationarity",
+     "id": "9d0636eef7831e29",
+     "metrics": {
+      "adf_lags": 8,
+      "adf_p_value": 1.01845e-07,
+      "adf_statistic": -6.09436,
+      "aggregate": "mean",
+      "alpha": 0.05,
+      "assessment": "ambiguous_trend_stationary_or_structural_break",
+      "frequency": "D",
+      "frequency_source": "profile",
+      "index": "normal_date",
+      "kpss_lags": 17,
+      "kpss_p_value": 0.0248579,
+      "kpss_statistic": 0.575563,
+      "max_periods": 2000,
+      "maxlag": 24,
+      "periods": 365,
+      "periods_filled": 0,
+      "periods_total": 365,
+      "rows_used": 5250,
+      "series_start": "2023-01-01T00:00:00",
+      "truncated": false
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "string_anomalies": {
    "findings": [
     {
@@ -3760,6 +4089,33 @@
      "subject": {
       "columns": [
        "variable_length_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "temporal_gaps": {
+   "findings": [
+    {
+     "check": "temporal_gaps",
+     "code": "irregular_spacing",
+     "id": "b8c5e600d886b0a5",
+     "metrics": {
+      "distinct": 4638,
+      "first": "2023-01-05T00:00:00",
+      "frequency": null,
+      "largest_gap_days": 2552.0,
+      "largest_gap_seconds": 220493000.0,
+      "last": "2430-07-26T00:00:00",
+      "n_gaps": null
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "datetime_with_gaps"
       ],
       "kind": "column"
      }

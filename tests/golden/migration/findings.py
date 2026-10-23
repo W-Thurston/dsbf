@@ -205,6 +205,18 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Length Outliers - ", "length_outliers"),
     ),
     "fuzzy_duplicate_detection": ((r"^Near-Duplicate Rows: ", "near_duplicate_rows"),),
+    "temporal_gap_detection": ((r"^Temporal Gaps: ", "gaps"),),
+    # The task raised no guidance.
+    "check_datetime_consistency": (),
+    "extract_datetime_features": (
+        (r"^Datetime Column - ", "extractable_features"),
+        (r"^Datetime Feature Extraction Required ", "extractable_features"),
+    ),
+    # One blurb per column whatever the reading; the check raises a finding for the
+    # two readings that need action (`non_stationary`, `ambiguous_stationarity`).
+    "detect_stationarity": ((r"^Stationarity: ", "non_stationary"),),
+    "compute_acf_pacf": ((r"^ACF/PACF: ", "autocorrelated"),),
+    "decompose_time_series": ((r"^STL: ", "seasonal"),),
 }
 
 

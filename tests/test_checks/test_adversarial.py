@@ -30,15 +30,38 @@ TITANIC = DATA_DIR / "titanic.csv"
 ACCEPTABLE = {CheckStatus.OK, CheckStatus.NOT_APPLICABLE}
 
 
-def run_core(frame: pd.DataFrame | pl.DataFrame, name: str = "adversarial") -> Run:
+def run_core(
+    frame: pd.DataFrame | pl.DataFrame,
+    name: str = "adversarial",
+    time_index: str | None = None,
+) -> Run:
+    """Run every core check; ``time_index`` goes to each check that takes one."""
     dataset = load(frame, name=name)
     profile = profile_dataset(dataset)
+    params = (
+        {c.id: {"time_index": time_index} for c in CHECKS if _takes_time_index(c)}
+        if time_index is not None
+        else None
+    )
     plan = make_plan(
         Registry(CHECKS),
         Selection(depth="deep", entry_points=False),
+        params=params,
         profile=profile,
     )
     return execute(plan, dataset, profile, dsbf_version="test", workers=2)
+
+
+def _takes_time_index(check) -> bool:
+    return "time_index" in check.spec.params.model_fields
+
+
+def first_datetime_column(frame: pd.DataFrame) -> str | None:
+    """The first column the profile types datetime, if any."""
+    profile = profile_dataset(load(frame, name="probe"))
+    return next(
+        (c.name for c in profile.columns if c.semantic_type == "datetime"), None
+    )
 
 
 def trouble(run: Run) -> dict[str, object]:
@@ -68,6 +91,27 @@ def test_a_core_check_runs_on_the_adversarial_frame(
 
     assert result.status in ACCEPTABLE, [n.message for n in result.notes]
     assert not [n for n in result.notes if n.code == "check_failed"]
+
+
+TIME_SERIES = ("stationarity", "autocorrelation", "seasonal_decomposition")
+
+
+def test_the_time_series_checks_run_on_the_adversarial_frame_with_a_time_index() -> (
+    None
+):
+    run = run_core(pl.from_pandas(build_adversarial_frame()), time_index="ts_tz")
+
+    assert trouble(run) == {}
+    for check_id in TIME_SERIES:
+        result = run.results[check_id]
+        assert result.status is CheckStatus.OK, [n.message for n in result.notes]
+        assert result.output is not None
+        # The hourly zone-aware index is read in UTC; the column with infinities is
+        # a series of the finite values.
+        assert result.output["frequency"] == "h"
+        assert "inf_col" in result.output["columns"]
+        assert "all_nan_float" not in result.output["columns"]
+    strict_loads(run.model_dump_json())
 
 
 def test_an_integer_coded_boolean_column_never_appears_in_zeros(
@@ -187,4 +231,20 @@ def test_every_core_check_survives_a_generated_frame(frame: pd.DataFrame) -> Non
 
     assert trouble(run) == {}
     assert set(run.results) == {c.id for c in CHECKS}
+    strict_loads(run.model_dump_json())
+
+
+@settings(
+    max_examples=60,
+    deadline=None,
+    derandomize=True,
+    database=None,
+    suppress_health_check=[HealthCheck.too_slow],
+)
+@given(frame=frames())
+def test_the_time_series_checks_survive_a_generated_index(frame: pd.DataFrame) -> None:
+    index = first_datetime_column(frame)
+    run = run_core(frame, name="generated", time_index=index)
+
+    assert trouble(run) == {}
     strict_loads(run.model_dump_json())

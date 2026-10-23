@@ -581,6 +581,35 @@ export interface DatetimeProfile {
   inferred_frequency: string | null;
   n_gaps: number | null;
   largest_gap_seconds: number | null;
+  /**
+   * The strptime format the text values were read with; None for a date or datetime column, and for Unix timestamps.
+   */
+  format: string | null;
+  /**
+   * The unit of Unix timestamps; None otherwise.
+   */
+  epoch_unit: ("s" | "ms") | null;
+  /**
+   * Non-null values that did not read as an instant: text outside `format`, or a timestamp out of range. 0 for a date or datetime column.
+   */
+  unparsed: number;
+  /**
+   * Some instant is not at midnight (local time of a time zone); None when there are no instants.
+   */
+  time_of_day: boolean | null;
+  distinct_years: number | null;
+  /**
+   * Distinct months of the year.
+   */
+  distinct_months: number | null;
+  /**
+   * Distinct days of the week.
+   */
+  distinct_weekdays: number | null;
+  /**
+   * Distinct hours of the day.
+   */
+  distinct_hours: number | null;
 }
 /**
  * This interface was referenced by `Run`'s JSON-Schema

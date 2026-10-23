@@ -30,9 +30,9 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 | Status | Findings |
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
-| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-35, F-36, F-37 |
+| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-35, F-36, F-37, F-39 |
 | Mostly resolved or partial | F-07, F-10 (U4-18), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
-| Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-38 (U4-18), F-39 (U4-11) |
+| Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-38 (U4-18) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
 ---
@@ -446,7 +446,7 @@ entirely by N-A2. Until then:
 - [ ] Truncate labels, cap categories to the top-k, render one theme and let the frontend restyle it, and skip text-intent columns.
 
 ### F-39 `detect_stationarity` scales super-linearly
-**Status (2026-10-19): Open.** Redesigned in U4-11.
+**Status (2026-10-22): Resolved in the `stationarity`, `autocorrelation` and `seasonal_decomposition` checks (U4-11).** The legacy tasks stay in the legacy pack until U4-18 deletes them, but the default selection no longer runs them. The checks resample to the configured or profile-inferred frequency (repeated timestamps aggregated, short holes interpolated), use at most the most recent `max_periods` (2 000) periods, cap the ADF and KPSS lags at `max_lag` (24) and the ACF/PACF lags at `max_lags` (40), and state the frequency, the series length and the lag cap on every finding. `stationarity` takes 0.28 s on kitchen50k (22 numeric columns, 365 daily periods) against 89 s for the task in the CI baseline, and 1.3 s on 52 500 rows over 3 000 days and 40 columns (2 000 periods each, the worst case the cap allows).
 
 On 10× more rows (kitchen5k → kitchen50k) it went from **4.9 s to 186 s (38×)**.
 `detect_stationarity.py:192` calls `adfuller(series.values, autolag="AIC")` with no `maxlag`.
@@ -454,8 +454,8 @@ statsmodels' default max lag grows with n (about 57 at 52k rows), and it fits on
 candidate lag. It also tests the raw rows in file order rather than the series resampled to the
 configured frequency. With tens of thousands of points, ADF and KPSS reject on trivially small
 deviations anyway.
-- [ ] Resample or aggregate to the configured or inferred frequency before testing, cap `maxlag` (configurable), and cap the series length used for testing (for example the most recent N periods). Record all three in the result.
-- [ ] Apply the same review to `compute_acf_pacf` and `decompose_time_series`.
+- [x] Resample or aggregate to the configured or inferred frequency before testing, cap `maxlag` (configurable), and cap the series length used for testing (for example the most recent N periods). Record all three in the result.
+- [x] Apply the same review to `compute_acf_pacf` and `decompose_time_series`.
 
 ### Overall run cost (for tracking)
 kitchen50k (52,500 × 60) took **707 s** with a 2.1 GB peak. Five tasks (`detect_stationarity`,
@@ -481,7 +481,7 @@ in U4-19.
 | N-A1 | **Complete the ECharts migration** | Move the remaining Plotly cards (`PlotCard`, `PairPlotCard`, correlation heatmap, missingness) to `DsbfChart`, then remove `plotly.js-dist-min`. Charts should render from task *data*, not pre-rendered figure files. **Status:** Phase 6 rebuilds the dashboard on ECharts only (the column view and the remaining charts). |
 | N-A2 | **Retire backend plot generation** | Once the frontend no longer reads figure files, remove `generate_univariate_plots`, `generate_dataset_summary_plots` and `dsbf/utils/plot_factory.py` (1.2k lines), along with the `matplotlib`/`seaborn`/`missingno`/`plotly`/`pydot`/`graphviz` deps (keep seaborn only if built-in datasets still need it). This shrinks install size and run time and removes the figure-path problems in [F-16](#f-16-paths-depend-on-the-current-working-directory). **Status:** open. U4-18 deletes the plotting tasks and `plot_factory`, and U4-19 drops the plotting dependencies. Both tasks are already left out of in-memory library runs (U3-12). |
 | N-A3 | **Q-Q plot** | `normality_qq_plots` already computes the quantiles. The Distributions tab shows a "coming soon" placeholder. **Status:** the `normality` check (U4-06) keeps the Q-Q quantiles of every column that fails its tests (or of all, with `qq_all_columns`): theoretical and empirical quantiles in the column's units, the Q1–Q3 reference line, the deviation in standard deviations and a pattern (heavy tails, right tail, left tail). The Phase 6 column view draws them. |
-| N-A4 | **Time Series tab** | Finish ACF/PACF, stationarity and decomposition views. Add a friendly empty state and a UI path to set `datetime_index_column`. **Status:** `dsbf.profile(time_index=...)` exists (U3-12). The time-series checks are redesigned in U4-11, and the tab is rebuilt in Phase 6. |
+| N-A4 | **Time Series tab** | Finish ACF/PACF, stationarity and decomposition views. Add a friendly empty state and a UI path to set `datetime_index_column`. **Status:** `dsbf.profile(time_index=...)` exists (U3-12) and reaches the `stationarity`, `autocorrelation` and `seasonal_decomposition` checks (U4-11), which keep the tests, the ACF/PACF values with their bands and the trend and seasonal strengths, but not the STL component series; the Phase 6 store keeps those as an artifact, and the tab is rebuilt then. |
 | N-A5 | **Findings tab** | Cross-column finding explorer (already on the README roadmap). It can be built entirely on the `guidance` blobs every task emits. **Status:** findings exist as a contract (U1-07) and come from every adapted task (U3-11). The explorer is Phase 6. |
 
 ## B. Engine architecture

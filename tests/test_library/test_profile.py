@@ -224,6 +224,10 @@ class TestSelection:
         params = {c.check_id: c.params for c in run.plan.checks}
         assert params["compute_mutual_information"]["task"]["target_column"] == "flag"
         assert params["class_imbalance"]["target"] == "flag"
+        for check in ("stationarity", "autocorrelation", "seasonal_decomposition"):
+            assert params[check]["time_index"] == "when"
+        assert "time_index" not in params["temporal_gaps"]
+        assert "target" not in params["stationarity"]
         assert params["compute_mutual_information"]["shared"]["time_series"] == {
             **params["compute_mutual_information"]["shared"]["time_series"],
             "enabled": True,

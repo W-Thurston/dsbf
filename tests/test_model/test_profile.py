@@ -298,6 +298,31 @@ def test_a_datetime_column_has_an_ordered_range():
         )
 
 
+def test_a_datetime_column_records_how_it_was_read_and_its_calendar():
+    column = DatetimeProfile(
+        **common(rows=10, nulls=1),
+        format="%Y-%m-%d",
+        unparsed=2,
+        time_of_day=False,
+        distinct_years=1,
+        distinct_months=12,
+        distinct_weekdays=7,
+        distinct_hours=24,
+    )
+    assert round_trip(column) == column
+
+    with pytest.raises(ValidationError, match="unparsed is at most the non-null"):
+        DatetimeProfile(**common(rows=10, nulls=1), unparsed=10)
+    with pytest.raises(ValidationError, match="less than or equal to 12"):
+        DatetimeProfile.model_validate({**common(), "distinct_months": 13})
+    with pytest.raises(ValidationError, match="less than or equal to 7"):
+        DatetimeProfile.model_validate({**common(), "distinct_weekdays": 8})
+    with pytest.raises(ValidationError, match="less than or equal to 24"):
+        DatetimeProfile.model_validate({**common(), "distinct_hours": 25})
+    with pytest.raises(ValidationError):
+        DatetimeProfile.model_validate({**common(), "epoch_unit": "d"})
+
+
 def test_text_identifier_and_unknown_columns_round_trip():
     for column in (
         TextProfile(

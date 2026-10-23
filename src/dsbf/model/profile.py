@@ -378,9 +378,40 @@ class DatetimeProfile(_ColumnBase):
     )
     n_gaps: int | None = Field(default=None, ge=0)
     largest_gap_seconds: FiniteFloat | None = Field(default=None, ge=0)
+    format: str | None = Field(
+        default=None,
+        description="The strptime format the text values were read with; None for a "
+        "date or datetime column, and for Unix timestamps.",
+    )
+    epoch_unit: Literal["s", "ms"] | None = Field(
+        default=None, description="The unit of Unix timestamps; None otherwise."
+    )
+    unparsed: int = Field(
+        default=0,
+        ge=0,
+        description="Non-null values that did not read as an instant: text outside "
+        "`format`, or a timestamp out of range. 0 for a date or datetime column.",
+    )
+    time_of_day: bool | None = Field(
+        default=None,
+        description="Some instant is not at midnight (local time of a time zone); "
+        "None when there are no instants.",
+    )
+    distinct_years: int | None = Field(default=None, ge=1)
+    distinct_months: int | None = Field(
+        default=None, ge=1, le=12, description="Distinct months of the year."
+    )
+    distinct_weekdays: int | None = Field(
+        default=None, ge=1, le=7, description="Distinct days of the week."
+    )
+    distinct_hours: int | None = Field(
+        default=None, ge=1, le=24, description="Distinct hours of the day."
+    )
 
     @model_validator(mode="after")
     def _check_range(self) -> Self:
+        if self.unparsed > self.counts.non_null:
+            raise ValueError("unparsed is at most the non-null rows")
         if self.min is not None and self.max is not None:
             if (self.min.tzinfo is None) != (self.max.tzinfo is None):
                 raise ValueError("min and max are both naive or both aware")

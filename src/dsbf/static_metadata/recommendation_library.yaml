@@ -978,3 +978,127 @@ near_duplicate_rows_normalise:
     Lower-case, trim and collapse the spaces of the text columns, then drop exact
     duplicates again, so the pairs that differ only in case or padding collapse
     before the rest are reviewed by hand.
+
+# ===================
+# DATETIME
+# ===================
+
+datetime_extract_features:
+  condition: {field: n_features, op: ">=", value: 1}
+  checks: [datetime_features]
+  codes: [extractable_features]
+  action: add_feature
+  method: calendar_parts
+  message: >
+    Derive the listed features from the column and drop the raw timestamp as a
+    model input. Derive them before the train-test split from the full column, and
+    check that `year` does not just stand in for the target drifting over time.
+
+datetime_cyclic_encoding:
+  condition: {field: n_cyclic, op: ">=", value: 1}
+  checks: [datetime_features]
+  codes: [extractable_features]
+  action: encode
+  method: sin_cos
+  message: >
+    Encode the cyclic features as a sine and a cosine of 2π times the value over
+    its period (12 months, 7 weekdays, 24 hours), so December sits next to January
+    and 23:00 next to 00:00. Tree-based models can use the plain integer.
+
+datetime_gaps_resample:
+  condition: {field: n_gaps, op: ">=", value: 1}
+  checks: [temporal_gaps]
+  codes: [gaps]
+  action: resample
+  message: >
+    Resample to the dominant frequency and decide per gap whether to interpolate
+    short ones or analyse the separate stretches; do not forward-fill across a
+    long gap.
+
+datetime_gaps_investigate:
+  condition: {field: n_gaps, op: ">=", value: 1}
+  checks: [temporal_gaps]
+  codes: [gaps]
+  action: investigate
+  message: >
+    Find where the gaps are. A gap at weekends or holidays is a calendar; a gap in
+    the middle of a working week is data that was not collected.
+
+irregular_spacing_set_frequency:
+  condition: {field: distinct, op: ">=", value: 1}
+  checks: [temporal_gaps]
+  codes: [irregular_spacing]
+  action: resample
+  message: >
+    Aggregate to a fixed frequency (hourly, daily, weekly) that suits the question,
+    and pass it as `frequency` to the time-series checks.
+
+unparsed_dates_investigate:
+  condition: {field: unparsed, op: ">=", value: 1}
+  checks: [datetime_consistency]
+  codes: [unparsed_values]
+  action: investigate
+  message: >
+    List the values that do not read. Mixed formats can each be parsed with their
+    own pattern; placeholders such as "N/A" or "0000-00-00" are missing values.
+
+stationarity_difference:
+  condition: {field: assessment, op: "==", value: consistent_with_non_stationary}
+  checks: [stationarity]
+  codes: [non_stationary]
+  action: transform
+  method: difference
+  message: >
+    Difference the series (or the seasonal difference, if it has a cycle) and test
+    it again; if a deterministic trend explains the drift, subtract the trend
+    instead.
+
+stationarity_ambiguous_detrend:
+  condition:
+    {field: assessment, op: "==", value: ambiguous_trend_stationary_or_structural_break}
+  checks: [stationarity]
+  codes: [ambiguous_stationarity]
+  action: investigate
+  message: >
+    Plot the series. A steady trend is removed by detrending; a sudden change in
+    level is a structural break, and the two halves are better analysed apart.
+
+autocorrelation_time_split:
+  condition: {field: n_flagged_acf, op: ">=", value: 1}
+  checks: [autocorrelation]
+  codes: [autocorrelated]
+  action: stratified_split
+  method: time_ordered
+  message: >
+    Split train and test by time, never at random, and cross-validate with
+    expanding or rolling windows; neighbouring rows are not independent.
+
+autocorrelation_lag_features:
+  condition: {field: n_flagged_pacf, op: ">=", value: 1}
+  checks: [autocorrelation]
+  codes: [autocorrelated]
+  action: add_feature
+  method: lagged_values
+  message: >
+    The partial autocorrelation names the lags that add information on their own;
+    add those lags of the series as features.
+
+seasonality_seasonal_difference:
+  condition: {field: seasonal_strength, op: ">=", value: 0.4}
+  checks: [seasonal_decomposition]
+  codes: [seasonal]
+  action: transform
+  method: seasonal_difference
+  message: >
+    Model the cycle with calendar features (position in the cycle) or subtract the
+    value one period earlier, and keep whole cycles together in a split.
+
+trend_detrend:
+  condition: {field: trend_strength, op: ">=", value: 0.4}
+  checks: [seasonal_decomposition]
+  codes: [trend]
+  action: transform
+  method: detrend
+  message: >
+    Difference the series or subtract its fitted trend before a model that
+    assumes a stable level, and validate on the most recent periods.

@@ -256,6 +256,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "autocorrelation": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "bimodality": {
    "findings": [],
    "status": "ok",
@@ -439,6 +444,16 @@
    "version": "1.0.0"
   },
   "contingency": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "datetime_consistency": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "datetime_features": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
@@ -1053,12 +1068,27 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "seasonal_decomposition": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "skewness": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
   },
+  "stationarity": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "string_anomalies": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "temporal_gaps": {
    "findings": [],
    "status": "not_applicable",
    "version": "1.0.0"
