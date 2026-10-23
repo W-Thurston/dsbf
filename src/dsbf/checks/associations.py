@@ -11,6 +11,7 @@ from scipy.stats import kendalltau, rankdata
 from dsbf.checks.pairs import (
     Band,
     Undefined,
+    correlation_ratio,
     finite,
     fisher_interval,
     level_codes,
@@ -364,34 +365,9 @@ def _eta_pair(
 ) -> PairAssociation:
     groups, n_levels = categorical
     keep = numeric.ok & (groups >= 0)
-    x, g = numeric.values[keep], groups[keep]
-    counts = np.bincount(g, minlength=n_levels)
-    # A group of one is fitted exactly, which inflates η; leave such groups out.
-    big = counts[g] >= 2
-    x, g = x[big], g[big]
-    if np.count_nonzero(counts >= 2) < 2:
-        raise Undefined("too_few_groups")
-    n_used = int(x.size)
-    if n_used < params.min_n:
-        raise Undefined("too_few_rows")
-    with np.errstate(all="ignore"):
-        biggest = float(np.max(np.abs(x)))
-        if not np.isfinite(biggest):
-            raise Undefined("overflow")
-        if biggest == 0:
-            raise Undefined("no_variation")
-        x = x / biggest
-        x = x - x.mean()
-        counts = np.bincount(g, minlength=n_levels)
-        sums = np.bincount(g, weights=x, minlength=n_levels)
-        present = counts > 0
-        between = float(np.sum(sums[present] ** 2 / counts[present]))
-        total = float(np.sum(x * x))
-    if not np.isfinite(total):
-        raise Undefined("overflow")
-    if total == 0:
-        raise Undefined("no_variation")
-    value = float(np.sqrt(np.clip(between / total, 0.0, 1.0)))
+    value, n_used = correlation_ratio(
+        numeric.values[keep], groups[keep], n_levels, min_n=params.min_n
+    )
     return PairAssociation(
         first=first,
         second=second,

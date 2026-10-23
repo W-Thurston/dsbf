@@ -48,6 +48,7 @@ from dsbf.checks.kurtosis import kurtosis
 from dsbf.checks.missingness_mechanism import missingness_mechanism
 from dsbf.checks.mixed_types import mixed_types
 from dsbf.checks.multivariate_outliers import multivariate_outliers
+from dsbf.checks.mutual_information import mutual_information
 from dsbf.checks.near_zero_variance import near_zero_variance
 from dsbf.checks.normality import normality
 from dsbf.checks.null_rate import null_rate
@@ -61,6 +62,7 @@ from dsbf.checks.seasonal_decomposition import seasonal_decomposition
 from dsbf.checks.skewness import skewness
 from dsbf.checks.stationarity import stationarity
 from dsbf.checks.string_anomalies import string_anomalies
+from dsbf.checks.target_leakage import target_leakage
 from dsbf.checks.temporal_gaps import temporal_gaps
 from dsbf.checks.text_encoding import text_encoding
 from dsbf.checks.transformations import transformations
@@ -120,5 +122,7 @@ def core_pack() -> Pack:
             numeric_binning,
             transformations,
             imputation,
+            target_leakage,
+            mutual_information,
         ),
     )

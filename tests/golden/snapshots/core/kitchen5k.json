@@ -524,7 +524,8 @@
       "cardinality": 6,
       "rarest_level_count": 849,
       "rows_per_level": 875.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -542,7 +543,8 @@
       "cardinality": 2,
       "rarest_level_count": 2601,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -560,7 +562,8 @@
       "cardinality": 2,
       "rarest_level_count": 104,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -578,7 +581,8 @@
       "cardinality": 51,
       "rarest_level_count": null,
       "rows_per_level": 102.941,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -596,7 +600,8 @@
       "cardinality": 20,
       "rarest_level_count": null,
       "rows_per_level": 262.5,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -614,7 +619,8 @@
       "cardinality": 3148,
       "rarest_level_count": null,
       "rows_per_level": 1.66773,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -632,7 +638,8 @@
       "cardinality": 2,
       "rarest_level_count": 242,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -650,7 +657,8 @@
       "cardinality": 4,
       "rarest_level_count": 1010,
       "rows_per_level": 1061.25,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -668,7 +676,8 @@
       "cardinality": 6,
       "rarest_level_count": 643,
       "rows_per_level": 875.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -686,7 +695,8 @@
       "cardinality": 2,
       "rarest_level_count": 516,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -704,7 +714,8 @@
       "cardinality": 5,
       "rarest_level_count": 103,
       "rows_per_level": 1050.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -722,7 +733,8 @@
       "cardinality": 11,
       "rarest_level_count": null,
       "rows_per_level": 477.273,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -740,7 +752,8 @@
       "cardinality": 4,
       "rarest_level_count": 1279,
       "rows_per_level": 1312.5,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -758,7 +771,8 @@
       "cardinality": 2,
       "rarest_level_count": 1609,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -776,7 +790,8 @@
       "cardinality": 3,
       "rarest_level_count": 1253,
       "rows_per_level": 1324.0,
-      "strategy": "one_hot"
+      "strategy": "one_hot",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -794,7 +809,8 @@
       "cardinality": 2,
       "rarest_level_count": 1609,
       "rows_per_level": 2625.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -812,7 +828,8 @@
       "cardinality": 3335,
       "rarest_level_count": null,
       "rows_per_level": 1.57421,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -824,7 +841,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -3117,6 +3134,69 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "mutual_information": {
+   "findings": [
+    {
+     "check": "mutual_information",
+     "code": "informative_feature",
+     "id": "0b467cb2d2a9bc13",
+     "metrics": {
+      "mutual_information": 0.615535,
+      "n_neighbors": 3,
+      "noise_floor": 0.00138665,
+      "normalised": 1.0,
+      "target": "target_for_leakage"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "future_leakage"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "mutual_information",
+     "code": "informative_feature",
+     "id": "e8bf3d69901a6197",
+     "metrics": {
+      "mutual_information": 0.615535,
+      "n_neighbors": 3,
+      "noise_floor": 0.00138665,
+      "normalised": 1.0,
+      "target": "target_for_leakage"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "perfect_leakage"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "mutual_information",
+     "code": "informative_feature",
+     "id": "b21a0820126201bd",
+     "metrics": {
+      "mutual_information": 0.615635,
+      "n_neighbors": 3,
+      "noise_floor": 0.0100045,
+      "normalised": 1.0,
+      "target": "target_for_leakage"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
@@ -4915,6 +4995,88 @@
      "subject": {
       "columns": [
        "variable_length_text"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
+   "findings": [
+    {
+     "check": "target_leakage",
+     "code": "timestamp_after_event",
+     "id": "37faffa589dd47d6",
+     "metrics": {
+      "association": 0.997279,
+      "metric": "later_share",
+      "part": null,
+      "target": "target_for_leakage",
+      "threshold": 0.95
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "datetime_with_gaps"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "target_leakage",
+     "code": "target_leakage",
+     "id": "8a0f9add4e93e0a8",
+     "metrics": {
+      "association": 0.998284,
+      "metric": "cramers_v",
+      "part": null,
+      "target": "target_for_leakage",
+      "threshold": 0.95
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "future_leakage"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "target_leakage",
+     "code": "target_leakage",
+     "id": "7343f8355b596a59",
+     "metrics": {
+      "association": 1.0,
+      "metric": "cramers_v",
+      "part": null,
+      "target": "target_for_leakage",
+      "threshold": 0.95
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "perfect_leakage"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "target_leakage",
+     "code": "target_leakage",
+     "id": "92f300b48a1c7471",
+     "metrics": {
+      "association": 0.994222,
+      "metric": "eta",
+      "part": null,
+      "target": "target_for_leakage",
+      "threshold": 0.95
+     },
+     "severity": "error",
+     "subject": {
+      "columns": [
+       "subtle_leakage"
       ],
       "kind": "column"
      }

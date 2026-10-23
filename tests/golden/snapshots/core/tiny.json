@@ -68,7 +68,8 @@
       "cardinality": 3,
       "rarest_level_count": 6,
       "rows_per_level": 8.33333,
-      "strategy": "frequency"
+      "strategy": "frequency",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -80,7 +81,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -284,6 +285,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "mutual_information": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "ok",
@@ -419,6 +425,11 @@
   "string_anomalies": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "temporal_gaps": {

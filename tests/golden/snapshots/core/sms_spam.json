@@ -25,7 +25,8 @@
       "cardinality": 2,
       "rarest_level_count": 747,
       "rows_per_level": 2787.0,
-      "strategy": "binary"
+      "strategy": "binary",
+      "target_encoding": false
      },
      "severity": "info",
      "subject": {
@@ -37,7 +38,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "class_imbalance": {
    "findings": [],
@@ -243,6 +244,11 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "mutual_information": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "near_zero_variance": {
    "findings": [],
    "status": "not_applicable",
@@ -341,6 +347,11 @@
     }
    ],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "target_leakage": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "temporal_gaps": {
