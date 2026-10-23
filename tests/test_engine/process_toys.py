@@ -9,7 +9,7 @@ import warnings
 
 from pydantic import Field
 
-from dsbf.engine import CheckContext, SemanticTypes, check
+from dsbf.engine import CheckContext, Requires, SemanticTypes, check
 from dsbf.model import (
     CheckParams,
     Confidence,
@@ -192,4 +192,19 @@ def py_warns(ctx: CheckContext, params: CheckParams):
     """Raise the same warning twice, as a library called in a loop does."""
     for _ in range(2):
         warnings.warn("constant input in a worker", RuntimeWarning, stacklevel=1)
+    return None
+
+
+@check(
+    id="py_reference_rows",
+    version="1.0.0",
+    kind="analysis",
+    applies_to=SemanticTypes("numeric"),
+    dimensions=[Dimension.DISTRIBUTION],
+    requires=Requires(reference=True),
+    runs_in="process",
+)
+def py_reference_rows(ctx: CheckContext, params: CheckParams):
+    """Report the rows of the reference, as seen from a worker."""
+    _report(ctx, "reference_rows", rows=ctx.reference.profile.n_rows)
     return None

@@ -265,6 +265,104 @@ class TestSampling:
         assert first.profile == again.profile
 
 
+def drift_output(result) -> dict:
+    assert result.output is not None
+    return result.output
+
+
+class TestReference:
+    @pytest.fixture
+    def shifted(self, frame) -> pl.DataFrame:
+        return frame.with_columns((pl.col("fare") * 3 + 40).alias("fare"))
+
+    def drift(self, frame, reference, **options):
+        run = dsbf.profile(
+            frame,
+            packs=["core"],
+            checks=["-fuzzy_duplicates"],
+            reference=reference,
+            **options,
+        )
+        return run.results["reference_drift"]
+
+    def test_without_a_reference_the_check_is_not_applicable(self, frame):
+        result = self.drift(frame, None)
+
+        assert result.status is CheckStatus.NOT_APPLICABLE
+        assert [n.code for n in result.notes] == ["no_reference"]
+
+    def test_identical_data_has_no_drift_and_a_shifted_column_is_found(
+        self, frame, shifted
+    ):
+        same = self.drift(frame, frame)
+        moved = self.drift(frame, shifted)
+
+        assert same.status is CheckStatus.OK and same.findings == ()
+        assert {f.subject.columns for f in moved.findings} == {("fare",)}
+
+    def test_a_table_a_dataset_a_file_and_a_run_are_all_references(
+        self, frame, shifted, tmp_path
+    ):
+        path = tmp_path / "reference.csv"
+        shifted.write_csv(path)
+        stored = dsbf.profile(shifted, depth="quick", name="stored")
+        references = {
+            "polars": shifted,
+            "pandas": shifted.to_pandas(),
+            "dataset": dsbf.data.load(shifted, name="a dataset"),
+            "file": path,
+            "run": stored,
+        }
+
+        found = {
+            kind: self.drift(frame, reference) for kind, reference in references.items()
+        }
+
+        for kind, result in found.items():
+            assert result.status is CheckStatus.OK, kind
+            codes = {(f.subject.columns, f.code) for f in result.findings}
+            # A CSV does not keep a column's type, so the file may add a type finding.
+            assert (("fare",), "distribution_shift") in codes, kind
+            assert {c for c, code in codes if code == "distribution_shift"} == {
+                ("fare",)
+            }, kind
+        assert drift_output(found["run"])["reference"] == "stored"
+        assert drift_output(found["run"])["reference_kind"] == "run"
+        assert drift_output(found["file"])["reference"] == "reference"
+        assert drift_output(found["file"])["reference_kind"] == "data"
+
+    def test_the_reference_is_sampled_like_the_data(self, frame):
+        sample = dsbf.Sample(rows=60, strategy="random", seed=3)
+
+        result = self.drift(frame, frame, sample=sample)
+
+        assert (
+            drift_output(result)["rows"]
+            == drift_output(result)["reference_rows_profiled"]
+            == 60
+        )
+        assert drift_output(result)["reference_rows"] == 240
+        assert [n.code for n in result.notes] == ["sampled_comparison"]
+
+    def test_the_target_setting_reaches_the_check(self, frame):
+        run = dsbf.profile(
+            frame,
+            packs=["core"],
+            checks=["-fuzzy_duplicates"],
+            reference=frame,
+            target="flag",
+        )
+
+        planned = {c.check_id: c for c in run.plan.checks}["reference_drift"]
+        assert planned.params["target"] == "flag"
+
+    def test_a_reference_that_cannot_be_read_is_a_source_error(self, frame, tmp_path):
+        with pytest.raises(dsbf.data.SourceError):
+            dsbf.profile(frame, reference=tmp_path / "missing.csv", depth="quick")
+        with pytest.raises(dsbf.data.SourceError):
+            dsbf.profile(frame, reference=42, depth="quick")
+
+
 class TestSources:
     def test_pandas_polars_and_arrow_give_the_same_data_identity(self, frame):
         runs = [

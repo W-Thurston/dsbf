@@ -1,5 +1,5 @@
-Plan for data (6 × 4): 44 checks
-  will run 35 · not applicable 4 · unavailable 4 · skipped 1
+Plan for data (6 × 4): 45 checks
+  will run 35 · not applicable 5 · unavailable 4 · skipped 1
 
 level 0
   ✓ will run        associations            reads 4 columns
@@ -34,6 +34,7 @@ level 0
   ✓ will run        numeric_spread          reads 2 columns
   ✓ will run        out_of_bounds           reads 2 columns
   ✓ will run        outliers                reads 2 columns
+  – not applicable  reference_drift         No reference dataset was given, which reference_drift compares with.
   ✓ will run        sample_size             reads 4 columns
   ✓ will run        schema                  reads 4 columns
   ⦸ unavailable     seasonal_decomposition  Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`.

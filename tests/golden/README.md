@@ -123,6 +123,19 @@ dataset's time-series column is passed the way `dsbf.profile(time_index=...)` do
 and `seasonal_decomposition`); kitchen5k is the only dataset with one, and the tasks'
 disabled results on the others are accepted differences.
 
+**Reference parity.** The three drift tasks (`compare_with_reference_dataset`,
+`detect_feature_drift`, `detect_target_drift`) do nothing without a reference, so the runs
+above leave them skipped and `reference_drift` not applicable: those statuses are accepted
+differences on every dataset. `test_reference_parity.py` compares them where they have
+something to compare. `reference_one.py` derives a reference from each dataset by a fixed
+perturbation (every third numeric column moved by half its standard deviation, 30% of the
+first categorical column set to its most frequent value, 20% of the first numeric column
+nulled, the last column removed), runs the three tasks with it as the session's reference
+frame (on the Polars backend, which two of them need) and the check with its profile, and
+writes `reference_run.json`. The target is the first categorical column with two to ten
+values. Differences are accepted under `<dataset>+reference` in
+`migration/accepted_reference_drift.py`.
+
 ## Determinism
 
 Each dataset runs in a fresh child process (`profile_one.py`) with `PYTHONHASHSEED=0`, a

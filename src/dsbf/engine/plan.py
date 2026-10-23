@@ -86,6 +86,7 @@ def make_plan(
     *,
     params: Params | None = None,
     profile: DatasetProfile | None = None,
+    has_reference: bool = False,
 ) -> Plan:
     """Plan a run: select checks, pull in what they require, order and validate them.
 
@@ -95,7 +96,8 @@ def make_plan(
 
     ``params`` maps a check id to the parameters it runs with; each is validated
     against the check's model. ``profile`` lets the plan judge which columns each
-    check would read.
+    check would read, and ``has_reference`` whether the run has a reference dataset
+    for the checks that compare with one.
 
     Raises:
         PlanError: a selection mistake, a required check that is missing or
@@ -117,7 +119,9 @@ def make_plan(
     expected: dict[str, Expectation] = {}
     for check_id in sorted(planned, key=lambda key: (levels[key], key)):
         planned_check = planned[check_id]
-        expected[check_id] = expect(planned_check, profile, expected)
+        expected[check_id] = expect(
+            planned_check, profile, expected, has_reference=has_reference
+        )
         entries.append(
             PlanEntry(
                 check=planned_check,

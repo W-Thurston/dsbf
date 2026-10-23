@@ -4,11 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from tests.golden.datasets import GoldenDataset
-from tests.golden.runner import GoldenRun, profile_with_engine
+from tests.golden.runner import (
+    GoldenRun,
+    profile_against_reference,
+    profile_with_engine,
+)
 
 
 @pytest.fixture(scope="session")
@@ -25,6 +30,22 @@ def engine_run(
         if dataset.name not in runs:
             workdir: Path = tmp_path_factory.mktemp(f"engine-{dataset.name}")
             runs[dataset.name] = profile_with_engine(dataset, workdir)
+        return runs[dataset.name]
+
+    return get
+
+
+@pytest.fixture(scope="session")
+def reference_run(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Callable[[GoldenDataset], dict[str, Any]]:
+    """The drift tasks and ``reference_drift`` against a perturbed copy of a dataset."""
+    runs: dict[str, dict[str, Any]] = {}
+
+    def get(dataset: GoldenDataset) -> dict[str, Any]:
+        if dataset.name not in runs:
+            workdir: Path = tmp_path_factory.mktemp(f"reference-{dataset.name}")
+            runs[dataset.name] = profile_against_reference(dataset, workdir)
         return runs[dataset.name]
 
     return get

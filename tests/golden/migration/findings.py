@@ -217,6 +217,16 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
     "detect_stationarity": ((r"^Stationarity: ", "non_stationary"),),
     "compute_acf_pacf": ((r"^ACF/PACF: ", "autocorrelated"),),
     "decompose_time_series": ((r"^STL: ", "seasonal"),),
+    "compare_with_reference_dataset": (
+        (r"^New column vs\. reference dataset", "columns_added"),
+        (r"^Column dropped vs\. reference dataset", "columns_dropped"),
+        (r"^Type mismatch vs\. reference ", "type_changed"),
+    ),
+    "detect_feature_drift": ((r"^High Distributional Drift \(", "distribution_shift"),),
+    "detect_target_drift": (
+        (r"^Target Drift Detected - ", "target_drift"),
+        (r"^Target Class Distribution Drift - ", "target_drift"),
+    ),
 }
 
 

@@ -1102,3 +1102,96 @@ trend_detrend:
   message: >
     Difference the series or subtract its fitted trend before a model that
     assumes a stable level, and validate on the most recent periods.
+
+# ===================
+# DRIFT AGAINST A REFERENCE
+# ===================
+
+reference_drift_investigate:
+  condition: {any: [{field: psi, op: ">=", value: 0}, {field: tvd, op: ">=", value: 0}]}
+  checks: [reference_drift]
+  codes: [distribution_shift]
+  action: investigate
+  message: >
+    Find out why the column moved: a change in how the data is collected, a new
+    population, a unit or encoding change upstream, or a real shift in the world.
+    Compare the largest shifts in the evidence with what the source says changed.
+
+reference_drift_retrain:
+  condition: {field: level, op: ==, value: high}
+  checks: [reference_drift]
+  codes: [distribution_shift]
+  action: monitor
+  when: a model or rule was fitted on the reference
+  message: >
+    A model fitted on the reference sees inputs it was not trained on. Monitor its
+    error on the new data, and retrain on a window that includes it if the error
+    grows. Do not retrain on drift alone: the shift can be a data defect.
+
+reference_target_drift_relabel:
+  condition: {field: level, op: in, value: [moderate, high]}
+  checks: [reference_drift]
+  codes: [target_drift]
+  action: investigate
+  message: >
+    The target's distribution changed, so the model's learned base rate is wrong
+    for the new data. Check how the label is produced (a definition, a threshold or
+    a labelling team that changed) before judging the model on the new data.
+
+reference_target_drift_reweight:
+  condition: {field: level, op: in, value: [moderate, high]}
+  checks: [reference_drift]
+  codes: [target_drift]
+  action: resample
+  when: the new label balance is real and will persist
+  message: >
+    Retrain on a sample that matches the new label balance, or reweight the loss,
+    and recalibrate predicted probabilities on recent data.
+
+reference_missingness_investigate:
+  condition: {field: change, op: "!=", value: 0}
+  checks: [reference_drift]
+  codes: [missingness_shift]
+  action: investigate
+  message: >
+    The share of nulls moved. A source that stopped filling a field, a join that
+    lost matches, or a new placeholder spelling are the usual causes. Fix the
+    pipeline if it is a defect; if it is real, check that the imputation fitted on
+    the reference still suits the new rate.
+
+reference_type_changed_convert:
+  condition: {field: type_changed, op: ==, value: true}
+  checks: [reference_drift]
+  codes: [type_changed]
+  action: convert
+  message: >
+    Cast the column back to its type in the reference before it reaches a model or
+    a join, and find out which step upstream changed how it is written.
+
+reference_columns_added_decide:
+  condition: {field: n_columns, op: ">=", value: 1}
+  checks: [reference_drift]
+  codes: [columns_added]
+  action: investigate
+  message: >
+    A model or query built on the reference ignores these columns. Decide whether
+    they belong in the pipeline, and drop them where a fixed schema is expected.
+
+reference_columns_dropped_restore:
+  condition: {field: n_columns, op: ">=", value: 1}
+  checks: [reference_drift]
+  codes: [columns_dropped]
+  action: investigate
+  message: >
+    Anything that reads these columns will fail or silently fill them. Find out
+    whether the source stopped sending them or renamed them, and restore or map
+    them before the data is used.
+
+reference_target_missing_investigate:
+  condition: {field: target_missing, op: ==, value: true}
+  checks: [reference_drift]
+  codes: [target_missing_in_reference]
+  action: investigate
+  message: >
+    The reference has no column of the target's name, so the target cannot be
+    compared. Check the name, or pass a reference that has it.

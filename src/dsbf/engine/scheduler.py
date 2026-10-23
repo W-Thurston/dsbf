@@ -15,6 +15,7 @@ from dsbf.data import Dataset
 from dsbf.engine.meter import Meter, Window
 from dsbf.engine.plan import PlanEntry
 from dsbf.engine.process import NotShippable, ProcessRun, WorkerHost
+from dsbf.engine.reference import Reference
 from dsbf.engine.worker import Attempt, Running, ThreadRun
 from dsbf.model import CheckResult, DatasetProfile, Note, Severity
 
@@ -65,12 +66,14 @@ class Scheduler:
         profile: DatasetProfile,
         grace: float,
         meter: Meter,
+        reference: Reference | None = None,
     ) -> None:
         if workers < 1:
             raise ValueError(f"workers must be at least 1, not {workers!r}")
         self._workers = workers
         self._dataset = dataset
         self._profile = profile
+        self._reference = reference
         self._grace = grace
         self._meter = meter
         self._host = WorkerHost(dataset)
@@ -153,6 +156,7 @@ class Scheduler:
             self._dataset,
             self._profile,
             visible,
+            self._reference,
             deadline=deadline,
             grace=self._grace,
             finished=self._finished,
@@ -170,7 +174,7 @@ class Scheduler:
         Raises:
             NotShippable: the check, its inputs or the data cannot go to a worker.
         """
-        payload = self._host.package(entry, self._profile, upstream)
+        payload = self._host.package(entry, self._profile, upstream, self._reference)
         window = self._meter.open_window(worker=True)
         try:
             run = self._host.start(payload, deadline=deadline, finished=self._finished)

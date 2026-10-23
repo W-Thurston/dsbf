@@ -12,6 +12,7 @@ from tests.golden.migration.accepted_group_differences import (
 from tests.golden.migration.accepted_missingness_strings import (
     ACCEPTED_MISSINGNESS_STRINGS,
 )
+from tests.golden.migration.accepted_reference_drift import ACCEPTED_REFERENCE_DRIFT
 from tests.golden.migration.accepted_time_series import ACCEPTED_TIME_SERIES
 from tests.golden.migration.analysis import (
     compare_bimodality,
@@ -59,6 +60,11 @@ from tests.golden.migration.missingness_strings import (
     compare_regex_violations,
     compare_string_anomalies,
 )
+from tests.golden.migration.reference_drift import (
+    compare_compare_with_reference_dataset,
+    compare_detect_feature_drift,
+    compare_detect_target_drift,
+)
 from tests.golden.migration.time_series import (
     compare_autocorrelation,
     compare_datetime_consistency,
@@ -76,6 +82,7 @@ ACCEPTED = (
     *ACCEPTED_FUZZY_DUPLICATES,
     *ACCEPTED_GROUP_DIFFERENCES,
     *ACCEPTED_MISSINGNESS_STRINGS,
+    *ACCEPTED_REFERENCE_DRIFT,
     *ACCEPTED_TIME_SERIES,
 )
 
@@ -129,6 +136,9 @@ COMPARATORS: dict[str, Comparator] = {
     "detect_stationarity": compare_stationarity,
     "compute_acf_pacf": compare_autocorrelation,
     "decompose_time_series": compare_seasonal_decomposition,
+    "compare_with_reference_dataset": compare_compare_with_reference_dataset,
+    "detect_feature_drift": compare_detect_feature_drift,
+    "detect_target_drift": compare_detect_target_drift,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

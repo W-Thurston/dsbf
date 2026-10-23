@@ -13,6 +13,7 @@ from dsbf.data import Dataset
 from dsbf.engine.check import CheckOutputModel, CheckSpec
 from dsbf.engine.eligibility import eligibility
 from dsbf.engine.errors import CheckCancelled, CheckContractError
+from dsbf.engine.reference import Reference
 from dsbf.model import (
     CheckParams,
     CheckResult,
@@ -79,7 +80,8 @@ class CheckContext:
     """The view of the data a check runs against.
 
     The caller builds one per check from the check's spec, the dataset, its profile,
-    the resolved parameters and the results of the checks it may read. A check
+    the resolved parameters, the results of the checks it may read and, for a check
+    that requires one, the reference dataset. A check
     reaches columns only through ``columns``, ``values`` and ``profile``, all of
     which are limited to the columns the check can read: those ``applies_to``
     selects that also have the profile features it requires, as in the plan.
@@ -97,6 +99,7 @@ class CheckContext:
         params: CheckParams | None = None,
         *,
         upstream: Mapping[str, CheckResult] | None = None,
+        reference: Reference | None = None,
         cancel: threading.Event | None = None,
     ) -> None:
         if [column.name for column in profile.columns] != dataset.columns:
@@ -110,12 +113,15 @@ class CheckContext:
         self.params = params if params is not None else spec.params()
         self._dataset = dataset
         self._upstream = dict(upstream or {})
+        self._reference = reference if spec.requires.reference else None
         self._cancel = cancel
         self._findings: list[Finding] = []
         self._finding_ids: set[str] = set()
         self._notes: list[Note] = []
 
-        self.eligibility = eligibility(spec, profile)
+        self.eligibility = eligibility(
+            spec, profile, has_reference=self._reference is not None
+        )
         eligible = set(self.eligibility.columns or ())
         scoped = tuple(c for c in profile.columns if c.name in eligible)
         self.columns: tuple[str, ...] = tuple(column.name for column in scoped)
@@ -138,6 +144,21 @@ class CheckContext:
     def sampling(self) -> SamplingInfo | None:
         """How the dataset was sampled, or None if the check sees all of it."""
         return self._dataset.sampling
+
+    @property
+    def reference(self) -> Reference:
+        """The reference dataset the run compares with.
+
+        Raises:
+            CheckContractError: the check did not declare ``Requires(reference=True)``.
+        """
+        self.checkpoint()
+        if not self.spec.requires.reference or self._reference is None:
+            raise CheckContractError(
+                f"{self.spec.id} did not declare requires.reference, "
+                "so it cannot read the reference"
+            )
+        return self._reference
 
     @property
     def coerced(self) -> Mapping[str, str]:

@@ -57,6 +57,9 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "detect_stationarity": ("stationarity",),
     "compute_acf_pacf": ("autocorrelation",),
     "decompose_time_series": ("seasonal_decomposition",),
+    "compare_with_reference_dataset": ("reference_drift",),
+    "detect_feature_drift": ("reference_drift",),
+    "detect_target_drift": ("reference_drift",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces
@@ -113,6 +116,7 @@ def make_legacy_plan(
     *,
     params: Mapping[str, Mapping[str, Any]] | None = None,
     profile: DatasetProfile | None = None,
+    has_reference: bool = False,
 ) -> Plan:
     """Plan a run, keeping the inputs of the legacy tasks that remain.
 
@@ -126,7 +130,13 @@ def make_legacy_plan(
     added: set[str] = set()
     while True:
         chosen = replace(selection, include=(*selection.include, *sorted(added)))
-        plan = make_plan(registry, chosen, params=params, profile=profile)
+        plan = make_plan(
+            registry,
+            chosen,
+            params=params,
+            profile=profile,
+            has_reference=has_reference,
+        )
         missing = {
             read
             for entry in plan

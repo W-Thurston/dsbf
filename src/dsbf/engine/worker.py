@@ -13,6 +13,7 @@ from dsbf.engine.capture import WarningLog, collecting
 from dsbf.engine.context import CheckContext
 from dsbf.engine.errors import CheckContractError
 from dsbf.engine.plan import PlanEntry
+from dsbf.engine.reference import Reference
 from dsbf.engine.runner import run_check
 from dsbf.model import CheckResult, DatasetProfile, Note
 
@@ -86,6 +87,7 @@ class ThreadRun:
         dataset: Dataset,
         profile: DatasetProfile,
         upstream: Mapping[str, CheckResult],
+        reference: Reference | None,
         *,
         deadline: float | None,
         grace: float,
@@ -101,7 +103,7 @@ class ThreadRun:
         self._warnings = WarningLog()
         self._thread = threading.Thread(
             target=self._work,
-            args=(entry, dataset, profile, upstream),
+            args=(entry, dataset, profile, upstream, reference),
             name=f"dsbf-check-{entry.id}",
             daemon=True,
         )
@@ -113,6 +115,7 @@ class ThreadRun:
         dataset: Dataset,
         profile: DatasetProfile,
         upstream: Mapping[str, CheckResult],
+        reference: Reference | None,
     ) -> None:
         try:
             with collecting(self._warnings):
@@ -122,6 +125,7 @@ class ThreadRun:
                     profile,
                     entry.params,
                     upstream=upstream,
+                    reference=reference,
                     cancel=self._cancel,
                 )
                 self._outcome.append(run_check(entry.check, context))
