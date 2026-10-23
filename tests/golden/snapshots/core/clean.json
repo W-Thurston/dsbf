@@ -15,6 +15,66 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "3dce4fc5594df2d3",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 477,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "department"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b1f61ffb3b53840e",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 644,
+      "rows_per_level": 666.667,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b7a648c27167c117",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 476,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -169,6 +229,11 @@
    "version": "1.0.0"
   },
   "id_columns": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "imputation": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -349,6 +414,92 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "f22d2d925a905435",
+     "metrics": {
+      "core_span": 0.764706,
+      "distinct": 34,
+      "n_bins": 10,
+      "skewness": -0.00670063,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "92fc5532a1f0b2f3",
+     "metrics": {
+      "core_span": 0.782311,
+      "distinct": 2000,
+      "n_bins": 10,
+      "skewness": -0.0132163,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "77c76d0168bad9d3",
+     "metrics": {
+      "core_span": 0.765778,
+      "distinct": 1527,
+      "n_bins": 10,
+      "skewness": 0.0165632,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "score"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "38b9eaba865224ef",
+     "metrics": {
+      "core_span": 0.8,
+      "distinct": 100,
+      "n_bins": 10,
+      "skewness": 0.0752126,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "tenure_years"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "out_of_bounds": {
    "findings": [],
    "status": "not_applicable",
@@ -485,6 +636,11 @@
    "version": "1.0.0"
   },
   "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

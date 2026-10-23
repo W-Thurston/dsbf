@@ -15,6 +15,102 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "1c91787b848c854f",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 209,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "channel"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "ea430db14b224732",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 365,
+      "rows_per_level": 391.667,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "device_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "318a912fa786256a",
+     "metrics": {
+      "cardinality": 6,
+      "rarest_level_count": 73,
+      "rows_per_level": 83.3333,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "notes"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b1f61ffb3b53840e",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 490,
+      "rows_per_level": 666.667,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "plan_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "b7a648c27167c117",
+     "metrics": {
+      "cardinality": 4,
+      "rarest_level_count": 466,
+      "rows_per_level": 500.0,
+      "strategy": "one_hot"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "region"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -221,6 +317,110 @@
   },
   "id_columns": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "imputation": {
+   "findings": [
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "7f7c380f37594363",
+     "metrics": {
+      "mechanism": "no_dependence_found",
+      "null_count": 151,
+      "null_share": 0.0755,
+      "skewness": -0.00480877,
+      "strategy": "mean",
+      "tier": "moderate"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "e6653eb96addf515",
+     "metrics": {
+      "mechanism": "depends_on_observed",
+      "null_count": 825,
+      "null_share": 0.4125,
+      "strategy": "constant_missing",
+      "tier": "significant"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "device_type"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "7d8ff38046b32b0e",
+     "metrics": {
+      "mechanism": "no_dependence_found",
+      "null_count": 492,
+      "null_share": 0.246,
+      "skewness": 0.0201723,
+      "strategy": "mean",
+      "tier": "significant"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "2979bb988ed69f59",
+     "metrics": {
+      "mechanism": "no_dependence_found",
+      "null_count": 1500,
+      "null_share": 0.75,
+      "strategy": "indicator_and_drop",
+      "tier": "severe"
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "notes"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "imputation",
+     "code": "imputation_strategy",
+     "id": "eab34420c91cb7be",
+     "metrics": {
+      "mechanism": "depends_on_observed",
+      "null_count": 812,
+      "null_share": 0.406,
+      "skewness": -0.35052,
+      "strategy": "iterative",
+      "tier": "significant"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "premium_score"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -567,6 +767,72 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "f22d2d925a905435",
+     "metrics": {
+      "core_span": 0.764706,
+      "distinct": 35,
+      "n_bins": 10,
+      "skewness": -0.00480877,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "age"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "92fc5532a1f0b2f3",
+     "metrics": {
+      "core_span": 0.838735,
+      "distinct": 1493,
+      "n_bins": 10,
+      "skewness": 0.0201723,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "income"
+      ],
+      "kind": "column"
+     }
+    },
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "b189c2e82547790b",
+     "metrics": {
+      "core_span": 0.852761,
+      "distinct": 1100,
+      "n_bins": 10,
+      "skewness": -0.35052,
+      "spike_share": null,
+      "strategy": "equal_width"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "premium_score"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "out_of_bounds": {
    "findings": [],
    "status": "not_applicable",
@@ -677,6 +943,11 @@
    "version": "1.0.0"
   },
   "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

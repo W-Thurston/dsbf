@@ -52,7 +52,9 @@ def eligibility(
     A column is eligible when it is of a type the check applies to and the profile
     holds the column features the check requires. A dataset-level feature the profile
     lacks, or a reference the check requires and the run was not given, makes the
-    whole check not applicable.
+    whole check not applicable. A synthesis check reads every column's profile, so it
+    can give advice about a column from other checks' results; a check about the
+    dataset as a whole (``applies_to=None``, any other kind) reads none.
     """
     if spec.requires.reference and not has_reference:
         return Eligibility(
@@ -68,6 +70,8 @@ def eligibility(
                 code="profile_feature_missing",
             )
     if spec.applies_to is None:
+        if spec.kind == "synthesis":
+            return Eligibility(tuple(c.name for c in profile.columns))
         return Eligibility(None)
 
     of_type = [c for c in profile.columns if spec.applies_to.selects(c.semantic_type)]

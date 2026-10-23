@@ -58,6 +58,30 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "aca90476d8888f1d",
+     "metrics": {
+      "cardinality": 3,
+      "rarest_level_count": 6,
+      "rows_per_level": 8.33333,
+      "strategy": "frequency"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "category"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -175,6 +199,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [
     {
@@ -266,6 +295,11 @@
    "version": "1.0.0"
   },
   "null_rate": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "numeric_binning": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"
@@ -393,6 +427,11 @@
    "version": "1.0.0"
   },
   "text_encoding": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
    "findings": [],
    "status": "ok",
    "version": "1.0.0"

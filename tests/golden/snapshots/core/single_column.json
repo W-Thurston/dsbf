@@ -15,6 +15,11 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -115,6 +120,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [
     {
@@ -189,6 +199,32 @@
   },
   "null_rate": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "numeric_binning": {
+   "findings": [
+    {
+     "check": "numeric_binning",
+     "code": "binning_strategy",
+     "id": "27d62d8cae53e99f",
+     "metrics": {
+      "core_span": 0.604052,
+      "distinct": 483,
+      "n_bins": 10,
+      "skewness": 2.14027,
+      "spike_share": null,
+      "strategy": "quantile"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },
@@ -321,6 +357,31 @@
   },
   "text_encoding": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
+   "findings": [
+    {
+     "check": "transformations",
+     "code": "transform_suggested",
+     "id": "13434bd8cfaf50b5",
+     "metrics": {
+      "lambda": null,
+      "reduction": 0.932057,
+      "skewness_after": 0.145417,
+      "skewness_before": 2.14027,
+      "transform": "log1p"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "value"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
    "status": "ok",
    "version": "1.0.0"
   },

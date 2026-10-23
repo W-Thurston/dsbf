@@ -15,6 +15,8 @@ from tests.golden.migration.harness import Difference, Result
 # The legacy guidance key for the dataset as a whole, and the core subject for it.
 LEGACY_DATASET = "__dataset__"
 _RANK = {"info": 0, "warn": 1, "error": 2}
+# A legacy blurb could also be `good`: a positive note, which is not a severity.
+_LEGACY_LEVEL = {"good": "info"}
 
 
 def legacy_levels(guidance: Mapping[str, Any]) -> dict[str, str]:
@@ -23,7 +25,10 @@ def legacy_levels(guidance: Mapping[str, Any]) -> dict[str, str]:
     for column, phases in guidance.items():
         blurbs = [b for phase in phases.values() for b in phase]
         if blurbs:
-            levels[column] = max((b["level"] for b in blurbs), key=_RANK.__getitem__)
+            levels[column] = max(
+                (_LEGACY_LEVEL.get(b["level"], b["level"]) for b in blurbs),
+                key=_RANK.__getitem__,
+            )
     return levels
 
 
@@ -227,6 +232,22 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Target Drift Detected - ", "target_drift"),
         (r"^Target Class Distribution Drift - ", "target_drift"),
     ),
+    "suggest_categorical_encoding": (
+        (r"^(Low|Moderate|High) Cardinality \(", "encoding_strategy"),
+        (r"^(One-Hot|Frequency) Encoding Recommended \(", "encoding_strategy"),
+        (r"^High-Cardinality Encoding Required \(", "encoding_strategy"),
+    ),
+    "suggest_numerical_binning": (
+        (r"^Right-skewed distribution - log transform", "binning_strategy"),
+        (r"^Wide value range - equal-width", "binning_strategy"),
+        (r"^Moderate spread - quantile", "binning_strategy"),
+        (r"^Binning strategy: ", "binning_strategy"),
+    ),
+    "transformation_preview": (
+        (r"^Transform Preview: ", "transform_suggested"),
+        (r"^Skewed Distribution - No Transform Applicable", "no_effective_transform"),
+    ),
+    "imputation_strategy_suggestions": ((r"^Imputation: ", "imputation_strategy"),),
 }
 
 

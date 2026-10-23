@@ -15,6 +15,30 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "categorical_encoding": {
+   "findings": [
+    {
+     "check": "categorical_encoding",
+     "code": "encoding_strategy",
+     "id": "830bf3f4020f2b94",
+     "metrics": {
+      "cardinality": 2,
+      "rarest_level_count": 747,
+      "rows_per_level": 2787.0,
+      "strategy": "binary"
+     },
+     "severity": "info",
+     "subject": {
+      "columns": [
+       "label"
+      ],
+      "kind": "column"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
@@ -194,6 +218,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "imputation": {
+   "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "kurtosis": {
    "findings": [],
    "status": "not_applicable",
@@ -227,6 +256,11 @@
   "null_rate": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "numeric_binning": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "out_of_bounds": {
@@ -317,6 +351,11 @@
   "text_encoding": {
    "findings": [],
    "status": "ok",
+   "version": "1.0.0"
+  },
+  "transformations": {
+   "findings": [],
+   "status": "not_applicable",
    "version": "1.0.0"
   },
   "zeros": {

@@ -6,6 +6,7 @@ import pytest
 from dsbf.data import load
 from dsbf.engine import CheckContext, Requires, SemanticTypes, check
 from dsbf.engine.eligibility import eligibility
+from dsbf.engine.errors import CheckContractError
 from dsbf.model import Dimension
 from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import make_dataset
@@ -48,6 +49,32 @@ def test_a_check_that_reads_no_columns_is_applicable_with_none():
     found = eligibility(declare(None).spec, profile_dataset(make_dataset()))
 
     assert found.columns is None and found.applicable and found.code is None
+
+
+def test_a_synthesis_check_reads_every_column_but_no_values():
+    dataset = make_dataset()
+    profile = profile_dataset(dataset)
+
+    @check(
+        id="advice",
+        version="1.0.0",
+        kind="synthesis",
+        applies_to=None,
+        dimensions=[Dimension.USABILITY],
+        after=["null_share"],
+    )
+    def advice(ctx, params):
+        """A synthesis check."""
+
+    found = eligibility(advice.spec, profile)
+    context = CheckContext(advice.spec, dataset, profile)
+
+    assert found.columns == tuple(c.name for c in profile.columns)
+    assert found.columns is not None
+    assert context.columns == found.columns
+    assert [c.name for c in context.profile.columns] == list(found.columns)
+    with pytest.raises(CheckContractError, match="does not read values"):
+        context.values("amount")
 
 
 def test_nothing_of_the_type_names_the_type():

@@ -10,6 +10,7 @@ from dsbf.engine import (
     CheckContext,
     CheckContractError,
     CheckOutputModel,
+    check,
 )
 from dsbf.model import (
     Confidence,
@@ -29,6 +30,17 @@ from tests.test_engine.toys import (
 )
 
 pytestmark = pytest.mark.unit
+
+
+@check(
+    id="shape_of",
+    version="1.0.0",
+    kind="rule",
+    applies_to=None,
+    dimensions=[Dimension.USABILITY],
+)
+def shape_of(ctx, params):
+    """A check about the dataset as a whole."""
 
 
 def context_for(toy, dataset=None, **kwargs):
@@ -68,7 +80,13 @@ class TestColumnScope:
         assert context_for(null_share).columns == tuple(EXPECTED_TYPES)
 
     def test_a_dataset_level_check_has_no_columns(self):
-        assert context_for(quality_summary).columns == ()
+        assert context_for(shape_of).columns == ()
+
+    def test_a_synthesis_check_has_every_column(self):
+        context = context_for(quality_summary)
+
+        assert context.columns == tuple(EXPECTED_TYPES)
+        assert [c.name for c in context.profile.columns] == list(EXPECTED_TYPES)
 
     def test_values_outside_the_scope_are_refused(self):
         context = context_for(numeric_spread)
@@ -196,11 +214,18 @@ class TestFindings:
         assert context.findings == ()
 
     def test_a_dataset_check_may_only_use_the_dataset_subject(self):
-        context = context_for(quality_summary)
+        context = context_for(shape_of)
 
         context.finding(**finding_kwargs(subject=Subject.dataset()))
         with pytest.raises(CheckContractError, match="applies to no columns"):
             context.finding(**finding_kwargs(code="other"))
+
+    def test_a_synthesis_check_may_name_any_column(self):
+        context = context_for(quality_summary)
+
+        context.finding(**finding_kwargs(subject=Subject.column("colour")))
+        with pytest.raises(CheckContractError, match="outside that scope"):
+            context.finding(**finding_kwargs(subject=Subject.column("no_such")))
 
     def test_a_subject_and_code_are_reported_once(self):
         context = context_for(null_share)
