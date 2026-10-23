@@ -1,5 +1,5 @@
-Plan for data (6 × 4): 37 checks
-  will run 34 · not applicable 1 · unavailable 1 · skipped 1
+Plan for data (6 × 4): 38 checks
+  will run 35 · not applicable 1 · unavailable 1 · skipped 1
 
 level 0
   ✓ will run        associations           reads 4 columns
@@ -16,6 +16,7 @@ level 0
   ✓ will run        encoded_columns        reads 2 columns
   ✓ will run        entropy                reads 2 columns
   ✓ will run        format_violations      reads 4 columns
+  ✓ will run        fuzzy_duplicates       reads 2 columns
   ✓ will run        group_differences      reads 4 columns
   ✓ will run        high_cardinality       reads 2 columns
   ✓ will run        id_columns             reads 4 columns

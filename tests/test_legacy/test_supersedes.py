@@ -14,7 +14,7 @@ from dsbf.legacy import (
     make_legacy_plan,
     superseded_tasks,
 )
-from dsbf.model import CheckStatus
+from dsbf.model import CheckStatus, Cost
 from tests.test_legacy.support import make_session
 
 CORE = {"core": ("zeros", "skewness"), "legacy": ("detect_zeros",)}
@@ -109,7 +109,12 @@ class TestThePlan:
 
         assert "zeros" in plan
         assert "detect_zeros" not in plan
-        assert set(plan.ids) == {check.id for check in core_pack().checks}
+        # The standard depth leaves out the heavy checks, such as `fuzzy_duplicates`.
+        assert set(plan.ids) == {
+            check.id
+            for check in core_pack().checks
+            if check.spec.cost is not Cost.HEAVY
+        }
 
     def test_a_replaced_task_sits_in_its_own_pack(self, tmp_path):
         _, registry = plan_for(tmp_path, {"detect_zeros": "zeros"})

@@ -30,9 +30,9 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 | Status | Findings |
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
-| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-36, F-37 |
+| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-35, F-36, F-37 |
 | Mostly resolved or partial | F-07, F-10 (U4-18), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
-| Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-35 (U4-10), F-38 (U4-18), F-39 (U4-11) |
+| Open, owned by Phase 4 | F-26 (U4-14, U4-15), F-38 (U4-18), F-39 (U4-11) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
 ---
@@ -406,20 +406,20 @@ numeric column:
 - `TaskResult._sanitize()` and `json.dumps(indent=2)` run over the full payload several times (report, mapping, DB). Serialise once and reuse the bytes.
 
 ### F-35 Fuzzy duplicate detection dominates runtime and output, and its results are arbitrary
-**Status (2026-10-19): Open, verified on 2026-10-19.** On titanic, `fuzzy_duplicate_detection` is 8.46 MB of an 8.93 MB `Run`, and in the CI perf baseline it takes 16.7 s of the legacy engine's 26.7 s. The check is redesigned in U4-10, and the calibration data for it is U4-16.
+**Status (2026-10-22): Resolved in the `fuzzy_duplicates` check (U4-10).** The legacy task stays in the legacy pack until U4-18 deletes it, but the default selection no longer runs it, and `fuzzy_duplicates` is a heavy check, so it runs at the deep depth. On 2026-10-19 it was 8.46 MB of titanic's 8.93 MB `Run` and 16.7 s of the legacy engine's 26.7 s in the CI perf baseline. The check scores each column with `rapidfuzz`, weights the columns by their entropy, leaves labels (columns of 20 or fewer values) out, blocks on rare tokens only when all pairs do not fit the budget, states `pairs_compared / pairs_possible` and the budget that stopped it, lists the 20 closest pairs, and ends `not_applicable` on titanic, which has no text column.
 
 It took **58.8 s of 72.5 s** of task time on titanic (891 rows) and **172 s of 296 s** on kitchen5k.
 It produced **8.6 MB** of data on titanic, which made `report.json` **18.5 MB** (5.3 s to write) and
 the dashboard's on-open `/tasks` response **8.2 MB**.
 
 Efficiency:
-- [ ] On titanic, ~42 s were ~395,000 `working_df.iloc[i][col]` lookups (`fuzzy_duplicate_detection.py:374-377`). Pre-extract the string columns once as a NumPy array of row strings.
-- [ ] On kitchen5k, ~148 s were pure-Python `difflib.SequenceMatcher` on long text rows. Use `rapidfuzz` (C++, typically 50–100× faster) and truncate or hash very long fields.
+- [x] On titanic, ~42 s were ~395,000 `working_df.iloc[i][col]` lookups (`fuzzy_duplicate_detection.py:374-377`). Pre-extract the string columns once as a NumPy array of row strings.
+- [x] On kitchen5k, ~148 s were pure-Python `difflib.SequenceMatcher` on long text rows. Use `rapidfuzz` (C++, typically 50–100× faster) and truncate or hash very long fields.
 
 Correctness:
-- [ ] Blocking keeps any pair that shares *one* token. On data with categorical columns, every row shares tokens like `male` or `southampton`, so blocking does nothing and the step stops at `max_candidates=50,000`. That's an **arbitrary ~12.6% of titanic's ~396k pairs**, and nothing in the output says the result is partial. Block on rare tokens (IDF-weighted or MinHash/LSH), exclude low-cardinality categoricals from the row string, and report `pairs_compared / pairs_possible`.
-- [ ] 16,316 flagged pairs on titanic suggests the 0.85 threshold on concatenated row strings mostly measures "same categorical values", not near-duplicate records. Calibrate against the planted near-duplicates in the kitchen-sink generator.
-- [ ] Store at most the top N pairs plus counts. Fetch details on demand.
+- [x] Blocking keeps any pair that shares *one* token. On data with categorical columns, every row shares tokens like `male` or `southampton`, so blocking does nothing and the step stops at `max_candidates=50,000`. That's an **arbitrary ~12.6% of titanic's ~396k pairs**, and nothing in the output says the result is partial. Block on rare tokens (IDF-weighted or MinHash/LSH), exclude low-cardinality categoricals from the row string, and report `pairs_compared / pairs_possible`.
+- [x] 16,316 flagged pairs on titanic suggests the 0.85 threshold on concatenated row strings mostly measures "same categorical values", not near-duplicate records. Calibrate against the planted near-duplicates in the kitchen-sink generator.
+- [x] Store at most the top N pairs plus counts. Fetch details on demand.
 
 ### F-36 `NaN` / `Infinity` in stored data make API endpoints return HTTP 500
 **Status (2026-10-19): Resolved in the contracts.** Non-finite values become `None` and are named in the contracts (U1-06 #74), and `Run` JSON is strict. API v1 can still emit `NaN`; it is deleted in U4-18.

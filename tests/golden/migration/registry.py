@@ -5,6 +5,7 @@ from __future__ import annotations
 from tests.golden.migration.accepted import ACCEPTED as _ACCEPTED
 from tests.golden.migration.accepted_analysis import ACCEPTED_ANALYSIS
 from tests.golden.migration.accepted_associations import ACCEPTED_ASSOCIATIONS
+from tests.golden.migration.accepted_fuzzy_duplicates import ACCEPTED_FUZZY_DUPLICATES
 from tests.golden.migration.accepted_group_differences import (
     ACCEPTED_GROUP_DIFFERENCES,
 )
@@ -42,6 +43,7 @@ from tests.golden.migration.distribution import (
     compare_skewness,
     compare_summarize_numeric,
 )
+from tests.golden.migration.fuzzy_duplicates import compare_fuzzy_duplicates
 from tests.golden.migration.group_differences import (
     compare_collinear_features,
     compare_kruskal_wallis,
@@ -62,6 +64,7 @@ ACCEPTED = (
     *_ACCEPTED,
     *ACCEPTED_ANALYSIS,
     *ACCEPTED_ASSOCIATIONS,
+    *ACCEPTED_FUZZY_DUPLICATES,
     *ACCEPTED_GROUP_DIFFERENCES,
     *ACCEPTED_MISSINGNESS_STRINGS,
 )
@@ -109,6 +112,7 @@ COMPARATORS: dict[str, Comparator] = {
     "detect_encoded_columns": compare_encoded_columns,
     "detect_regex_format_violations": compare_regex_violations,
     "detect_string_anomalies": compare_string_anomalies,
+    "fuzzy_duplicate_detection": compare_fuzzy_duplicates,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

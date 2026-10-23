@@ -953,3 +953,28 @@ date_formats_unify:
     Parse each format with its own pattern and write all of them as ISO 8601. Do
     not rely on a parser that guesses: a day-first and a month-first date read
     the same digits differently.
+
+# ===================
+# NEAR-DUPLICATE ROWS
+# ===================
+
+near_duplicate_rows_review:
+  condition: {field: pairs_flagged, op: ">=", value: 1}
+  checks: [fuzzy_duplicates]
+  codes: [near_duplicate_rows]
+  action: investigate
+  message: >
+    Read the listed pairs. A pair that differs by a typo, case or padding is one
+    record entered twice; a pair that differs in a name or a number that matters
+    is two records that happen to look alike. Settle which before merging.
+
+near_duplicate_rows_normalise:
+  condition: {field: rows_involved_share, op: ">=", value: 0.01}
+  checks: [fuzzy_duplicates]
+  codes: [near_duplicate_rows]
+  action: transform
+  method: normalise_then_deduplicate
+  message: >
+    Lower-case, trim and collapse the spaces of the text columns, then drop exact
+    duplicates again, so the pairs that differ only in case or padding collapse
+    before the rest are reviewed by hand.

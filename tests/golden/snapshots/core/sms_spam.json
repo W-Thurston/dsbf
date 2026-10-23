@@ -136,6 +136,34 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "fuzzy_duplicates": {
+   "findings": [
+    {
+     "check": "fuzzy_duplicates",
+     "code": "near_duplicate_rows",
+     "id": "29ff14ae47801c63",
+     "metrics": {
+      "columns_compared": 1,
+      "coverage": 0.013372,
+      "pairs_compared": 178744,
+      "pairs_flagged": 217,
+      "pairs_possible": 13367035,
+      "rows_involved": 320,
+      "rows_involved_share": 0.0574094,
+      "threshold": 0.92
+     },
+     "severity": "warn",
+     "subject": {
+      "columns": [
+       "text"
+      ],
+      "kind": "row_set"
+     }
+    }
+   ],
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "group_differences": {
    "findings": [],
    "status": "not_applicable",

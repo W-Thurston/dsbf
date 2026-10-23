@@ -50,6 +50,7 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "detect_encoded_columns": ("encoded_columns",),
     "detect_regex_format_violations": ("format_violations",),
     "detect_string_anomalies": ("string_anomalies",),
+    "fuzzy_duplicate_detection": ("fuzzy_duplicates",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

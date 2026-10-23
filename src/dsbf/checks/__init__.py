@@ -35,6 +35,7 @@ from dsbf.checks.duplicate_rows import duplicate_rows
 from dsbf.checks.encoded_columns import encoded_columns
 from dsbf.checks.entropy import entropy
 from dsbf.checks.format_violations import format_violations
+from dsbf.checks.fuzzy_duplicates import fuzzy_duplicates
 from dsbf.checks.group_differences import group_differences
 from dsbf.checks.high_cardinality import high_cardinality
 from dsbf.checks.id_columns import id_columns
@@ -96,5 +97,6 @@ def core_pack() -> Pack:
             mixed_types,
             format_violations,
             missingness_mechanism,
+            fuzzy_duplicates,
         ),
     )

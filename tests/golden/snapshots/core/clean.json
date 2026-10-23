@@ -138,6 +138,11 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "fuzzy_duplicates": {
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.0.0"
+  },
   "group_differences": {
    "findings": [],
    "status": "ok",

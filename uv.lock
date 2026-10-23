@@ -326,6 +326,7 @@ dev = [
     { name = "pyrefly" },
     { name = "pytest" },
     { name = "pytest-order" },
+    { name = "rapidfuzz" },
     { name = "ruff" },
     { name = "xlsxwriter" },
 ]
@@ -379,6 +380,7 @@ dev = [
     { name = "pyrefly", specifier = ">=1.1.1,<2" },
     { name = "pytest", specifier = ">=8.0.0,<10" },
     { name = "pytest-order", specifier = ">=1.3.0,<2" },
+    { name = "rapidfuzz", specifier = ">=3.14,<4" },
     { name = "ruff", specifier = ">=0.11.10,<0.18" },
     { name = "xlsxwriter", specifier = ">=3.2,<4" },
 ]
