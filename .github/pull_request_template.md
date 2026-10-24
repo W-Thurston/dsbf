@@ -36,11 +36,11 @@ uv run pytest tests/path/to/relevant_test.py -v
 - [ ] Uses `get_columns_by_intent()` — not `df.columns` or `select_dtypes()`
 - [ ] Zero-eligible-columns edge case handled (returns `status="success"` with empty data)
 - [ ] Unit test covers the happy path and the empty-input case
-- [ ] Validation suite run locally before opening PR: `uv run python tests/validation/run_validation.py`
+- [ ] Archetype test added or updated in `tests/validation/test_archetypes.py`
 
 **If this PR changes the Quality or ML Readiness scoring:**
 - [ ] `data_quality_scorer._level()` thresholds understood and intentionally changed
-- [ ] Existing validation dataset assertions still pass or updated assertions included
+- [ ] Existing archetype tests still pass or updated ones are included, and the `calibration` label is on the PR
 
 ## Notes for reviewer
 

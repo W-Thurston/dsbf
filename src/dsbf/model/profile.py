@@ -321,6 +321,15 @@ class NumericProfile(_ColumnBase):
 class CategoricalProfile(_ColumnBase):
     semantic_type: Literal["categorical"] = "categorical"
     top_values: tuple[ValueCount, ...] = ()
+    mode_count: int | None = Field(
+        default=None,
+        ge=1,
+        description=(
+            "Rows holding the most frequent non-null value, whether or not it is "
+            "listed in `top_values`: a string over 256 characters never is. None when "
+            "the column has no value."
+        ),
+    )
     lengths: LengthStats | None = None
     empty_strings: int = Field(default=0, ge=0)
     shape: TextShape | None = Field(
@@ -339,6 +348,11 @@ class CategoricalProfile(_ColumnBase):
     def _check_counts(self) -> Self:
         _check_entropy(self.entropy_bits, self.counts)
         _check_top_values(self.top_values, self.counts)
+        if self.mode_count is not None:
+            if self.mode_count > self.counts.non_null:
+                raise ValueError("mode_count is at most the non-null rows")
+            if self.top_values and self.top_values[0].count > self.mode_count:
+                raise ValueError("mode_count is at least the count of the top value")
         if self.empty_strings > self.counts.non_null:
             raise ValueError("empty_strings is at most the non-null rows")
         if self.shape is not None:

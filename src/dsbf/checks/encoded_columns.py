@@ -42,6 +42,7 @@ _UUID = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-
 # is a number.
 _HEX = r"^[0-9a-fA-F]+$"
 _HEX_LETTER = r"[a-fA-F]"
+_HEX_DIGIT = r"[0-9]"
 _HEX_LENGTHS = (32, 40, 56, 64, 96, 128)
 # Base64 needs enough characters to mean something and a length that is a multiple of
 # four. Its text must either decode to printable ASCII, or look random: both cases and
@@ -68,7 +69,17 @@ class EncodedColumnsParams(CheckParams):
     )
     detect_uuid: bool = Field(True, description="Look for UUIDs.")
     detect_hex: bool = Field(
-        True, description="Look for hexadecimal digests of 32 to 128 digits."
+        True,
+        description="Look for hexadecimal digests of 32 to 128 digits, and shorter "
+        "hexadecimal keys (see `min_hex_length`).",
+    )
+    min_hex_length: int = Field(
+        8,
+        ge=4,
+        description="Digits a hexadecimal key of another length than a digest has at "
+        "least, when it holds both a digit and a letter: a request id or a short "
+        "commit hash. Random hexadecimal has no digit or no letter in about one "
+        "value in fifty at 8 digits and almost never at more.",
     )
     detect_base64: bool = Field(True, description="Look for base64 strings.")
     detect_tokens: bool = Field(
@@ -86,10 +97,12 @@ class EncodedColumnsParams(CheckParams):
         16, ge=4, description="Characters an opaque token has at least."
     )
     min_entropy: float = Field(
-        4.5,
+        5.0,
         gt=0,
         description="Shannon entropy, in bits per character, of the characters of "
-        "all the candidate tokens together from which they look random.",
+        "all the candidate tokens together from which they look random. Random "
+        "letters and digits have 5.2 to 6, email addresses and other text 4.1 to "
+        "4.7.",
     )
     length_std_threshold: float = Field(
         2.0,
@@ -125,7 +138,7 @@ class EncodedColumnsOutput(CheckOutputModel):
 
 @check(
     id="encoded_columns",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes(*STRING_TYPES),
     dimensions=[Dimension.USABILITY],
@@ -180,7 +193,10 @@ def _read(distinct: pl.DataFrame, params: EncodedColumnsParams) -> EncodedColumn
         kinds = kinds.when(
             value.str.contains(_HEX)
             & value.str.contains(_HEX_LETTER)
-            & length.is_in(_HEX_LENGTHS)
+            & (
+                length.is_in(_HEX_LENGTHS)
+                | (value.str.contains(_HEX_DIGIT) & (length >= params.min_hex_length))
+            )
         ).then(pl.lit("hex"))
     if params.detect_base64:
         printable = (
@@ -281,7 +297,7 @@ def _entropy(value: str) -> float:
 
 _KIND_NAMES: dict[str, str] = {
     "uuid": "UUIDs",
-    "hex": "hexadecimal digests",
+    "hex": "hexadecimal digests or keys",
     "base64": "base64 strings",
     "opaque_token": "random-looking tokens of one length",
 }

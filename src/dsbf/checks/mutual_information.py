@@ -37,7 +37,9 @@ from dsbf.model import (
 )
 
 _CONFIDENT_ROWS = 200
-# Estimates of the null that set a kind's noise floor, at the fewest.
+# Class features are measured against the null each on its own; with this many
+# estimates in all they get fewer draws each (never under `_MIN_NULL_DRAWS`).
+_CLASS_NULL_BUDGET = 4_000
 _MIN_NULL_DRAWS = 12
 # Above this a feature is, to within estimation error, the target.
 _LEAK_LIKE = 0.95
@@ -77,18 +79,27 @@ class MutualInformationParams(CheckParams):
         description="Most rows read; more are sampled with `seed`. The estimator "
         "searches neighbours, so its cost grows faster than the rows.",
     )
+    null_draws: int = Field(
+        40,
+        ge=_MIN_NULL_DRAWS,
+        description="Estimates against a shuffled target that set a noise floor, the "
+        "highest of them: a truly independent feature passes it about once in "
+        "`null_draws + 1`. A class feature gets that many of its own, since its "
+        "estimate is biased up by its number of levels; the continuous features "
+        "share one floor.",
+    )
     null_features: int = Field(
         6,
         ge=1,
-        description="Features of each kind (class, continuous) measured against "
-        "shuffled targets to set the noise floor.",
+        description="Continuous features measured against shuffled targets to set "
+        "their shared noise floor.",
     )
     null_shuffles: int = Field(
         2,
         ge=1,
         description="Shuffled copies of the target each of those features is "
-        "measured against, or more when that leaves fewer than 12 estimates; the "
-        "noise floor is the highest of them.",
+        "measured against, or more when that leaves fewer than `null_draws` "
+        "estimates.",
     )
     seed: int = Field(42, description="Seed of the row sample, shuffles and estimator.")
     max_findings: int = Field(
@@ -115,6 +126,11 @@ class FeatureInformation(Contract):
         ge=0,
         description="Rows the estimate used: those where the feature and target exist.",
     )
+    noise_floor: float = Field(
+        ge=0,
+        description="The highest mutual information, in nats, this feature shows with "
+        "a shuffled copy of the target.",
+    )
     notable: bool = Field(
         description="At least `min_normalised` and above the noise floor."
     )
@@ -134,8 +150,9 @@ class MutualInformationOutput(CheckOutputModel):
         description="Every feature that was measured, most informative first."
     )
     noise_floor: dict[str, float] = Field(
-        description="The highest mutual information, in nats, that features of a "
-        "kind (`discrete`, `continuous`) show with a shuffled copy of the target."
+        description="The highest noise floor, in nats, among the features of a kind "
+        "(`discrete`, `continuous`): what a feature of that kind shows with a "
+        "shuffled copy of the target."
     )
     features_tested: int = Field(ge=0)
     features_notable: int = Field(ge=0)
@@ -234,23 +251,18 @@ def _noise_floor(
     measured: list[tuple[str, Variable, np.ndarray]],
     target: Target,
     params: MutualInformationParams,
-) -> dict[str, float]:
+) -> tuple[dict[str, float], dict[str, float]]:
     """The highest mutual information that features show with a shuffled target.
 
-    The estimator is not zero for independent data, and its spread grows as rows
-    fall, so a few features of each kind are measured against shuffled copies of the
-    target (shuffled among the rows that have one). A kind with fewer features gets
-    more shuffles each, so that at least ``_MIN_NULL_DRAWS`` estimates set the floor.
+    The estimator is not zero for independent data, its spread grows as rows fall,
+    and a class feature's bias grows with its levels. So each class feature is
+    measured against its own shuffled copies of the target (shuffled among the rows
+    that have one), and a few continuous features, which share a bias, are measured
+    against enough copies to give ``null_draws`` estimates. Returns the floor of each
+    kind (the highest) and the floor of each feature.
     """
     floor = {"discrete": 0.0, "continuous": 0.0}
-    chosen: dict[str, list[tuple[Variable, np.ndarray]]] = {
-        "discrete": [],
-        "continuous": [],
-    }
-    for _, feature, both in measured:
-        kind = "discrete" if feature.kind == "class" else "continuous"
-        if len(chosen[kind]) < params.null_features:
-            chosen[kind].append((feature, both))
+    by_feature: dict[str, float] = {}
     have = np.flatnonzero(target.present)
     shuffles: list[Target] = []
 
@@ -262,24 +274,39 @@ def _noise_floor(
             shuffles.append(target.take(order))
         return shuffles[number]
 
-    for kind, pairs in chosen.items():
-        if not pairs:
-            continue
-        wanted = max(params.null_shuffles, -(-_MIN_NULL_DRAWS // len(pairs)))
-        for feature, both in pairs:
-            for number in range(wanted):
-                ctx.checkpoint()
-                try:
-                    null, _ = _estimate(feature, shuffle(number), both, params)
-                except Undefined:
-                    continue
-                floor[kind] = max(floor[kind], null)
-    return floor
+    def highest(feature: Variable, both: np.ndarray, draws: int) -> float:
+        top = 0.0
+        for number in range(draws):
+            ctx.checkpoint()
+            try:
+                null, _ = _estimate(feature, shuffle(number), both, params)
+            except Undefined:
+                continue
+            top = max(top, null)
+        return top
+
+    classes = [(n, f, b) for n, f, b in measured if f.kind == "class"]
+    if classes:
+        draws = max(
+            _MIN_NULL_DRAWS, min(params.null_draws, _CLASS_NULL_BUDGET // len(classes))
+        )
+        for name, feature, both in classes:
+            by_feature[name] = highest(feature, both, draws)
+        floor["discrete"] = max(by_feature.values())
+    pool = [(n, f, b) for n, f, b in measured if f.kind != "class"]
+    if pool:
+        chosen = pool[: params.null_features]
+        draws = max(params.null_shuffles, -(-params.null_draws // len(chosen)))
+        pooled = max(highest(f, b, draws) for _, f, b in chosen)
+        floor["continuous"] = pooled
+        for name, _, _ in pool:
+            by_feature[name] = pooled
+    return floor, by_feature
 
 
 @check(
     id="mutual_information",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "categorical", "boolean"),
     dimensions=[Dimension.RELATIONSHIP],
@@ -366,7 +393,7 @@ def mutual_information(
                 int(used.size),
             )
         )
-    floor = _noise_floor(ctx, kept, target, params)
+    floor, feature_floor = _noise_floor(ctx, kept, target, params)
 
     features = sorted(
         (
@@ -376,8 +403,9 @@ def mutual_information(
                 mutual_information=information,
                 normalised=normalised,
                 n_used=n_used,
+                noise_floor=feature_floor[name],
                 notable=normalised >= params.min_normalised
-                and information > floor["discrete" if discrete else "continuous"],
+                and information > feature_floor[name],
             )
             for name, discrete, information, normalised, n_used in scores
         ),

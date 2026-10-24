@@ -59,7 +59,8 @@ class TransformationsParams(CheckParams):
         gt=0,
         le=1,
         description="Share of the absolute skewness a transform must remove to be "
-        "suggested when none reaches the target.",
+        "suggested when none reaches the target, and it must also leave the column "
+        "under `skew_threshold`.",
     )
     min_n: int = Field(10, ge=4, description="Finite values a column needs.")
     max_rows: int = Field(
@@ -214,14 +215,20 @@ def _choose(
     if not usable:
         return None
     best = max(usable, key=lambda m: usable[m].reduction)  # type: ignore[arg-type,return-value]
-    if usable[best].reduction >= params.min_reduction:  # type: ignore[operator]
+    # A transform that leaves the column as skewed as it began to be called is
+    # no fix, and the fitted power of a column with a spike at one value moves with
+    # the number of rows: 14% of the skew removed at 5 000 rows, 27% at 20 000.
+    if (
+        usable[best].reduction >= params.min_reduction  # type: ignore[operator]
+        and abs(usable[best].skewness_after) <= params.skew_threshold  # type: ignore[arg-type]
+    ):
         return best
     return None
 
 
 @check(
     id="transformations",
-    version="1.0.1",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -292,7 +299,8 @@ def transformations(ctx: CheckContext, params: TransformationsParams) -> CheckOu
                 title=f"No transform removes the skew ({before:+.2f})",
                 message=(
                     f"{column.name!r} has skewness {before:.2f}, and no log, root, "
-                    "power or Yeo–Johnson transform removes at least "
+                    "power or Yeo–Johnson transform gets it under "
+                    f"{params.skew_threshold:g} while removing at least "
                     f"{params.min_reduction:.0%} of it. A few extreme values or a "
                     "second mode, not a smooth tail, usually cause that: look at "
                     "the outliers and the histogram before transforming."

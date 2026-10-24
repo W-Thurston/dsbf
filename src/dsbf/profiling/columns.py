@@ -23,7 +23,7 @@ kurtosis, and linear-interpolation quantiles.
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 
@@ -327,6 +327,11 @@ def _value_fields(series: pl.Series, top_k: int, *, text: bool) -> dict[str, Any
         "top_values": top_values(counts, top_k, min_count=2 if text else 1),
         "entropy_bits": entropy_bits(counts["count"].to_list()),
     }
+    if not text:
+        # The most frequent value may be a string too long to list.
+        fields["mode_count"] = (
+            cast("int", counts["count"].max()) if counts.height else None
+        )
     if series.dtype in _TEXT_DTYPES:
         stats = string_stats(counts, top_k)
         fields["lengths"] = stats.lengths

@@ -39,7 +39,6 @@ tests load seaborn's titanic dataset). It takes about 5 minutes:
 
 ```bash
 uv run pytest
-uv run python tests/validation/run_validation.py
 ```
 
 ### Test tiers
@@ -53,6 +52,7 @@ one. Set it for a whole module with `pytestmark = pytest.mark.unit`.
 | `integration` | Exercises several components together, such as the engine or the API. |
 | `golden` | Profiles a dataset end to end and compares it with a committed snapshot. Deselected by default; see [Golden runs](#golden-runs). |
 | `perf` | Times full runs and compares them with a committed baseline. Deselected by default; see [Performance runs](#performance-runs). |
+| `calibration` | Measures each check's detection and false-alarm rates on planted-truth frames against a committed baseline. Deselected by default; see [Calibration runs](#calibration-runs). |
 
 Two modifiers can be added to a test: `slow` (more than 5 s on a developer machine) and
 `network` (needs network access). The fast gate is `unit and not slow`. Select any
@@ -79,6 +79,20 @@ takes about fifteen minutes, so `pytest` skips it. Run it with `uv run pytest -m
 the `perf` label to a pull request to run it in CI, where the baseline was recorded. Local
 numbers from another machine are only roughly comparable. How to read the results and update
 the baseline is in [`tests/perf/README.md`](tests/perf/README.md).
+
+### Calibration runs
+
+`tests/calibration/` generates frames with a known truth (a planted leak, outliers,
+dependent nulls, a typo'd duplicate, nothing at all) from a seed, profiles each over many
+seeds, and records how often every check finds what was planted and how often it raises
+an alarm nobody planted. A check whose rate got worse than `tests/calibration/baseline.json`
+fails its scenario. The suite takes several minutes, so `pytest` skips it. Run it with
+`uv run pytest -m calibration`, and add the `calibration` label to a pull request that
+changes a threshold, a method or a check's version; CI runs it nightly and uploads the
+rates. A change that moves a rate on purpose is accepted with
+`uv run pytest -m calibration --update-calibration-baseline`, and the new check version
+goes in the same commit. How to add a scenario and read the results is in
+[`tests/calibration/README.md`](tests/calibration/README.md).
 
 ### Test isolation
 
@@ -109,12 +123,11 @@ frontend/               # Vue 3 + Vite dashboard app
 
 
 tests/
+├── calibration/        # Planted-truth scenarios, rates per check and their baseline
 ├── generators/         # Dataset generators for the validation suite
 ├── golden/             # Golden-run snapshots and the code that compares them
 ├── perf/               # Performance benchmark and its committed baseline
-├── validation/
-│   ├── assertions/     # Per-dataset assertion modules
-│   └── run_validation.py
+├── validation/         # The eight archetype datasets against what each should show
 └── unit/               # Pytest unit tests
 
 frontend/
@@ -282,7 +295,9 @@ the happy path, the zero-eligible-columns case, and any numerical edge cases.
 
 ## Adding a validation dataset
 
-The validation suite lives in `tests/validation/`. Each dataset has three parts:
+The validation suite lives in `tests/validation/`. It profiles each archetype in memory
+with `dsbf.profile()` and states what the core checks must say about it. Each dataset has
+two parts:
 
 **1. A generator function** in `tests/generators/dsbf_test_dataset_generator.py`:
 
@@ -299,28 +314,26 @@ def generate_my_dataset(n_rows: int = 1000, seed: int = 42) -> pd.DataFrame:
 
 Add it to the `GENERATORS` dict at the bottom of the file.
 
-**2. An assertion module** in `tests/validation/assertions/my_dataset.py`:
+**2. A test** in `tests/validation/test_archetypes.py` that takes the `archetype` fixture
+(a `Run`, profiled once per session) and reads it with the helpers in
+`tests/validation/support.py`:
 
 ```python
-def validate(report: dict) -> None:
-    _no_unexpected_failures(report)
-    _core_tasks_succeeded(report)
-    # ... specific assertions ...
-    print("✓  my_dataset: all assertions passed")
+def test_my_dataset(archetype: Archetype) -> None:
+    run = archetype("my_dataset")
+    assert flagged(run, "skewness", "skewed", Severity.WARN) == {"purchase_amount"}
+    assert quality(run, "completeness")["level"] == "amber"
 ```
 
-Assertions should read the actual task output structure from `report.json` before
-writing — the data structures are not always what you'd expect. Dry-run against a
-real report before committing.
-
-**3. Registration** in `tests/validation/run_validation.py` — add to
-`ASSERTION_MODULES` and the manual dashboard checklist.
+Add the name to `ARCHETYPES` so that "no check fails" covers it, and to
+`tests/validation/DASHBOARD_CHECKLIST.md` with what to look at in the browser.
 
 **Assertion writing principles:**
-- Check both directions where relevant (e.g. skewed columns flagged AND clean columns not flagged)
-- Use ranges not exact values for seeded floats (±5pp is typical)
-- Never use `{ {comprehension} }` inside f-strings — extract to a named variable first (Ruff E201/E202)
-- The `detect_high_cardinality` task returns `{col: count}` — flagged columns are dict keys, not a list
+- Check both directions where relevant (skewed columns flagged AND clean columns not flagged)
+- Use ranges, not exact values, for seeded floats (±5pp is typical)
+- Read the `Run` of the real dataset before writing the assertion: a check's output is
+  not always what its name suggests
+- A rate across many seeds belongs in `tests/calibration`, not here
 
 ---
 
@@ -381,7 +394,6 @@ the diff shows what changed.
    uv run ruff check .
    uv run pytest -m "unit and not slow"
    uv run pytest
-   uv run python tests/validation/run_validation.py
    ```
 
 4. **PR description** — explain what changed, why, and how to verify it. Link to
@@ -389,7 +401,6 @@ the diff shows what changed.
 
 5. **Checklist before merge:**
    - [ ] Tests pass (`pytest -m "unit and not slow"` and `pytest`), and new tests carry a tier marker
-   - [ ] Validation suite passes (`run_validation.py`)
    - [ ] Ruff clean
    - [ ] Docstrings on new public classes and methods
    - [ ] `task_metadata.yaml` updated (if adding a task)

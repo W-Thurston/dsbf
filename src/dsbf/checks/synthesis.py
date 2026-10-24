@@ -253,21 +253,27 @@ def columns_of(findings: Iterable[Finding]) -> list[str]:
     return list(dict.fromkeys(c for f in findings for c in f.subject.columns))
 
 
+# A warning on more than this share of the columns is red; a finding below a warning on
+# more than the other share is amber instead of blue.
+_RED_SHARE = 0.5
+_BLUE_SHARE = 0.30
+
+
 def traffic_light(
     pct_affected: float, any_affected: bool, severity: Severity | None
 ) -> Level:
     """A dimension's level from the share of columns it flags and its worst finding.
 
-    Green is no finding. An error is red; a warning is amber, and red above 15% of the
-    columns. Findings below a warning are blue under 10% of the columns, amber to 30%
-    and red above, so a pattern across many columns is not mistaken for a coincidence.
+    Green is no finding. An error is red. A warning is amber, and red when it is on
+    more than half the columns: one flawed column of a few is something to act on, not
+    a reason to distrust the table. Findings below a warning are blue up to 30% of the
+    columns and amber above, never red: a mild pattern across many columns is worth a
+    look, not a stop.
     """
     if not any_affected:
         return "green"
     if severity is not None and severity >= Severity.ERROR:
         return "red"
     if severity is not None and severity >= Severity.WARN:
-        return "red" if pct_affected > 0.15 else "amber"
-    if pct_affected < 0.10:
-        return "blue"
-    return "amber" if pct_affected <= 0.30 else "red"
+        return "red" if pct_affected > _RED_SHARE else "amber"
+    return "blue" if pct_affected <= _BLUE_SHARE else "amber"

@@ -132,12 +132,12 @@ search-path = ["src", "."]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-ra -q --strict-markers -m \"not golden and not perf\""
+addopts = "-ra -q --strict-markers -m \"not golden and not perf and not calibration\""
 testpaths = ["tests"]
-# Every test carries exactly one tier (unit, integration, golden or perf) and may add
+# Every test carries exactly one tier (unit, integration, golden, perf or calibration) and may add
 # the slow and network modifiers; tests/conftest.py fails collection otherwise.
-# The golden and perf tiers take minutes, so addopts deselects them; `-m golden` or
-# `-m perf` on the command line replaces that expression.
+# The golden, perf and calibration tiers take minutes, so addopts deselects them; `-m golden`,
+# `-m perf` or `-m calibration` on the command line replaces that expression.
 markers = [
     "unit: fast, isolated test with no network and no full engine run",
     "integration: exercises several components together, such as the engine or the API",
@@ -145,4 +145,5 @@ markers = [
     "network: needs network access, such as a seaborn dataset download",
     "golden: compares a full run against a committed snapshot; deselected by default, run with -m golden",
     "perf: times full runs against a committed baseline; deselected by default, run with -m perf",
+    "calibration: measures false-alarm and detection rates on planted-truth datasets against a committed baseline; deselected by default, run with -m calibration",
 ]

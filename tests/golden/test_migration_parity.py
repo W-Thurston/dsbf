@@ -14,7 +14,12 @@ from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
 from tests.golden.migration.distribution import merge_core
 from tests.golden.migration.findings import unmapped_titles
 from tests.golden.migration.harness import compare, judge
-from tests.golden.migration.registry import ACCEPTED, COMPARATORS, PARTIAL_COVERAGE
+from tests.golden.migration.registry import (
+    ACCEPTED,
+    ACCEPTED_KINDS,
+    COMPARATORS,
+    PARTIAL_COVERAGE,
+)
 
 pytestmark = pytest.mark.golden
 
@@ -46,7 +51,7 @@ def test_a_core_check_differs_from_its_task_only_where_accepted(
                     task, legacy["result"].get("guidance") or {}
                 )
             ]
-        verdict = judge(task, dataset.name, found, ACCEPTED)
+        verdict = judge(task, dataset.name, found, ACCEPTED, ACCEPTED_KINDS)
         problems += [
             f"+ {task}: {d.describe()}  (add to accepted.py: "
             f"Accepted({task!r}, {dataset.name!r}, {d.subject!r}, {d.kind!r}, "

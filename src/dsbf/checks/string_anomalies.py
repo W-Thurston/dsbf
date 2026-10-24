@@ -107,7 +107,7 @@ class StringAnomaliesOutput(CheckOutputModel):
 
 @check(
     id="string_anomalies",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes(*STRING_TYPES),
     dimensions=[Dimension.VALIDITY],
@@ -232,9 +232,9 @@ def _length_outliers(
     q1, q3 = _weighted_quartiles(
         lengths["length"].to_numpy(), lengths["count"].to_numpy()
     )
-    spread = q3 - q1
-    if spread == 0:
-        return None
+    # When most values share a length the quartiles meet, and a value of any other
+    # length would be an outlier; one character is the least spread a length has.
+    spread = max(q3 - q1, 1.0)
     upper = q3 + params.fence * spread
     lower = max(q1 - params.fence * spread, 0.0)
     far = (pl.col("length") > upper) | (pl.col("length") < lower)

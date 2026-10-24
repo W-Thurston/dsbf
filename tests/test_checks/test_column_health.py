@@ -235,6 +235,18 @@ class TestDominantValue:
 
         assert "long" not in (result.output or {}).get("columns", {})
 
+    def test_a_mode_too_long_to_list_is_still_the_mode(self):
+        # A string over 256 characters is never in `top_values`, but it can be the
+        # most frequent value; the profile counts it apart.
+        frame = pl.DataFrame({"c": ["x" * 300] * 8 + [f"s{i % 40}" for i in range(92)]})
+
+        result = run_core_check(frame, "dominant_value")
+
+        column = output_of(result)["columns"]["c"]
+        assert column["top_count"] == 8
+        assert column["top_value"] == "(a value of over 256 characters)"
+        assert column["top_share"] == pytest.approx(0.08)
+
 
 class TestNearZeroVariance:
     def frame(self) -> pl.DataFrame:

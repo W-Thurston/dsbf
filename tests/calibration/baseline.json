@@ -1,0 +1,6424 @@
+{
+  "checks": {
+    "associations": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0313],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 119,
+      "unscored": {
+        "not_applicable": 20
+      },
+      "version": "1.0.0"
+    },
+    "autocorrelation": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0157, 0.0984],
+      "false_alarm_rate": 0.04,
+      "false_alarm_trials": 4,
+      "plants": 40,
+      "trials": 100,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "bimodality": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0115, 0.0945],
+      "false_alarm_rate": 0.0337,
+      "false_alarm_trials": 3,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "categorical_encoding": {
+      "detected": 60,
+      "detection_interval": [0.9398, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.1611],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 60,
+      "trials": 20,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "class_imbalance": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0876],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 40,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "collinearity": {
+      "detected": 100,
+      "detection_interval": [0.963, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0313],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 100,
+      "trials": 119,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "constant_columns": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "contingency": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.0.0"
+    },
+    "datetime_consistency": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.1611],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 20,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.0.0"
+    },
+    "dominant_value": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.1.0"
+    },
+    "duplicate_columns": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "duplicate_rows": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 109,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "encoded_columns": {
+      "detected": 120,
+      "detection_interval": [0.969, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 120,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.1.0"
+    },
+    "entropy": {
+      "detected": 0,
+      "false_alarm_interval": [0.0, 0.0787],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 0,
+      "trials": 45,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.0.0"
+    },
+    "format_violations": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.0.0"
+    },
+    "fuzzy_duplicates": {
+      "detected": 70,
+      "detection_interval": [0.6815, 0.8513],
+      "detection_rate": 0.7778,
+      "false_alarm_interval": [0.0079, 0.0657],
+      "false_alarm_rate": 0.0231,
+      "false_alarm_trials": 3,
+      "metrics": {
+        "extra_pairs_per_record": {
+          "higher_is_better": false,
+          "mean": 0.0,
+          "n": 90
+        },
+        "pair_recall": {
+          "higher_is_better": true,
+          "mean": 0.7572,
+          "n": 90
+        }
+      },
+      "plants": 90,
+      "trials": 130,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "group_differences": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0149, 0.0939],
+      "false_alarm_rate": 0.0381,
+      "false_alarm_trials": 4,
+      "plants": 20,
+      "trials": 105,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.1.0"
+    },
+    "high_cardinality": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.0.0"
+    },
+    "id_columns": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 109,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "imputation": {
+      "detected": 60,
+      "detection_interval": [0.9398, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.1611],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 60,
+      "trials": 20,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "kurtosis": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0251],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 149,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "missingness_mechanism": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.005, 0.0633],
+      "false_alarm_rate": 0.018,
+      "false_alarm_trials": 2,
+      "plants": 40,
+      "trials": 111,
+      "unscored": {
+        "not_applicable": 48
+      },
+      "version": "1.0.0"
+    },
+    "mixed_types": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.0.0"
+    },
+    "ml_readiness": {
+      "detected": 0,
+      "false_alarm_interval": [0.0, 0.0527],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 0,
+      "trials": 69,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "multivariate_outliers": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0428],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 86,
+      "unscored": {
+        "not_applicable": 3
+      },
+      "version": "1.1.0"
+    },
+    "mutual_information": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0343, 0.1375],
+      "false_alarm_rate": 0.07,
+      "false_alarm_trials": 7,
+      "plants": 40,
+      "trials": 100,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "near_zero_variance": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "normality": {
+      "detected": 230,
+      "detection_interval": [0.9836, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0012, 0.037],
+      "false_alarm_rate": 0.0067,
+      "false_alarm_trials": 1,
+      "plants": 230,
+      "trials": 149,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "null_rate": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "numeric_binning": {
+      "detected": 100,
+      "detection_interval": [0.963, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.1611],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 100,
+      "trials": 20,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "out_of_bounds": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0876],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 40,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.0.0"
+    },
+    "outliers": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0012, 0.037],
+      "false_alarm_rate": 0.0067,
+      "false_alarm_trials": 1,
+      "plants": 40,
+      "trials": 149,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "quality_dimensions": {
+      "detected": 0,
+      "false_alarm_interval": [0.0, 0.0527],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "metrics": {
+        "level": {
+          "higher_is_better": true,
+          "mean": 1.0,
+          "n": 24
+        }
+      },
+      "plants": 0,
+      "trials": 69,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "reference_drift": {
+      "detected": 100,
+      "detection_interval": [0.963, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0015, 0.0457],
+      "false_alarm_rate": 0.0083,
+      "false_alarm_trials": 1,
+      "plants": 100,
+      "trials": 120,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "sample_size": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 109,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "schema": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.1611],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 20,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.0.0"
+    },
+    "seasonal_decomposition": {
+      "detected": 40,
+      "detection_interval": [0.9124, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0103, 0.0845],
+      "false_alarm_rate": 0.03,
+      "false_alarm_trials": 3,
+      "plants": 40,
+      "trials": 100,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "skewness": {
+      "detected": 80,
+      "detection_interval": [0.9542, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0251],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 80,
+      "trials": 149,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "stationarity": {
+      "detected": 37,
+      "detection_interval": [0.8014, 0.9742],
+      "detection_rate": 0.925,
+      "false_alarm_interval": [0.0, 0.037],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 40,
+      "trials": 100,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "string_anomalies": {
+      "detected": 80,
+      "detection_interval": [0.9542, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0558],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 80,
+      "trials": 65,
+      "unscored": {
+        "not_applicable": 24
+      },
+      "version": "1.1.0"
+    },
+    "target_leakage": {
+      "detected": 180,
+      "detection_interval": [0.9791, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0267],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 180,
+      "trials": 140,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.1.0"
+    },
+    "temporal_gaps": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0876],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 40,
+      "unscored": {
+        "not_applicable": 69
+      },
+      "version": "1.0.0"
+    },
+    "text_encoding": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    },
+    "transformations": {
+      "detected": 198,
+      "detection_interval": [0.9643, 0.9973],
+      "detection_rate": 0.99,
+      "false_alarm_interval": [0.0092, 0.1136],
+      "false_alarm_rate": 0.0333,
+      "false_alarm_trials": 2,
+      "plants": 200,
+      "trials": 60,
+      "unscored": {},
+      "version": "1.1.0"
+    },
+    "zeros": {
+      "detected": 20,
+      "detection_interval": [0.8389, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
+      "plants": 20,
+      "trials": 89,
+      "unscored": {},
+      "version": "1.0.0"
+    }
+  },
+  "environment": {
+    "numpy": "2.3.1",
+    "polars": "2.0.0",
+    "python": "3.12.3",
+    "scikit-learn": "1.7.2",
+    "scipy": "1.17.1",
+    "statsmodels": "0.14.6"
+  },
+  "scenarios": {
+    "binning_planted": {
+      "numeric_binning": {
+        "detected": 100,
+        "detection_interval": [0.963, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 100,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "bounds_clean": {
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "bounds_planted": {
+      "out_of_bounds": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "collinear_planted": {
+      "collinearity": {
+        "detected": 100,
+        "detection_interval": [0.963, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 100,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "dates_unparsed": {
+      "datetime_consistency": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "drift_none": {
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1135],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 30,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "drift_none_small": {
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_interval": [0.0059, 0.1667],
+        "false_alarm_rate": 0.0333,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 30,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "drift_planted": {
+      "reference_drift": {
+        "detected": 80,
+        "detection_interval": [0.9542, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 80,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "drift_small_shift": {
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "drift_target": {
+      "reference_drift": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "duplicate_rows_planted": {
+      "duplicate_rows": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "encoded_planted": {
+      "encoded_columns": {
+        "detected": 120,
+        "detection_interval": [0.969, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 120,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "encoding_planted": {
+      "categorical_encoding": {
+        "detected": 60,
+        "detection_interval": [0.9398, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 60,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "format_violations_planted": {
+      "format_violations": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "fuzzy_blocked": {
+      "fuzzy_duplicates": {
+        "detected": 10,
+        "detection_interval": [0.7225, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.2775],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 10
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 0.9625,
+            "n": 10
+          }
+        },
+        "plants": 10,
+        "trials": 10,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "fuzzy_look_alikes": {
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_interval": [0.0524, 0.3604],
+        "false_alarm_rate": 0.15,
+        "false_alarm_trials": 3,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "fuzzy_one_edit": {
+      "fuzzy_duplicates": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 20
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 0.9725,
+            "n": 20
+          }
+        },
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "fuzzy_two_edits": {
+      "fuzzy_duplicates": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 20
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 0.9537,
+            "n": 20
+          }
+        },
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "fuzzy_two_sources": {
+      "fuzzy_duplicates": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 20
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 20
+          }
+        },
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "fuzzy_two_sources_unaided": {
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "detection_interval": [0.0, 0.1611],
+        "detection_rate": 0.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 20
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 0.0,
+            "n": 20
+          }
+        },
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "groups_shifted": {
+      "group_differences": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "groups_unequal": {
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_interval": [0.0396, 0.2305],
+        "false_alarm_rate": 0.1,
+        "false_alarm_trials": 4,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "imbalance_none": {
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "imbalance_severe": {
+      "class_imbalance": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "imputation_planted": {
+      "imputation": {
+        "detected": 60,
+        "detection_interval": [0.9398, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 60,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "joint_outliers": {
+      "multivariate_outliers": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "leakage_exact": {
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 80,
+        "detection_interval": [0.9542, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 80,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "leakage_flipped": {
+      "target_leakage": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "leakage_honest": {
+      "mutual_information": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "leakage_indirect": {
+      "target_leakage": {
+        "detected": 60,
+        "detection_interval": [0.9398, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 60,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "leakage_small_sample": {
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_interval": [0.0577, 0.2218],
+        "false_alarm_rate": 0.1167,
+        "false_alarm_trials": 7,
+        "plants": 0,
+        "trials": 60,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.0602],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 60,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "mean_median_gap": {
+      "skewness": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "missing_at_random_noise": {
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "missing_at_random_planted": {
+      "missingness_mechanism": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "missing_completely_wide": {
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.2775],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 10,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "missing_not_at_random_hidden": {
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "missing_not_at_random_proxy": {
+      "missingness_mechanism": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "mixed_types_planted": {
+      "mixed_types": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "noise_large": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 10,
+        "detection_interval": [0.7225, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 10,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 5
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.4345],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 5,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "noise_numeric": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "noise_small": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0524, 0.3604],
+        "false_alarm_rate": 0.15,
+        "false_alarm_trials": 3,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0089, 0.2361],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 1,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0089, 0.2361],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "normality_large": {
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "outliers_planted": {
+      "kurtosis": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "outliers": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "outliers_rare": {
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "outliers": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "pairs_categorical": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 20
+        },
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "pairs_independent": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1135],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 30,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1135],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 30,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "pairs_numeric": {
+      "associations": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_error_one_of_twenty": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_green": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_notice_most": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0615, 0.7923],
+        "false_alarm_rate": 0.3333,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_notice_one_of_twenty": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_notice_three_of_ten": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_warning_most": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0615, 0.7923],
+        "false_alarm_rate": 0.3333,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_warning_one_of_twenty": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_warning_one_of_two": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "rows_distinct": {
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "rules_planted": {
+      "constant_columns": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "high_cardinality": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "near_zero_variance": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "null_rate": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "sample_size_ample": {
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "sample_size_small": {
+      "sample_size": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "schema_planted": {
+      "schema": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "series_gaps": {
+      "temporal_gaps": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "series_regular": {
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "series_shapes": {
+      "autocorrelation": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 37,
+        "detection_interval": [0.8014, 0.9742],
+        "detection_rate": 0.925,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "series_short_noise": {
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_interval": [0.0396, 0.2305],
+        "false_alarm_rate": 0.1,
+        "false_alarm_trials": 4,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_interval": [0.0258, 0.1986],
+        "false_alarm_rate": 0.075,
+        "false_alarm_trials": 3,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.0876],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "series_white_noise": {
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.0876],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.0876],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.0876],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "shapes_planted": {
+      "bimodality": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 20,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 100,
+        "detection_interval": [0.963, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 100,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 40,
+        "detection_interval": [0.9124, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "string_anomalies_planted": {
+      "string_anomalies": {
+        "detected": 80,
+        "detection_interval": [0.9542, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 80,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "transform_planted": {
+      "transformations": {
+        "detected": 80,
+        "detection_interval": [0.9542, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 80,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "transform_spike_20000": {
+      "transformations": {
+        "detected": 59,
+        "detection_interval": [0.9114, 0.9971],
+        "detection_rate": 0.9833,
+        "false_alarm_interval": [0.0089, 0.2361],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 1,
+        "plants": 60,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
+    "transform_spike_5000": {
+      "transformations": {
+        "detected": 59,
+        "detection_interval": [0.9114, 0.9971],
+        "detection_rate": 0.9833,
+        "false_alarm_interval": [0.0089, 0.2361],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 1,
+        "plants": 60,
+        "trials": 20,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    }
+  },
+  "schema": 1
+}

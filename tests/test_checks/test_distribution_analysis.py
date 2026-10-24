@@ -139,6 +139,48 @@ class TestOutliers:
 
         assert by_column(run_core_check(frame, "outliers"))["a|b"]
 
+    def test_the_cutoffs_rise_with_the_number_of_values(self):
+        generator = rng()
+        values = generator.normal(size=30_000)
+        frame = pl.DataFrame(
+            {"long": values, "short": [*values[:30], *[None] * 29_970]}
+        )
+
+        columns = output_of(run_core_check(frame, "outliers"))["columns"]
+        fixed = output_of(run_core_check(frame, "outliers", false_flag_rate=1))[
+            "columns"
+        ]
+
+        short, long = columns["short"], columns["long"]
+        assert 3.0 < short["zscore"]["threshold"] < long["zscore"]["threshold"]
+        assert long["zscore"]["threshold"] > 4.5
+        assert long["iqr"]["multiplier"] > 2.5
+        # Never below the fixed cutoffs, which false_flag_rate=1 uses alone.
+        assert fixed["long"]["zscore"]["threshold"] == 3.0
+        assert fixed["long"]["iqr"]["multiplier"] == 1.5
+
+    def test_clean_normal_columns_of_any_length_are_rarely_flagged(self):
+        generator = rng()
+        frame = pl.DataFrame({f"x{i}": generator.normal(size=5000) for i in range(100)})
+
+        def warned(**params):
+            result = run_core_check(frame, "outliers", **params)
+            return [f for f in result.findings if f.severity is Severity.WARN]
+
+        # About 1 column in 100 is flagged by chance; the fixed cutoffs flag most.
+        assert len(warned()) <= 6
+        assert len(warned(false_flag_rate=1)) > 50
+
+    def test_a_few_values_far_from_a_long_clean_column_are_still_flagged(self):
+        generator = rng()
+        values = generator.normal(size=3000)
+        values[:3] = [7.0, -7.5, 8.0]
+
+        (finding,) = run_core_check(pl.DataFrame({"x": values}), "outliers").findings
+
+        assert finding.severity is Severity.WARN
+        assert finding.evidence.metrics["consensus"] is True
+
     @pytest.mark.parametrize(
         "bad",
         [
@@ -215,12 +257,46 @@ class TestNormality:
         assert run_core_check(frame, "normality").status is CheckStatus.NOT_APPLICABLE
 
     def test_the_alpha_decides_the_verdict(self):
-        lenient = run_core_check(self.frame(), "normality", alpha=0.9999)
+        lenient = run_core_check(
+            self.frame(), "normality", alpha=0.9999, min_deviation=0
+        )
 
         assert "normal" in by_column(lenient)
 
+    def test_a_significant_gap_too_small_to_matter_is_not_reported(self):
+        generator = rng()
+        frame = pl.DataFrame({"almost": generator.standard_t(30, size=50_000)})
+
+        strict = run_core_check(frame, "normality", min_deviation=0)
+        default = run_core_check(frame, "normality")
+
+        column = output_of(default)["columns"]["almost"]
+        assert column["rejected"] is True and column["non_normal"] is False
+        assert column["mean_abs_deviation_in_std"] < 0.05
+        assert default.findings == ()
+        assert [f.code for f in strict.findings] == ["non_normal"]
+
+    def test_a_normal_column_is_rejected_about_alpha_of_the_time(self):
+        generator = rng()
+        frame = pl.DataFrame({f"x{i}": generator.normal(size=400) for i in range(200)})
+
+        rejected = output_of(run_core_check(frame, "normality", min_deviation=0))[
+            "columns"
+        ]
+
+        share = sum(c["rejected"] for c in rejected.values()) / 200
+        # Two tests, each held to alpha / 2, so the pair is not above alpha.
+        assert share <= 0.08
+
     @pytest.mark.parametrize(
-        "bad", [{"alpha": 0}, {"alpha": 1}, {"qq_points": 5}, {"shapiro_max_n": 5}]
+        "bad",
+        [
+            {"alpha": 0},
+            {"alpha": 1},
+            {"qq_points": 5},
+            {"shapiro_max_n": 5},
+            {"min_deviation": -1},
+        ],
     )
     def test_each_parameter_has_bounds(self, bad):
         with pytest.raises(ValidationError):
@@ -383,7 +459,101 @@ class TestMultivariateOutliers:
         output = output_of(result)
         assert (output["rows_used"], output["rows_total"]) == (1000, 3000)
         assert all(0 <= row < 3000 for row in output["example_rows"])
-        assert result.findings[0].evidence.n_used == 1000
+
+    def test_clean_normal_columns_raise_no_finding(self):
+        generator = rng()
+        frame = pl.DataFrame({f"x{i}": generator.normal(size=3000) for i in range(4)})
+
+        result = run_core_check(frame, "multivariate_outliers")
+
+        output = output_of(result)
+        assert result.findings == ()
+        # The forest still ranks the share it was asked to; that is not a finding.
+        assert output["n_flagged"] > 100
+        assert output["far_rows"] == 0
+        assert output["excess"] < 0.03
+
+    def test_rows_that_break_a_correlation_are_far_though_ordinary_in_each_column(
+        self,
+    ):
+        generator = rng()
+        n = 3000
+        x = generator.normal(size=n)
+        y = 0.9 * x + np.sqrt(0.19) * generator.normal(size=n)
+        broken = generator.choice(n, 30, replace=False)
+        x[broken], y[broken] = 1.8, -1.8
+        frame = pl.DataFrame({"x": x, "y": y, "z": generator.normal(size=n)})
+
+        result = run_core_check(frame, "multivariate_outliers")
+
+        output = output_of(result)
+        assert output["far_rows"] == 30
+        assert set(output["example_rows"]) <= set(broken.tolist())
+        (finding,) = result.findings
+        assert finding.confidence.value == "moderate"
+        assert finding.evidence.method == "robust_mahalanobis+isolation_forest"
+        assert not run_core_check(frame, "outliers").findings
+
+    def test_a_far_row_does_not_stretch_the_ruler_that_measures_it(self):
+        generator = rng()
+        frame = pl.DataFrame(
+            {
+                "a": np.r_[generator.normal(size=2000), [9.0, 9.0, 9.0, 9.0]],
+                "b": np.r_[generator.normal(size=2000), [9.0, -9.0, 9.0, -9.0]],
+            }
+        )
+
+        output = output_of(run_core_check(frame, "multivariate_outliers"))
+
+        assert output["far_rows"] == 4
+
+    def test_with_too_few_rows_per_column_no_row_is_called_far(self):
+        generator = rng()
+        frame = pl.DataFrame({f"x{i}": generator.normal(size=60) for i in range(6)})
+        frame = frame.with_columns(
+            pl.when(pl.int_range(60) == 0)
+            .then(30.0)
+            .otherwise(pl.col("x0"))
+            .alias("x0")
+        )
+
+        output = output_of(run_core_check(frame, "multivariate_outliers"))
+
+        assert output["far_rows"] == 0 and output["far_limit"] is None
+
+    def test_a_column_that_repeats_another_costs_no_degree_of_freedom(self):
+        generator = rng()
+        x = generator.normal(size=2000)
+        frame = pl.DataFrame(
+            {"x": x, "copy": x * 3 + 1, "y": generator.normal(size=2000)}
+        )
+
+        result = run_core_check(frame, "multivariate_outliers")
+
+        assert result.status is CheckStatus.OK
+        assert output_of(result)["far_rows"] == 0
+
+    def test_a_column_that_is_mostly_missing_is_not_a_feature(self):
+        generator = rng()
+        n = 2000
+        mostly = generator.normal(5, 1, n)
+        mostly[generator.random(n) < 0.9] = np.nan
+        frame = pl.DataFrame(
+            {
+                "a": generator.normal(size=n),
+                "b": generator.normal(size=n),
+                "mostly_missing": mostly,
+            }
+        )
+
+        result = run_core_check(frame, "multivariate_outliers")
+
+        assert output_of(result)["feature_columns"] == ["a", "b"]
+        assert [n.code for n in result.notes] == ["features_mostly_missing"]
+        # Standing the median in for 90% of a column made the other rows "far".
+        assert result.findings == ()
+        loose = run_core_check(frame, "multivariate_outliers", max_missing_share=1.0)
+        assert output_of(loose)["feature_columns"] == ["a", "b", "mostly_missing"]
 
     def test_the_forest_is_repeatable_with_a_seed(self):
         first = output_of(run_core_check(self.frame(), "multivariate_outliers"))

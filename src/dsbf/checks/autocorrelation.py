@@ -3,6 +3,7 @@
 
 import numpy as np
 from pydantic import Field
+from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.tsa.stattools import acf, pacf
 
 from dsbf.checks.timeseries import (
@@ -41,6 +42,15 @@ class AutocorrelationParams(TimeSeriesParams):
         description="Significance level of the confidence bands: Bartlett's for the "
         "ACF, ±z/√n for the PACF.",
     )
+    omnibus_alpha: float = Field(
+        0.01,
+        gt=0,
+        lt=1,
+        description="Level of the Ljung-Box test over the first lags that a column "
+        "must fail before any one lag is reported. With 20 or 40 lags a lag lies "
+        "outside its band by chance in most white-noise series, so a lag counts "
+        "only in a series that is not white noise as a whole.",
+    )
     max_lags: int = Field(
         40,
         ge=2,
@@ -69,6 +79,12 @@ class ColumnAutocorrelation(SeriesInfo):
         description="Partial autocorrelation at lags 0 to max_lags."
     )
     pacf_band: float = Field(gt=0, description="Half-width of the PACF's band.")
+    ljung_box_p: float = Field(
+        ge=0,
+        le=1,
+        description="Ljung-Box test of no autocorrelation over the first lags: up to "
+        "20, and at most a fifth of the periods.",
+    )
     significant_acf: tuple[int, ...] = Field(
         description="Lags from 1 whose ACF is outside the band."
     )
@@ -76,10 +92,12 @@ class ColumnAutocorrelation(SeriesInfo):
         description="Lags from 1 whose PACF is outside the band."
     )
     flagged_acf: tuple[int, ...] = Field(
-        description="Significant ACF lags with |ACF| of at least `min_abs`."
+        description="Significant ACF lags with |ACF| of at least `min_abs`, in a "
+        "series the Ljung-Box test says is not white noise."
     )
     flagged_pacf: tuple[int, ...] = Field(
-        description="Significant PACF lags with |PACF| of at least `min_abs`."
+        description="Significant PACF lags with |PACF| of at least `min_abs`, in "
+        "such a series."
     )
     strongest_lag: int | None = Field(
         description="The flagged ACF lag with the largest |ACF|; None without one."
@@ -96,7 +114,7 @@ class AutocorrelationOutput(TimeSeriesOutput):
 
 @check(
     id="autocorrelation",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "datetime"),
     dimensions=[Dimension.TEMPORAL],
@@ -147,11 +165,19 @@ def _analyse(
     pacf_band = float((pacf_interval[1:, 1] - values_pacf[1:]).mean())
     significant_acf = _outside(values_acf, acf_band)
     significant_pacf = _outside(values_pacf, np.full(values_pacf.size, pacf_band))
+    # The test's chi-squared reference holds for lags well under n / 5, and it is
+    # not worth a longer reach than 20 lags: a lag beyond that is a season, which
+    # the lag-by-lag band reports.
+    reach = max(1, min(lags, 20, values.size // 5))
+    ljung_box = float(
+        acorr_ljungbox(centred, lags=[reach], return_df=True)["lb_pvalue"].iloc[0]
+    )
+    serial = ljung_box < params.omnibus_alpha
     flagged_acf = tuple(
-        k for k in significant_acf if abs(values_acf[k]) >= params.min_abs
+        k for k in significant_acf if serial and abs(values_acf[k]) >= params.min_abs
     )
     flagged_pacf = tuple(
-        k for k in significant_pacf if abs(values_pacf[k]) >= params.min_abs
+        k for k in significant_pacf if serial and abs(values_pacf[k]) >= params.min_abs
     )
     strongest = max(flagged_acf, key=lambda k: abs(values_acf[k]), default=None)
     return ColumnAutocorrelation(
@@ -161,6 +187,7 @@ def _analyse(
         acf_band=_round(acf_band),
         pacf=_round(values_pacf),
         pacf_band=pacf_band,
+        ljung_box_p=ljung_box,
         significant_acf=significant_acf,
         significant_pacf=significant_pacf,
         flagged_acf=flagged_acf,
@@ -193,6 +220,7 @@ def _report(
         "alpha": params.alpha,
         "min_abs": params.min_abs,
         "maxlag": result.max_lags,
+        "ljung_box_p": result.ljung_box_p,
         "acf_lag1": result.acf[1],
         "pacf_lag1": result.pacf[1],
         "strongest_lag": strongest,

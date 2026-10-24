@@ -8,7 +8,7 @@
   "autocorrelation": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "bimodality": {
    "findings": [],
@@ -119,7 +119,7 @@
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "collinearity": {
    "findings": [],
@@ -167,7 +167,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "dtype_optimizations": {
    "findings": [
@@ -293,7 +293,7 @@
   "encoded_columns": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "entropy": {
    "findings": [],
@@ -308,12 +308,12 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "group_differences": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "high_cardinality": {
    "findings": [],
@@ -588,13 +588,11 @@
       "level": "red"
      },
      "transformations": {
-      "action_columns": [
-       "income"
-      ],
+      "action_columns": [],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 6,
-      "level": "amber"
+      "findings": 3,
+      "level": "green"
      },
      "unusable": {
       "action_columns": [],
@@ -610,57 +608,14 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
-   "findings": [
-    {
-     "check": "multivariate_outliers",
-     "code": "multivariate_anomalies",
-     "id": "f6afd15b1805ac86",
-     "metrics": {
-      "contamination": 0.05,
-      "example_rows": [
-       1344,
-       1758,
-       1901,
-       302,
-       534,
-       1582,
-       1553,
-       1842,
-       258,
-       1862,
-       1857,
-       432,
-       600,
-       1896,
-       1831,
-       453,
-       794,
-       1782,
-       224,
-       404
-      ],
-      "max_anomaly_score": 0.7014,
-      "n_features": 3,
-      "n_flagged": 100
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age",
-       "income",
-       "premium_score"
-      ],
-      "kind": "row_set"
-     }
-    }
-   ],
-   "status": "ok",
-   "version": "1.0.0"
+   "findings": [],
+   "status": "not_applicable",
+   "version": "1.1.0"
   },
   "mutual_information": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "near_zero_variance": {
    "findings": [],
@@ -696,30 +651,6 @@
     {
      "check": "normality",
      "code": "non_normal",
-     "id": "3f8a5993eea90f63",
-     "metrics": {
-      "alpha": 0.05,
-      "jarque_bera_p_value": 0.0402364,
-      "jarque_bera_statistic": 6.42597,
-      "mean_abs_deviation_in_std": 0.0301224,
-      "min": 15000.0,
-      "primary_p_value": 0.00341901,
-      "primary_statistic": 0.996807,
-      "primary_test": "shapiro_wilk",
-      "qq_pattern": "heavy_tails",
-      "skewness": 0.0201723
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "income"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "normality",
-     "code": "non_normal",
      "id": "8954c0aa31333a11",
      "metrics": {
       "alpha": 0.05,
@@ -743,7 +674,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "null_rate": {
    "findings": [
@@ -903,68 +834,9 @@
    "version": "1.0.0"
   },
   "outliers": {
-   "findings": [
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "f563e593a6d0fbaf",
-     "metrics": {
-      "consensus": false,
-      "iqr_count": 2,
-      "lower_fence": 29.0,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr"
-      ],
-      "outlier_share": 0.00108167,
-      "top_values": [
-       62.0,
-       28.0
-      ],
-      "upper_fence": 61.0,
-      "zscore_count": 0
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "1ce2b99b8b30ba5a",
-     "metrics": {
-      "consensus": true,
-      "iqr_count": 3,
-      "lower_fence": 4599.94,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr",
-       "zscore"
-      ],
-      "outlier_share": 0.00198939,
-      "top_values": [
-       122168.0,
-       119903.0,
-       118556.0
-      ],
-      "upper_fence": 117362.0,
-      "zscore_count": 1
-     },
-     "severity": "warn",
-     "subject": {
-      "columns": [
-       "income"
-      ],
-      "kind": "column"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "quality_dimensions": {
    "findings": [],
@@ -1012,12 +884,12 @@
     }
    },
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "sample_size": {
    "findings": [],
@@ -1032,27 +904,27 @@
   "seasonal_decomposition": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "skewness": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "string_anomalies": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "target_leakage": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "temporal_gaps": {
    "findings": [],
@@ -1067,7 +939,7 @@
   "transformations": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.1"
+   "version": "1.1.0"
   },
   "zeros": {
    "findings": [],

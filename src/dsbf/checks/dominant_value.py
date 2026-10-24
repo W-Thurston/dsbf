@@ -23,6 +23,7 @@ from dsbf.model import (
     Severity,
     Subject,
 )
+from dsbf.profiling.values import MAX_TOP_VALUE_CHARS
 
 
 class DominantValueParams(CheckParams):
@@ -64,8 +65,9 @@ def most_frequent(
 ) -> tuple[str, int] | None:
     """The most frequent value and its count, or None if the profile lacks it.
 
-    A categorical column keeps no top value when its values are too long to list,
-    so it is skipped, not read as having no dominant value.
+    A categorical column lists no value longer than ``MAX_TOP_VALUE_CHARS``, but it
+    does record how many rows its most frequent value holds, so the mode is read from
+    that count even when it cannot be named.
     """
     if isinstance(column, BooleanProfile):
         if column.true_count == column.false_count == 0:
@@ -73,15 +75,20 @@ def most_frequent(
         if column.true_count >= column.false_count:
             return "True", column.true_count
         return "False", column.false_count
-    if not column.top_values:
+    first = column.top_values[0] if column.top_values else None
+    mode = column.mode_count
+    if first is not None and (mode is None or first.count >= mode):
+        return str(first.value), first.count
+    if mode is None:
         return None
-    first = column.top_values[0]
-    return str(first.value), first.count
+    # The most frequent value is a string too long to list (an unlisted value can
+    # outrank every listed one), so it has a count but no name.
+    return f"(a value of over {MAX_TOP_VALUE_CHARS} characters)", mode
 
 
 @check(
     id="dominant_value",
-    version="1.0.0",
+    version="1.1.0",
     kind="rule",
     applies_to=SemanticTypes("categorical", "boolean"),
     dimensions=[Dimension.DISTRIBUTION],

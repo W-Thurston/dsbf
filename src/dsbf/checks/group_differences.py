@@ -56,6 +56,14 @@ class GroupDifferencesParams(CheckParams):
         description="Adjustment of the p-values for the number of pairs tested, "
         "separately for each method. `fdr_bh` controls the false discovery rate.",
     )
+    equal_variances: bool = Field(
+        False,
+        description="Take the p-values from the classic ANOVA F and the "
+        "Kruskal–Wallis H, which assume the groups have the same spread. Off, they "
+        "come from Welch's ANOVA on the values and on their ranks, which do not: with "
+        "groups of unequal size and spread, the classic tests call equal groups "
+        "different half the time (5% is the promise).",
+    )
     min_effect: float = Field(
         0.01,
         ge=0,
@@ -128,7 +136,8 @@ class PairComparison(Contract):
     smallest_group: int = Field(ge=1)
     largest_group: int = Field(ge=1)
     f_statistic: float | None = Field(
-        description="None when the groups have no spread within them."
+        description="Welch's F, or the classic F with `equal_variances`; None when "
+        "the groups have no spread within them."
     )
     anova_p: float = Field(ge=0, le=1)
     anova_p_adjusted: float = Field(ge=0, le=1)
@@ -140,7 +149,11 @@ class PairComparison(Contract):
     )
     eta_squared: float = Field(ge=0, le=1, description="The uncorrected share.")
     h_statistic: float = Field(ge=0, description="Kruskal–Wallis H, tie-corrected.")
-    kruskal_p: float = Field(ge=0, le=1)
+    kruskal_p: float = Field(
+        ge=0,
+        le=1,
+        description="From Welch's ANOVA on the ranks (H with `equal_variances`).",
+    )
     kruskal_p_adjusted: float = Field(ge=0, le=1)
     epsilon_squared: float = Field(
         ge=0, le=1, description="H / (n - 1): the effect size of the rank test."
@@ -208,7 +221,7 @@ class _Numeric:
 
 @check(
     id="group_differences",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "categorical", "boolean"),
     dimensions=[Dimension.RELATIONSHIP],
@@ -394,8 +407,11 @@ def _compare(
         data.counts, means[None, :], np.array([[ssw]]), np.array([ssb])
     )
     if ssw > _SPREAD_FLOOR * (ssb + ssw):
-        f_stat = (ssb / (k - 1)) / (ssw / (n - k))
-        anova_p = float(f_distribution.sf(f_stat, k - 1, n - k))
+        if params.equal_variances:
+            f_stat = (ssb / (k - 1)) / (ssw / (n - k))
+            anova_p = float(f_distribution.sf(f_stat, k - 1, n - k))
+        else:
+            f_stat, anova_p = _welch(data.counts, means, data.x, data.g)
         f_value: float | None = float(f_stat) if np.isfinite(f_stat) else None
     else:
         f_value, anova_p = None, 0.0
@@ -408,7 +424,10 @@ def _compare(
     ssb_ranks = float(np.sum(data.counts * (rank_means - data.ranks.mean()) ** 2))
     epsilon = float(np.clip(ssb_ranks / sst_ranks, 0.0, 1.0))
     h_stat = epsilon * (n - 1)
-    kruskal_p = float(chi2.sf(h_stat, k - 1))
+    if params.equal_variances:
+        kruskal_p = float(chi2.sf(h_stat, k - 1))
+    else:
+        kruskal_p = _welch(data.counts, rank_means, data.ranks, data.g)[1]
 
     spreads = np.sqrt(
         np.bincount(data.g, weights=deviations**2, minlength=k) / (data.counts - 1)
@@ -441,6 +460,33 @@ def _compare(
         contrasts=[],
         contrasts_skipped=False,
     )
+
+
+def _welch(
+    counts: np.ndarray, means: np.ndarray, values: np.ndarray, group: np.ndarray
+) -> tuple[float, float]:
+    """Welch's heteroscedastic ANOVA: its F and p-value.
+
+    Each group is weighted by its size over its variance, so a small group with a wide
+    spread cannot swing the result the way it does the classic F. A group with no
+    spread takes a variance a billionth of the pooled one, so it still weighs most.
+    """
+    k = counts.size
+    deviation = values - means[group]
+    variances = np.bincount(group, weights=deviation**2, minlength=k) / (counts - 1)
+    pooled = float(np.sum(deviation**2)) / max(1.0, float(counts.sum() - k))
+    if pooled <= 0:
+        # No group has any spread: whatever differs between them differs for certain.
+        return float("inf"), 0.0
+    variances = np.maximum(variances, pooled * 1e-9)
+    weight = counts / variances
+    total = float(weight.sum())
+    centre = float((weight * means).sum() / total)
+    tail = float(np.sum((1 - weight / total) ** 2 / (counts - 1)))
+    numerator = float(np.sum(weight * (means - centre) ** 2)) / (k - 1)
+    f_stat = numerator / (1 + 2 * (k - 2) / (k**2 - 1) * tail)
+    df2 = (k**2 - 1) / (3 * tail)
+    return f_stat, float(f_distribution.sf(f_stat, k - 1, df2))
 
 
 def _anova_effect(
@@ -635,10 +681,12 @@ def _report(
         else ""
     )
     first, second = pair.numeric, pair.categorical
-    tests = " and ".join(
-        {"anova": "ANOVA", "kruskal": "the Kruskal–Wallis test"}[m]
-        for m in pair.flagged_by
+    names = (
+        {"anova": "ANOVA", "kruskal": "the Kruskal–Wallis test"}
+        if params.equal_variances
+        else {"anova": "Welch's ANOVA", "kruskal": "Welch's ANOVA on the ranks"}
     )
+    tests = " and ".join(names[m] for m in pair.flagged_by)
     disagreement = (
         " The rank test finds no difference, so the means differ without the "
         "typical value moving, which is often a few extreme values."
@@ -652,7 +700,10 @@ def _report(
         " The groups' spreads differ by more than a factor of "
         f"{_SD_RATIO_LIMIT:g}, which ANOVA assumes they do not; trust the rank "
         "test."
-        if pair.sd_ratio is not None and pair.sd_ratio > _SD_RATIO_LIMIT and anova
+        if params.equal_variances
+        and pair.sd_ratio is not None
+        and pair.sd_ratio > _SD_RATIO_LIMIT
+        and anova
         else ""
     )
     scan = (

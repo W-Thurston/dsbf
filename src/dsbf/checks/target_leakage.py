@@ -85,11 +85,13 @@ class TargetLeakageParams(CheckParams):
         "compared with it.",
     )
     warn_at: float = Field(
-        0.95,
+        0.93,
         gt=0,
         le=1,
         description="Association with the target from which a feature is reported "
-        "as a possible leak.",
+        "as a possible leak. A feature that gets 3 labels in 100 wrong is at 0.94, "
+        "one that gets 5 in 100 wrong at 0.90, and an honest feature seldom gets "
+        "within 10.",
     )
     error_at: float = Field(
         0.99,
@@ -269,7 +271,7 @@ def _later_share(
 
 @check(
     id="target_leakage",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes(),
     dimensions=[Dimension.LEAKAGE],

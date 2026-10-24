@@ -11,7 +11,7 @@ from dsbf.config import load_default_config
 from dsbf.eda.profile_engine import ProfileEngine
 
 # Exactly one of these tiers per test; slow and network are optional modifiers.
-PRIMARY_TIERS = ("unit", "integration", "golden", "perf")
+PRIMARY_TIERS = ("unit", "integration", "golden", "perf", "calibration")
 
 # Runtime state the suite must never share with a developer's own runs. Each
 # variable is forced for the whole session, whatever the caller exported.
@@ -38,6 +38,18 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         action="store_true",
         default=False,
         help="Merge the measured scenarios into tests/perf/baseline.json.",
+    )
+    parser.addoption(
+        "--calibration-results",
+        default="calibration-results/calibration.json",
+        help="Where `-m calibration` writes its results JSON (from the invocation "
+        "directory).",
+    )
+    parser.addoption(
+        "--update-calibration-baseline",
+        action="store_true",
+        default=False,
+        help="Merge the measured rates into tests/calibration/baseline.json.",
     )
     parser.addoption(
         "--perf-no-compare",

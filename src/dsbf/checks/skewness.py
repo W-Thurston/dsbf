@@ -39,15 +39,19 @@ class SkewnessParams(CheckParams):
         2.0, gt=0, description="Absolute skewness above which the skew is called heavy."
     )
     gap_notice: float = Field(
-        0.5,
+        0.35,
         gt=0,
         description="Distance between the mean and the median, in standard "
-        "deviations, from which the gap is reported.",
+        "deviations, from which the gap is reported. A long tail alone puts them "
+        "up to about a third apart (an exponential, 0.31); a mix of two groups or "
+        "a column that is mostly zero goes beyond that.",
     )
     gap_warn: float = Field(
-        1.0,
+        0.45,
         gt=0,
-        description="Gap, in standard deviations, from which the finding is a warning.",
+        description="Gap, in standard deviations, from which the finding is a "
+        "warning. The two can be at most 1 apart; a column that is 55% zero and "
+        "exponential beyond that has a gap of 0.55, and one that is 70% zero 0.42.",
     )
     gap_min_variance: float = Field(
         1e-4,
@@ -96,7 +100,7 @@ def _level(size: float, params: SkewnessParams) -> Level:
 
 @check(
     id="skewness",
-    version="1.0.0",
+    version="1.1.0",
     kind="rule",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],

@@ -54,7 +54,16 @@ class NormalityParams(CheckParams):
         0.05,
         gt=0,
         lt=1,
-        description="Significance level at which normality is rejected.",
+        description="Chance that a normal column is rejected. Two tests are run, so "
+        "each is held to half of it.",
+    )
+    min_deviation: float = Field(
+        0.05,
+        ge=0,
+        description="Average distance of the column's quantiles from a normal's, in "
+        "standard deviations, below which a rejection is not reported. At thousands "
+        "of rows the tests reject deviations too small to matter: a t distribution "
+        "with 30 degrees of freedom is 0.02 away, a gamma with skew 0.3 is 0.05.",
     )
     min_n: int = Field(
         8, ge=4, description="Finite values a column needs to be tested."
@@ -79,7 +88,7 @@ class NormalityTest(Contract):
     test: Literal["shapiro_wilk", "ks_fitted_normal", "jarque_bera"]
     statistic: float
     p_value: float = Field(ge=0, le=1)
-    rejects: bool = Field(description="p is below `alpha`.")
+    rejects: bool = Field(description="p is below its share of `alpha`.")
 
 
 class QQData(Contract):
@@ -117,7 +126,13 @@ class ColumnNormality(Contract):
         "above it."
     )
     jarque_bera: NormalityTest
-    non_normal: bool = Field(description="Either test rejects normality.")
+    rejected: bool = Field(description="Either test rejects normality.")
+    mean_abs_deviation_in_std: float = Field(
+        ge=0, description="Average Q-Q gap from a normal, in standard deviations."
+    )
+    non_normal: bool = Field(
+        description="A test rejects normality and the gap is at least `min_deviation`."
+    )
     qq: QQData | None = Field(
         description="None for a column that passes, unless `qq_all_columns` is set."
     )
@@ -132,7 +147,7 @@ class NormalityOutput(CheckOutputModel):
 
 @check(
     id="normality",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -181,31 +196,33 @@ def _test(values: np.ndarray, params: NormalityParams) -> ColumnNormality | None
         std = float(np.std(values, ddof=1))
     if not (np.isfinite(mean) and np.isfinite(std) and std > 0):
         return None
+    level = params.alpha / 2
     if n <= params.shapiro_max_n:
         statistic, p_value = stats.shapiro(values)
-        primary = _result("shapiro_wilk", statistic, p_value, params.alpha)
+        primary = _result("shapiro_wilk", statistic, p_value, level)
     else:
         # The sample's own mean and std set the normal, so the p-value is
         # conservative (no Lilliefors correction). Standardising first keeps scipy
         # off the `args=` form of `kstest`, which 1.18 breaks.
         statistic, p_value = stats.kstest((values - mean) / std, "norm")[:2]
-        primary = _result("ks_fitted_normal", statistic, p_value, params.alpha)
+        primary = _result("ks_fitted_normal", statistic, p_value, level)
     statistic, p_value = stats.jarque_bera(values)
-    jarque_bera = _result("jarque_bera", statistic, p_value, params.alpha)
+    jarque_bera = _result("jarque_bera", statistic, p_value, level)
     if primary is None or jarque_bera is None:
         return None
-    non_normal = primary.rejects or jarque_bera.rejects
-    qq = None
-    if non_normal or params.qq_all_columns:
-        qq = _qq(values, mean, std, params.qq_points)
-        if qq is None:
-            return None
+    rejected = primary.rejects or jarque_bera.rejects
+    qq = _qq(values, mean, std, params.qq_points)
+    if qq is None:
+        return None
+    non_normal = rejected and qq.mean_abs_deviation_in_std >= params.min_deviation
     return ColumnNormality(
         n_used=n,
         primary=primary,
         jarque_bera=jarque_bera,
+        rejected=rejected,
+        mean_abs_deviation_in_std=qq.mean_abs_deviation_in_std,
         non_normal=non_normal,
-        qq=qq,
+        qq=qq if non_normal or params.qq_all_columns else None,
     )
 
 
@@ -314,9 +331,9 @@ def _report(
             f"{name!r} (n={result.n_used:,}) rejects normality at α={params.alpha:g}: "
             f"{tests}. On its Q-Q plot {_PATTERN_TEXT[qq.pattern]}, with an average "
             f"gap of {qq.mean_abs_deviation_in_std:.2f} standard deviations from a "
-            "normal's quantiles. With many values a test rejects deviations too "
-            "small to matter, so judge the size from that gap. Models that assume "
-            "normal inputs or residuals are affected; tree-based models are not."
+            f"normal's quantiles, at least the {params.min_deviation:g} below which "
+            "a rejection is too small to report. Models that assume normal inputs or "
+            "residuals are affected; tree-based models are not."
         ),
         evidence=Evidence(
             metrics=metrics,  # type: ignore[arg-type]

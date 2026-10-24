@@ -288,32 +288,37 @@ The built-in `core` group is loaded from `src/dsbf/custom_plugins/core`. `src/ds
 
 ---
 
-## Validation suite
+## Validation and calibration
 
-DSBF ships with a purpose-built validation suite covering eight dataset archetypes:
+DSBF ships with two suites that check its checks against data whose truth is known.
+
+The **validation suite** (`tests/validation/`) profiles eight dataset archetypes in memory
+and states what the core checks must say about each:
 
 | Dataset | Purpose |
 |---|---|
-| `clean` | Baseline — all tasks succeed, no false positives |
+| `clean` | Baseline — no warning anywhere, every quality dimension green |
 | `tiny` | 25-row graceful degradation, low-N reliability warnings |
-| `near_clean` | Calibration — mild issues detected correctly |
-| `all_categorical` | Zero continuous columns — continuous tasks degrade cleanly |
+| `near_clean` | Mild issues detected, and the dataset lands at amber, not red |
+| `all_categorical` | Zero numeric columns — numeric checks step aside with a reason |
 | `high_missingness` | Structured MAR patterns, extreme null rates |
 | `severe_multicollinearity` | Four VIF failure modes including scale-mismatch regression test |
-| `single_column` | Pair-based tasks degrade gracefully with one column |
-| `wide` | 100-column scale — column browser, heatmap, pairwise associations |
+| `single_column` | Pair-based checks degrade gracefully with one column |
+| `wide` | 100-column scale — every column reported, none truncated |
 
 ```bash
-# Generate the datasets into tests/datasets/ (all of them, or --only near_clean ...)
-uv run python tests/generators/dsbf_test_dataset_generator.py --only near_clean
-
-# Profile one, then validate its report (pass the report path printed by the run)
-uv run dsbf profile tests/datasets/near_clean.csv --name near_clean
-uv run python tests/validation/run_validation.py --datasets near_clean \
-    --skip-generate --report "$DSBF_HOME/outputs/<timestamp>/report.json"
+uv run pytest tests/validation
 ```
 
-Without `--report`, the script picks the most recently written report under `dsbf/outputs/` (a location DSBF no longer writes to), which may belong to a different dataset.
+The **calibration suite** (`tests/calibration/`) generates frames with a planted flaw (or
+none) from a seed and measures, per check and per version, how often it finds the flaw
+and how often it raises an alarm nobody planted. The rates are committed in
+`tests/calibration/baseline.json` and compared nightly in CI.
+
+```bash
+uv run pytest -m calibration                 # all scenarios, against the baseline
+uv run pytest -m calibration -k leakage      # the leakage scenarios
+```
 
 ---
 

@@ -14,7 +14,7 @@ import pytest
 from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
 from tests.golden.migration.findings import unmapped_titles
 from tests.golden.migration.harness import compare, judge
-from tests.golden.migration.registry import ACCEPTED, COMPARATORS
+from tests.golden.migration.registry import ACCEPTED, ACCEPTED_KINDS, COMPARATORS
 
 pytestmark = pytest.mark.golden
 
@@ -48,7 +48,7 @@ def test_reference_drift_differs_from_its_tasks_only_where_accepted(
                     task, legacy["result"].get("guidance") or {}
                 )
             ]
-        verdict = judge(task, key, found, ACCEPTED)
+        verdict = judge(task, key, found, ACCEPTED, ACCEPTED_KINDS)
         problems += [
             f"+ {task}: {d.describe()}  (add to accepted_reference_drift.py: "
             f"Accepted({task!r}, {key!r}, {d.subject!r}, {d.kind!r}, "

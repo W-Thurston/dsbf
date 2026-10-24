@@ -1053,6 +1053,17 @@ stationarity_difference:
     it again; if a deterministic trend explains the drift, subtract the trend
     instead.
 
+stationarity_trend_stationary_detrend:
+  condition: {field: assessment, op: "==", value: consistent_with_trend_stationary}
+  checks: [stationarity]
+  codes: [trend_stationary]
+  action: transform
+  method: detrend
+  message: >
+    Subtract the fitted trend, or give the model a time term, instead of
+    differencing: the series has no unit root, so differencing would only add noise.
+    Keep the time order in any split.
+
 stationarity_ambiguous_detrend:
   condition:
     {field: assessment, op: "==", value: ambiguous_trend_stationary_or_structural_break}
