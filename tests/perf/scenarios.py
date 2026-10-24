@@ -56,7 +56,8 @@ class EngineScenario:
     on the same data show what the parallel executor buys, so the pair is the
     measurement. ``depth`` is the plan's
     depth: ``deep`` runs every check, ``standard`` is what ``dsbf.profile()`` runs
-    when no depth is given.
+    when no depth is given. ``packs`` is the call's packs: ``None`` is the default
+    selection, and ``LEGACY_TOO`` keeps the legacy tasks in the plan.
     """
 
     name: str
@@ -65,6 +66,7 @@ class EngineScenario:
     time_series_column: str | None = None
     repeats: int = 1
     depth: str = "deep"
+    packs: tuple[str, ...] | None = None
 
 
 def _adversarial(directory: Path) -> Path:
@@ -121,25 +123,42 @@ PROFILE_SCENARIOS = [
 ]
 
 
+# The legacy tasks beside the core pack, until the legacy engine is deleted: the default
+# selection no longer holds them, and the `engine-*` pairs measure what the executor
+# does for them.
+LEGACY_TOO = ("core", "legacy")
+
 # The full legacy task set through ``dsbf.profile(depth="deep")``, serial and parallel,
 # then the default selection at the standard depth, which the Phase 4 budgets in
 # ``compare.ENGINE_BUDGETS`` are about.
 ENGINE_SCENARIOS = [
-    EngineScenario("engine-titanic-serial", TITANIC.write_csv, workers=1, repeats=3),
     EngineScenario(
-        "engine-titanic-parallel", TITANIC.write_csv, workers=PER_CORE, repeats=3
+        "engine-titanic-serial",
+        TITANIC.write_csv,
+        workers=1,
+        repeats=3,
+        packs=LEGACY_TOO,
+    ),
+    EngineScenario(
+        "engine-titanic-parallel",
+        TITANIC.write_csv,
+        workers=PER_CORE,
+        repeats=3,
+        packs=LEGACY_TOO,
     ),
     EngineScenario(
         "engine-kitchen5k-serial",
         KITCHEN5K.write_csv,
         workers=1,
         time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+        packs=LEGACY_TOO,
     ),
     EngineScenario(
         "engine-kitchen5k-parallel",
         KITCHEN5K.write_csv,
         workers=PER_CORE,
         time_series_column=KITCHEN_TIME_SERIES_COLUMN,
+        packs=LEGACY_TOO,
     ),
     EngineScenario(
         "standard-titanic",

@@ -582,6 +582,67 @@
    "status": "not_applicable",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [
+       "sparse_c"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 3,
+      "level": "red"
+     },
+     "transformations": {
+      "action_columns": [
+       "base",
+       "click_rate",
+       "combo",
+       "copy_a",
+       "copy_b",
+       "factor_x",
+       "factor_y",
+       "factor_z",
+       "revenue",
+       "signal",
+       "sparse_c"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 23,
+      "level": "amber"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     }
+    },
+    "gate": "not_ready"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -1320,6 +1381,58 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [
+      "sparse_c"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 1,
+     "level": "red"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [
+      "base",
+      "combo",
+      "copy_a",
+      "copy_b",
+      "factor_x",
+      "factor_y",
+      "factor_z"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 8,
+     "level": "red"
+    },
+    "usability": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 0,
+     "level": "green"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -1382,7 +1495,7 @@
   }
  },
  "dataset": "severe_multicollinearity",
- "format": 1,
+ "format": 2,
  "shape": [
   2000,
   11

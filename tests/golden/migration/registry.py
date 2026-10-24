@@ -14,6 +14,7 @@ from tests.golden.migration.accepted_missingness_strings import (
 )
 from tests.golden.migration.accepted_ml_prep import ACCEPTED_ML_PREP
 from tests.golden.migration.accepted_reference_drift import ACCEPTED_REFERENCE_DRIFT
+from tests.golden.migration.accepted_synthesis import ACCEPTED_SYNTHESIS
 from tests.golden.migration.accepted_target_aware import ACCEPTED_TARGET_AWARE
 from tests.golden.migration.accepted_time_series import ACCEPTED_TIME_SERIES
 from tests.golden.migration.analysis import (
@@ -73,6 +74,10 @@ from tests.golden.migration.reference_drift import (
     compare_detect_feature_drift,
     compare_detect_target_drift,
 )
+from tests.golden.migration.synthesis import (
+    compare_data_quality_scorer,
+    compare_ml_readiness_scorer,
+)
 from tests.golden.migration.target_aware import compare_mutual_information
 from tests.golden.migration.time_series import (
     compare_autocorrelation,
@@ -93,6 +98,7 @@ ACCEPTED = (
     *ACCEPTED_ML_PREP,
     *ACCEPTED_MISSINGNESS_STRINGS,
     *ACCEPTED_REFERENCE_DRIFT,
+    *ACCEPTED_SYNTHESIS,
     *ACCEPTED_TARGET_AWARE,
     *ACCEPTED_TIME_SERIES,
 )
@@ -155,6 +161,8 @@ COMPARATORS: dict[str, Comparator] = {
     "transformation_preview": compare_transformations,
     "imputation_strategy_suggestions": compare_imputation,
     "compute_mutual_information": compare_mutual_information,
+    "data_quality_scorer": compare_data_quality_scorer,
+    "ml_readiness_scorer": compare_ml_readiness_scorer,
 }
 
 __all__ = ["ACCEPTED", "COMPARATORS", "PARTIAL_COVERAGE", "Accepted"]

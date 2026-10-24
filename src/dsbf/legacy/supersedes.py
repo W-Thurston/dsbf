@@ -65,6 +65,8 @@ SUPERSEDED_BY: Mapping[str, tuple[str, ...]] = {
     "transformation_preview": ("transformations",),
     "imputation_strategy_suggestions": ("imputation",),
     "compute_mutual_information": ("mutual_information",),
+    "data_quality_scorer": ("quality_dimensions",),
+    "ml_readiness_scorer": ("ml_readiness",),
 }
 
 # Tasks that restate the profile and raise no finding of their own. No check replaces

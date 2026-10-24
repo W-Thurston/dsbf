@@ -252,6 +252,9 @@ LEGACY_FINDING_CODES: dict[str, tuple[tuple[str, str | None], ...]] = {
         (r"^Mutual Information with ", "informative_feature"),
         (r"^Feature Signal: ", "informative_feature"),
     ),
+    # The scorers raise no finding of their own; the core checks are reports.
+    "data_quality_scorer": (),
+    "ml_readiness_scorer": (),
 }
 
 

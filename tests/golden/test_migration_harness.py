@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
+from dsbf.checks import core_pack
 from dsbf.legacy import SUPERSEDED_BY
 from tests.golden.datasets import GOLDEN_DATASETS
 from tests.golden.migration.column_health import (
@@ -222,6 +225,46 @@ class TestTheCoreSnapshot:
         assert render_snapshot(core_snapshot("demo", self.RUN)) == render_snapshot(
             core_snapshot("demo", self.RUN)
         )
+
+    def test_a_report_only_check_keeps_its_levels_and_flagged_columns(self):
+        dimension = {
+            "assessed": True,
+            "level": "amber",
+            "coverage": 0.5,
+            "affected_columns": ["y", "x"],
+            "findings": [{"id": "f"}],
+            "inputs": [{"check_id": "volatile prose"}],
+        }
+        run = {
+            **self.RUN,
+            "results": {
+                "quality_dimensions": {
+                    "check_version": "1.0.0",
+                    "status": "ok",
+                    "findings": [],
+                    "output": {"dimensions": {"validity": dimension}},
+                }
+            },
+        }
+
+        kept = core_snapshot("demo", run)["checks"]["quality_dimensions"]["output"]
+
+        assert kept == {
+            "validity": {
+                "assessed": True,
+                "level": "amber",
+                "coverage": 0.5,
+                "affected_columns": ["x", "y"],
+                "findings": 1,
+            }
+        }
+
+    def test_every_committed_core_snapshot_covers_every_core_check(self):
+        wanted = {check.id for check in core_pack().checks}
+
+        for dataset in GOLDEN_DATASETS:
+            snapshot = json.loads(dataset.core_snapshot_path.read_text())
+            assert set(snapshot["checks"]) == wanted, dataset.name
 
 
 class TestTheColumnHealthComparators:

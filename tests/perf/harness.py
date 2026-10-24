@@ -109,6 +109,8 @@ def run_engine_once(scenario: EngineScenario, workdir: Path) -> dict[str, Any]:
     ]
     if scenario.time_series_column:
         command += ["--time-index", scenario.time_series_column]
+    if scenario.packs:
+        command += ["--packs", ",".join(scenario.packs)]
     return _run_child(command, workdir, name=scenario.name)
 
 

@@ -39,7 +39,7 @@ class TestProfileConfig:
     def test_the_defaults(self):
         config = ProfileConfig()
 
-        assert config.packs == DEFAULT_PACKS == ("core", "legacy")
+        assert config.packs == DEFAULT_PACKS == ("core",)
         assert config.depth is Depth.STANDARD
         assert config.backend is Backend.PANDAS
         assert config.sample is None

@@ -30,9 +30,9 @@ Unit IDs refer to [`ROADMAP.md`](../ROADMAP.md); finished units are listed with 
 | Status | Findings |
 |---|---|
 | Resolved | F-01, F-02, F-03, F-04, F-05, F-14, F-16, F-17, F-19, F-21, F-27, F-33 |
-| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-34, F-35, F-36, F-37, F-39 |
+| Resolved in the new engine, profile, data layer or contracts (legacy copy deleted in U4-18) | F-06, F-08, F-09, F-18, F-23, F-24, F-26, F-34, F-35, F-36, F-37, F-39 |
 | Mostly resolved or partial | F-07, F-10 (U4-18), F-11 (U4-08 to U4-15), F-12, F-15, F-20, F-22, F-28, F-29, F-30, F-31, F-32 |
-| Open, owned by Phase 4 | F-26 (U4-15), F-38 (U4-18) |
+| Open, owned by Phase 4 | F-38 (U4-18) |
 | Open, resolved by deleting API v1 (U4-18) and replacing it in Phase 6 | F-25 |
 
 ---
@@ -270,7 +270,7 @@ reports `version="0.1.0"` (`dsbf/api/main.py:45`).
 - [ ] Emit `status="skipped"` results with the blocking dependency, persist the full TaskResult (one JSON column or extra columns plus a schema migration), and add a "Run health" panel in the dashboard listing failed and skipped tasks with reasons.
 
 ### F-21 Ordering relies on implicit DAG levels
-**Status (2026-10-19): Resolved.** Soft `after` edges (U3-03 #90). The adapter gives the three tasks that read undeclared results `after` edges, and a test scans the task sources for new ones (U3-10 #97).
+**Status (2026-10-23): Resolved.** Soft `after` edges (U3-03 #90). The adapter gives the three tasks that read undeclared results `after` edges, and a test scans the task sources for new ones (U3-10 #97). The scorers that motivated the finding are now `quality_dimensions` and `ml_readiness` (U4-15), which name every input in `after`: a check that failed, was not planned or needs a setting the caller did not give lowers the dimension's coverage and never skips the report, and the old scorers leave the default selection.
 
 `data_quality_scorer` deliberately leaves `detect_collinear_features` and `detect_out_of_bounds`
 out of `depends_on` (`data_quality_scorer.py:127`) so their failures don't skip the scorer. It
@@ -316,13 +316,13 @@ RSS is process-wide and rarely shrinks. It also mixes units (`/1e6` vs `* 1024`)
 - [ ] `frontend/src/api.js`: `getDataset`, `listRuns` and `getTask` don't `encodeURIComponent` their path params, so names containing spaces, `/` or `#` break routing.
 
 ### F-26 "Leakage" is mislabeled
-**Status (2026-10-22): Partial.** The feature–feature check is now Redundancy: `associations` (U4-07) raises `redundant_columns` (warning, redundancy dimension) for |Pearson r| ≥ 0.99 and says it is no statement about a target. The target-based check is `target_leakage` (U4-14): it measures every feature against the target by type pair, finds identifiers built from the outcome, missingness that follows it and datetimes later than the time index, and is `not_applicable` with a note without a target. The quality dimensions show Leakage as not assessed without a target in U4-15.
+**Status (2026-10-23): Resolved in the new engine (legacy copy deleted in U4-18).** The feature–feature check is now Redundancy: `associations` (U4-07) raises `redundant_columns` (warning, redundancy dimension) for |Pearson r| ≥ 0.99 and says it is no statement about a target. The target-based check is `target_leakage` (U4-14): it measures every feature against the target by type pair, finds identifiers built from the outcome, missingness that follows it and datetimes later than the time index, and is `not_applicable` with a note without a target. `quality_dimensions` and `ml_readiness` (U4-15) read only `target_leakage` for Leakage, and report the dimension as `not assessed`, with no level, when it could not run.
 
 The Leakage dimension is driven by `detect_data_leakage`, which flags *feature–feature* pairs with
 |r| ≥ 0.99. That's redundancy or duplication. Target leakage means a feature encodes information
 about the target that wouldn't be available at prediction time, and detecting it requires a target.
 Calling feature collinearity "leakage" conflicts with the hedged-language principle.
-- [ ] Fold the current check into Redundancy. Redefine Leakage around a configured `target_column` (near-perfect feature→target association, post-event timestamps, target-derived IDs). If no target is set, show "not assessed" rather than green.
+- [x] Fold the current check into Redundancy. Redefine Leakage around a configured `target_column` (near-perfect feature→target association, post-event timestamps, target-derived IDs). If no target is set, show "not assessed" rather than green.
 
 ## P2: Hygiene, docs and developer experience
 
@@ -504,7 +504,7 @@ This is the project's core differentiator, so these items deserve priority after
 - [x] **Bias-corrected Cramér's V** (Bergsma 2013). The uncorrected V currently inflates on small samples and high-cardinality pairs. **Status:** resolved in `contingency` (U4-07); the plain V is kept beside it.
 - [x] **A comparable association scale** across metric types (F-25). For example, convert η² to η, or rank by strength band and never by raw value across types. **Status:** resolved in the checks (U4-07): η replaces η² and point-biserial r, and every pair has a band on its own metric's scale. The API v1 ordering is deleted in U4-18.
 - [x] **Multiple-comparison awareness** in pairwise scans on wide data. Report how many pairs were tested next to the number flagged. **Status:** done: `associations` and `contingency` state `pairs_tested` and `pairs_flagged` in the output and in each finding (U4-07); `group_differences` (U4-08) states `pairs_tested`, `pairs_flagged` and `tests_run`, adjusts each method's p-values over every pair (Benjamini–Hochberg by default) and a flagged pair's contrasts by Holm, and flags only a pair whose effect reaches `min_effect`.
-- [ ] **Target-aware leakage detection** (F-26) built on a single `target_column`. **Status:** `target_leakage` and `mutual_information` (U4-14), on the one `target` setting of `dsbf.profile()` (U3-12); the Leakage dimension of the quality scorer is U4-15.
+- [ ] **Target-aware leakage detection** (F-26) built on a single `target_column`. **Status:** `target_leakage` and `mutual_information` (U4-14), on the one `target` setting of `dsbf.profile()` (U3-12); `quality_dimensions` shows the Leakage dimension as not assessed without a target (U4-15).
 - [ ] **Calibration suite:** extend `tests/validation/` with datasets that have *known* ground truth (planted leakage, planted MAR or MNAR, planted bimodality), and track false-positive and false-negative rates per task across releases. **Status:** U4-16 rebuilds `tests/validation/` on the new engine as the calibration suite.
 
 ## D. Product and UX

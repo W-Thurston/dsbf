@@ -439,6 +439,59 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [
+     "is_active"
+    ],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [
+       "tag"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 8,
+      "level": "amber"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     },
+     "transformations": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     },
+     "unusable": {
+      "action_columns": [
+       "dominant"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 2,
+      "level": "amber"
+     }
+    },
+    "gate": "needs_work"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [],
    "status": "not_applicable",
@@ -477,6 +530,50 @@
   "outliers": {
    "findings": [],
    "status": "not_applicable",
+   "version": "1.0.0"
+  },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [
+      "tag"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 1,
+     "level": "amber"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.888889,
+     "findings": 0,
+     "level": "green"
+    }
+   },
+   "status": "ok",
    "version": "1.0.0"
   },
   "reference_drift": {
@@ -541,7 +638,7 @@
   }
  },
  "dataset": "all_categorical",
- "format": 1,
+ "format": 2,
  "shape": [
   2000,
   9
