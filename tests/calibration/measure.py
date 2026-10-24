@@ -48,17 +48,24 @@ def run_trial(
 ) -> list[Trial]:
     """Generate the frame of ``scenario`` for ``seed``, profile it and score it.
 
+    ``only`` limits the run to those checks (and what they require).
+
     The core pack runs at the deep depth through the engine, as `dsbf.profile()`
     does, but with the check parameters of the scenario (the library takes none).
     """
     planted = scenario.build(seed)
     return score(
-        scenario.name, seed, planted, _run(scenario, planted), _wanted(planted)
+        scenario.name,
+        seed,
+        planted,
+        _run(scenario, planted, only),
+        _wanted(planted, only),
     )
 
 
-def _wanted(planted: Planted) -> tuple[str, ...]:
-    return planted.checks or ALL_CHECKS
+def _wanted(planted: Planted, only: Sequence[str] | None = None) -> tuple[str, ...]:
+    """The checks to run and score: the scenario's, narrowed to ``only`` if given."""
+    return tuple(c for c in planted.checks or ALL_CHECKS if not only or c in only)
 
 
 def _closure(wanted: Iterable[str]) -> set[str]:
@@ -73,9 +80,11 @@ def _closure(wanted: Iterable[str]) -> set[str]:
     return found
 
 
-def _run(scenario: Scenario, planted: Planted) -> Run:
+def _run(
+    scenario: Scenario, planted: Planted, only: Sequence[str] | None = None
+) -> Run:
     """Profile the frame of ``planted`` and run the checks it asks for."""
-    wanted = _wanted(planted)
+    wanted = _wanted(planted, only)
     dataset = load(planted.frame, name=scenario.name)
     data_profile = profile_dataset(dataset)
     reference = None

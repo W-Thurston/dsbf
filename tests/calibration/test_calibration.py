@@ -27,11 +27,6 @@ def test_scenario(
     measured[scenario.name] = trials
     found = rates(trials)
 
-    never_ran = [
-        check_id
-        for check_id, entry in found.items()
-        if entry["plants"] == 0 and entry["trials"] == 0 and entry["unscored"]
-    ]
     planted = {t.check_id for t in trials if t.planted}
     silent = sorted(c for c in planted if found[c]["trials"] == 0)
     assert not silent, (
@@ -39,7 +34,6 @@ def test_scenario(
         f"({', '.join(silent)}); their statuses: "
         + ", ".join(f"{c} {found[c]['unscored']}" for c in silent)
     )
-    del never_ran
 
     if pytestconfig.getoption("--update-calibration-baseline"):
         return

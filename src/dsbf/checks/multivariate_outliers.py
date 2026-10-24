@@ -244,7 +244,8 @@ def multivariate_outliers(
     # only in the last digits on another machine count as tied, and the earlier row
     # comes first, so the order is the same everywhere.
     ranked = np.lexsort((positions, -np.round(anomaly, 9)))
-    order = [int(i) for i in far] + [int(i) for i in ranked if i not in set(far)]
+    far_set = set(far.tolist())
+    order = [int(i) for i in far] + [int(i) for i in ranked if i not in far_set]
     examples = tuple(int(positions[i]) for i in order[:_EXAMPLES])
     output = MultivariateOutliersOutput(
         feature_columns=features,
