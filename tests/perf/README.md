@@ -23,9 +23,8 @@ inference), after the file is loaded:
 | `profile-wide1m` | 1,000,000 x 50 floats (`numpy` seed 42), as Parquet | 3, median kept | memory under 2.5x; time compared with the baseline only |
 
 The engine scenarios time one `dsbf.profile()` call (loading the file, the profile pass,
-planning and executing the checks), in a fresh interpreter. The `engine-*` pairs select
-`packs=["core", "legacy"]`, so they keep timing the legacy tasks until they are deleted;
-the `standard-*` scenarios take the default selection, the `core` pack alone. Each writes the
+planning and executing the checks of the default selection, the `core` pack), in a fresh
+interpreter. Each writes the
 wall time of every check as its `tasks`, so the executor's effect shows per check as well
 as in the total. The `engine-*` pairs run every check (`depth="deep"`), serial and
 parallel. The `standard-*` scenarios run what `dsbf.profile()` runs when no depth is
@@ -118,7 +117,7 @@ recorded but not gated. A task or stage that is not in the baseline is not compa
 `PYTHONHASHSEED=0` is pinned for every run: the legacy `fuzzy_duplicate_detection` walks sets of
 strings, and its amount of work (and so its time) depends on the iteration order. The
 `fuzzy_duplicates` check that replaces it does not, but the legacy task still runs in the
-`deep` scenarios and the legacy-engine ones until it is deleted with the legacy pack.
+legacy-engine scenarios until it is deleted with the legacy pack.
 
 ## Update the baseline
 

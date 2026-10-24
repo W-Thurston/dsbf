@@ -106,6 +106,15 @@ def _skew(values: np.ndarray) -> float | None:
     return found if math.isfinite(found) else None
 
 
+# The skewness a transform leaves is close to 0 by design, so the digits past the
+# fourth are rounding noise that differs between platforms; a report keeps four.
+REPORTED_DECIMALS = 4
+
+
+def _reported(value: float) -> float:
+    return round(value, REPORTED_DECIMALS)
+
+
 def _fit_box_cox(x: np.ndarray) -> tuple[np.ndarray, float]:
     transformed, lam = stats.boxcox(x)
     return transformed, float(lam)
@@ -188,8 +197,8 @@ def _try(
             skipped="the result has no skewness (it is constant)",
         ), None
     return Candidate(
-        skewness_after=after,
-        reduction=(abs(before) - abs(after)) / abs(before),
+        skewness_after=_reported(after),
+        reduction=_reported((abs(before) - abs(after)) / abs(before)),
         lam=lam,
         skipped=None,
     ), transformed
@@ -212,7 +221,7 @@ def _choose(
 
 @check(
     id="transformations",
-    version="1.0.0",
+    version="1.0.1",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -264,6 +273,7 @@ def transformations(ctx: CheckContext, params: TransformationsParams) -> CheckOu
             if usable and abs(tried[method].skewness_after) <= params.target_skew:  # type: ignore[arg-type]
                 chosen = method
         recommended = _choose(tried, params)
+        before = _reported(before)
         columns[column.name] = ColumnTransforms(
             skewness_before=before,
             n_used=len(x),

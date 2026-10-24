@@ -469,9 +469,9 @@
      "id": "13434bd8cfaf50b5",
      "metrics": {
       "lambda": null,
-      "reduction": 0.932057,
-      "skewness_after": 0.145417,
-      "skewness_before": 2.14027,
+      "reduction": 0.9321,
+      "skewness_after": 0.1454,
+      "skewness_before": 2.1403,
       "transform": "log1p"
      },
      "severity": "info",
@@ -484,7 +484,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.0.1"
   },
   "zeros": {
    "findings": [],
