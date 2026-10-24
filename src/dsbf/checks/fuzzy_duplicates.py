@@ -46,6 +46,16 @@ class FuzzyDuplicatesParams(CheckParams):
         "a value in, weighted by each column's entropy in bits, so one long shared "
         "field or a column that hardly varies cannot make unlike rows alike.",
     )
+    number_cap: float = Field(
+        0.7,
+        ge=0,
+        le=1,
+        description="The most two values alike when they are the same but for their "
+        "digits, which both hold and which differ. The same text with another "
+        "number (an email's serial, a street number, a sequential code) is evidence "
+        "of a different record, which a typo in letters is not; 1 reads digits as "
+        "letters, so a typo in a number is a typo.",
+    )
     max_label_levels: int = Field(
         20,
         ge=1,
@@ -154,7 +164,7 @@ class FuzzyDuplicatesOutput(CheckOutputModel):
 
 @check(
     id="fuzzy_duplicates",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("categorical", "text", "identifier"),
     dimensions=[Dimension.VALIDITY],
@@ -283,6 +293,8 @@ class _Records:
     # The raw values as c0, c1, ..., `first` (first row of the record) and `rows`.
     frame: pl.DataFrame
     values: list[list[str]]  # per column, normalised; "" where there is no value
+    digits: list[list[str]]  # per column, only the digits of the value
+    others: list[list[str]]  # per column, the value without its digits
     present: list[np.ndarray]  # per column, whether the record has a value
     weights: tuple[float, ...]  # per column
     tokens: list[str]  # per record, every column's value joined by a space
@@ -292,6 +304,8 @@ class _Records:
         return _Records(
             frame=self.frame[picked],
             values=[[column[i] for i in picked] for column in self.values],
+            digits=[[column[i] for i in picked] for column in self.digits],
+            others=[[column[i] for i in picked] for column in self.others],
             present=[column[index] for column in self.present],
             weights=self.weights,
             tokens=[self.tokens[i] for i in picked],
@@ -343,6 +357,14 @@ def _records(
     return _Records(
         frame=records,
         values=[normal[c].fill_null("").to_list() for c in normal.columns],
+        digits=[
+            normal[c].fill_null("").str.replace_all(r"[^0-9]", "").to_list()
+            for c in normal.columns
+        ],
+        others=[
+            normal[c].fill_null("").str.replace_all(r"[0-9]", "").to_list()
+            for c in normal.columns
+        ],
         present=[normal[c].is_not_null().to_numpy() for c in normal.columns],
         weights=weights,
         tokens=normal.select(
@@ -431,8 +453,13 @@ def _score(
         high = second[start : start + _CHUNK]
         total = np.zeros(low.size)
         used = np.zeros(low.size)
-        for values, present, weight in zip(
-            table.values, table.present, table.weights, strict=True
+        for values, digits, others, present, weight in zip(
+            table.values,
+            table.digits,
+            table.others,
+            table.present,
+            table.weights,
+            strict=True,
         ):
             either = present[low] | present[high]
             if not either.any():
@@ -444,6 +471,21 @@ def _score(
                 dtype=np.float64,
                 workers=1,
             )
+            if params.number_cap < 1:
+                # The same text with another number is another record. A digit typed
+                # as a letter, against none, or beside other letters, is a typo.
+                differ = np.array(
+                    [
+                        others[i] == others[j]
+                        and bool(digits[i])
+                        and bool(digits[j])
+                        and digits[i] != digits[j]
+                        for i, j in zip(low, high, strict=True)
+                    ]
+                )
+                ratio = np.where(
+                    differ, np.minimum(ratio, 100 * params.number_cap), ratio
+                )
             total += np.where(either, ratio, 0.0) * weight
             used += either * weight
         similarity = total / np.maximum(used, 1e-12) / 100

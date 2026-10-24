@@ -73,7 +73,11 @@ class TestOmnibusTests:
         ssb = sum(g.size * (g.mean() - frame["y"].mean()) ** 2 for g in groups)
         ssw = sum(((g - g.mean()) ** 2).sum() for g in groups)
 
-        found = pair(run_core_check(frame, "group_differences"), "y", "group")
+        found = pair(
+            run_core_check(frame, "group_differences", equal_variances=True),
+            "y",
+            "group",
+        )
 
         assert found["f_statistic"] == pytest.approx(f_stat)
         assert found["anova_p"] == pytest.approx(f_p)
@@ -86,6 +90,54 @@ class TestOmnibusTests:
         )
         assert found["epsilon_squared"] == pytest.approx(h_stat / (n - 1))
         assert found["omega_squared"] < found["eta_squared"]
+
+    def test_the_default_p_values_are_welchs_by_hand(self):
+        g = generator()
+        groups = [g.normal(0, sd, n) for n, sd in ((50, 1.0), (30, 2.0), (20, 5.0))]
+        frame = pl.DataFrame(
+            {
+                "y": np.concatenate(groups),
+                "group": ["a"] * 50 + ["b"] * 30 + ["c"] * 20,
+            }
+        )
+        n = np.array([50, 30, 20])
+        mean = np.array([x.mean() for x in groups])
+        weight = n / np.array([x.var(ddof=1) for x in groups])
+        centre = (weight * mean).sum() / weight.sum()
+        tail = (((1 - weight / weight.sum()) ** 2) / (n - 1)).sum()
+        f_star = ((weight * (mean - centre) ** 2).sum() / 2) / (1 + 2 * 1 / 8 * tail)
+        df2 = 8 / (3 * tail)
+
+        found = pair(run_core_check(frame, "group_differences"), "y", "group")
+
+        assert found["f_statistic"] == pytest.approx(f_star)
+        assert found["anova_p"] == pytest.approx(stats.f.sf(f_star, 2, df2))
+        # The Kruskal-Wallis H stays in the output; the p-value is Welch's on ranks.
+        assert found["h_statistic"] == pytest.approx(stats.kruskal(*groups).statistic)
+
+    def test_equal_groups_of_unequal_size_and_spread_are_rarely_called_different(self):
+        g = generator()
+        sizes = ((600, 1.0), (300, 1.5), (100, 3.0), (30, 6.0))
+        called = {True: 0, False: 0}
+        for _ in range(60):
+            values = np.concatenate([g.normal(0, sd, n) for n, sd in sizes])
+            frame = pl.DataFrame(
+                {
+                    "y": values,
+                    "group": np.repeat(list("abcd"), [n for n, _ in sizes]),
+                }
+            )
+            for classic in called:
+                found = pair(
+                    run_core_check(frame, "group_differences", equal_variances=classic),
+                    "y",
+                    "group",
+                )
+                called[classic] += found["anova_p"] < 0.05
+
+        # The classic F calls equal means different about half the time here.
+        assert called[True] > 20
+        assert called[False] <= 8
 
     def test_ties_are_corrected_in_h(self):
         g = generator()

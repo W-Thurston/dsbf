@@ -8,7 +8,7 @@
   "autocorrelation": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "bimodality": {
    "findings": [],
@@ -81,7 +81,7 @@
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "collinearity": {
    "findings": [],
@@ -111,7 +111,7 @@
   "dominant_value": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "dtype_optimizations": {
    "findings": [
@@ -204,7 +204,7 @@
   "encoded_columns": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "entropy": {
    "findings": [],
@@ -219,12 +219,12 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "group_differences": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "high_cardinality": {
    "findings": [],
@@ -290,7 +290,7 @@
       "action_columns": [],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 8,
+      "findings": 4,
       "level": "green"
      },
      "unusable": {
@@ -307,58 +307,14 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
-   "findings": [
-    {
-     "check": "multivariate_outliers",
-     "code": "multivariate_anomalies",
-     "id": "ffba35f7662c8f24",
-     "metrics": {
-      "contamination": 0.05,
-      "example_rows": [
-       480,
-       817,
-       729,
-       1614,
-       912,
-       1293,
-       514,
-       781,
-       1053,
-       1224,
-       1858,
-       162,
-       980,
-       1674,
-       1214,
-       576,
-       898,
-       926,
-       1538,
-       1517
-      ],
-      "max_anomaly_score": 0.653364,
-      "n_features": 4,
-      "n_flagged": 100
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age",
-       "income",
-       "score",
-       "tenure_years"
-      ],
-      "kind": "row_set"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "mutual_information": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "near_zero_variance": {
    "findings": [],
@@ -390,82 +346,10 @@
       ],
       "kind": "column"
      }
-    },
-    {
-     "check": "normality",
-     "code": "non_normal",
-     "id": "3f8a5993eea90f63",
-     "metrics": {
-      "alpha": 0.05,
-      "jarque_bera_p_value": 0.000264761,
-      "jarque_bera_statistic": 16.4734,
-      "mean_abs_deviation_in_std": 0.046351,
-      "min": 36603.4,
-      "primary_p_value": 0.000259707,
-      "primary_statistic": 0.996701,
-      "primary_test": "shapiro_wilk",
-      "qq_pattern": "heavy_tails",
-      "skewness": -0.0132163
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "income"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "normality",
-     "code": "non_normal",
-     "id": "41b2c944276face1",
-     "metrics": {
-      "alpha": 0.05,
-      "jarque_bera_p_value": 9.1401e-05,
-      "jarque_bera_statistic": 18.6005,
-      "mean_abs_deviation_in_std": 0.0454004,
-      "min": 0.2536,
-      "primary_p_value": 4.67601e-05,
-      "primary_statistic": 0.996083,
-      "primary_test": "shapiro_wilk",
-      "qq_pattern": "heavy_tails",
-      "skewness": 0.0165632
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "score"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "normality",
-     "code": "non_normal",
-     "id": "b186d614e13d5efa",
-     "metrics": {
-      "alpha": 0.05,
-      "jarque_bera_p_value": 0.000306688,
-      "jarque_bera_statistic": 16.1794,
-      "mean_abs_deviation_in_std": 0.043873,
-      "min": 1.6,
-      "primary_p_value": 2.65578e-05,
-      "primary_statistic": 0.99587,
-      "primary_test": "shapiro_wilk",
-      "qq_pattern": "left_tail",
-      "skewness": 0.0752126
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "tenure_years"
-      ],
-      "kind": "column"
-     }
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "null_rate": {
    "findings": [],
@@ -564,94 +448,9 @@
    "version": "1.0.0"
   },
   "outliers": {
-   "findings": [
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "f563e593a6d0fbaf",
-     "metrics": {
-      "consensus": false,
-      "iqr_count": 2,
-      "lower_fence": 29.0,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr"
-      ],
-      "outlier_share": 0.001,
-      "top_values": [
-       62.0,
-       28.0
-      ],
-      "upper_fence": 61.0,
-      "zscore_count": 0
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "4e57ef8da5e58b27",
-     "metrics": {
-      "consensus": false,
-      "iqr_count": 1,
-      "lower_fence": 0.2444,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr"
-      ],
-      "outlier_share": 0.0005,
-      "top_values": [
-       0.7688
-      ],
-      "upper_fence": 0.7654,
-      "zscore_count": 0
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "score"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "1313cc07d65b2896",
-     "metrics": {
-      "consensus": false,
-      "iqr_count": 3,
-      "lower_fence": 0.95,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr"
-      ],
-      "outlier_share": 0.0015,
-      "top_values": [
-       12.1,
-       11.8,
-       11.8
-      ],
-      "upper_fence": 11.75,
-      "zscore_count": 0
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "tenure_years"
-      ],
-      "kind": "column"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "quality_dimensions": {
    "findings": [],
@@ -693,12 +492,12 @@
     }
    },
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "sample_size": {
    "findings": [],
@@ -713,27 +512,27 @@
   "seasonal_decomposition": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "skewness": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "string_anomalies": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "target_leakage": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "temporal_gaps": {
    "findings": [],
@@ -748,7 +547,7 @@
   "transformations": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.1"
+   "version": "1.1.0"
   },
   "zeros": {
    "findings": [],

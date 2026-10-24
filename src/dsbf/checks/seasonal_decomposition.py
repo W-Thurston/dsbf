@@ -45,6 +45,12 @@ _CYCLE: dict[str, int] = {
 # Strength from which a component is called strong or moderate, as the task did.
 _STRONG = 0.7
 _MODERATE = 0.4
+# What white noise reaches. STL fits a seasonal component and a trend to any series, so
+# even noise has a strength, more of it the fewer cycles and periods there are. The
+# 99th percentile of 150 white-noise series of each length (periods of 4 to 52, 24 to
+# 2 000 values) is within 0.05 of these, which are slightly conservative.
+_SEASONAL_FLOOR = (0.20, 0.90)  # 0.20 + 0.90 / sqrt(cycles)
+_TREND_FLOOR = (0.12, 1.50)  # 0.12 + 1.50 / sqrt(periods)
 
 
 class SeasonalDecompositionParams(TimeSeriesParams):
@@ -66,7 +72,8 @@ class SeasonalDecompositionParams(TimeSeriesParams):
         ge=0,
         le=1,
         description="Smallest trend or seasonal strength that is reported: a "
-        "moderate one.",
+        "moderate one. A series with few cycles or periods must also beat what "
+        "white noise of its length reaches by chance, which is higher.",
     )
 
 
@@ -87,6 +94,17 @@ class ColumnDecomposition(SeriesInfo):
     remainder_share: float = Field(
         ge=0, description="Variance of the remainder over the variance of the series."
     )
+    seasonal_floor: float = Field(
+        ge=0,
+        le=1,
+        description="The seasonal strength that white noise of this many cycles "
+        "reaches in 1% of series: a seasonal strength below it is not reported.",
+    )
+    trend_floor: float = Field(
+        ge=0,
+        le=1,
+        description="The same for the trend strength, by number of periods.",
+    )
 
 
 class SeasonalDecompositionOutput(TimeSeriesOutput):
@@ -105,7 +123,7 @@ class SeasonalDecompositionOutput(TimeSeriesOutput):
 
 @check(
     id="seasonal_decomposition",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "datetime"),
     dimensions=[Dimension.TEMPORAL],
@@ -211,7 +229,14 @@ def _decompose(
         trend_strength=_strength(variance, detrended),
         seasonal_strength=_strength(variance, deseasoned),
         remainder_share=share,
+        seasonal_floor=_noise_floor(_SEASONAL_FLOOR, values.size / period),
+        trend_floor=_noise_floor(_TREND_FLOOR, values.size),
     )
+
+
+def _noise_floor(fit: tuple[float, float], size: float) -> float:
+    """The strength white noise reaches in 1% of series, for a series of this size."""
+    return min(1.0, fit[0] + fit[1] / np.sqrt(size))
 
 
 def _strength(remainder: float, with_remainder: float) -> float:
@@ -235,11 +260,11 @@ def _report(
     params: SeasonalDecompositionParams,
     prepared: Prepared,
 ) -> None:
-    for code, kind, strength in (
-        ("seasonal", "seasonality", result.seasonal_strength),
-        ("trend", "trend", result.trend_strength),
+    for code, kind, strength, floor in (
+        ("seasonal", "seasonality", result.seasonal_strength, result.seasonal_floor),
+        ("trend", "trend", result.trend_strength, result.trend_floor),
     ):
-        if strength < params.min_strength:
+        if strength < max(params.min_strength, floor):
             continue
         label = _label(strength)
         metrics: dict[str, object] = {
@@ -249,6 +274,7 @@ def _report(
             "seasonal_strength": result.seasonal_strength,
             "remainder_share": result.remainder_share,
             "min_strength": params.min_strength,
+            "noise_floor": floor,
         }
         ctx.finding(
             code=code,

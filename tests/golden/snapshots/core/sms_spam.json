@@ -8,7 +8,7 @@
   "autocorrelation": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "bimodality": {
    "findings": [],
@@ -43,7 +43,7 @@
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "collinearity": {
    "findings": [],
@@ -91,7 +91,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "dtype_optimizations": {
    "findings": [
@@ -145,7 +145,7 @@
   "encoded_columns": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "entropy": {
    "findings": [],
@@ -186,10 +186,10 @@
       "columns_compared": 1,
       "coverage": 0.013372,
       "pairs_compared": 178744,
-      "pairs_flagged": 217,
+      "pairs_flagged": 196,
       "pairs_possible": 13367035,
-      "rows_involved": 320,
-      "rows_involved_share": 0.0574094,
+      "rows_involved": 306,
+      "rows_involved_share": 0.0548977,
       "threshold": 0.92
      },
      "severity": "warn",
@@ -202,12 +202,12 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "group_differences": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "high_cardinality": {
    "findings": [],
@@ -291,12 +291,12 @@
   "multivariate_outliers": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "mutual_information": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "near_zero_variance": {
    "findings": [],
@@ -306,7 +306,7 @@
   "normality": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "null_rate": {
    "findings": [],
@@ -326,7 +326,7 @@
   "outliers": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "quality_dimensions": {
    "findings": [],
@@ -366,16 +366,16 @@
      "assessed": true,
      "coverage": 0.888889,
      "findings": 5,
-     "level": "red"
+     "level": "amber"
     }
    },
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "sample_size": {
    "findings": [],
@@ -390,17 +390,17 @@
   "seasonal_decomposition": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "skewness": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "string_anomalies": {
    "findings": [
@@ -440,12 +440,12 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "target_leakage": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "temporal_gaps": {
    "findings": [],
@@ -460,7 +460,7 @@
   "transformations": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.1"
+   "version": "1.1.0"
   },
   "zeros": {
    "findings": [],

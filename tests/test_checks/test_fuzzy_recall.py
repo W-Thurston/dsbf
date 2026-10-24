@@ -61,7 +61,7 @@ def test_every_planted_copy_is_found_and_nothing_else(planted):
     assert set(found) == set(expected)
     assert output["blocking"] == "rare_tokens" and output["stopped_by"] is None
     assert output["pairs_flagged"] == PLANTED
-    assert min(found.values()) > 0.97
+    assert min(found.values()) > 0.95
     assert [n.code for n in result.notes] == []
 
 

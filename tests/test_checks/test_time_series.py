@@ -1,5 +1,6 @@
 """The resampling the time-series checks share, and the three analysis checks."""
 
+import datetime as dt
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
@@ -459,18 +460,46 @@ class TestStationarity:
         assert column["kpss"]["rejects"] is False
         assert column["kpss"]["p_value_limit"] == "at_least"
 
-    def test_a_trend_stationary_series_has_both_tests_reject_and_is_information(self):
+    def test_a_series_stationary_around_a_trend_is_told_to_detrend_not_difference(
+        self,
+    ):
         n = 300
         trend = ar1(n, phi=0.7) + 0.01 * np.arange(n)
         result = run_core_check(daily({"x": trend}), "stationarity", time_index="t")
 
         column = output_of(result)["columns"]["x"]
-        assert column["assessment"] == "ambiguous_trend_stationary_or_structural_break"
+        # With a constant alone both tests reject; allowing a trend settles it.
+        assert column["adf"]["rejects"] and column["kpss"]["rejects"]
+        assert column["adf_trend"]["rejects"] and not column["kpss_trend"]["rejects"]
+        assert column["assessment"] == "consistent_with_trend_stationary"
         (finding,) = result.findings
-        assert (finding.code, finding.severity) == (
-            "ambiguous_stationarity",
-            Severity.INFO,
-        )
+        assert (finding.code, finding.severity) == ("trend_stationary", Severity.INFO)
+        (action,) = actions_of(finding)
+        assert (action.action, action.method) == ("transform", "detrend")
+
+    def test_a_deterministic_ramp_is_not_called_drifting(self):
+        generator = rng(9)
+        ramp = 0.05 * np.arange(400) + generator.normal(size=400)
+
+        result = run_core_check(daily({"ramp": ramp}), "stationarity", time_index="t")
+
+        assert [f.code for f in result.findings] == ["trend_stationary"]
+
+    def test_a_random_walk_stays_non_stationary_with_a_trend_allowed_for(self):
+        result = run_core_check(daily({"walk": walk()}), "stationarity", time_index="t")
+
+        column = output_of(result)["columns"]["walk"]
+        assert not column["adf_trend"]["rejects"]
+        assert column["assessment"] == "consistent_with_non_stationary"
+
+    def test_a_shift_in_level_stays_ambiguous_or_drifting_not_trend_stationary(self):
+        generator = rng(10)
+        shifted = np.r_[generator.normal(size=200), generator.normal(4, 1, size=200)]
+
+        result = run_core_check(daily({"x": shifted}), "stationarity", time_index="t")
+
+        assert result.findings
+        assert all(f.code != "trend_stationary" for f in result.findings)
 
     def test_the_tips_say_to_difference_a_drifting_series(self):
         result = run_core_check(daily({"walk": walk()}), "stationarity", time_index="t")
@@ -547,6 +576,35 @@ class TestAutocorrelation:
         assert (finding.code, finding.subject.columns) == ("autocorrelated", ("ar",))
         assert finding.severity is Severity.INFO
 
+    def test_a_lag_outside_its_band_in_white_noise_is_not_reported(self):
+        generator = rng(8)
+        noise_columns = {f"n{i}": generator.normal(size=48) for i in range(40)}
+        frame = pl.DataFrame(
+            {
+                "t": pl.date_range(
+                    dt.date(2020, 1, 1), dt.date(2023, 12, 1), "1mo", eager=True
+                ),
+                **noise_columns,
+            }
+        )
+
+        result = run_core_check(frame, "autocorrelation", time_index="t")
+
+        columns = output_of(result)["columns"]
+        # Lag by lag, a third of these series have a lag outside its band.
+        assert sum(bool(c["significant_acf"]) for c in columns.values()) > 8
+        assert len(result.findings) <= 3
+        assert all(c["ljung_box_p"] >= 0 for c in columns.values())
+
+    def test_a_series_that_is_not_white_noise_is_reported_by_its_lags(self):
+        result = run_core_check(
+            daily({"ar": ar1(80, 0.8)}), "autocorrelation", time_index="t"
+        )
+
+        column = output_of(result)["columns"]["ar"]
+        assert column["ljung_box_p"] < 0.01
+        assert column["flagged_acf"]
+
     def test_a_weekly_cycle_peaks_at_lag_seven(self):
         result = run_core_check(
             daily({"cycle": sine()}), "autocorrelation", time_index="t"
@@ -619,6 +677,45 @@ class TestSeasonalDecomposition:
         assert ("walk", "trend") in found
         assert not {c for c, _ in found} & {"noise"}
 
+    def test_noise_over_few_cycles_is_not_seasonal_though_stl_gives_it_a_strength(
+        self,
+    ):
+        generator = np.random.default_rng(5)
+        frame = pl.DataFrame(
+            {
+                "t": pl.date_range(
+                    dt.date(2020, 1, 1), dt.date(2023, 12, 1), "1mo", eager=True
+                ),
+                **{f"noise{i}": generator.normal(size=48) for i in range(30)},
+            }
+        )
+
+        result = run_core_check(frame, "seasonal_decomposition", time_index="t")
+
+        columns = output_of(result)["columns"]
+        strengths = [c["seasonal_strength"] for c in columns.values()]
+        assert max(strengths) > 0.4  # the old fixed bar would have reported these
+        assert all(c["seasonal_floor"] > 0.55 for c in columns.values())
+        assert len(result.findings) <= 2
+
+    def test_a_clear_cycle_still_clears_the_floor_over_few_cycles(self):
+        generator = np.random.default_rng(6)
+        cycle = 3 * np.sin(2 * np.pi * np.arange(48) / 12)
+        frame = pl.DataFrame(
+            {
+                "t": pl.date_range(
+                    dt.date(2020, 1, 1), dt.date(2023, 12, 1), "1mo", eager=True
+                ),
+                "monthly": cycle + generator.normal(size=48),
+            }
+        )
+
+        found = run_core_check(frame, "seasonal_decomposition", time_index="t")
+
+        assert ("monthly", "seasonal") in {
+            (f.subject.columns[0], f.code) for f in found.findings
+        }
+
     def test_the_output_keeps_strengths_not_component_series(self):
         output = output_of(
             run_core_check(
@@ -636,6 +733,8 @@ class TestSeasonalDecomposition:
             "trend_strength",
             "seasonal_strength",
             "remainder_share",
+            "seasonal_floor",
+            "trend_floor",
         }
 
     def test_the_period_can_be_configured(self):

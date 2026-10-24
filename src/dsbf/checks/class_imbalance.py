@@ -24,6 +24,7 @@ from dsbf.model import (
     Severity,
     Subject,
 )
+from dsbf.profiling.values import MAX_TOP_VALUE_CHARS
 
 
 class ClassImbalanceParams(CheckParams):
@@ -60,7 +61,7 @@ class ClassImbalanceOutput(CheckOutputModel):
 
 @check(
     id="class_imbalance",
-    version="1.0.0",
+    version="1.1.0",
     kind="rule",
     applies_to=SemanticTypes("categorical", "boolean"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -160,4 +161,9 @@ def _classes(column: CategoricalProfile | BooleanProfile) -> list[tuple[str, int
     if isinstance(column, BooleanProfile):
         listed = [("True", column.true_count), ("False", column.false_count)]
         return sorted((c for c in listed if c[1] > 0), key=lambda c: -c[1])
-    return [(str(entry.value), entry.count) for entry in column.top_values]
+    classes = [(str(entry.value), entry.count) for entry in column.top_values]
+    mode = column.mode_count
+    if mode is not None and (not classes or classes[0][1] < mode):
+        # The most frequent class is a string too long to list.
+        classes.insert(0, (f"(a value of over {MAX_TOP_VALUE_CHARS} characters)", mode))
+    return classes

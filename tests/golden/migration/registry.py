@@ -5,6 +5,7 @@ from __future__ import annotations
 from tests.golden.migration.accepted import ACCEPTED as _ACCEPTED
 from tests.golden.migration.accepted_analysis import ACCEPTED_ANALYSIS
 from tests.golden.migration.accepted_associations import ACCEPTED_ASSOCIATIONS
+from tests.golden.migration.accepted_calibration import ACCEPTED_CALIBRATION
 from tests.golden.migration.accepted_fuzzy_duplicates import ACCEPTED_FUZZY_DUPLICATES
 from tests.golden.migration.accepted_group_differences import (
     ACCEPTED_GROUP_DIFFERENCES,
@@ -102,6 +103,8 @@ ACCEPTED = (
     *ACCEPTED_TARGET_AWARE,
     *ACCEPTED_TIME_SERIES,
 )
+# Kinds of difference accepted wherever they occur, for the calibrated checks.
+ACCEPTED_KINDS = ACCEPTED_CALIBRATION
 
 # Tasks whose checks cover different parts of what the task did: the task is compared
 # wherever any of its checks ran.

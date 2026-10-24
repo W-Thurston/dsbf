@@ -1,0 +1,68 @@
+name: Calibration
+
+# The calibration suite profiles planted-truth frames over many seeds and compares each
+# check's detection and false-alarm rates with the committed baseline in
+# tests/calibration/baseline.json, so it stays out of the CI workflow. It runs nightly,
+# on demand, and on pull requests that carry the `calibration` label. Its report is
+# uploaded as the `calibration-results` artifact either way.
+on:
+  schedule:
+    - cron: "37 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+
+# A newer run for the same pull request replaces an older one (the label added twice
+# at creation started the run five times). A label other than `calibration` gets a
+# group of its own and its job is skipped, so it cannot cancel a run in progress.
+# Scheduled and manual runs are never cancelled.
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}-${{
+    github.event.action == 'labeled' && github.event.label.name != 'calibration' && github.run_id || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The job only reads the repository and uploads an artifact.
+permissions:
+  contents: read
+
+jobs:
+  calibration:
+    name: Calibration
+    if: >-
+      github.event_name != 'pull_request' ||
+      (contains(github.event.pull_request.labels.*.name, 'calibration') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'calibration'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # Writes the rates even when a scenario regressed, so the artifact is always
+      # there to inspect or to promote as the new baseline.
+      - name: Measure and compare with the baseline
+        run: uv run --no-sync pytest -m calibration --tb=short -q --junitxml=calibration-results/junit.xml
+
+      - name: Summarise
+        if: always()
+        run: |
+          if [ -f calibration-results/calibration.md ]; then
+            { echo "### Rates against tests/calibration/baseline.json"; echo; cat calibration-results/calibration.md; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: calibration-results
+          path: calibration-results/

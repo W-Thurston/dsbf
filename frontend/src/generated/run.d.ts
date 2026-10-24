@@ -402,6 +402,10 @@ export interface CategoricalProfile {
   values_with_nul: number | null;
   semantic_type: "categorical";
   top_values: ValueCount[];
+  /**
+   * Rows holding the most frequent non-null value, whether or not it is listed in `top_values`: a string over 256 characters never is. None when the column has no value.
+   */
+  mode_count: number | null;
   lengths: LengthStats | null;
   empty_strings: number;
   /**

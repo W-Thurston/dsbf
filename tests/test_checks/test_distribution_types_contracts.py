@@ -98,7 +98,38 @@ class TestSkewness:
         assert metrics["gap_in_std"] == pytest.approx(
             abs(metrics["mean"] - metrics["median"]) / metrics["std"]
         )
-        assert gap.severity is Severity.INFO
+        assert gap.severity is Severity.WARN
+
+    def test_a_gap_over_a_third_is_noted_and_one_near_half_is_a_warning(self):
+        generator = rng()
+        n = 4000
+        two_groups = np.where(
+            generator.random(n) < 0.7,
+            generator.normal(0, 1, n),
+            generator.normal(6, 1, n),
+        )
+        mostly_zero = np.where(
+            generator.random(n) < 0.55, 0.0, generator.exponential(5, n)
+        )
+        frame = pl.DataFrame({"two_groups": two_groups, "mostly_zero": mostly_zero})
+
+        found = by_column(run_core_check(frame, "skewness"))
+
+        def gap(column):
+            return next(f for f in found[column] if f.code == "mean_median_gap")
+
+        assert 0.35 <= gap("two_groups").evidence.metrics["gap_in_std"] < 0.45
+        assert gap("two_groups").severity is Severity.INFO
+        assert gap("mostly_zero").evidence.metrics["gap_in_std"] >= 0.45
+        assert gap("mostly_zero").severity is Severity.WARN
+
+    def test_a_long_tail_alone_does_not_make_a_gap(self):
+        generator = rng()
+        frame = pl.DataFrame({"tail": generator.exponential(1, 5000)})
+
+        found = by_column(run_core_check(frame, "skewness"))
+
+        assert "mean_median_gap" not in {f.code for f in found["tail"]}
 
     def test_the_gap_levels_are_parameters(self):
         generator = rng()

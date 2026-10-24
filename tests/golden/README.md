@@ -114,6 +114,12 @@ and names a golden dataset and a registered comparator.
 To migrate another task, add it to `SUPERSEDED_BY`, write its comparator, run the suite,
 and list each difference with its reason.
 
+A check calibrated afterwards against planted truth (`tests/calibration`) differs from its task
+in every row its new method touches, so `migration/accepted_calibration.py` accepts the kinds of
+difference it changed for all datasets (`AcceptedKind`), each with the reason. A listed
+difference of such a kind is not stale if it no longer occurs. The calibration suite and the
+core snapshots guard these checks from then on.
+
 A core check that does nothing without parameters (`format_violations` runs only the rules it is
 given, besides its scan for mixed date formats) gets them from `GoldenDataset.core_params`;
 `sms_spam` sets the two rules its snapshots exercise. The runner passes them to

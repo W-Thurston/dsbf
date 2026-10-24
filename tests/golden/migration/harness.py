@@ -50,6 +50,27 @@ class Accepted:
         return Difference(self.subject, self.kind, self.detail)
 
 
+@dataclass(frozen=True)
+class AcceptedKind:
+    """A kind of difference accepted wherever it occurs, for a check calibrated since.
+
+    The core checks were migrated to match their tasks, and the differences listed one
+    by one in the ``accepted_*`` modules are the ones that migration chose. A check
+    that was calibrated afterwards against planted truth (``tests/calibration``) differs
+    from its task in every row its new method touches, thousands for a test that now
+    takes another p-value, so the kinds it changed are accepted for all datasets at
+    once, with the reason, and the calibration suite and the golden snapshots guard
+    the check from here on.
+    """
+
+    check: str
+    kinds: tuple[str, ...]
+    reason: str
+
+    def covers(self, check: str, difference: Difference) -> bool:
+        return check == self.check and difference.kind in self.kinds
+
+
 # A comparator gets the legacy task's stored entry (status, notes, finding count and
 # result, as ``engine_run.json`` has it) and the core check's result as a dict.
 Comparator = Callable[[Result, Result], list[Difference]]
@@ -99,11 +120,25 @@ def judge(
     dataset: str,
     found: list[Difference],
     accepted: tuple[Accepted, ...],
+    kinds: tuple[AcceptedKind, ...] = (),
 ) -> Verdict:
-    """The differences nobody accepted, and the accepted ones that did not occur."""
+    """The differences nobody accepted, and the accepted ones that did not occur.
+
+    A difference of a kind in ``kinds`` is accepted, and a listed one of such a kind
+    is not stale for failing to occur: the calibrated check may no longer produce it.
+    """
     listed = [a for a in accepted if a.check == check and a.dataset == dataset]
     wanted = {a.difference for a in listed}
+    present = set(found)
+
+    def calibrated(difference: Difference) -> bool:
+        return any(k.covers(check, difference) for k in kinds)
+
     return Verdict(
-        unexpected=[d for d in found if d not in wanted],
-        stale=[a for a in listed if a.difference not in set(found)],
+        unexpected=[d for d in found if d not in wanted and not calibrated(d)],
+        stale=[
+            a
+            for a in listed
+            if a.difference not in present and not calibrated(a.difference)
+        ],
     )

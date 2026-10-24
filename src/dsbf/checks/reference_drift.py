@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 from pydantic import Field, model_validator
+from scipy.stats import chi2_contingency
 
 from dsbf.engine import (
     CheckContext,
@@ -70,6 +71,16 @@ class ReferenceDriftParams(CheckParams):
         "share of it; PSI grows with the number of bins, and its usual limits "
         "assume about ten.",
     )
+    significance: float = Field(
+        0.01,
+        gt=0,
+        lt=1,
+        description="Level of the chi-squared test that the two samples are of one "
+        "distribution (on the PSI for a number, on the counts for a category). A "
+        "distance below its limits or a test above this level is no drift: a small "
+        "sample has a large distance by chance, and a huge one a significant "
+        "difference too small to matter.",
+    )
     missing_shift: float = Field(
         0.1,
         gt=0,
@@ -81,6 +92,14 @@ class ReferenceDriftParams(CheckParams):
         None,
         description="The column to predict. `dsbf.profile(target=...)` sets it; "
         "drift in the target is reported one level higher.",
+    )
+    target_scale: float = Field(
+        0.5,
+        gt=0,
+        le=1,
+        description="The target is held to this share of the PSI and distance "
+        "limits: a model learns the target itself, and a 15-point move in the "
+        "share of positives is a total variation distance of 0.15.",
     )
 
     @model_validator(mode="after")
@@ -190,6 +209,31 @@ def total_variation(
     return float(np.abs(p / p.sum() - q / q.sum()).sum() / 2)
 
 
+def _homogeneity_p(
+    reference: Sequence[float] | np.ndarray, current: Sequence[float] | np.ndarray
+) -> float:
+    """The p-value of the chi-squared test that two count vectors are of one law."""
+    table = np.array([reference, current], dtype=float)
+    table = table[:, table.sum(axis=0) > 0]
+    if table.shape[1] < 2:
+        return 1.0
+    return float(chi2_contingency(table)[1])
+
+
+def _tvd_noise(reference: Sequence[float], current: Sequence[float]) -> float:
+    """The total variation distance two samples of one distribution are apart.
+
+    Each share differs by about its standard error, so half the sum of the expected
+    absolute differences. It is large for a small sample of many values, which a
+    fixed limit would call drift.
+    """
+    ref = np.asarray(reference, dtype=float)
+    now = np.asarray(current, dtype=float)
+    pooled = (ref + now) / (ref.sum() + now.sum())
+    spread = np.sqrt(pooled * (1 - pooled) * (1 / ref.sum() + 1 / now.sum()))
+    return float(0.5 * np.sqrt(2 / np.pi) * spread.sum())
+
+
 def _raised(severity: Severity) -> Severity:
     return _SEVERITIES[min(_SEVERITIES.index(severity) + 1, len(_SEVERITIES) - 1)]
 
@@ -238,7 +282,7 @@ class _Level:
 
 @check(
     id="reference_drift",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     # Every column, so a column that has changed type or gone missing is known.
     applies_to=SemanticTypes(),
@@ -515,9 +559,16 @@ def _compare_numeric(
     now = bin_counts(edges, values)
     psi = population_stability(reference, now)
     js = jensen_shannon(reference, now)
-    # What PSI reaches between two samples of one distribution, to read it against.
+    # What PSI reaches between two samples of one distribution. It is subtracted, so
+    # that a small sample, whose PSI is high by chance alone, is not called drifting.
     noise = (len(reference) - 1) * (1 / n_ref + 1 / len(values))
-    level = _Level(psi, params.psi_warn, params.psi_high)
+    scale = params.target_scale if is_target else 1.0
+    p_value = _homogeneity_p(reference, now)
+    level = _Level(
+        max(0.0, psi - noise) if p_value < params.significance else 0.0,
+        params.psi_warn * scale,
+        params.psi_high * scale,
+    )
     if level.drift != "none":
         outside = float((now[0] + now[-1]) / len(values))
         _report_shift(
@@ -530,14 +581,16 @@ def _compare_numeric(
             method="psi",
             metrics={
                 "psi": psi,
+                "psi_excess": max(0.0, psi - noise),
                 "js_divergence": js,
                 "psi_noise": noise,
+                "p_value": p_value,
                 "n_bins": len(ref_counts),
                 "share_outside_reference_range": outside,
                 "mean": getattr(getattr(column, "stats", None), "mean", None),
                 "reference_mean": ref.stats.mean if ref.stats else None,
-                "warn": params.psi_warn,
-                "high": params.psi_high,
+                "warn": params.psi_warn * scale,
+                "high": params.psi_high * scale,
             },
             what=f"PSI {psi:.2f} (JS divergence {js:.2f})",
         )
@@ -586,7 +639,14 @@ def _compare_categorical(
     ref_vector.append(n_ref - sum(ref_vector))
     now_vector.append(n_now - sum(now_vector))
     tvd = total_variation(ref_vector, now_vector)
-    level = _Level(tvd, params.tvd_warn, params.tvd_high)
+    noise = _tvd_noise(ref_vector, now_vector)
+    scale = params.target_scale if is_target else 1.0
+    p_value = _homogeneity_p(ref_vector, now_vector)
+    level = _Level(
+        max(0.0, tvd - noise) if p_value < params.significance else 0.0,
+        params.tvd_warn * scale,
+        params.tvd_high * scale,
+    )
     if level.drift != "none":
         p = np.asarray(ref_vector, dtype=float) / n_ref
         q = np.asarray(now_vector, dtype=float) / n_now
@@ -602,11 +662,13 @@ def _compare_categorical(
             method="tvd",
             metrics={
                 "tvd": tvd,
+                "tvd_noise": noise,
+                "p_value": p_value,
                 "listed_values_complete": complete,
                 "largest_shifts": {names[i]: float(q[i] - p[i]) for i in order},
                 "new_value_share": float(q[-1]) if complete else None,
-                "warn": params.tvd_warn,
-                "high": params.tvd_high,
+                "warn": params.tvd_warn * scale,
+                "high": params.tvd_high * scale,
             },
             what=f"total variation distance {tvd:.2f}",
         )

@@ -5,6 +5,7 @@ from typing import Literal
 
 import numpy as np
 from pydantic import Field
+from scipy.stats import norm
 
 from dsbf.engine import (
     CheckContext,
@@ -32,6 +33,10 @@ LABELS = {"iqr": "IQR", "zscore": "z-score", "mad": "MAD"}
 
 # Scales a deviation from the median, in MADs, to a standard-normal z-score.
 _MAD_SCALE = 0.6745
+# For a normal column, the upper quartile sits this many deviations above the median
+# and the interquartile range is this many deviations wide.
+_NORMAL_Q3 = 0.6745
+_NORMAL_IQR = 1.3490
 _TOP_VALUES = 10
 
 
@@ -53,6 +58,17 @@ class OutliersParams(CheckParams):
         description="Modified z-score (Iglewicz and Hoaglin, 1993) above which a "
         "value is flagged.",
     )
+    false_flag_rate: float = Field(
+        0.01,
+        gt=0,
+        le=1,
+        description="Chance that a normal column of any length has a value flagged "
+        "by a rule. The cutoffs of the three rules rise with the number of values "
+        "until a normal column of n values breaks one with this probability, since "
+        "the fixed cutoffs (3 deviations, 1.5 interquartile ranges) flag a few "
+        "values of every long column by chance. They never fall below the fixed "
+        "cutoffs; 1 uses those alone.",
+    )
     min_n: int = Field(
         10, ge=4, description="Finite values a column needs to be examined."
     )
@@ -66,6 +82,7 @@ class OutliersParams(CheckParams):
 
 
 class IqrResult(Contract):
+    multiplier: float = Field(description="The fence distance used, in IQRs.")
     count: int = Field(ge=0)
     share: float = Field(ge=0, le=1, description="Of the finite values.")
     q1: float
@@ -79,7 +96,7 @@ class ZScoreResult(Contract):
     share: float = Field(ge=0, le=1, description="Of the finite values.")
     mean: float
     std: float
-    threshold: float
+    threshold: float = Field(description="The cutoff used, in deviations.")
     max_score: float = Field(ge=0, description="The largest |z|.")
 
 
@@ -88,7 +105,7 @@ class MadResult(Contract):
     share: float = Field(ge=0, le=1, description="Of the finite values.")
     median: float
     mad: float = Field(gt=0, description="Median absolute deviation from the median.")
-    threshold: float
+    threshold: float = Field(description="The cutoff used, in modified z-scores.")
     max_score: float = Field(ge=0, description="The largest modified z-score.")
 
 
@@ -121,7 +138,7 @@ class OutliersOutput(CheckOutputModel):
 
 @check(
     id="outliers",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -166,17 +183,28 @@ def _examine(values: np.ndarray, params: OutliersParams) -> ColumnOutliers | Non
     flagged = np.zeros(n, dtype=bool)
     iqr = zscore = mad = None
     median = float(np.median(values))
+    # The deviations at which a normal column of n values breaks a rule by chance
+    # with probability `false_flag_rate`, never below the fixed cutoffs.
+    reach = (
+        float(norm.isf(params.false_flag_rate / (2 * n)))
+        if params.false_flag_rate < 1
+        else 0.0
+    )
+    z_cutoff = max(params.zscore_threshold, reach)
+    mad_cutoff = max(params.mad_threshold, reach)
+    multiplier = max(params.iqr_multiplier, (reach - _NORMAL_Q3) / _NORMAL_IQR)
     if "iqr" in params.methods:
         q1, q3 = (float(q) for q in np.percentile(values, [25, 75]))
         spread = q3 - q1
-        lower = q1 - params.iqr_multiplier * spread
-        upper = q3 + params.iqr_multiplier * spread
+        lower = q1 - multiplier * spread
+        upper = q3 + multiplier * spread
         if not np.isfinite([q1, q3, lower, upper]).all():
             return None
         mask = (values < lower) | (values > upper)
         flagged |= mask
         count = int(np.count_nonzero(mask))
         iqr = IqrResult(
+            multiplier=multiplier,
             count=count,
             share=count / n,
             q1=q1,
@@ -191,7 +219,7 @@ def _examine(values: np.ndarray, params: OutliersParams) -> ColumnOutliers | Non
             scores = np.abs(values - mean) / std
             if not np.isfinite([mean, std, scores.max()]).all():
                 return None
-            mask = scores > params.zscore_threshold
+            mask = scores > z_cutoff
             flagged |= mask
             count = int(np.count_nonzero(mask))
             zscore = ZScoreResult(
@@ -199,7 +227,7 @@ def _examine(values: np.ndarray, params: OutliersParams) -> ColumnOutliers | Non
                 share=count / n,
                 mean=mean,
                 std=std,
-                threshold=params.zscore_threshold,
+                threshold=z_cutoff,
                 max_score=float(scores.max()),
             )
     if "mad" in params.methods:
@@ -209,7 +237,7 @@ def _examine(values: np.ndarray, params: OutliersParams) -> ColumnOutliers | Non
             scores = _MAD_SCALE * deviation / spread
             if not np.isfinite([median, spread, scores.max()]).all():
                 return None
-            mask = scores > params.mad_threshold
+            mask = scores > mad_cutoff
             flagged |= mask
             count = int(np.count_nonzero(mask))
             mad = MadResult(
@@ -217,7 +245,7 @@ def _examine(values: np.ndarray, params: OutliersParams) -> ColumnOutliers | Non
                 share=count / n,
                 median=median,
                 mad=spread,
-                threshold=params.mad_threshold,
+                threshold=mad_cutoff,
                 max_score=float(scores.max()),
             )
     flagging = tuple(

@@ -127,6 +127,31 @@ class TestNumericDrift:
         assert column["psi"] == pytest.approx(0, abs=1e-9)
         assert output_of(result)["drifted"] == []
 
+    def test_two_small_samples_of_one_distribution_are_not_drift(self):
+        flagged = 0
+        for seed in range(40):
+            frame = pl.DataFrame({"x": normal(150, seed=seed)})
+            reference = pl.DataFrame({"x": normal(150, seed=1000 + seed)})
+            result = run_drift(frame, reference)
+            column = output_of(result)["columns"]["x"]
+            # PSI between two samples of 150 is high by chance alone.
+            assert column["psi"] > 0
+            flagged += column["drift"] != "none"
+
+        assert flagged <= 3
+
+    def test_the_psi_chance_alone_reaches_is_subtracted_before_the_limits(self):
+        frame = pl.DataFrame({"x": normal(150, 0.55, seed=1)})
+        reference = pl.DataFrame({"x": normal(150, seed=2)})
+
+        result = run_drift(frame, reference)
+
+        (finding,) = result.findings
+        assert metric(finding, "psi_excess") == pytest.approx(
+            metric(finding, "psi") - metric(finding, "psi_noise")
+        )
+        assert metric(finding, "psi_excess") >= metric(finding, "warn")
+
     def test_a_shift_is_found_and_grows_with_the_shift(self):
         reference = pl.DataFrame({"x": normal()})
         psis = []
@@ -384,6 +409,19 @@ class TestTarget:
         (finding,) = targeted.findings
         assert finding.code == "target_drift"
         assert finding.severity > plain.findings[0].severity
+
+    def test_the_target_is_held_to_half_the_limits_of_a_feature(self):
+        frame, reference = self.frames([0.75, 0.25])  # 15 points of share
+
+        plain = run_drift(frame, reference)
+        targeted = run_drift(frame, reference, target="y")
+        loose = run_drift(frame, reference, target="y", target_scale=1.0)
+
+        assert plain.findings == ()
+        (finding,) = targeted.findings
+        assert finding.code == "target_drift"
+        assert metric(finding, "warn") == pytest.approx(0.1)
+        assert loose.findings == ()
 
     def test_a_target_the_reference_lacks_is_a_finding(self):
         frame = pl.DataFrame({"x": normal(300), "y": ["a", "b", "a"] * 100})

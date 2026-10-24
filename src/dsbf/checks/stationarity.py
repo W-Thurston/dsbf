@@ -33,6 +33,7 @@ from dsbf.model import (
 
 Assessment = Literal[
     "consistent_with_stationary",
+    "consistent_with_trend_stationary",
     "consistent_with_non_stationary",
     "ambiguous_trend_stationary_or_structural_break",
     "inconclusive",
@@ -46,6 +47,11 @@ _KPSS_TABLE = (0.01, 0.1)
 
 _MEANING: dict[Assessment, str] = {
     "consistent_with_stationary": "both tests point to a stationary series",
+    "consistent_with_trend_stationary": (
+        "with a constant alone the tests say the level drifts, but once a straight "
+        "trend is allowed for, ADF rejects a unit root and KPSS does not reject "
+        "stationarity: the series is stationary around a deterministic trend"
+    ),
     "consistent_with_non_stationary": (
         "ADF cannot reject a unit root and KPSS rejects stationarity: the level "
         "drifts, as with a trend or a random walk"
@@ -97,6 +103,12 @@ class ColumnStationarity(SeriesInfo):
         description="Null hypothesis: stationary around a level. Rejecting it "
         "favours a drifting level."
     )
+    adf_trend: UnitRootTest | None = Field(
+        description="ADF with a constant and a linear trend in the regression."
+    )
+    kpss_trend: UnitRootTest | None = Field(
+        description="Null hypothesis: stationary around a linear trend."
+    )
     errors: dict[str, str] = Field(description="Tests that could not run, and why.")
     assessment: Assessment
     confidence: Literal["moderate", "low"]
@@ -112,7 +124,7 @@ class StationarityOutput(TimeSeriesOutput):
 
 @check(
     id="stationarity",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "datetime"),
     dimensions=[Dimension.TEMPORAL],
@@ -140,6 +152,8 @@ def stationarity(ctx: CheckContext, params: StationarityParams) -> CheckOutput:
         columns[name] = result
         if result.assessment == "consistent_with_non_stationary":
             _report(ctx, name, result, params, prepared, "non_stationary")
+        elif result.assessment == "consistent_with_trend_stationary":
+            _report(ctx, name, result, params, prepared, "trend_stationary")
         elif result.assessment == "ambiguous_trend_stationary_or_structural_break":
             _report(ctx, name, result, params, prepared, "ambiguous_stationarity")
     return ctx.output(
@@ -156,11 +170,27 @@ def _test(
     errors: dict[str, str] = {}
     adf = _adf(values, cap, params.alpha, errors)
     kpss_test = _kpss(values, cap, params.alpha, errors)
+    adf_trend = _adf(values, cap, params.alpha, errors, regression="ct")
+    kpss_trend = _kpss(values, cap, params.alpha, errors, regression="ct")
     assessment, confidence = _assess(adf, kpss_test)
+    if (
+        assessment
+        in (
+            "consistent_with_non_stationary",
+            "ambiguous_trend_stationary_or_structural_break",
+        )
+        and adf_trend is not None
+        and kpss_trend is not None
+        and adf_trend.rejects
+        and not kpss_trend.rejects
+    ):
+        assessment, confidence = "consistent_with_trend_stationary", "moderate"
     return ColumnStationarity(
         **info.model_dump(),
         adf=adf,
         kpss=kpss_test,
+        adf_trend=adf_trend,
+        kpss_trend=kpss_trend,
         errors=errors,
         assessment=assessment,
         confidence=confidence,
@@ -169,28 +199,36 @@ def _test(
 
 
 def _adf(
-    values: np.ndarray, cap: int, alpha: float, errors: dict[str, str]
+    values: np.ndarray,
+    cap: int,
+    alpha: float,
+    errors: dict[str, str],
+    regression: Literal["c", "ct"] = "c",
 ) -> UnitRootTest | None:
     try:
-        found: Any = adfuller(values, maxlag=cap, autolag="AIC")
+        found: Any = adfuller(values, maxlag=cap, regression=regression, autolag="AIC")
     except _FAILURES as error:
-        errors["adf"] = str(error)
+        errors["adf" if regression == "c" else "adf_trend"] = str(error)
         return None
     statistic, p_value, lags, critical = found[0], found[1], found[2], found[4]
     return _result("adf", statistic, p_value, lags, critical, alpha, errors)
 
 
 def _kpss(
-    values: np.ndarray, cap: int, alpha: float, errors: dict[str, str]
+    values: np.ndarray,
+    cap: int,
+    alpha: float,
+    errors: dict[str, str],
+    regression: Literal["c", "ct"] = "c",
 ) -> UnitRootTest | None:
     n = values.size
     # The long-run variance of the Newey–West estimate; statsmodels' automatic choice
     # is capped at the same number of lags as the ADF regression.
     lags = min(cap, math.ceil(12 * (n / 100) ** 0.25))
     try:
-        found: Any = kpss(values, regression="c", nlags=lags)
+        found: Any = kpss(values, regression=regression, nlags=lags)
     except _FAILURES as error:
-        errors["kpss"] = str(error)
+        errors["kpss" if regression == "c" else "kpss_trend"] = str(error)
         return None
     statistic, p_value, used, critical = found[0], found[1], found[2], found[3]
     return _result("kpss", statistic, p_value, used, critical, alpha, errors)
@@ -247,7 +285,7 @@ def _report(
     result: ColumnStationarity,
     params: StationarityParams,
     prepared: Prepared,
-    code: Literal["non_stationary", "ambiguous_stationarity"],
+    code: Literal["non_stationary", "trend_stationary", "ambiguous_stationarity"],
 ) -> None:
     assert result.adf is not None and result.kpss is not None
     metrics: dict[str, object] = {
@@ -262,26 +300,42 @@ def _report(
         "maxlag": result.max_lag,
     }
     drifting = code == "non_stationary"
+    around_trend = code == "trend_stationary"
+    if around_trend and result.adf_trend and result.kpss_trend:
+        metrics |= {
+            "adf_trend_p_value": result.adf_trend.p_value,
+            "kpss_trend_p_value": result.kpss_trend.p_value,
+        }
+    title = (
+        "Non-stationary over time"
+        if drifting
+        else "Stationary around a trend"
+        if around_trend
+        else "Stationarity tests disagree"
+    )
+    advice = (
+        "Autocorrelations and ARIMA-type models assume a stationary series, "
+        "so difference or detrend it and test again."
+        if drifting
+        else "Remove the trend (regress on time) rather than differencing, which "
+        "adds noise to a series that has no unit root; a model with a time term "
+        "handles it, and a random train-test split does not."
+        if around_trend
+        else "Test the series after removing a deterministic trend, and "
+        "look for a break in level."
+    )
     ctx.finding(
         code=code,
         subject=Subject.column(name),
         severity=Severity.WARN if drifting else Severity.INFO,
-        confidence=Confidence.MODERATE if drifting else Confidence.LOW,
-        title=(
-            "Non-stationary over time" if drifting else "Stationarity tests disagree"
-        ),
+        confidence=Confidence.MODERATE if drifting or around_trend else Confidence.LOW,
+        title=title,
         message=(
             f"{name!r} against {prepared.index!r}, as {result.periods:,} "
             f"{prepared.step.alias} periods: {_MEANING[result.assessment]} "
             f"(ADF p={result.adf.p_value:.3g}, KPSS p={result.kpss.p_value:.3g}, "
             f"α={params.alpha:g}). "
-            + (
-                "Autocorrelations and ARIMA-type models assume a stationary series, "
-                "so difference or detrend it and test again."
-                if drifting
-                else "Test the series after removing a deterministic trend, and "
-                "look for a break in level."
-            )
+            + advice
             + (
                 f" Only the last {prepared.max_periods:,} of "
                 f"{prepared.periods_total:,} periods were used."

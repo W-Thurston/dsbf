@@ -52,7 +52,9 @@ class TestStringAnomalies:
         assert {a.action for a in actions_of(finding)} == {"transform"}
 
     def test_padding_and_hidden_characters_are_counted_in_rows(self):
-        values = ["ok"] * 50 + [" padded", "padded ", "\tpadded"] + ["zero​width"] * 4
+        values = (
+            ["okay-ok!"] * 50 + [" padded", "padded ", "\tpadded"] + ["zero​width"] * 4
+        )
         values += ["no break", "bell\x07"]
         result = run_core_check(pl.DataFrame({"tag": values}), "string_anomalies")
 
@@ -87,8 +89,15 @@ class TestStringAnomalies:
         finding = by_column(result)["code"][0]
         assert finding.code == "length_outliers" and finding.severity is Severity.INFO
 
-    def test_a_column_of_one_length_has_no_length_fence(self):
+    def test_in_a_column_of_one_length_a_value_far_from_it_is_an_outlier(self):
         frame = pl.DataFrame({"code": ["abcde"] * 100 + ["abcdefghijklmnop"]})
+
+        (finding,) = run_core_check(frame, "string_anomalies").findings
+
+        assert finding.code == "length_outliers"
+
+    def test_in_a_column_of_one_length_a_value_a_character_off_is_not(self):
+        frame = pl.DataFrame({"code": ["abcde"] * 100 + ["abcdef", "abcd"]})
 
         assert run_core_check(frame, "string_anomalies").findings == ()
 
@@ -163,6 +172,47 @@ class TestEncodedColumns:
         assert finding.confidence is Confidence.HIGH
         assert finding.evidence.metrics["kind"] == "uuid"
         assert {a.action for a in actions_of(finding)} == {"drop"}
+
+    def test_email_addresses_of_similar_length_are_not_random_tokens(self):
+        g = generator()
+        words = ["river", "stone", "cloud", "maple", "harbor", "violet", "ember"]
+        emails = [
+            f"{g.choice(words)}{g.integers(10, 999)}@{g.choice(words)}.org"
+            for _ in range(500)
+        ]
+
+        found = output_of(
+            run_core_check(pl.DataFrame({"email": emails}), "encoded_columns")
+        )
+
+        assert found["columns"] == {}
+
+    def test_short_hexadecimal_keys_need_a_digit_a_letter_and_the_minimum_length(self):
+        g = generator()
+        keys = [g.bytes(5).hex()[:8] for _ in range(200)]
+        keys = [
+            k
+            if any(c.isalpha() for c in k) and any(c.isdigit() for c in k)
+            else "a1b2c3d4"
+            for k in keys
+        ]
+        frame = pl.DataFrame(
+            {
+                "request": keys,
+                "plain_number": [f"{i:08d}" for i in range(200)],  # no letter
+                "words": ["facade" if i % 2 else "decade" for i in range(200)],
+                "brief": [k[:6] for k in keys],  # under min_hex_length
+            }
+        )
+
+        found = output_of(run_core_check(frame, "encoded_columns"))["columns"]
+        loose = output_of(run_core_check(frame, "encoded_columns", min_hex_length=6))[
+            "columns"
+        ]
+
+        assert found["request"]["kind"] == "hex"
+        assert not {"plain_number", "words", "brief"} & set(found)
+        assert "brief" in loose
 
     def test_hex_digests_have_a_digest_length_and_some_letters(self):
         digests = [hashlib.sha256(str(i).encode()).hexdigest() for i in range(80)]

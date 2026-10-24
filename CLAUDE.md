@@ -44,7 +44,7 @@ Read this section before planning or modifying the repository.
    cd ..
    ```
 
-   Run the `integration`, `slow`, `network`, `golden` or `perf` tiers when the affected boundary requires them.
+   Run the `integration`, `slow`, `network`, `golden`, `perf` or `calibration` tiers when the affected boundary requires them (a change to a check's threshold or method needs `calibration`).
 8. **Verify against real artifacts and responses.** After engine, data, storage, API or frontend changes, run DSBF on real data in an isolated scratch directory (with its own `DSBF_DB_PATH`). Then inspect the output directly: the `Run` or report, database rows, API responses, and the rendered dashboard. Check:
    - row and column counts, check statuses and their reasons;
    - identities and uniqueness, coverage of eligible columns;

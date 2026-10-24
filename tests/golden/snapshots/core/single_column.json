@@ -8,7 +8,7 @@
   "autocorrelation": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "bimodality": {
    "findings": [],
@@ -23,7 +23,7 @@
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "collinearity": {
    "findings": [],
@@ -53,7 +53,7 @@
   "dominant_value": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "dtype_optimizations": {
    "findings": [],
@@ -88,7 +88,7 @@
   "encoded_columns": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "entropy": {
    "findings": [],
@@ -103,12 +103,12 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "group_differences": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "high_cardinality": {
    "findings": [],
@@ -209,12 +209,12 @@
   "multivariate_outliers": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "mutual_information": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "near_zero_variance": {
    "findings": [],
@@ -249,7 +249,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "null_rate": {
    "findings": [],
@@ -295,15 +295,15 @@
      "id": "0077bfbf3768c80e",
      "metrics": {
       "consensus": true,
-      "iqr_count": 29,
-      "lower_fence": -15.1763,
-      "mad_count": 17,
+      "iqr_count": 10,
+      "lower_fence": -44.1126,
+      "mad_count": 11,
       "methods_flagging": [
        "iqr",
        "zscore",
        "mad"
       ],
-      "outlier_share": 0.058,
+      "outlier_share": 0.022,
       "top_values": [
        190.25,
        189.24,
@@ -316,8 +316,8 @@
        116.27,
        115.14
       ],
-      "upper_fence": 84.4738,
-      "zscore_count": 10
+      "upper_fence": 113.41,
+      "zscore_count": 4
      },
      "severity": "warn",
      "subject": {
@@ -329,7 +329,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "quality_dimensions": {
    "findings": [],
@@ -371,12 +371,12 @@
     }
    },
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "sample_size": {
    "findings": [
@@ -409,7 +409,7 @@
   "seasonal_decomposition": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "skewness": {
    "findings": [
@@ -434,22 +434,22 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "string_anomalies": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "target_leakage": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "temporal_gaps": {
    "findings": [],
@@ -484,7 +484,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.1"
+   "version": "1.1.0"
   },
   "zeros": {
    "findings": [],

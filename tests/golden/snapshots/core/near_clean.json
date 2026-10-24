@@ -8,7 +8,7 @@
   "autocorrelation": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "bimodality": {
    "findings": [],
@@ -81,7 +81,7 @@
   "class_imbalance": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "collinearity": {
    "findings": [],
@@ -146,7 +146,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "dtype_optimizations": {
    "findings": [
@@ -257,7 +257,7 @@
   "encoded_columns": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "entropy": {
    "findings": [],
@@ -272,12 +272,12 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "group_differences": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "high_cardinality": {
    "findings": [],
@@ -399,12 +399,11 @@
      },
      "transformations": {
       "action_columns": [
-       "income",
        "purchase_amount"
       ],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 11,
+      "findings": 9,
       "level": "amber"
      },
      "unusable": {
@@ -429,30 +428,34 @@
      "metrics": {
       "contamination": 0.05,
       "example_rows": [
-       678,
-       479,
-       2400,
-       859,
-       596,
+       2413,
        1472,
-       802,
-       1720,
-       1517,
-       1301,
-       1369,
-       1327,
-       2389,
        191,
-       1441,
-       1315,
        684,
-       954,
+       802,
+       479,
+       252,
+       307,
+       2070,
+       678,
+       596,
+       1782,
+       244,
        1852,
-       2838
+       859,
+       2748,
+       2384,
+       1348,
+       1369,
+       1280
       ],
+      "excess": 0.0121307,
+      "far_limit": 33.2653,
+      "far_rows": 23,
       "max_anomaly_score": 0.669273,
       "n_features": 5,
-      "n_flagged": 150
+      "n_flagged": 150,
+      "reference_max_score": 0.657142
      },
      "severity": "info",
      "subject": {
@@ -468,12 +471,12 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "mutual_information": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "near_zero_variance": {
    "findings": [],
@@ -580,7 +583,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "null_rate": {
    "findings": [
@@ -720,86 +723,18 @@
     {
      "check": "outliers",
      "code": "outliers_detected",
-     "id": "f563e593a6d0fbaf",
-     "metrics": {
-      "consensus": false,
-      "iqr_count": 5,
-      "lower_fence": 29.0,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr"
-      ],
-      "outlier_share": 0.00166667,
-      "top_values": [
-       62.0,
-       28.0,
-       28.0,
-       62.0,
-       62.0
-      ],
-      "upper_fence": 61.0,
-      "zscore_count": 0
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
-     "id": "1ce2b99b8b30ba5a",
-     "metrics": {
-      "consensus": true,
-      "iqr_count": 16,
-      "lower_fence": 20223.1,
-      "mad_count": 0,
-      "methods_flagging": [
-       "iqr",
-       "zscore"
-      ],
-      "outlier_share": 0.00569598,
-      "top_values": [
-       104486.0,
-       15000.0,
-       15000.0,
-       15000.0,
-       15000.0,
-       15000.0,
-       15685.4,
-       16453.2,
-       102266.0,
-       101017.0
-      ],
-      "upper_fence": 99185.2,
-      "zscore_count": 1
-     },
-     "severity": "warn",
-     "subject": {
-      "columns": [
-       "income"
-      ],
-      "kind": "column"
-     }
-    },
-    {
-     "check": "outliers",
-     "code": "outliers_detected",
      "id": "d1d565fa526c6d51",
      "metrics": {
       "consensus": true,
-      "iqr_count": 155,
-      "lower_fence": -68.7613,
-      "mad_count": 125,
+      "iqr_count": 28,
+      "lower_fence": -148.777,
+      "mad_count": 45,
       "methods_flagging": [
        "iqr",
        "zscore",
        "mad"
       ],
-      "outlier_share": 0.0516667,
+      "outlier_share": 0.015,
       "top_values": [
        421.55,
        366.97,
@@ -812,8 +747,8 @@
        319.55,
        302.13
       ],
-      "upper_fence": 152.529,
-      "zscore_count": 52
+      "upper_fence": 232.545,
+      "zscore_count": 11
      },
      "severity": "warn",
      "subject": {
@@ -825,7 +760,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "quality_dimensions": {
    "findings": [],
@@ -837,7 +772,7 @@
      "assessed": true,
      "coverage": 1.0,
      "findings": 1,
-     "level": "amber"
+     "level": "blue"
     },
     "leakage": {
      "affected_columns": [],
@@ -869,12 +804,12 @@
     }
    },
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "sample_size": {
    "findings": [],
@@ -889,7 +824,7 @@
   "seasonal_decomposition": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "skewness": {
    "findings": [
@@ -914,22 +849,22 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "string_anomalies": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "target_leakage": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "temporal_gaps": {
    "findings": [],
@@ -964,7 +899,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.1"
+   "version": "1.1.0"
   },
   "zeros": {
    "findings": [],

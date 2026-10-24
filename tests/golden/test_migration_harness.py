@@ -21,7 +21,13 @@ from tests.golden.migration.findings import (
     legacy_levels,
     unmapped_titles,
 )
-from tests.golden.migration.harness import Accepted, Difference, compare, judge
+from tests.golden.migration.harness import (
+    Accepted,
+    AcceptedKind,
+    Difference,
+    compare,
+    judge,
+)
 from tests.golden.migration.registry import ACCEPTED, COMPARATORS
 from tests.golden.migration.snapshot import core_snapshot
 from tests.golden.migration.zeros import compare_zeros
@@ -147,6 +153,35 @@ class TestTheVerdict:
         verdict = judge("zeros", "wide", [], (self.ACCEPT,))
 
         assert verdict.clean
+
+
+class TestAcceptedKinds:
+    KIND = AcceptedKind("zeros", ("column_read",), "calibrated")
+
+    def test_a_kind_is_accepted_for_every_dataset_and_subject(self):
+        found = [
+            Difference("a", "column_read", "legacy only"),
+            Difference("b", "column_read", "core only"),
+        ]
+
+        for dataset in ("titanic", "wide"):
+            assert judge("zeros", dataset, found, (), (self.KIND,)).clean
+
+    def test_another_kind_or_check_is_still_unexpected(self):
+        other_kind = [Difference("a", "status", "legacy ok, core failed")]
+
+        assert judge("zeros", "titanic", other_kind, (), (self.KIND,)).unexpected == (
+            other_kind
+        )
+        assert judge(
+            "nulls", "titanic", [Difference("a", "column_read", "x")], (), (self.KIND,)
+        ).unexpected
+
+    def test_a_listed_difference_of_an_accepted_kind_is_not_stale(self):
+        listed = Accepted("zeros", "titanic", "a", "column_read", "legacy only", "why")
+
+        assert judge("zeros", "titanic", [], (listed,), (self.KIND,)).clean
+        assert not judge("zeros", "titanic", [], (listed,)).clean
 
 
 class TestTheRegistry:
