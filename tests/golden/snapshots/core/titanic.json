@@ -3302,9 +3302,9 @@
      "id": "f7af712d4905a8af",
      "metrics": {
       "lambda": null,
-      "reduction": 0.917505,
-      "skewness_after": 0.394928,
-      "skewness_before": 4.78732,
+      "reduction": 0.9175,
+      "skewness_after": 0.3949,
+      "skewness_before": 4.7873,
       "transform": "log1p"
      },
      "severity": "info",
@@ -3317,7 +3317,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.0.1"
   },
   "zeros": {
    "findings": [],

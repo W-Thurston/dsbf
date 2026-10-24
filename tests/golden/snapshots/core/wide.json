@@ -6609,9 +6609,9 @@
      "id": "075822f6d124229e",
      "metrics": {
       "lambda": null,
-      "reduction": 0.724276,
-      "skewness_after": 0.337415,
-      "skewness_before": 1.22374,
+      "reduction": 0.7243,
+      "skewness_after": 0.3374,
+      "skewness_before": 1.2237,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6628,9 +6628,9 @@
      "id": "df9a7adb021c48db",
      "metrics": {
       "lambda": null,
-      "reduction": 0.684423,
-      "skewness_after": 0.487308,
-      "skewness_before": 1.54418,
+      "reduction": 0.6844,
+      "skewness_after": 0.4873,
+      "skewness_before": 1.5442,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6647,9 +6647,9 @@
      "id": "357d37fd3a08014a",
      "metrics": {
       "lambda": null,
-      "reduction": 0.705179,
-      "skewness_after": 0.426966,
-      "skewness_before": 1.44822,
+      "reduction": 0.7052,
+      "skewness_after": 0.427,
+      "skewness_before": 1.4482,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6666,9 +6666,9 @@
      "id": "a67f27f89ad78a34",
      "metrics": {
       "lambda": null,
-      "reduction": 0.73689,
-      "skewness_after": 0.349631,
-      "skewness_before": 1.32884,
+      "reduction": 0.7369,
+      "skewness_after": 0.3496,
+      "skewness_before": 1.3288,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6685,9 +6685,9 @@
      "id": "1e612d99a2b221fb",
      "metrics": {
       "lambda": null,
-      "reduction": 0.760886,
-      "skewness_after": -0.278835,
-      "skewness_before": 1.16612,
+      "reduction": 0.7609,
+      "skewness_after": -0.2788,
+      "skewness_before": 1.1661,
       "transform": "log1p"
      },
      "severity": "info",
@@ -6704,9 +6704,9 @@
      "id": "33c4ef14dbf500b4",
      "metrics": {
       "lambda": 0.272514,
-      "reduction": 0.997662,
-      "skewness_after": 0.00397525,
-      "skewness_before": 1.70036,
+      "reduction": 0.9977,
+      "skewness_after": 0.004,
+      "skewness_before": 1.7004,
       "transform": "box_cox"
      },
      "severity": "info",
@@ -6723,9 +6723,9 @@
      "id": "357061f470fd1045",
      "metrics": {
       "lambda": null,
-      "reduction": 0.714301,
-      "skewness_after": 0.42354,
-      "skewness_before": 1.48247,
+      "reduction": 0.7143,
+      "skewness_after": 0.4235,
+      "skewness_before": 1.4825,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6742,9 +6742,9 @@
      "id": "2efb2de23a456dd4",
      "metrics": {
       "lambda": null,
-      "reduction": 0.721803,
-      "skewness_after": 0.424496,
-      "skewness_before": 1.52588,
+      "reduction": 0.7218,
+      "skewness_after": 0.4245,
+      "skewness_before": 1.5259,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6761,9 +6761,9 @@
      "id": "db28e408466634a5",
      "metrics": {
       "lambda": null,
-      "reduction": 0.82057,
-      "skewness_after": -0.287695,
-      "skewness_before": 1.60338,
+      "reduction": 0.8206,
+      "skewness_after": -0.2877,
+      "skewness_before": 1.6034,
       "transform": "log1p"
      },
      "severity": "info",
@@ -6780,8 +6780,8 @@
      "id": "00dbd90a934dcc4a",
      "metrics": {
       "lambda": null,
-      "reduction": 0.713568,
-      "skewness_after": 0.378978,
+      "reduction": 0.7136,
+      "skewness_after": 0.379,
       "skewness_before": 1.3231,
       "transform": "sqrt"
      },
@@ -6799,9 +6799,9 @@
      "id": "b89821baebe694bc",
      "metrics": {
       "lambda": null,
-      "reduction": 0.694954,
-      "skewness_after": 0.383886,
-      "skewness_before": 1.25845,
+      "reduction": 0.695,
+      "skewness_after": 0.3839,
+      "skewness_before": 1.2585,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6818,9 +6818,9 @@
      "id": "4ef8b3766d421eec",
      "metrics": {
       "lambda": null,
-      "reduction": 0.773549,
-      "skewness_after": 0.29385,
-      "skewness_before": 1.29763,
+      "reduction": 0.7735,
+      "skewness_after": 0.2938,
+      "skewness_before": 1.2976,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6837,9 +6837,9 @@
      "id": "cabe774f20b032fb",
      "metrics": {
       "lambda": null,
-      "reduction": 0.677304,
-      "skewness_after": 0.469676,
-      "skewness_before": 1.45547,
+      "reduction": 0.6773,
+      "skewness_after": 0.4697,
+      "skewness_before": 1.4555,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6856,9 +6856,9 @@
      "id": "2320cd09b7b6b7ae",
      "metrics": {
       "lambda": null,
-      "reduction": 0.717248,
-      "skewness_after": 0.392833,
-      "skewness_before": 1.38932,
+      "reduction": 0.7172,
+      "skewness_after": 0.3928,
+      "skewness_before": 1.3893,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6875,9 +6875,9 @@
      "id": "59d9652b3dedcf9e",
      "metrics": {
       "lambda": null,
-      "reduction": 0.730936,
-      "skewness_after": 0.393447,
-      "skewness_before": 1.46228,
+      "reduction": 0.7309,
+      "skewness_after": 0.3934,
+      "skewness_before": 1.4623,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6894,8 +6894,8 @@
      "id": "f7ab70dbca5070f6",
      "metrics": {
       "lambda": null,
-      "reduction": 0.754749,
-      "skewness_after": -0.341462,
+      "reduction": 0.7547,
+      "skewness_after": -0.3415,
       "skewness_before": 1.3923,
       "transform": "log1p"
      },
@@ -6913,9 +6913,9 @@
      "id": "b09fb593a287203f",
      "metrics": {
       "lambda": null,
-      "reduction": 0.715778,
-      "skewness_after": 0.403868,
-      "skewness_before": 1.42096,
+      "reduction": 0.7158,
+      "skewness_after": 0.4039,
+      "skewness_before": 1.421,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6932,9 +6932,9 @@
      "id": "f59df8aae23cad6a",
      "metrics": {
       "lambda": null,
-      "reduction": 0.758918,
-      "skewness_after": -0.290207,
-      "skewness_before": 1.20377,
+      "reduction": 0.7589,
+      "skewness_after": -0.2902,
+      "skewness_before": 1.2038,
       "transform": "log1p"
      },
      "severity": "info",
@@ -6951,8 +6951,8 @@
      "id": "60ca63cbad7ec569",
      "metrics": {
       "lambda": null,
-      "reduction": 0.707857,
-      "skewness_after": 0.445227,
+      "reduction": 0.7079,
+      "skewness_after": 0.4452,
       "skewness_before": 1.524,
       "transform": "sqrt"
      },
@@ -6970,9 +6970,9 @@
      "id": "2f934e387db339f0",
      "metrics": {
       "lambda": null,
-      "reduction": 0.783347,
-      "skewness_after": 0.24072,
-      "skewness_before": 1.11109,
+      "reduction": 0.7833,
+      "skewness_after": 0.2407,
+      "skewness_before": 1.1111,
       "transform": "sqrt"
      },
      "severity": "info",
@@ -6985,7 +6985,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.0.1"
   },
   "zeros": {
    "findings": [],

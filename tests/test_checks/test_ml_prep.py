@@ -219,6 +219,22 @@ class TestTransformations:
         assert abs(metric(finding, "skewness_after")) <= 0.5
         assert metric(finding, "reduction") > 0.8
 
+    def test_the_skewness_is_reported_to_four_decimals(self):
+        """A skewness near 0 differs in its later digits between platforms."""
+        result = self.run(RNG.lognormal(2, 1, 5000))
+        (finding,) = result.findings
+        column = output_of(result)["columns"]["x"]
+        shown = [
+            metric(finding, "skewness_before"),
+            metric(finding, "skewness_after"),
+            metric(finding, "reduction"),
+            column["skewness_before"],
+            column["candidates"]["log1p"]["skewness_after"],
+            column["candidates"]["log1p"]["reduction"],
+        ]
+
+        assert shown == [round(value, 4) for value in shown]
+
     def test_negative_values_rule_out_the_roots_and_box_cox(self):
         values = RNG.exponential(3, 5000) - 1.0
         result = self.run(values)
