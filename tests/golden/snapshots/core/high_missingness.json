@@ -555,6 +555,60 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 5,
+      "level": "green"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [
+       "device_type",
+       "income",
+       "notes",
+       "premium_score"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 15,
+      "level": "red"
+     },
+     "transformations": {
+      "action_columns": [
+       "income"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 6,
+      "level": "amber"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 1,
+      "level": "green"
+     }
+    },
+    "gate": "not_ready"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -912,6 +966,54 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [
+      "age",
+      "device_type",
+      "income",
+      "notes",
+      "premium_score"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 5,
+     "level": "red"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 1,
+     "level": "blue"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -974,7 +1076,7 @@
   }
  },
  "dataset": "high_missingness",
- "format": 1,
+ "format": 2,
  "shape": [
   2000,
   9

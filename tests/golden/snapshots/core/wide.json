@@ -1803,6 +1803,84 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [
+     "bool_00",
+     "bool_01",
+     "bool_02",
+     "bool_03",
+     "bool_04"
+    ],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [
+       "cat_hc"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 28,
+      "level": "amber"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 24,
+      "level": "green"
+     },
+     "transformations": {
+      "action_columns": [
+       "cont_clean_11",
+       "cont_clean_32",
+       "cont_skew_00",
+       "cont_skew_01",
+       "cont_skew_02",
+       "cont_skew_03",
+       "cont_skew_04",
+       "cont_skew_05",
+       "cont_skew_06",
+       "cont_skew_07",
+       "cont_skew_08",
+       "cont_skew_09",
+       "cont_skew_10",
+       "cont_skew_11",
+       "cont_skew_12",
+       "cont_skew_13",
+       "cont_skew_14",
+       "cont_skew_15",
+       "cont_skew_16",
+       "cont_skew_17",
+       "cont_skew_18",
+       "cont_skew_19"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 140,
+      "level": "amber"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     }
+    },
+    "gate": "needs_work"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -6021,6 +6099,59 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [
+      "null_00",
+      "null_01",
+      "null_02",
+      "null_03",
+      "null_04",
+      "null_05",
+      "null_06",
+      "null_07"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 8,
+     "level": "blue"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [
+      "cat_hc"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 2,
+     "level": "amber"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 0,
+     "level": "green"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -6863,7 +6994,7 @@
   }
  },
  "dataset": "wide",
- "format": 1,
+ "format": 2,
  "shape": [
   1000,
   100

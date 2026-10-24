@@ -370,6 +370,56 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 3,
+      "level": "green"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 3,
+      "level": "green"
+     },
+     "transformations": {
+      "action_columns": [
+       "income",
+       "purchase_amount"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 11,
+      "level": "amber"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 2,
+      "level": "green"
+     }
+    },
+    "gate": "needs_work"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -777,6 +827,50 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [
+      "income"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 1,
+     "level": "amber"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 0,
+     "level": "green"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -879,7 +973,7 @@
   }
  },
  "dataset": "near_clean",
- "format": 1,
+ "format": 2,
  "shape": [
   3000,
   9

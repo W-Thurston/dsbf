@@ -256,6 +256,56 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [
+     "has_upgrade",
+     "is_active"
+    ],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 3,
+      "level": "green"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     },
+     "transformations": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 8,
+      "level": "green"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     }
+    },
+    "gate": "ready"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -603,6 +653,48 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 0,
+     "level": "green"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -665,7 +757,7 @@
   }
  },
  "dataset": "clean",
- "format": 1,
+ "format": 2,
  "shape": [
   2000,
   9

@@ -1,5 +1,5 @@
-Plan for data (6 × 4): 51 checks
-  will run 41 · not applicable 5 · unavailable 4 · skipped 1
+Plan for data (6 × 4): 53 checks
+  will run 43 · not applicable 5 · unavailable 4 · skipped 1
 
 level 0
   ✓ will run        associations            reads 4 columns
@@ -53,5 +53,9 @@ level 0
 level 1
   ✓ will run        categorical_encoding    reads 2 columns · after mutual_information, target_leakage
   ✓ will run        imputation              reads 4 columns · requires null_rate · after missingness_mechanism
+  ✓ will run        quality_dimensions      reads 4 columns · after associations, collinearity, constant_columns, datetime_consistency, duplicate_columns, duplicate_rows, encoded_columns, format_violations, fuzzy_duplicates, high_cardinality, id_columns, mixed_types, near_zero_variance, null_rate, out_of_bounds, sample_size, schema, string_anomalies, target_leakage, text_encoding
   ✓ will run        quality_summary         reads 4 columns · requires null_share · after numeric_spread
   ↷ skipped         trend_summary           Requires 'unit_root' (unavailable), which cannot run.
+
+level 2
+  ✓ will run        ml_readiness            reads 4 columns · after bimodality, categorical_encoding, constant_columns, dominant_value, high_cardinality, id_columns, imputation, missingness_mechanism, multivariate_outliers, near_zero_variance, null_rate, numeric_binning, outliers, skewness, target_leakage, transformations, zeros

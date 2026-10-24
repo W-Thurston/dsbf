@@ -23,14 +23,15 @@ inference), after the file is loaded:
 | `profile-wide1m` | 1,000,000 x 50 floats (`numpy` seed 42), as Parquet | 3, median kept | memory under 2.5x; time compared with the baseline only |
 
 The engine scenarios time one `dsbf.profile()` call (loading the file, the profile pass,
-planning and executing the adapted legacy tasks), in a fresh interpreter. Each writes the
+planning and executing the checks), in a fresh interpreter. The `engine-*` pairs select
+`packs=["core", "legacy"]`, so they keep timing the legacy tasks until they are deleted;
+the `standard-*` scenarios take the default selection, the `core` pack alone. Each writes the
 wall time of every check as its `tasks`, so the executor's effect shows per check as well
 as in the total. The `engine-*` pairs run every check (`depth="deep"`), serial and
 parallel. The `standard-*` scenarios run what `dsbf.profile()` runs when no depth is
 given, which is what the Phase 4 targets are about (REFACTOR_PLAN section 11). The summary
-lists each target the run misses. Nothing fails on a target, because the run time rises
-while the core checks run beside the legacy tasks they replace and only falls when those
-are removed. The baseline comparison applies to them as to every scenario.
+lists each target the run misses, and nothing fails on one. The baseline comparison
+applies to them as to every scenario.
 
 An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`. Linux keeps
 `ru_maxrss` across `exec`, so a child started after the harness had generated the
@@ -42,7 +43,7 @@ An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`.
 | `engine-titanic-parallel` | titanic | 3, median kept | `deep` | the executor's default (one per core, at most 8) | |
 | `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | `deep` | 1 | |
 | `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | `deep` | one per core | |
-| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one, while a legacy task is in the plan) | under 5 s |
+| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one per core: the default selection has no legacy task) | under 5 s |
 | `standard-kitchen50k` | kitchen50k, `normal_date` as the time index | 1 | `standard` | `dsbf.profile()`'s choice | under 60 s and 1 GB peak |
 
 ## Run it

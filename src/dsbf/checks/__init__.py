@@ -47,6 +47,7 @@ from dsbf.checks.imputation import imputation
 from dsbf.checks.kurtosis import kurtosis
 from dsbf.checks.missingness_mechanism import missingness_mechanism
 from dsbf.checks.mixed_types import mixed_types
+from dsbf.checks.ml_readiness import ml_readiness
 from dsbf.checks.multivariate_outliers import multivariate_outliers
 from dsbf.checks.mutual_information import mutual_information
 from dsbf.checks.near_zero_variance import near_zero_variance
@@ -55,6 +56,7 @@ from dsbf.checks.null_rate import null_rate
 from dsbf.checks.numeric_binning import numeric_binning
 from dsbf.checks.out_of_bounds import out_of_bounds
 from dsbf.checks.outliers import outliers
+from dsbf.checks.quality_dimensions import quality_dimensions
 from dsbf.checks.reference_drift import reference_drift
 from dsbf.checks.sample_size import sample_size
 from dsbf.checks.schema import schema
@@ -124,5 +126,7 @@ def core_pack() -> Pack:
             imputation,
             target_leakage,
             mutual_information,
+            quality_dimensions,
+            ml_readiness,
         ),
     )

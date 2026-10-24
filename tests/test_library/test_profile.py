@@ -19,6 +19,8 @@ from tests.test_legacy.support import build_frame
 pytestmark = pytest.mark.integration
 
 FILE_WRITERS = {"generate_dataset_summary_plots", "generate_univariate_plots"}
+# Asks for the legacy scorers and the tasks that feed them, until they are deleted.
+WITH_LEGACY = {"packs": ["core", "legacy"], "checks": ["+ml_readiness_scorer"]}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -109,12 +111,37 @@ def sparse() -> pl.DataFrame:
     return pl.DataFrame({"sparse": values, "dense": [float(i) for i in range(100)]})
 
 
+class TestTheDefaultSelection:
+    def test_it_plans_core_checks_and_no_legacy_task(self, quick):
+        planned = {c.check_id: c for c in quick.plan.checks}
+
+        assert {"quality_dimensions", "ml_readiness"} <= set(planned)
+        assert set(planned) <= {check.id for check in core_pack().checks}
+
+    def test_the_synthesis_checks_report_on_the_other_checks(self, quick):
+        quality = quick.results["quality_dimensions"]
+        readiness = quick.results["ml_readiness"]
+
+        assert quality.status is CheckStatus.OK and readiness.status is CheckStatus.OK
+        assert quality.output is not None and readiness.output is not None
+        assert quality.output["dimensions"]["leakage"]["assessed"] is False
+        assert readiness.output["unassessed"] == ["leakage"]
+
+    def test_a_target_assesses_leakage(self, frame):
+        run = dsbf.profile(frame, depth="standard", target="flag")
+
+        output = run.results["quality_dimensions"].output
+        assert output is not None
+        assert output["dimensions"]["leakage"]["assessed"] is True
+
+
 class TestMigratedChecks:
     """A core check replaces its legacy task, which keeps feeding the scorers."""
 
     def test_the_default_selection_runs_the_core_check_not_the_task(self, sparse):
         run = dsbf.profile(sparse, depth="quick")
 
+        assert "detect_zeros" not in run.results
         assert run.results["zeros"].status is CheckStatus.OK
         zero_findings = [f for f in run.findings if f.subject.columns == ("sparse",)]
         assert {f.check_id for f in zero_findings if "zero" in f.code} == {"zeros"}
@@ -122,7 +149,7 @@ class TestMigratedChecks:
     def test_a_scorer_still_gets_the_task_as_a_requirement_without_its_findings(
         self, sparse
     ):
-        run = dsbf.profile(sparse, depth="quick")
+        run = dsbf.profile(sparse, depth="quick", **WITH_LEGACY)
 
         task = run.results["detect_zeros"]
         assert task.status is CheckStatus.OK
@@ -160,7 +187,7 @@ class TestMigratedChecks:
         assert run.results["schema"].status is CheckStatus.NOT_APPLICABLE
 
     def test_a_retired_task_runs_only_for_the_scorer_that_reads_it(self, frame):
-        run = dsbf.profile(frame, depth="quick")
+        run = dsbf.profile(frame, depth="quick", **WITH_LEGACY)
 
         for task in ("summarize_unique", "sample_head", "compute_entropy"):
             assert task not in run.results or run.results[task].findings == ()
@@ -176,23 +203,31 @@ class TestMigratedChecks:
 
 class TestSelection:
     def test_a_minus_removes_a_check_nothing_else_needs(self, frame):
-        run = dsbf.profile(frame, depth="quick", checks=["-detect_duplicate_columns"])
+        run = dsbf.profile(
+            frame,
+            depth="quick",
+            packs=["core", "legacy"],
+            checks=["+ml_readiness_scorer", "-detect_duplicate_columns"],
+        )
 
         assert "detect_duplicate_columns" not in run.results
         assert "detect_constant_columns" in run.results
 
     def test_removing_a_check_another_needs_is_a_plan_error(self, frame):
         with pytest.raises(PlanError, match="exclude 'ml_readiness_scorer' too"):
-            dsbf.profile(frame, depth="quick", checks=["-detect_outliers"])
+            dsbf.profile(
+                frame,
+                depth="quick",
+                packs=["core", "legacy"],
+                checks=["+ml_readiness_scorer", "-detect_outliers"],
+            )
 
     def test_an_unknown_pack_is_a_plan_error(self, frame):
         with pytest.raises(PlanError, match="nope"):
             dsbf.profile(frame, packs=["nope"])
 
     def test_a_deeper_depth_plans_more(self, frame, quick):
-        standard = dsbf.profile(
-            frame, depth="standard", checks=["-fuzzy_duplicate_detection"]
-        )
+        standard = dsbf.profile(frame, depth="standard", checks=["-fuzzy_duplicates"])
 
         assert set(quick.plan.check_ids) < set(standard.plan.check_ids)
         assert quick.plan.depth == "quick"
@@ -205,7 +240,8 @@ class TestSelection:
             frame,
             tasks=settings,
             depth="standard",
-            checks=["-fuzzy_duplicate_detection"],
+            packs=["core", "legacy"],
+            checks=["+ml_readiness_scorer", "-fuzzy_duplicate_detection"],
         )
 
         planned = {c.check_id: c for c in run.plan.checks}["detect_outliers"]
@@ -218,7 +254,8 @@ class TestSelection:
             depth="standard",
             target="flag",
             time_index="when",
-            checks=["-fuzzy_duplicate_detection"],
+            packs=["core", "legacy"],
+            checks=["+ml_readiness_scorer", "-fuzzy_duplicate_detection"],
         )
 
         params = {c.check_id: c.params for c in run.plan.checks}
@@ -435,7 +472,7 @@ class TestRunsToTheEnd:
         assert set(run.results) == set(run.plan.check_ids)
         assert run.results["boom"].status is CheckStatus.ERROR
         assert "forced failure" in run.results["boom"].notes[0].message
-        assert run.results["detect_constant_columns"].status is CheckStatus.OK
+        assert run.results["constant_columns"].status is CheckStatus.OK
         issues = {i.check_id: i.status for i in run.health.issues}
         assert issues["boom"] is CheckStatus.ERROR
         assert "boom" in run.render_health()
@@ -471,7 +508,7 @@ class TestCache:
         self, frame, tmp_path
     ):
         cache = DiskCache(tmp_path / "results")
-        options = {"depth": "quick", "cache": cache}
+        options = {"depth": "quick", "cache": cache, **WITH_LEGACY}
 
         first = dsbf.profile(frame, **options)
         same = dsbf.profile(frame, **options)

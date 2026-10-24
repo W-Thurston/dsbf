@@ -237,6 +237,56 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [
+     "flag",
+     "signup"
+    ],
+    "complete": false,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 1,
+      "level": "green"
+     },
+     "leakage": {
+      "action_columns": [],
+      "assessed": false,
+      "coverage": 0.0,
+      "findings": 0,
+      "level": null
+     },
+     "missingness": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     },
+     "transformations": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 2,
+      "level": "green"
+     },
+     "unusable": {
+      "action_columns": [],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 0,
+      "level": "green"
+     }
+    },
+    "gate": "ready"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -317,6 +367,48 @@
   },
   "outliers": {
    "findings": [],
+   "status": "ok",
+   "version": "1.0.0"
+  },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "leakage": {
+     "affected_columns": [],
+     "assessed": false,
+     "coverage": 0.0,
+     "findings": 0,
+     "level": null
+    },
+    "redundancy": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 0,
+     "level": "green"
+    },
+    "usability": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 3,
+     "level": "amber"
+    },
+    "validity": {
+     "affected_columns": [],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 0,
+     "level": "green"
+    }
+   },
    "status": "ok",
    "version": "1.0.0"
   },
@@ -454,7 +546,7 @@
   }
  },
  "dataset": "tiny",
- "format": 1,
+ "format": 2,
  "shape": [
   25,
   6

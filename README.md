@@ -130,14 +130,16 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 | Argument | Meaning |
 |---|---|
 | `depth` | `quick`, `standard` (the default) or `deep`: the most expensive kind of check to run |
-| `packs`, `checks` | The packs to draw checks from (`legacy`, which holds every existing task, by default); `checks=["-detect_outliers", "+detect_zeros"]` removes and adds checks by id |
+| `packs`, `checks` | The packs to draw checks from (`core`, the checks DSBF ships, by default; add `"legacy"` for the old tasks no core check replaces); `checks=["-outliers", "+zeros"]` removes and adds checks by id |
 | `target`, `time_index` | The columns the checks that need a target or a time axis use |
 | `sample` | `dsbf.Sample(rows=100_000, strategy="random", seed=1)`, or a row count for the first rows; the `Run` records how the rows were chosen |
-| `tasks` | Settings for a legacy task, by name: `{"detect_outliers": {"flag_threshold": 0.05}}` |
-| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one by default while every check is a legacy task, since they run no faster together; otherwise one per core, at most 8 |
+| `tasks` | Settings for a legacy task, by name, when the `legacy` pack is selected: `{"detect_outliers": {"flag_threshold": 0.05}}` |
+| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one per core, at most 8, unless a legacy task is planned, which runs them one at a time since the legacy tasks run no faster together |
 | `cache` | `True` keeps results under the DSBF home, so a second call re-runs only the checks whose inputs changed; off by default |
 | `hooks`, `plugins` | Functions that receive an event as each check starts and finishes; directories of check plugins |
 | `config` | The path of a settings file with the same names. An argument here overrides the file, and `DSBF__SECTION__KEY` environment variables sit between the two. No file is read unless you name it |
+
+`run.results["quality_dimensions"].output` reports completeness, validity, usability, redundancy and leakage from the other checks' findings, each with a level, the columns it flags and a coverage (the share of its input checks that ran); a dimension no check could assess, such as leakage without a `target`, has no level rather than a green one. `run.results["ml_readiness"].output` does the same for what to do before modelling and gives a gate (`ready`, `needs_work`, `not_ready`).
 
 A `Run` can be megabytes on data with many columns, because a check's output is kept whole: the titanic `Run` is 0.56 MB (the largest outputs are `group_differences` at 52 KB and `contingency` at 44 KB). It was 8.9 MB until `fuzzy_duplicates`, which lists its 20 closest pairs and counts the rest, replaced `fuzzy_duplicate_detection`'s whole pair list.
 

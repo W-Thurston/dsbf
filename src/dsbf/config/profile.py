@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from dsbf.engine.selection import Depth
 
-DEFAULT_PACKS = ("core", "legacy")
+DEFAULT_PACKS = ("core",)
 
 
 class Backend(StrEnum):

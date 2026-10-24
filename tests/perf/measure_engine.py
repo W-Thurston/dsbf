@@ -12,6 +12,9 @@ executor's own default, one per core.
 
 Usage: python measure_engine.py <name> <csv> <out_dir> --workers {default,per-core,N}
                                 --depth {quick,standard,deep} [--time-index COLUMN]
+                                [--packs core,legacy]
+
+Without ``--packs`` the call takes the default selection.
 """
 
 import argparse
@@ -62,6 +65,7 @@ def main() -> None:
     parser.add_argument("--workers", required=True)
     parser.add_argument("--depth", required=True)
     parser.add_argument("--time-index")
+    parser.add_argument("--packs")
     args = parser.parse_args()
 
     started = time.perf_counter()
@@ -71,6 +75,7 @@ def main() -> None:
         depth=args.depth,
         time_index=args.time_index,
         workers=_workers(args.workers),
+        packs=args.packs.split(",") if args.packs else None,
     )
     total_seconds = time.perf_counter() - started
 

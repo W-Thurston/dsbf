@@ -3067,6 +3067,109 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "ml_readiness": {
+   "findings": [],
+   "output": {
+    "clean_columns": [
+     "normal_boolean",
+     "normal_date"
+    ],
+    "complete": true,
+    "dimensions": {
+     "encoding": {
+      "action_columns": [
+       "extremely_long_strings",
+       "high_cardinality_random",
+       "unexpected_object_column"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 20,
+      "level": "amber"
+     },
+     "leakage": {
+      "action_columns": [
+       "datetime_with_gaps",
+       "future_leakage",
+       "perfect_leakage",
+       "subtle_leakage"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 4,
+      "level": "red"
+     },
+     "missingness": {
+      "action_columns": [
+       "constant_null",
+       "empty_vs_nan",
+       "mixed_null_types",
+       "short_text"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 13,
+      "level": "red"
+     },
+     "transformations": {
+      "action_columns": [
+       "age_with_bounds_issues",
+       "bimodal_column",
+       "corr_base",
+       "extreme_skew",
+       "highly_correlated",
+       "left_skewed",
+       "moderately_correlated",
+       "negatively_correlated",
+       "normal_numeric_float",
+       "outlier_column",
+       "right_skewed",
+       "sparse_column",
+       "subtle_leakage"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 52,
+      "level": "amber"
+     },
+     "unusable": {
+      "action_columns": [
+       "base64_encoded",
+       "constant_null",
+       "constant_numeric",
+       "constant_string",
+       "control_character_text",
+       "email_with_violations",
+       "empty_vs_nan",
+       "extremely_long_strings",
+       "hex_encoded",
+       "high_cardinality_uuid",
+       "imbalanced_boolean",
+       "imbalanced_target",
+       "long_text",
+       "mixed_null_types",
+       "mixed_type_column",
+       "mostly_zeros",
+       "near_zero_variance",
+       "normal_text",
+       "phone_with_violations",
+       "sparse_column",
+       "transaction_id",
+       "user_id",
+       "uuid_column",
+       "variable_length_text"
+      ],
+      "assessed": true,
+      "coverage": 1.0,
+      "findings": 24,
+      "level": "red"
+     }
+    },
+    "gate": "not_ready"
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "multivariate_outliers": {
    "findings": [
     {
@@ -4627,6 +4730,102 @@
    "status": "ok",
    "version": "1.0.0"
   },
+  "quality_dimensions": {
+   "findings": [],
+   "output": {
+    "completeness": {
+     "affected_columns": [
+      "constant_null",
+      "empty_vs_nan",
+      "inconsistent_datetime",
+      "mixed_null_types",
+      "mixed_type_column",
+      "short_text"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 6,
+     "level": "red"
+    },
+    "leakage": {
+     "affected_columns": [
+      "datetime_with_gaps",
+      "future_leakage",
+      "perfect_leakage",
+      "subtle_leakage"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 4,
+     "level": "red"
+    },
+    "redundancy": {
+     "affected_columns": [
+      "constant_null",
+      "corr_base",
+      "duplicate_col_1",
+      "duplicate_col_2",
+      "duplicate_col_3",
+      "empty_vs_nan",
+      "highly_correlated",
+      "mixed_null_types",
+      "negatively_correlated",
+      "partial_duplicate_1",
+      "partial_duplicate_2",
+      "perfect_leakage",
+      "target_for_leakage"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 16,
+     "level": "red"
+    },
+    "usability": {
+     "affected_columns": [
+      "base64_encoded",
+      "constant_null",
+      "constant_numeric",
+      "constant_string",
+      "email_with_violations",
+      "empty_vs_nan",
+      "extremely_long_strings",
+      "hex_encoded",
+      "high_cardinality_random",
+      "high_cardinality_uuid",
+      "long_text",
+      "mixed_null_types",
+      "mixed_type_column",
+      "normal_text",
+      "phone_with_violations",
+      "transaction_id",
+      "unexpected_object_column",
+      "user_id",
+      "uuid_column",
+      "variable_length_text"
+     ],
+     "assessed": true,
+     "coverage": 1.0,
+     "findings": 23,
+     "level": "red"
+    },
+    "validity": {
+     "affected_columns": [
+      "ambiguous_booleans",
+      "control_character_text",
+      "inconsistent_datetime",
+      "mixed_boolean_types",
+      "mixed_type_column",
+      "variable_length_text"
+     ],
+     "assessed": true,
+     "coverage": 0.777778,
+     "findings": 8,
+     "level": "amber"
+    }
+   },
+   "status": "ok",
+   "version": "1.0.0"
+  },
   "reference_drift": {
    "findings": [],
    "status": "not_applicable",
@@ -5274,7 +5473,7 @@
   }
  },
  "dataset": "kitchen5k",
- "format": 1,
+ "format": 2,
  "shape": [
   5250,
   60
