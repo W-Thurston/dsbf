@@ -36,12 +36,16 @@ def sleeper(seconds=2.0):
 
 class TestCheckTimeout:
     def test_a_sleeping_check_times_out_without_stalling_the_run(self):
-        slow = declare("slow", function=sleeper())
+        # `numeric_spread` runs in a worker process, whose start-up and data transfer
+        # count against its limit, so the limit is well above `FAST`; the sleeper
+        # outlasts the whole run, which must not wait for it.
+        limits = Limits(check_timeout_seconds=1.0, cancel_grace_seconds=0.05)
+        slow = declare("slow", function=sleeper(6.0))
         started = time.perf_counter()
 
-        run = run_plan([null_share, slow, numeric_spread], limits=FAST)
+        run = run_plan([null_share, slow, numeric_spread], limits=limits)
 
-        assert time.perf_counter() - started < 1.5
+        assert time.perf_counter() - started < 4.0
         assert statuses(run) == {
             "null_share": CheckStatus.OK,
             "numeric_spread": CheckStatus.OK,
