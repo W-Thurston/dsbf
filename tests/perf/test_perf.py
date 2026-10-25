@@ -4,7 +4,7 @@ Run with ``uv run pytest -m perf``; see ``tests/perf/README.md``. Each run write
 results JSON (``--perf-results``), and fails when a stage, task, the total, the peak
 memory or a dashboard payload regressed against ``baseline.json``. The profile pass is
 also held to the absolute budgets in ``compare.PROFILE_BUDGETS``; the standard plan's
-targets in ``compare.ENGINE_BUDGETS`` are only reported.
+budgets in ``compare.ENGINE_BUDGETS`` hold the standard plan the same way.
 """
 
 from __future__ import annotations
@@ -83,9 +83,10 @@ def test_engine_run_within_baseline(
 
     # A check that errored or timed out did less work than the baseline's did.
     assert not result["failed_checks"], f"checks failed: {result['failed_checks']}"
-    # Reported in the summary and here, never failed on: Phase 4 works towards them.
-    for missed in check_engine_budget(scenario.name, result):
-        print(f"target missed: {missed}")
+    # Like the profile pass, the standard plan's budgets hold with or without a
+    # baseline, and when the baseline is being rewritten.
+    over_budget = check_engine_budget(scenario.name, result)
+    assert not over_budget, "over budget:\n" + "\n".join(f"  {b}" for b in over_budget)
 
     if config.getoption("--update-perf-baseline") or config.getoption(
         "--perf-no-compare"

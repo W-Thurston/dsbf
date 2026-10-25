@@ -125,7 +125,8 @@ class TestFrequency:
     )
     def test_regular_series_agree_with_pandas(self, pandas_freq, alias):
         index = pd.date_range("2024-01-03", periods=40, freq=pandas_freq)
-        assert pd.infer_freq(index) is not None
+        with pd.option_context("future.infer_freq_returns_offset", True):
+            assert pd.infer_freq(index) is not None
         stats = _stats(index.to_pydatetime().tolist())
         assert stats.inferred_frequency == alias
 

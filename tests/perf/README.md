@@ -21,15 +21,15 @@ interpreter. Each writes the
 wall time of every check as its `tasks`, so the executor's effect shows per check as well
 as in the total. The `engine-*` pairs run every check (`depth="deep"`), serial and
 parallel. The `standard-*` scenarios run what `dsbf.profile()` runs when no depth is
-given, which is what the Phase 4 targets are about (REFACTOR_PLAN section 11). The summary
-lists each target the run misses, and nothing fails on one. The baseline comparison
-applies to them as to every scenario.
+given, which is what the Phase 4 budgets are about (REFACTOR_PLAN section 11). The summary
+lists each budget; a run that breaks one fails, with or without a baseline, and the baseline
+comparison applies to them as to every scenario.
 
 An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`. Linux keeps
 `ru_maxrss` across `exec`, so a child started after the harness had generated the
 `profile-wide1m` frame reported the harness's 959 MB whatever it did.
 
-| Scenario | Input | Runs | `depth` | `workers` | Target (reported) |
+| Scenario | Input | Runs | `depth` | `workers` | Budget (enforced) |
 |---|---|---|---|---|---|
 | `engine-titanic-serial` | titanic | 3, median kept | `deep` | 1 | |
 | `engine-titanic-parallel` | titanic | 3, median kept | `deep` | the executor's default (one per core, at most 8) | |

@@ -373,7 +373,7 @@ What this removes:
 - **Empty results have a defined shape,** because outputs are typed models (F-03).
 - **Optional enrichment can't fail a check:** recommendation tips are attached after the check returns, and a failed tip lookup becomes a note (F-31).
 
-**Legacy adapter (migration only):** `LegacyTaskCheck` wraps an existing `BaseTask`, gives it the
+**Legacy adapter (migration only; deleted in U4-18, 2026-10-25, with the legacy tasks):** `LegacyTaskCheck` wraps an existing `BaseTask`, gives it the
 old `AnalysisContext` interface, and converts `TaskResult.guidance` into `Finding`s. This lets the new
 engine run **every** existing task from Phase 3 on, so migration proceeds one check at a time
 against a running system.
@@ -687,8 +687,8 @@ The goal is a trustworthy baseline to measure the refactor against. This is the 
 **Exit:** the golden runs reproduce through the adapter. A forced exception in any check yields a complete Run with a note. Changing one parameter re-executes only the affected checks.
 **Resolves:** F-06, F-07, F-19, F-21, F-22, F-23, F-24, F-34, F-16, F-17, F-18 (core does no I/O).
 
-### Phase 4: Migrate checks (L, 19 units)
-Revised in U4-00 (2026-10-19); the units and the full migration map are in [`ROADMAP.md`](../ROADMAP.md#phase-4-migrate-checks).
+### Phase 4: Migrate checks (L, 20 units; done 2026-10-25)
+Revised in U4-00 (2026-10-19). The phase is done: its summary is in [`HISTORY.md`](HISTORY.md#phase-4-migrate-checks), and the adapter described in §6.2 and the parallel tracks below existed only until U4-18 deleted the legacy stack. The base install is the ten packages `dsbf` imports when it loads, and the checks that need `scikit-learn`, `statsmodels` or `rapidfuzz` import them inside the function and end `unavailable` without the extra; the executor imports the installed extras on the calling thread before checks run side by side.
 - **Parallel tracks:** core checks are built in a `core` pack beside the intact legacy pack. A core check names the legacy tasks it supersedes, and those leave the default selection. A superseded task still runs, with its findings dropped, when a remaining legacy task hard-requires it or reads its result undeclared, so no shim feeds legacy scorers from core output. Run time therefore rose until the legacy scorers left the default selection, which `quality_dimensions` and `ml_readiness` made possible in U4-15: they read the core checks' findings through soft `after` edges, and the default selection is the `core` pack alone.
 - **Retired, not migrated** (chosen by the user on 2026-10-19): the 13 tasks that restate the profile (the `summarize_*` tasks, `categorical_length_stats`, `missingness_heatmap`, `infer_types`, `sample_head`, `sample_tail`), whose guidance moves to rule checks; the engine-metadata tasks; and the plot tasks. The ML-prep suggestion tasks and `schema_validation` are migrated as checks.
 - **4a Rule checks (~20):** move onto the profile. Expected outcome is a large speed-up with near-zero findings diff.
@@ -747,7 +747,7 @@ P0 ─► P1 ─► P2 ─► P3 ─► P4 ─► P5 (1.0.0a1, mode 1) ─► P6
 | F-10, F-20, F-36 | Phase 1 (by schema) | Done in the contracts; legacy pair keys and API v1 go in Phase 4 |
 | F-08, F-09, F-30, F-32, F-37 | Phase 2 | Done in the data layer and profile; VIF `n_used` (F-32) is a Phase 4 check |
 | F-06, F-07, F-16, F-17, F-18, F-19, F-21, F-22, F-23, F-24, F-34 | Phase 3 | Done in the engine; F-07's per-task keys go as each task migrates |
-| F-11, F-13, F-26, F-35, F-38, F-39 | Phase 4 | Open; each has a unit |
+| F-11, F-13, F-26, F-35, F-38, F-39 | Phase 4 | Done in the `core` checks; the legacy copies were deleted in U4-18 |
 | F-15, F-25, F-29 | Phase 6 | F-15's run identity is done; the old store and API v1 are deleted in Phase 4, so the rest are design inputs for Phase 6 |
 
 The status of every finding, with its evidence, is recorded in

@@ -15,6 +15,20 @@ reviewed commit.
 
 ---
 
+## Status after Phase 4 (reviewed 2026-10-25)
+
+Phase 4 migrated every analysis to a typed check, deleted the legacy engine, tasks, store and
+API v1 (U4-18, #126) and shrank the base install (U4-19). Each finding that Phase 4 changed has a
+second **Status (2026-10-25)** line under the earlier one; the earlier lines are kept as written,
+and where they say a legacy copy "is deleted in U4-18" it now is.
+
+| Status | Findings |
+|---|---|
+| Resolved | F-01 to F-11, F-13, F-14, F-16 to F-19, F-21 to F-28, F-32 to F-39 |
+| Partial, owned by a later phase | F-12 (Phase 6, the dashboard draws the profile's bins), F-15 (Phase 6, dataset identity), F-20 (Phase 6, the Run health panel), F-29 (Phase 6, the frontend build), F-30 (Phase 7, read-time sampling), F-31 (U5-09, the clean-install CI job) |
+
+---
+
 ## Status after Phases 0–3 (reviewed 2026-10-19)
 
 Each finding now opens with a **Status** line, checked on 2026-10-19 against `main` at `ec202ed`
@@ -118,6 +132,8 @@ exist. It also contradicts the documented "DSBF will not guess" principle.
 ### F-06 The engine treats a `status="failed"` result as success
 **Status (2026-10-19): Resolved in the new engine.** U3-05 (#92) trusts the status a check returns and never infers success from the absence of an exception; U3-10 (#97) added `ctx.stop(...)`, so an adapted task's `failed` is `error` and its `skipped` is `skipped`. The executor owns isolation, so a check has no try/except boilerplate. The legacy `ExecutionGraph` (`eda/graph.py:38`) still marks a task `success` when nothing escapes; it is deleted with the legacy engine (U4-18).
 
+**Status (2026-10-25): Resolved.** The legacy `ExecutionGraph` is deleted (U4-18, #126).
+
 **(verified)** `Task.run` (`dsbf/eda/graph.py:34`) marks a task `"success"` whenever no exception
 escapes, even if the task returned `TaskResult(status="failed")`. Dependents then run on bad
 upstream output (`graph.py:105` only checks `Task.status`), and `task_outcomes` overcounts
@@ -129,6 +145,8 @@ and `identify_bottleneck_tasks`, which return failed results instead of raising.
 
 ### F-07 Documented config keys are silently ignored
 **Status (2026-10-22): Partial.** Checks declare their parameters, and the planner rejects an unknown key or a value out of bounds (U1-09 #77, U3-04 #91). Adapted legacy tasks still take their config as a free dict (`LegacyParams.task`), so the ignored keys in the table, `ignore_null_type ... or True` (`detect_mixed_type_columns.py:72`) and 43 `get_task_param(x) or default` calls remain until each task migrates (U4-06 to U4-15; the nine column health checks of U4-04 and the seven rule checks of U4-05 take their bounded params from `CheckParams`, and `schema` replaces `schema_validation`'s four keys with one `columns` mapping in which an unknown key is a planning error; since U4-09 `mixed_types` has a real `ignore_null_tokens` switch and `format_violations` takes its rules as a list in which a pattern that does not compile is a planning error, so `match_threshold` is gone). `dsbf.profile(target=...)` (U3-12 #99) is one setting: it fills the `target_column` keys of the legacy tasks and, since U4-05, the `target` parameter of every core check that declares one (`class_imbalance`), and, since U4-12, of `reference_drift`, which replaces `detect_target_drift` (whose `target` key never saw it) and `detect_feature_drift` with typed `psi_warn`, `psi_high`, `tvd_warn`, `tvd_high`, `bins`, `missing_shift` and `target` parameters; the ignored `js_threshold`, `ks_pvalue_threshold`, `chi2_pvalue_threshold`, `compare_*` and `enabled` keys of the three drift tasks are gone from it. Since U4-14, `target_leakage` and `mutual_information` take it too, and `categorical_encoding` reads their results; no check reads a separate target key.
+
+**Status (2026-10-25): Resolved.** Every check in the `core` pack declares bounded parameters and the planner rejects an unknown key; the legacy free-dict config is deleted (U4-18, #126).
 
 **(verified)** A script cross-checked `default_config.yaml` against the keys each task reads:
 
@@ -150,6 +168,8 @@ Related problems:
 ### F-08 Stage inference reads the wrong config path and depends on the backend
 **Status (2026-10-19): Resolved in the new profile.** U2-06 (#85): `dsbf.profiling.infer_stage` reads `StageThresholds.from_config` and the profile, so it does not depend on the backend. The legacy `eda/stage_inference.py` is still called by `ProfileEngine` until U4-18.
 
+**Status (2026-10-25): Resolved.** The legacy `eda/stage_inference.py` is deleted (U4-18, #126).
+
 **(verified)**
 - `dsbf/eda/stage_inference.py:8` reads `config["stage_inference"]`, but the default config puts it under `engine.stage_inference`, so the thresholds are ignored.
 - The Polars branch (`stage_inference.py:33`) compares dtypes to the strings `"i64"`/`"f64"`, which never match. The same 4×2 numeric frame is inferred as `model_ready` with pandas and `cleaned` with Polars. Built-in datasets default to Polars.
@@ -159,6 +179,8 @@ Related problems:
 ### F-09 Polars and `sample_strategy: random` crash
 **Status (2026-10-19): Resolved in the new data layer.** U2-02 (#81): `Dataset.sample` implements seeded random and stratified sampling and records them in `SamplingInfo`. The legacy `utils/data_utils.py:35` still passes `random_state=` to Polars; it is deleted in U4-18.
 
+**Status (2026-10-25): Resolved.** The legacy `utils/data_utils.py` is deleted (U4-18, #126).
+
 **(verified)** `dsbf/utils/data_utils.py:24` calls `d.sample(n=..., random_state=42)`. Polars uses
 `seed=`, so this raises `TypeError`. `"stratified"` is a silent alias for `"head"`, which biases
 any ordered file.
@@ -166,6 +188,8 @@ any ordered file.
 
 ### F-10 Column names containing `|` crash pair-based tasks
 **Status (2026-10-19): Partial.** The contracts key pairs by `Subject.column_pair` (U1-06 #74), and U0-09 (#52) stopped the leakage crash: a frame with columns `a|b` and `c|d` runs to a complete `Run` (checked on 2026-10-19). Seven legacy tasks still key pairs as `"a|b"`, and API v1 splits on the first `|`. `associations` and `contingency` (U4-07) report every pair as a `Subject.column_pair` and a record with `first` and `second` (a frame with columns `a|b` and `c|d` gets the right subjects, tested). `group_differences` (U4-08) does the same for a numeric and a categorical column, so every pair-based core check is done and the seven legacy tasks go with U4-18, with API v1.
+
+**Status (2026-10-25): Resolved.** The seven legacy tasks that keyed pairs as `"a|b"` and API v1 are deleted (U4-18, #126); every pair-based core check reports a `Subject.column_pair`.
 
 **(verified)** Pair results are keyed as `"col1|col2"` and split with `split("|")`. A column named
 `a|b` makes `detect_data_leakage` raise `ValueError: too many values to unpack`
@@ -175,6 +199,8 @@ silently mis-attributes the pair instead.
 
 ### F-11 Semantic-type filtering is still bypassed in places
 **Status (2026-10-22): Partial.** A check written to the new API sees only the columns its `applies_to` selects (`ctx.columns`, U3-01 #88), and the `core` pack's checks do: `zeros` (U4-02) and the nine column health checks (U4-04) and the seven rule checks of U4-05, which declare `applies_to` and read `ctx.profile` only (`schema` also reads the values it names), and the five distribution analysis checks of U4-06 the two pairwise checks of U4-07 (`associations`, `contingency`), the group difference and collinearity checks of U4-08 and the five missingness and string checks of U4-09, which read `ctx.values` for the columns they apply to (the four string checks take the columns the profile types `categorical`, `text` or `identifier` and skip one that is not stored as strings, saying why); the adversarial test runs all thirty-one. The regression test is in: on the adversarial frame the integer-coded booleans (`flag_as_int`, `flag_copy`) and `[/x]` never appear in `zeros`, and on titanic `zeros` reads `age` and `fare` where `detect_zeros` also read `survived`, `pclass`, `sibsp` and `parch` and raised guidance for three of them (`tests/golden/migration/accepted.py` lists each difference). The legacy tasks still pick their own columns: on a 200-row frame, a 0/1 integer column that the profile types `categorical` appeared in the output of nine continuous-only checks on 2026-10-19 (`detect_zeros` among them, now replaced), `detect_data_leakage` and `detect_collinear_features` among the rest. 21 task files still call `select_dtypes`. Each migration removes its copy (U4-04 to U4-15). The same frame shows that an integer row number (`0..n-1`) is profiled `numeric`, not `identifier`; `id_columns` (U4-04) reads a numeric integer column with no repeat and no gap as a row number.
+
+**Status (2026-10-25): Resolved.** All 47 `core` checks pick their columns through `applies_to`, and the adversarial test runs them all; the legacy tasks that picked their own are deleted (U4-18, #126).
 
 v0.20.0 fixed tasks iterating over `df.columns` instead of `matched_cols`. The same bug class
 remains: `detect_data_leakage.py:73` computes correlations over
@@ -217,6 +243,8 @@ executes in the dashboard. The risk is low for a local tool but real once a dash
 ### F-15 Run identity and dataset identity
 **Status (2026-10-19): Partial.** `Run.run_id` is a UUID, `started_at` is a timezone-aware time, and `DatasetManifest` carries the content fingerprint (U1-08 #76, U2-02 #81). The legacy store still uses a second-resolution `run_key` and datasets keyed by name, and API v1 re-reads the source; both are deleted in U4-18. Dataset identity and the per-run data snapshot are Phase 6 work.
 
+**Status (2026-10-25): Partial.** The legacy store and API v1 are deleted (U4-18, #126). Dataset identity and the per-run data snapshot are still Phase 6 work.
+
 - [x] **run_key collisions:** `run_key` is a second-resolution timestamp (`dsbf/core/base_engine.py:93`). Two runs in the same second share an output dir (`exist_ok=True` overwrites), and `_insert_run` silently reuses the first run's row, merging task results. Add a short random suffix or a UUID.
 - [x] **`ran_at` can be NULL:** with a custom `output_dir`, `run_key` isn't a timestamp, `ran_at` becomes `None` (`writer.py:313`), and the explicit NULL overrides the column default. Those runs then sort last and break "latest run" queries. Use the actual start time.
 - [ ] **Datasets are keyed by name only.** Two different files profiled under the same name are merged. `source_path` is set once and never updated (`writer.py:42`), so later runs point at the first file. The `EDA()` facade and default config both fall back to `"default_dataset_name"`.
@@ -236,6 +264,8 @@ package is pip-installed, it would write into `site-packages`.
 ### F-17 Every run rewrites tracked files and grows `dsbf_run.json`
 **Status (2026-10-19): Resolved.** U1-04 (#71) made the export an explicit `dsbf tasks export` and removed `record_run()`. The generated `task_metadata.json` is still tracked; it goes with the legacy registry in U4-18.
 
+**Status (2026-10-25): Resolved.** `dsbf tasks export` and the generated `task_metadata.*` are deleted (U4-18, #126).
+
 - `load_task_group()` calls `write_task_metadata()` on **every run** (`dsbf/eda/task_registry.py:276`, enabled by default). It rewrites the tracked `task_metadata.json` and strips its trailing newline, which fights the `end-of-file-fixer` pre-commit hook. That's why the file is always dirty in `git status`.
 - `record_run()` appends to `dsbf_run.json` with no bound. It's currently 442 entries and 240 KB, and the SQLite `runs` table already holds the same information.
 - [x] Make metadata export an explicit command (for example `dsbf tasks export`) and stop tracking the generated JSON, or generate it in CI.
@@ -243,6 +273,8 @@ package is pip-installed, it would write into `site-packages`.
 
 ### F-18 Version and git SHA describe the wrong repository
 **Status (2026-10-19): Resolved for the library.** `dsbf.__version__`, the run manifest and `dsbf version` read `importlib.metadata` (U3-12 #99). API v1 still reports `version="0.1.0"` (`api/main.py:48`), and the legacy engine still runs `git rev-parse` (`core/base_engine.py:102`); both are deleted in U4-18.
+
+**Status (2026-10-25): Resolved.** API v1 and the legacy engine are deleted (U4-18, #126).
 
 `get_dsbf_version()` runs `git describe` and `_get_git_sha()` runs `git rev-parse` in the
 **current directory** (`dsbf/utils/versioning.py:16`, `base_engine.py:125`). When DSBF is used
@@ -263,6 +295,8 @@ reports `version="0.1.0"` (`dsbf/api/main.py:45`).
 ### F-20 Failure visibility end to end
 **Status (2026-10-19): Partial.** The status model (U1-07 #75) and the executor (U3-05 #92) give every check a result, `skipped` with `blocked_by`, and an `error` note with its traceback in `Note.detail`. `Run.render_health()` prints the summary (U3-12 #99). Persisting full results and a Run health panel in the dashboard are Phase 6 work. The legacy `TaskResult` defects listed here are deleted in U4-18.
 
+**Status (2026-10-25): Partial.** The legacy `TaskResult` is deleted (U4-18, #126). `dsbf profile` prints `Run.render_health()`; the dashboard's Run health panel is Phase 6.
+
 - Skipped tasks (failed dependency) get **no TaskResult** (`graph.py:105-117`), so they're missing from `report.json`, the DB and the dashboard. Users can't tell "not applicable" from "skipped because X failed".
 - The DB stores only `status/summary/data/guidance` (`dsbf/storage/writer.py`). `error_metadata`, `reliability_warnings`, `recommendations` and `metadata` (for example `memory_exceeded` and `excluded_columns`) are dropped, so the dashboard can't explain failures or show reliability caveats.
 - `TaskResult.to_dict()` (`task_result.py:74`) omits `recommendation_tags`.
@@ -282,6 +316,8 @@ dimensions.
 ### F-22 Configuration loading
 **Status (2026-10-19): Partial.** `dsbf.profile()` takes data and settings as arguments, validates the enums in `ProfileConfig` and never mutates its inputs (U1-09 #77, U3-12 #99). `dsbf run -c` (which still uses the YAML as the whole config), the `EDA` facade and the dead config keys are deleted with the legacy CLI and config in U4-18. CLI v2 gets layered config in U5-06.
 
+**Status (2026-10-25): Resolved.** Resolved by deletion: `dsbf run -c`, the `EDA` facade, the legacy config and its dead keys are gone (U4-18, #126). Layered config for CLI v2 is U5-06.
+
 - [ ] `dsbf run -c my.yaml` uses the YAML **as the whole config** (`dsbf/interfaces/cli.py:53`). A partial user config loses every default task parameter. Deep-merge user config over defaults. The `default_config.yaml` comment already promises a `user_config.yaml` override that doesn't exist.
 - [x] `EDA(...)` (`dsbf/interfaces/api.py`) mutates the caller's config dict, raises `KeyError` when the config has no `metadata` block (`:36`), and supports in-memory data by monkeypatching `engine._load_data` (`:48`). Add a first-class `ProfileEngine(config, data=df)` parameter.
 - [x] Validate enum-like values (`profiling_depth`, `backend`, `runtime_estimate`, `sample_strategy`) up front. An invalid depth currently raises a bare `KeyError` in `build_graph`.
@@ -289,6 +325,8 @@ dimensions.
 
 ### F-23 Plugin loading
 **Status (2026-10-19): Resolved in the new registry.** U3-02 (#89): an explicit `Registry`, directory plugins imported under names unique to their path, nothing registered on import, and plugin problems recorded as notes. The legacy registry (registration on import in `utils/task_utils.py:14`, the global `PLUGIN_WARNINGS`, modules named by file stem) is deleted in U4-18.
+
+**Status (2026-10-25): Resolved.** The legacy registry and `PLUGIN_WARNINGS` are deleted (U4-18, #126).
 
 - [x] The `core` task group imports `dsbf.custom_plugins.core`, which is **empty**. Core tasks are actually registered as an import side effect of `dsbf/utils/task_utils.py:14` (`load_all_tasks()` at module import). Make registration explicit.
 - [x] Loading a plugin directory twice in one process (a notebook or the API) re-executes the module, hits "already registered", and logs a traceback. `PLUGIN_WARNINGS` is a global that accumulates across runs and is never cleared.
@@ -298,6 +336,8 @@ dimensions.
 ### F-24 Resource tracking is misleading
 **Status (2026-10-19): Resolved in the new engine.** U3-06 (#93) and U3-07 (#94): wall time, CPU time and sampled peak memory per check, labelled approximate, with enforced timeouts and a run budget. The legacy `graph.py:126` is deleted in U4-18.
 
+**Status (2026-10-25): Resolved.** The legacy `graph.py` is deleted (U4-18, #126).
+
 `peak_mem = max(rss_before, rss_after)` (`graph.py:126`) is neither a peak nor per-task, because
 RSS is process-wide and rarely shrinks. It also mixes units (`/1e6` vs `* 1024`).
 `max_runtime_seconds` only warns.
@@ -305,6 +345,8 @@ RSS is process-wide and rarely shrinks. It also mixes units (`/1e6` vs `* 1024`)
 
 ### F-25 API and data-layer issues
 **Status (2026-10-19): Open; resolved by deletion and replacement.** Still true of API v1 (for example `/sample` reads the whole file, `api/db.py:194`). Decided on 2026-10-19: API v1 and the old store are deleted in U4-18, and the Phase 6 store and API v2 are built against these items. The `encodeURIComponent` item goes with the generated client in Phase 6.
+
+**Status (2026-10-25): Resolved.** Resolved by deletion: API v1 and the old store are gone (U4-18, #126). The list stays a design input for the Phase 6 store and API v2.
 
 - [ ] `/sample` reads the **entire source file** to return 10 rows (`dsbf/api/db.py:193`). Use `nrows=`. For built-in datasets, each request re-downloads from seaborn or sklearn. Cache, or snapshot a sample at profile time.
 - [ ] `_load_dataframe` returns `None | DataFrame | {"error": ...}`. `/column-data` passes the error dict back as an HTTP 200 payload. Raise and map to 4xx/5xx instead.
@@ -339,6 +381,8 @@ Calling feature collinearity "leakage" conflicts with the hedged-language princi
 ### F-28 Repository clutter
 **Status (2026-10-19): Mostly resolved.** U0-11 (#54) deleted the stray files, `.flake8` and the dead code, and moved the handoff doc to `docs/architecture.md`. `poetry.lock` went with the move to uv (U0-05 #41). `run_profile.py` and `migrate_runs.py` were kept on purpose while the legacy engine runs; they are deleted in U4-18.
 
+**Status (2026-10-25): Resolved.** `run_profile.py` and `migrate_runs.py` are deleted (U4-18, #126).
+
 - [x] Untracked or stray files: root `package-lock.json` (empty), `clean_dsbf_db.txt`, `dsbf_reference_dataset.csv` (5.3 MB), `dsbf_test_schema.json`, `tests/generators/dsbf_test_generator_backup.py`, `dsbf_directory_structure.md`. Delete them, or move them under `docs/`, `examples/` or `tests/fixtures/`.
 - [x] Move `dsbf_handoff_doc.md` into `docs/architecture.md`. It's the best architecture doc in the repo.
 - [ ] `.flake8` is obsolete now that ruff is used. `run_profile.py` and `migrate_runs.py` at the root should become CLI subcommands.
@@ -355,6 +399,8 @@ Calling feature collinearity "leakage" conflicts with the hedged-language princi
 
 ### F-30 Engine performance
 **Status (2026-10-23): Partial.** One profile pass, a per-column value cache for checks (U2-02 #81), and file loading through Polars (U2-01 #80). Each adapted legacy check still gets its own copy of the frame (a full copy with the default pandas backend) until U4-18 and U4-19. Read-time sampling is Phase 7 (T2). The reference dataset takes any source `dsbf.data.load` accepts, or a `Run`, through `dsbf.profile(reference=...)` (U4-12); only its profile reaches `reference_drift`.
+
+**Status (2026-10-25): Partial.** No adapted legacy check copies the frame any more (U4-18, #126). Read-time sampling is Phase 7.
 
 - [x] Each pandas-dependent task calls `to_pandas()` on the Polars frame independently (`BaseTask.setup_run` / `get_dataframe_pandas`), which can mean up to about 60 full copies per run. Convert once and cache on `AnalysisContext`.
 - [ ] Data is fully loaded before sampling. For large files, sample at read time (Polars `scan_*` with `head` or `sample`).
@@ -383,6 +429,8 @@ every pip-installed user and anyone running from a different directory.
 ### F-32 Listwise deletion across all numeric columns
 **Status (2026-10-22): Partial.** The profile computes statistics on each column's own non-null values (U2-04 #83), and U0-09 (#52) added the VIF crash guard. `collinearity` (U4-08) leaves out a column more than 40% missing before it drops any row, then drops the sparsest column until there are at least k + 1 (and 10) complete rows, states `n_used`, the columns left out and the columns dropped for rows, and uses the centred VIF (the diagonal of the inverse correlation matrix). On kitchen5k the legacy task had no row to fit; on `severe_multicollinearity` the check reads 2 000 rows where the task read 721. The legacy `compute_reliability_flags` still deletes rows listwise, until U4-15 takes the scorers out.
 
+**Status (2026-10-25): Resolved.** The legacy `compute_reliability_flags` is deleted with the legacy tasks (U4-18, #126); `collinearity` is the only VIF.
+
 `numeric_df = df.select_dtypes("number").dropna()` drops every row with *any* null in *any*
 numeric column:
 - `compute_reliability_flags` (`dsbf/utils/reliability_stats.py:18`) used **0 rows** on kitchen5k and adversarial, and 714 of 891 on titanic. Global reliability flags are computed on an empty or biased frame.
@@ -401,12 +449,16 @@ numeric column:
 ### F-34 Wasted post-processing every run
 **Status (2026-10-19): Resolved in the new engine.** `dsbf.profile()` builds no column-to-task map, draws no DAG image and serialises nothing (U3-12 #99). The legacy `ProfileEngine` still does all three (`eda/profile_engine.py:123`, `visualize_dag: true` by default) until U4-18.
 
+**Status (2026-10-25): Resolved.** The legacy `ProfileEngine` is deleted (U4-18, #126).
+
 - `build_column_task_mappings` re-serialises every result via `to_dict()` (0.67 s on titanic) and treats every `data` key as a column name. The map is polluted with `__dataset__`, `__correlation_matrix__`, `age|class|First_vs_Second`, and so on. Use `task_column_map` from the columns each task actually processed (`matched_cols`).
 - `visualize_dag: true` by default draws a 400 KB `dag.png` on every run (about 1 s), and it's identical for an identical task set. Make it opt-in, or cache it by task-set hash.
 - `TaskResult._sanitize()` and `json.dumps(indent=2)` run over the full payload several times (report, mapping, DB). Serialise once and reuse the bytes.
 
 ### F-35 Fuzzy duplicate detection dominates runtime and output, and its results are arbitrary
 **Status (2026-10-22): Resolved in the `fuzzy_duplicates` check (U4-10).** The legacy task stays in the legacy pack until U4-18 deletes it, but the default selection no longer runs it, and `fuzzy_duplicates` is a heavy check, so it runs at the deep depth. On 2026-10-19 it was 8.46 MB of titanic's 8.93 MB `Run` and 16.7 s of the legacy engine's 26.7 s in the CI perf baseline. The check scores each column with `rapidfuzz`, weights the columns by their entropy, leaves labels (columns of 20 or fewer values) out, blocks on rare tokens only when all pairs do not fit the budget, states `pairs_compared / pairs_possible` and the budget that stopped it, lists the 20 closest pairs, and ends `not_applicable` on titanic, which has no text column.
+
+**Status (2026-10-25): Resolved.** The legacy `fuzzy_duplicate_detection` task is deleted (U4-18, #126).
 
 It took **58.8 s of 72.5 s** of task time on titanic (891 rows) and **172 s of 296 s** on kitchen5k.
 It produced **8.6 MB** of data on titanic, which made `report.json` **18.5 MB** (5.3 s to write) and
@@ -424,6 +476,8 @@ Correctness:
 ### F-36 `NaN` / `Infinity` in stored data make API endpoints return HTTP 500
 **Status (2026-10-19): Resolved in the contracts.** Non-finite values become `None` and are named in the contracts (U1-06 #74), and `Run` JSON is strict. API v1 can still emit `NaN`; it is deleted in U4-18.
 
+**Status (2026-10-25): Resolved.** API v1 is deleted (U4-18, #126).
+
 The writer stores task data with `json.dumps(..., default=str)`, which emits the non-standard tokens
 `NaN` and `Infinity`. FastAPI's encoder refuses them on the way out. On the adversarial run,
 `/associations` (a `NaN` metric) and `/sample` (an `inf` in the source data) both returned **500**.
@@ -433,12 +487,16 @@ The writer stores task data with `json.dumps(..., default=str)`, which emits the
 ### F-37 `infer_types` parses entire columns as dates
 **Status (2026-10-19): Resolved in the profile.** U2-03 (#82): sample-based type inference took 0.2–0.3 s on kitchen50k, against 25.95 s for the legacy `infer_types`. `infer_types` still runs as an adapted check until it is superseded (U4-05) and deleted (U4-18).
 
+**Status (2026-10-25): Resolved.** The legacy `infer_types` is deleted (U4-18, #126).
+
 `_is_datetime_like` (`infer_types.py:250`) took 8.6 of `infer_types`' 9.0 s on kitchen5k (25 object
 columns). Every downstream task waits on `infer_types`.
 - [x] Test a sample of a few hundred non-null values first, try known formats before falling back to dateutil, and only parse the full column for columns that pass.
 
 ### F-38 `generate_univariate_plots` cost and output
 **Status (2026-10-19): Open.** Already left out of in-memory library runs (U3-12 #99). Deleted with `plot_factory` in U4-18.
+
+**Status (2026-10-25): Resolved.** `plot_factory` and the plotting tasks are deleted (U4-18, #126).
 
 It took 84 s on kitchen5k and wrote 361 files, including **two 17–18 MB PNGs** for a column of
 extremely long strings, because bar-chart labels are full category values. It would be removed
@@ -447,6 +505,8 @@ entirely by N-A2. Until then:
 
 ### F-39 `detect_stationarity` scales super-linearly
 **Status (2026-10-22): Resolved in the `stationarity`, `autocorrelation` and `seasonal_decomposition` checks (U4-11).** The legacy tasks stay in the legacy pack until U4-18 deletes them, but the default selection no longer runs them. The checks resample to the configured or profile-inferred frequency (repeated timestamps aggregated, short holes interpolated), use at most the most recent `max_periods` (2 000) periods, cap the ADF and KPSS lags at `max_lag` (24) and the ACF/PACF lags at `max_lags` (40), and state the frequency, the series length and the lag cap on every finding. `stationarity` takes 0.28 s on kitchen50k (22 numeric columns, 365 daily periods) against 89 s for the task in the CI baseline, and 1.3 s on 52 500 rows over 3 000 days and 40 columns (2 000 periods each, the worst case the cap allows).
+
+**Status (2026-10-25): Resolved.** The legacy time-series tasks are deleted (U4-18, #126).
 
 On 10× more rows (kitchen5k → kitchen50k) it went from **4.9 s to 186 s (38×)**.
 `detect_stationarity.py:192` calls `adfuller(series.values, autolag="AIC")` with no `maxlag`.

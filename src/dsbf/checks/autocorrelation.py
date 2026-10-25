@@ -1,10 +1,10 @@
 # dsbf/checks/autocorrelation.py
 """Numeric columns whose value is predictable from earlier periods: ACF and PACF."""
 
+from typing import Any
+
 import numpy as np
 from pydantic import Field
-from statsmodels.stats.diagnostic import acorr_ljungbox
-from statsmodels.tsa.stattools import acf, pacf
 
 from dsbf.checks.timeseries import (
     Prepared,
@@ -155,12 +155,17 @@ def autocorrelation(ctx: CheckContext, params: AutocorrelationParams) -> CheckOu
 def _analyse(
     values: np.ndarray, params: AutocorrelationParams, info: SeriesInfo
 ) -> ColumnAutocorrelation:
+    from statsmodels.stats.diagnostic import (
+        acorr_ljungbox,  # the `timeseries` extra
+    )
+    from statsmodels.tsa.stattools import acf, pacf
+
     lags = max(1, min(params.max_lags, values.size // 2 - 1))
     centred = values - values.mean()
     values_acf, interval = acf(centred, nlags=lags, alpha=params.alpha, fft=True)
-    values_pacf, pacf_interval = pacf(
-        centred, nlags=lags, alpha=params.alpha, method="ywm"
-    )
+    # With ``alpha`` given the interval is there; the stubs allow ``None``.
+    partial: Any = pacf(centred, nlags=lags, alpha=params.alpha, method="ywm")
+    values_pacf, pacf_interval = partial
     acf_band = interval[:, 1] - values_acf
     pacf_band = float((pacf_interval[1:, 1] - values_pacf[1:]).mean())
     significant_acf = _outside(values_acf, acf_band)

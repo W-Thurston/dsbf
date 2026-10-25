@@ -152,27 +152,27 @@ def test_the_engine_scenarios_pair_each_dataset_serial_and_parallel() -> None:
     assert by_data == {"titanic": {1, PER_CORE}, "kitchen5k": {1, PER_CORE}}
 
 
-def test_every_standard_scenario_has_a_target_and_runs_the_default_plan() -> None:
+def test_every_standard_scenario_has_a_budget_and_runs_the_default_plan() -> None:
     standard = [s for s in ENGINE_SCENARIOS if s.name.startswith("standard-")]
     assert {s.name for s in standard} == set(ENGINE_BUDGETS)
     assert {(s.depth, s.workers) for s in standard} == {("standard", None)}
 
 
-def test_an_engine_entry_within_its_target_misses_nothing() -> None:
+def test_an_engine_entry_within_its_budget_breaks_nothing() -> None:
     assert check_engine_budget("standard-titanic", entry(total_seconds=4.0)) == []
 
 
-def test_a_missed_target_is_described() -> None:
+def test_a_broken_budget_is_described() -> None:
     missed = check_engine_budget(
         "standard-kitchen50k", entry(total_seconds=90.0, peak_rss_mb=1500.0)
     )
     assert missed == [
-        "standard-kitchen50k: took 90.0 s, target 60 s",
-        "standard-kitchen50k: peak memory 1,500 MB, target 1,024 MB",
+        "standard-kitchen50k: took 90.0 s, budget 60 s",
+        "standard-kitchen50k: peak memory 1,500 MB, budget 1,024 MB",
     ]
 
 
-def test_the_summary_reports_the_targets() -> None:
+def test_the_summary_reports_the_budgets() -> None:
     results = {
         "scenarios": {
             "standard-titanic": entry(total_seconds=30.0),
@@ -180,8 +180,8 @@ def test_the_summary_reports_the_targets() -> None:
         }
     }
     summary = render_summary(results, {})
-    assert "- standard-titanic: took 30.0 s, target 5 s" in summary
-    assert "- standard-kitchen50k: within its target" in summary
+    assert "- standard-titanic: took 30.0 s, budget 5 s" in summary
+    assert "- standard-kitchen50k: within its budget" in summary
 
 
 def test_committed_baseline_covers_every_scenario() -> None:

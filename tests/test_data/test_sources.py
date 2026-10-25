@@ -231,7 +231,7 @@ def test_float_columns_are_not_copied():
 def test_pandas_leg_runs_the_requested_major():
     expected = os.environ.get("DSBF_TEST_PANDAS_MAJOR")
     if expected is None:
-        pytest.skip("only the pandas-3 CI leg sets DSBF_TEST_PANDAS_MAJOR")
+        pytest.skip("only the pandas-2 CI leg sets DSBF_TEST_PANDAS_MAJOR")
     assert pd.__version__.split(".")[0] == expected
 
 

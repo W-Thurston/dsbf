@@ -5,8 +5,8 @@ for its kind. The relative limit alone would flag a task that went from 0.2 s to
 which on a shared CI runner is noise.
 
 The profile pass has budgets as well: absolute limits that hold with or without a
-baseline (``PROFILE_BUDGETS``). The standard plan has the targets Phase 4 works
-towards (``ENGINE_BUDGETS``), which the summary reports and nothing enforces.
+baseline (``PROFILE_BUDGETS``). So does the standard plan (``ENGINE_BUDGETS``, the
+Phase 4 exit criteria).
 """
 
 from __future__ import annotations
@@ -49,13 +49,13 @@ PROFILE_BUDGETS = {
 
 @dataclass(frozen=True)
 class EngineBudget:
-    """A target for one ``dsbf.profile()`` scenario; ``None`` leaves a limit unset."""
+    """Absolute limits for one ``dsbf.profile()`` scenario; ``None`` leaves one off."""
 
     seconds: float
     peak_mb: float | None = None
 
 
-# The standard plan's targets (REFACTOR_PLAN section 11): reported, not enforced.
+# The standard plan's budgets (REFACTOR_PLAN section 11), measured on the CI runner.
 ENGINE_BUDGETS = {
     "standard-titanic": EngineBudget(seconds=5.0),
     "standard-kitchen50k": EngineBudget(seconds=60.0, peak_mb=1024.0),
@@ -143,7 +143,7 @@ def check_budget(scenario: str, entry: dict[str, Any]) -> list[str]:
 
 
 def check_engine_budget(scenario: str, entry: dict[str, Any]) -> list[str]:
-    """Describe each target in ``ENGINE_BUDGETS`` that ``entry`` misses."""
+    """Describe each budget in ``ENGINE_BUDGETS`` that ``entry`` breaks."""
     budget = ENGINE_BUDGETS.get(scenario)
     if budget is None:
         return []
@@ -151,12 +151,12 @@ def check_engine_budget(scenario: str, entry: dict[str, Any]) -> list[str]:
     seconds = entry["total_seconds"]
     if seconds > budget.seconds:
         missed.append(
-            f"{scenario}: took {seconds:,.1f} s, target {budget.seconds:,.0f} s"
+            f"{scenario}: took {seconds:,.1f} s, budget {budget.seconds:,.0f} s"
         )
     peak = entry["peak_rss_mb"]
     if budget.peak_mb is not None and peak > budget.peak_mb:
         missed.append(
-            f"{scenario}: peak memory {peak:,.0f} MB, target {budget.peak_mb:,.0f} MB"
+            f"{scenario}: peak memory {peak:,.0f} MB, budget {budget.peak_mb:,.0f} MB"
         )
     return missed
 
@@ -186,13 +186,13 @@ def render_summary(
             f"| {name} | {total:,.1f} | {base_cell} | {change} "
             f"| {entry['peak_rss_mb']:,.0f} | {tasks} |"
         )
-    targets = [
+    budgets = [
         line
         for name, entry in results["scenarios"].items()
         if name in ENGINE_BUDGETS
-        for line in check_engine_budget(name, entry) or [f"{name}: within its target"]
+        for line in check_engine_budget(name, entry) or [f"{name}: within its budget"]
     ]
-    if targets:
-        lines += ["", "Phase 4 targets (reported, not enforced):", ""]
-        lines += [f"- {line}" for line in targets]
+    if budgets:
+        lines += ["", "Phase 4 budgets:", ""]
+        lines += [f"- {line}" for line in budgets]
     return "\n".join(lines) + "\n"

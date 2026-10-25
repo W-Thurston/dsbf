@@ -2,6 +2,7 @@
 """Which optional-dependency groups are installed, so a plan can say what is missing."""
 
 from collections.abc import Iterable
+from importlib import import_module
 from importlib.util import find_spec
 
 from dsbf.engine.check import Extra
@@ -16,6 +17,31 @@ EXTRA_MODULES: dict[Extra, tuple[str, ...]] = {
     "sql": ("ibis",),
     "server": ("fastapi", "uvicorn", "sqlalchemy", "alembic"),
 }
+
+
+# What a check imports when it runs, because the core pack loads without its extra.
+# ``preload_extras`` imports these on the calling thread before checks run side by
+# side: a first import on a worker thread can hang. Loading a C extension takes the
+# loader's lock, and scikit-learn's thread-pool controller holds that lock while it
+# waits for the interpreter lock that the importing thread holds.
+# ``tests/test_packaging.py`` checks the table against the imports in ``src``.
+PRELOAD: dict[Extra, tuple[str, ...]] = {
+    "ml": ("sklearn.ensemble", "sklearn.feature_selection", "sklearn.mixture"),
+    "timeseries": (
+        "statsmodels.stats.diagnostic",
+        "statsmodels.tsa.seasonal",
+        "statsmodels.tsa.stattools",
+    ),
+    "text": ("rapidfuzz.fuzz", "rapidfuzz.process"),
+}
+
+
+def preload_extras(extras: Iterable[Extra]) -> None:
+    """Import the modules of each installed extra in ``extras`` on this thread."""
+    for extra in dict.fromkeys(extras):
+        if not missing_modules(extra):
+            for module in PRELOAD.get(extra, ()):
+                import_module(module)
 
 
 def missing_modules(extra: Extra) -> tuple[str, ...]:

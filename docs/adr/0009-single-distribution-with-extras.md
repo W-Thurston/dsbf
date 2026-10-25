@@ -40,7 +40,9 @@ DSBF stays **one distribution** with extras, in a **`src/dsbf/`** layout.
 
 - The extras are declared in Phase 1, with the `src/` move as a separate unit. The base install
   shrinks only as legacy tasks migrate (Phase 4), since they still need the heavy libraries, and
-  dependencies nothing imports are removed then.
+  dependencies nothing imports are removed then. Done in Phase 4 (U4-19): the base holds the ten
+  packages `dsbf` imports when it loads, a check imports its extra inside the function that uses
+  it, and the executor imports the installed extras before checks run on threads.
 - Each extra needs a test that the core runs without it and reports `unavailable`.
 - A wheel smoke test (build, install in a clean environment, run from a temporary directory) guards the layout.
 - Extras are the unit of the install matrix in CI.

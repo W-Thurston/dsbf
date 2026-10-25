@@ -67,6 +67,26 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
 | U3-10 | feat(engine): add legacy task adapter | #97 | `9fcb2bc` | 2026-10-19 |
 | U3-11 | feat(engine): run all legacy tasks through the new engine | #98 | `dca2abe` | 2026-10-19 |
 | U3-12 | feat: add dsbf.profile() library entry point | #99 | `ec202ed` | 2026-10-19 |
+| U4-00 | docs: plan the check migration and record finding status | #100 | `0ef2161` | 2026-10-19 |
+| U4-01 | perf: record engine baselines and turn check warnings into notes | #101 | `91c064d` | 2026-10-20 |
+| U4-02 | feat(checks): add the core check pack with a migration harness | #102 | `aa2703a` | 2026-10-20 |
+| U4-03 | feat(profile): add entropy, content hashes and encoding damage counts | #103 | `97c9d6d` | 2026-10-20 |
+| U4-04 | feat(checks): add column health rule checks with declarative tips | #104 | `56a24d4` | 2026-10-20 |
+| U4-05 | feat(checks): add distribution, type and schema rule checks | #105 | `9f5c5ea` | 2026-10-21 |
+| U4-06 | feat(checks): add outlier, normality, bimodality and bounds checks | #108 | `63c2bbe` | 2026-10-21 |
+| U4-07 | feat(checks): add association and contingency checks with intervals | #109 | `a6641b7` | 2026-10-22 |
+| U4-08 | feat(checks): add group difference and collinearity checks | #110 | `5bb5a65` | 2026-10-22 |
+| U4-09 | feat(checks): add missingness mechanism and string structure checks | #111 | `fb07cdb` | 2026-10-22 |
+| U4-10 | feat(checks): redesign fuzzy duplicate detection with blocking and budgets | #115 | `05de0dd` | 2026-10-22 |
+| U4-11 | feat(checks): redesign time-series checks with resampling and capped lags | #116 | `cddf99d` | 2026-10-23 |
+| U4-12 | feat(checks): compare a dataset with a reference | #117 | `70fe926` | 2026-10-23 |
+| U4-13 | feat(checks): add encoding, binning, transformation and imputation guidance | #118 | `2564726` | 2026-10-23 |
+| U4-14 | feat(checks): detect target leakage and mutual information | #119 | `7df24ea` | 2026-10-23 |
+| U4-15 | feat(checks): score quality dimensions and ML readiness from findings | #121 | `9fe8873` | 2026-10-23 |
+| U4-16 | test: add a calibration suite of planted-truth datasets | #123 | `111bd9c` | 2026-10-24 |
+| U4-17 | feat(cli): run dsbf profile on the new engine | #125 | `73b361a` | 2026-10-25 |
+| U4-18 | refactor!: remove the legacy engine, tasks, store and API | #126 | `d75ded1` | 2026-10-25 |
+| U4-19 | build: shrink the base install to the core dependency set | | | |
 
 ---
 
@@ -170,3 +190,37 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
   - The `engine-*` perf scenarios (serial and parallel, titanic and kitchen5k) are added, but their baseline can only be recorded from the CI runner, so it is open (carried into U4-00).
   - `RunHealth` has no `summary()`; the §7.1 text is `Run.render_health()`, and REFACTOR_PLAN §9 says so.
 - **PRs:** #88 (U3-01, `729d288`), #89 (U3-02, `7f33080`), #90 (U3-03, `61db3e0`), #91 (U3-04, `4a22481`), #92 (U3-05, `b233bc8`), #93 (U3-06, `294c5e4`), #94 (U3-07, `75674f4`), #95 (U3-08, `3474ef0`), #96 (U3-09, `e401bb0`), #97 (U3-10, `9fcb2bc`), #98 (U3-11, `dca2abe`), and #99 (U3-12, `ec202ed`).
+
+---
+
+## Phase 4: Migrate checks
+
+- **Capability:** Every analysis DSBF performs is a typed check in the `core` pack. It reads the profile or the value cache and declares its parameters, output, cost and extras. The legacy engine, tasks, store, API v1 and backend plotting are gone. A stopgap `dsbf profile` runs the new engine, and the base install holds only the core dependencies.
+- **Motivation:** Findings with evidence and statistical fixes are the product (REFACTOR_PLAN §2, §10). Column selection by construction removes F-11. Heavy checks with budgets meet the performance targets (§11). Deleting the legacy stack ends the two-system period that Phase 3 opened.
+- **Boundaries:** No policy evaluation, no sinks beyond the stopgap CLI's `run.json`, and no CLI v2 (all Phase 5). No store, API v2 or dashboard (Phase 6). The frontend source stays in the repo unchanged; with API v1 deleted, the dashboard does not run from U4-18 until Phase 6 (decided by the user on 2026-10-19). No new data sources (Phase 7).
+- **Sequence and dependencies:** Depends on Phase 3. Foundations (U4-01 to U4-03), then rule checks (U4-04, U4-05), analysis checks (U4-06 to U4-09), heavy checks (U4-10 to U4-12), ML-prep, target-aware and synthesis checks (U4-13 to U4-15), calibration (U4-16), and the cutover (U4-17 to U4-19).
+- **Success criteria:**
+  - No legacy task remains; `dsbf.legacy`, `dsbf.eda`, `dsbf.core`, `dsbf.storage` and `dsbf.api` are deleted.
+  - On the CI runner, the standard plan takes under 5 s on titanic, and under 60 s with under 1 GB peak on kitchen50k (52.5k × 60).
+  - Calibration baselines (false-positive and false-negative rates) are recorded for each core check version.
+  - Every core check runs on the adversarial frame, and the golden findings snapshots cover every core check.
+  - `pip install dsbf` without extras runs `dsbf profile`, and each check that needs an extra reports `unavailable`.
+
+**Done (2026-10-25), 20 units.** Detailed unit entries were condensed here at close-out; the per-unit notes that later units depend on were carried into those units as "Note from U4-xx" lines. Three other PRs merged during the phase and are not units: #112 (cancel superseded pull request runs), #122 (report transform skewness to four decimals and drop the perf pin) and #124 (a limit a worker process can meet in the stalling-run timeout test).
+
+- **Capability delivered:** the `core` pack holds 47 checks: 21 rule checks that read the profile, 23 analysis checks that read values, and 3 synthesis checks. Every one has an `applies_to`, a bounded `CheckParams` model, a typed output, a cost, its extras and the adversarial-frame test. Every finding states `n_used` and the method; interval and effect-size estimates, multiple-comparison adjustment (`fdr_bh`, with `pairs_tested` or `tests_run` next to the number flagged) and shuffled-null floors replace the legacy fixed thresholds; advice is attached after a check returns from declarative `{field, op, value}` tips (no `eval`). Beyond the migrations: fuzzy duplicates and the time-series checks were redesigned with budgets, `reference_drift` compares a dataset or a stored `Run`, `target_leakage` and `mutual_information` use one `target` setting, and `quality_dimensions` and `ml_readiness` score from findings, with a coverage per input. `tests/calibration/` plants flaws in 70 seeded scenarios and commits each check's detection and false-alarm rate. `dsbf profile` runs `dsbf.profile()` and writes `run.json`. The legacy engine, its 65 tasks, the store, API v1, backend plotting and the legacy config are deleted (about 290 files and 148 000 lines), and the base install is ten packages.
+- **Success criteria, measured:**
+  - No legacy task remains: `dsbf.legacy`, `dsbf.eda`, `dsbf.core`, `dsbf.storage` and `dsbf.api` are gone and nothing in `src` or `tests` imports them (U4-18). `snapshots/core/` is byte-identical under two hash seeds, which shows the core pack never read a legacy task.
+  - Performance on the CI runner, from the nightly on `main` of 2026-10-25 (`a2bda9e`): `standard-titanic` 2.1 s (21.3 s at U4-01 with the legacy tasks) and `standard-kitchen50k` 10.0 s with a 809 MB peak (266.7 s and 2 318 MB at U4-01), inside 5 s and 60 s with 1 GB. U4-19 enforces both budgets in `tests/perf`, with or without a baseline; the PR's labelled perf run is the first measurement made under the enforcing code.
+  - Calibration baselines: `tests/calibration/baseline.json` holds the detection rate, false-alarm rate (Wilson intervals) and probe means of every core check and its version, over 70 scenarios; all 70 give the same rates on scikit-learn 1.9.1, scipy 1.18.1 and statsmodels 0.15.0 as on the versions it was recorded with.
+  - Adversarial frame and golden coverage: the Hypothesis test and the fixed adversarial frame run every core check; 10 golden datasets (11 tests) compare each core check's findings with `snapshots/core/`.
+  - Lean install: a wheel built from the final tree installs 21 packages and 533 MB in a clean venv (the base of `main` was 54 packages and 750 MB; with `ml,timeseries,text,excel,pandas` it is 38 packages and 691 MB). `dsbf profile` on titanic from it gives 32 ok, 8 not applicable and 6 unavailable (`autocorrelation`, `seasonal_decomposition`, `stationarity` need `timeseries`; `bimodality`, `multivariate_outliers`, `mutual_information` need `ml`), each with its install line, and `fuzzy_duplicates` (`text`) is unavailable at the `deep` depth. `run.json` validates against the schema; with the five extras the run gives 34 ok and 12 not applicable.
+- **Key decisions:** core checks run beside the legacy tasks they supersede, each compared with its task on the ten golden datasets through a harness that accepts a difference only with a reason; a statistical fix is an accepted difference whose reason says why the new result is right, and U4-18 deleted the harness; the user chose on 2026-10-19 to delete the legacy stack, API v1 and the old store in this phase, with a stopgap CLI, and to retire the 13 profile-restating summaries; a check that needs an extra is `unavailable` per check, and it imports the extra inside its function ([ADR 0009](adr/0009-single-distribution-with-extras.md)); the executor imports the installed extras on the calling thread before checks run side by side, because a first import on a worker thread deadlocked kitchen5k in 4 of 4 runs; the four Python caps became next-major ceilings, `scikit-learn` has a floor of 1.8 and `numpy` of 2.3 (the tested range); a check with nothing to examine reports `not_applicable` where the legacy task reported `skipped`, and `unavailable` is for a missing extra.
+- **Deviations from the phase block:**
+  - The dashboard does not run from U4-18 until Phase 6 (the user's decision, recorded in the phase block). `tests/validation/DASHBOARD_CHECKLIST.md` and the frontend source were kept for Phase 6.
+  - The performance criterion was met by the nightly run before U4-19 enforced it; the enforcing code has run only locally (3.4 s and 299 MB on titanic, 18.9 s and 682 MB on kitchen50k on a machine slower than the runner) until the PR's perf run.
+  - Several gaps are recorded, not closed: `fuzzy_duplicates` unaided cross-system matches and single-character typos, `bimodality` below 300 values, `stationarity` on random walks, and the skewed-null false alarms of `multivariate_outliers` (U5-00 decides). A column named `*` or `^a$` still breaks the profiler (U5-00).
+  - `fuzzy_duplicates` runs at the `deep` depth only, so the standard depth no longer reports fuzzy duplicates, and the `text` extra shows as unavailable only there.
+  - Schema: `SCHEMA_VERSION` went from 0.6.0 to 0.10.0 over the phase (notes with a count, profile fields for rule checks, datetime fields, and others), all additive before the 1.x guarantee.
+  - U4-19 lifted the caps and moved two golden snapshots: `wide` (three `normality` p-values in the sixth significant digit, scipy 1.18) and `kitchen5k` (`multivariate_outliers` scores, scikit-learn 1.8 and later).
+- **PRs:** #100 (U4-00, `0ef2161`), #101 (U4-01, `91c064d`), #102 (U4-02, `aa2703a`), #103 (U4-03, `97c9d6d`), #104 (U4-04, `56a24d4`), #105 (U4-05, `9f5c5ea`), #108 (U4-06, `63c2bbe`), #109 (U4-07, `a6641b7`), #110 (U4-08, `5bb5a65`), #111 (U4-09, `fb07cdb`), #115 (U4-10, `05de0dd`), #116 (U4-11, `cddf99d`), #117 (U4-12, `70fe926`), #118 (U4-13, `2564726`), #119 (U4-14, `7df24ea`), #121 (U4-15, `9fe8873`), #123 (U4-16, `111bd9c`), #125 (U4-17, `73b361a`), #126 (U4-18, `d75ded1`), and U4-19 (the PR is recorded when the next unit starts).

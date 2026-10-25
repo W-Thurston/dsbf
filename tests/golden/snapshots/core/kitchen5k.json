@@ -3197,10 +3197,10 @@
        4471,
        599
       ],
-      "excess": 0.03393,
+      "excess": 0.0613112,
       "far_limit": 61.9354,
       "far_rows": 473,
-      "max_anomaly_score": 0.582067,
+      "max_anomaly_score": 0.609448,
       "n_features": 22,
       "n_flagged": 263,
       "reference_max_score": 0.548137

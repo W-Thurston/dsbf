@@ -93,12 +93,12 @@ jobs:
       - name: Run fast gate
         run: uv run --no-sync pytest -m "unit and not slow" --tb=short -q
 
-  # The source adapters take pandas 3 frames (new string dtype, copy-on-write), but the
-  # base pin stays `<3` until the dependency caps are lifted, so this leg overlays
-  # pandas 3 on the locked environment for the adapter tests only. The variable makes
-  # one test fail if the overlay didn't take.
-  pandas3:
-    name: Source adapters on pandas 3
+  # The lock holds pandas 3 (new string dtype, copy-on-write), but the `pandas` extra
+  # accepts 2.3 too, so this leg overlays the oldest supported pandas on the locked
+  # environment for the adapter tests only. The variable makes one test fail if the
+  # overlay didn't take.
+  pandas2:
+    name: Source adapters on pandas 2
     runs-on: ubuntu-latest
     needs: lint
 
@@ -114,10 +114,50 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Run adapter tests on pandas 3
+      - name: Run adapter tests on pandas 2
         env:
-          DSBF_TEST_PANDAS_MAJOR: "3"
-        run: uv run --no-sync --with "pandas>=3,<4" pytest tests/test_data -m unit --tb=short -q
+          DSBF_TEST_PANDAS_MAJOR: "2"
+        run: uv run --no-sync --with "pandas>=2.3,<3" pytest tests/test_data -m unit --tb=short -q
+
+  # The base install on its own, then with each extra alone, from the lock and without
+  # the dev group. `tests/test_extras.py` asserts that the checks of an extra that is
+  # not installed report `unavailable` and the rest run, and `dsbf profile` is run from
+  # the installed command on a CSV. The `sql` and `server` extras gate no code yet.
+  extras:
+    name: Install with ${{ matrix.extra }}
+    runs-on: ubuntu-latest
+    needs: lint
+
+    strategy:
+      fail-fast: false
+      matrix:
+        extra: [none, ml, timeseries, text, excel, pandas]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+
+      - name: Install the base and the extra
+        run: |
+          if [ "${{ matrix.extra }}" = none ]; then
+            uv sync --frozen --no-dev --group extras
+          else
+            uv sync --frozen --no-dev --group extras --extra ${{ matrix.extra }}
+          fi
+
+      - name: Extras tests
+        run: uv run --no-sync pytest tests/test_extras.py -m integration --tb=short -q
+
+      - name: Profile a CSV from the installed command
+        run: |
+          printf 'id,score,label\n1,0.5,a\n2,0.7,b\n3,0.2,a\n4,0.9,c\n5,0.1,b\n' > "$RUNNER_TEMP/small.csv"
+          cd "$RUNNER_TEMP"
+          "$GITHUB_WORKSPACE/.venv/bin/dsbf" profile small.csv --out "$RUNNER_TEMP/out"
+          test -s "$RUNNER_TEMP/out/run.json"
 
   # The full suite adds the integration, slow and network tests (the engine runs
   # on seaborn's titanic dataset, which needs network access).

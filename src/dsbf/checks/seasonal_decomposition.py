@@ -3,7 +3,6 @@
 
 import numpy as np
 from pydantic import Field
-from statsmodels.tsa.seasonal import STL
 
 from dsbf.checks.timeseries import (
     Prepared,
@@ -212,6 +211,8 @@ def _decompose(
     params: SeasonalDecompositionParams,
     info: SeriesInfo,
 ) -> ColumnDecomposition | None:
+    from statsmodels.tsa.seasonal import STL  # the `timeseries` extra
+
     fit = STL(values, period=period, robust=params.robust).fit()
     trend, seasonal, remainder = fit.trend, fit.seasonal, fit.resid
     with np.errstate(all="ignore"):
