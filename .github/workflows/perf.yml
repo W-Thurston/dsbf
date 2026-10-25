@@ -1,8 +1,8 @@
 name: Performance
 
-# The benchmark profiles four datasets end to end (kitchen50k alone takes over ten
-# minutes) and compares each stage, task and dashboard payload with the committed
-# baseline in tests/perf/baseline.json, so it stays out of the CI workflow. It runs
+# The benchmark times the profile pass and `dsbf.profile()` on titanic, kitchen5k,
+# kitchen50k and a 1M x 50 frame, and compares each stage, check and the peak memory
+# with the committed baseline in tests/perf/baseline.json, so it stays out of the CI workflow. It runs
 # nightly, on demand, and on pull requests that carry the `perf` label.
 #
 # The baseline must come from this runner type: download the `perf-results` artifact of a

@@ -7,16 +7,13 @@ from pydantic import ValidationError
 import dsbf
 from dsbf.config import (
     DEFAULT_PACKS,
-    Backend,
     ConfigError,
     LimitsConfig,
     ProfileConfig,
     SampleConfig,
 )
 from dsbf.engine import Depth, PlanError
-from dsbf.library import _default_workers, parse_checks
-from dsbf.profiling import profile_dataset
-from tests.test_engine.toys import declare, make_dataset, plan_for
+from dsbf.library import parse_checks
 
 pytestmark = pytest.mark.unit
 
@@ -41,7 +38,6 @@ class TestProfileConfig:
 
         assert config.packs == DEFAULT_PACKS == ("core",)
         assert config.depth is Depth.STANDARD
-        assert config.backend is Backend.PANDAS
         assert config.sample is None
         assert config.workers is None
         assert config.limits == LimitsConfig()
@@ -80,15 +76,13 @@ class TestRefusedSettings:
                 frame,
                 target="survived",
                 time_index="when",
-                tasks={"detect_outlier": {"flag_threshold": 0.1}},
             )
 
         paths = {issue.path for issue in caught.value.issues}
-        assert paths == {"target", "time_index", "tasks.detect_outlier"}
+        assert paths == {"target", "time_index"}
         message = str(caught.value)
         assert "'survived' is not a column of the data" in message
         assert "allowed: age, group" in message
-        assert "did you mean 'detect_outliers'?" in message
 
     def test_an_unknown_depth_names_the_setting(self, frame):
         with pytest.raises(ConfigError, match="depth"):
@@ -123,34 +117,6 @@ class TestRefusedSettings:
         assert {i.path for i in caught.value.issues} == {"depth"}
 
 
-class TestDefaultWorkers:
-    """A plan with a legacy task runs one check at a time; any other, per core."""
-
-    @staticmethod
-    def plan(*checks):
-        declared = [
-            declare(f"c{i}", packs=packs, kind=kind)
-            for i, (packs, kind) in enumerate(checks)
-        ]
-        return _default_workers(plan_for(declared, profile_dataset(make_dataset())))
-
-    def test_a_plan_of_legacy_tasks_runs_one_at_a_time(self):
-        assert self.plan((("legacy",), "analysis"), (("legacy",), "analysis")) == 1
-
-    def test_a_task_a_core_check_replaces_is_still_a_legacy_task(self):
-        legacy = (("legacy",), "analysis")
-        replaced = (("legacy_superseded",), "analysis")
-        assert self.plan(legacy, replaced) == 1
-
-    def test_core_checks_beside_legacy_tasks_do_not_change_that(self):
-        legacy = (("legacy",), "analysis")
-        assert self.plan(legacy, (("core",), "rule")) == 1
-        assert self.plan(legacy, (("core",), "analysis")) == 1
-
-    def test_a_plan_with_no_legacy_task_uses_the_executors_default(self):
-        assert self.plan((("core",), "rule")) is None
-
-
 class TestParams:
     def test_a_params_setting_reaches_the_check(self):
         run = dsbf.profile(
@@ -168,6 +134,10 @@ class TestParams:
         )
 
         assert run.results["class_imbalance"].params["target"] == "b"
+
+    def test_a_setting_of_the_removed_engine_is_refused(self):
+        with pytest.raises(ValidationError, match="extra_forbidden"):
+            ProfileConfig.model_validate({"backend": "polars"})
 
     def test_an_unknown_check_is_a_planning_error(self):
         with pytest.raises(PlanError, match="unknown check 'nulls'"):

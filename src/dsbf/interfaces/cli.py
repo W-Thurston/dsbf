@@ -1,6 +1,5 @@
 # dsbf/interfaces/cli.py
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,6 @@ import yaml
 from dsbf.checks import core_pack
 from dsbf.config import ConfigError
 from dsbf.data import SamplingError, SourceError, load
-from dsbf.eda.task_registry import load_task_group
 from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
 from dsbf.interfaces import schema_export
 from dsbf.library import profile as dsbf_profile
@@ -18,14 +16,11 @@ from dsbf.model import Cost, Dimension
 from dsbf.paths import default_outputs_dir
 from dsbf.profiling import profile_dataset
 from dsbf.utils.logging_utils import console_logging
-from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version
 
 RUN_FILE = "run.json"
 
 app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
-tasks_app = typer.Typer(help="Inspect the registered tasks.")
-app.add_typer(tasks_app, name="tasks")
 schema_app = typer.Typer(help="Publish and guard the result schema.")
 app.add_typer(schema_app, name="schema")
 
@@ -158,24 +153,6 @@ def plan_command(
         raise typer.Exit(2) from error
     shape = f"{dataset.n_rows:,} × {dataset.n_columns}"
     typer.echo(format_plan(plan, dataset=f"{dataset.name} ({shape})"))
-
-
-@tasks_app.command("export")
-def export_tasks(
-    output: Path | None = typer.Option(
-        None,
-        "--output",
-        "-o",
-        help="Write the JSON to this file instead of printing it.",
-    ),
-) -> None:
-    """Export the static metadata of every registered task as JSON."""
-    load_task_group("core")
-    if output is None:
-        typer.echo(json.dumps(build_task_metadata(), indent=2))
-    else:
-        write_task_metadata(str(output))
-        typer.echo(f"Task metadata written to {output}")
 
 
 @schema_app.command("export")

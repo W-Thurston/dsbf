@@ -9,7 +9,7 @@
 ## Type of change
 
 - [ ] Bug fix
-- [ ] New task
+- [ ] New check
 - [ ] Dashboard / UI change
 - [ ] Refactor (no behaviour change)
 - [ ] Documentation
@@ -31,15 +31,15 @@ uv run pytest tests/path/to/relevant_test.py -v
 - [ ] Docstrings added or updated on new public classes and methods
 - [ ] Type annotations on new function signatures
 
-**If this PR adds or changes a task:**
-- [ ] `task_metadata.yaml` updated
-- [ ] Uses `get_columns_by_intent()` — not `df.columns` or `select_dtypes()`
-- [ ] Zero-eligible-columns edge case handled (returns `status="success"` with empty data)
-- [ ] Unit test covers the happy path and the empty-input case
+**If this PR adds or changes a check:**
+- [ ] The check is in `core_pack()`, and its `version` is bumped if its results changed
+- [ ] Columns come from `applies_to` and `ctx.columns` — not `df.columns` or `select_dtypes()`
+- [ ] Every finding states `n_used` and the method
+- [ ] Unit test covers the happy path and an edge case
 - [ ] Archetype test added or updated in `tests/validation/test_archetypes.py`
 
-**If this PR changes the Quality or ML Readiness scoring:**
-- [ ] `data_quality_scorer._level()` thresholds understood and intentionally changed
+**If this PR changes the Quality or ML Readiness summaries (`quality_dimensions`, `ml_readiness`):**
+- [ ] The level rules in `checks/synthesis.py` are understood and intentionally changed
 - [ ] Existing archetype tests still pass or updated ones are included, and the `calibration` label is on the PR
 
 ## Notes for reviewer

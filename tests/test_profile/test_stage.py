@@ -6,7 +6,6 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from dsbf.config import load_default_config
 from dsbf.data import load
 from dsbf.model import DatasetProfile, Stage
 from dsbf.profiling import StageThresholds, infer_stage, profile_dataset
@@ -131,24 +130,9 @@ def test_inference_returns_only_stages_a_dataset_can_be_at():
     assert {_stage(f) for f in frames} <= {Stage.RAW, Stage.CLEANED, Stage.MODELING}
 
 
-def test_the_default_config_section_loads_as_the_default_thresholds():
-    assert StageThresholds.from_config(load_default_config()) == StageThresholds()
-
-
-def test_thresholds_are_read_from_the_engine_section():
-    config = {"engine": {"stage_inference": {"high_cardinality_threshold": 7}}}
-
-    assert StageThresholds.from_config(config).high_cardinality_threshold == 7
-
-
-def test_a_config_without_the_section_gives_the_defaults():
-    assert StageThresholds.from_config({}) == StageThresholds()
-    assert StageThresholds.from_config({"engine": None}) == StageThresholds()
-
-
-def test_a_misplaced_or_misspelt_threshold_is_an_error():
+def test_a_misspelt_or_out_of_range_threshold_is_an_error():
     with pytest.raises(ValidationError):
-        StageThresholds.from_config({"engine": {"stage_inference": {"nulls": 1}}})
+        StageThresholds.model_validate({"nulls": 1})
     with pytest.raises(ValidationError):
         StageThresholds(null_ratio_raw_threshold=1.5)
 

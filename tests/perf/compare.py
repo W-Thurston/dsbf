@@ -2,8 +2,7 @@
 
 A value regresses when it grows by more than ``TOLERANCE`` *and* by at least a floor
 for its kind. The relative limit alone would flag a task that went from 0.2 s to 0.3 s,
-which on a shared CI runner is noise. A dashboard endpoint that stops answering 200
-regresses regardless of size.
+which on a shared CI runner is noise.
 
 The profile pass has budgets as well: absolute limits that hold with or without a
 baseline (``PROFILE_BUDGETS``). The standard plan has the targets Phase 4 works
@@ -23,15 +22,12 @@ FLOORS = {
     "stage": 1.0,
     "task": 1.0,
     "peak memory": 100.0,
-    "api payload": 10 * 1024.0,
 }
 UNITS = {
     "total": "s",
     "stage": "s",
     "task": "s",
     "peak memory": "MB",
-    "api payload": "B",
-    "api status": "",
 }
 
 
@@ -59,8 +55,7 @@ class EngineBudget:
     peak_mb: float | None = None
 
 
-# The standard plan's targets (REFACTOR_PLAN section 11). Until the legacy tasks are
-# replaced they are missed, so they are reported, not enforced.
+# The standard plan's targets (REFACTOR_PLAN section 11): reported, not enforced.
 ENGINE_BUDGETS = {
     "standard-titanic": EngineBudget(seconds=5.0),
     "standard-kitchen50k": EngineBudget(seconds=60.0, peak_mb=1024.0),
@@ -80,11 +75,6 @@ class Regression:
         return self.current / self.baseline - 1
 
     def describe(self) -> str:
-        if self.kind == "api status":
-            return (
-                f"{self.scenario}: {self.kind} {self.name}: "
-                f"HTTP {self.baseline:.0f} -> HTTP {self.current:.0f}"
-            )
         unit = UNITS[self.kind]
         return (
             f"{self.scenario}: {self.kind} {self.name}: "
@@ -101,9 +91,6 @@ def _measurements(entry: dict[str, Any]) -> Iterator[tuple[str, str, float]]:
         yield "stage", name, seconds
     for name, seconds in entry.get("tasks", {}).items():
         yield "task", name, seconds
-    for name, probe in entry.get("api", {}).items():
-        if isinstance(probe, dict) and "bytes" in probe:
-            yield "api payload", name, float(probe["bytes"])
 
 
 def find_regressions(
@@ -125,7 +112,6 @@ def find_regressions(
             continue
         if value > reference * (1 + tolerance) and value - reference >= FLOORS[kind]:
             found.append(Regression(scenario, kind, name, reference, value))
-    found += _status_regressions(scenario, baseline, current)
     return sorted(found, key=lambda r: r.growth, reverse=True)
 
 
@@ -173,22 +159,6 @@ def check_engine_budget(scenario: str, entry: dict[str, Any]) -> list[str]:
             f"{scenario}: peak memory {peak:,.0f} MB, target {budget.peak_mb:,.0f} MB"
         )
     return missed
-
-
-def _status_regressions(
-    scenario: str, baseline: dict[str, Any], current: dict[str, Any]
-) -> list[Regression]:
-    """Endpoints that answered 200 in the baseline and no longer do."""
-    found = []
-    for name, probe in current.get("api", {}).items():
-        before = baseline.get("api", {}).get(name)
-        if not (isinstance(probe, dict) and isinstance(before, dict)):
-            continue
-        if before.get("status") == 200 and probe.get("status") != 200:
-            found.append(
-                Regression(scenario, "api status", name, 200, probe.get("status", 0))
-            )
-    return found
 
 
 def render_summary(

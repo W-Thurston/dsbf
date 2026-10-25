@@ -103,7 +103,7 @@ def test_the_packaged_library_is_valid_and_every_tip_names_who_it_advises():
 
     assert library
     for name, tip in library.items():
-        assert tip.checks or tip.applicable_to, name
+        assert tip.checks, name
 
 
 def test_every_check_a_tip_advises_is_in_the_core_pack():

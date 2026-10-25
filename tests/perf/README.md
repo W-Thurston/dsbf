@@ -1,18 +1,11 @@
 # Performance benchmark
 
-`pytest -m perf` profiles four datasets end to end with the legacy engine, times the new
-profile pass on two more and `dsbf.profile()` on three, each in a fresh interpreter. It compares what it measured with
-`baseline.json`, and holds the profile pass to absolute budgets. It is deselected by default (kitchen50k alone takes
-over ten minutes), and `.github/workflows/perf.yml` runs it nightly, on demand, and on a pull
-request labelled `perf`. Add that label to any pull request that is meant to change speed or
-memory, or that touches the engine or a slow task.
-
-| Scenario | Input | Runs |
-|---|---|---|
-| `titanic` | `tests/golden/data/titanic.csv` (891 x 15) | 3, median kept |
-| `adversarial` | `tests/fixtures/adversarial.py` (200 x 14) | 3, median kept |
-| `kitchen5k` | `DSBFTestDataGenerator(n_rows=5000, random_seed=42)`, `normal_date` as the time series | 1 |
-| `kitchen50k` | the same generator at 50,000 rows (52,500 x 60 after the generator's own additions) | 1 |
+`pytest -m perf` times the profile pass on two datasets and `dsbf.profile()` on six scenarios,
+each in a fresh interpreter. It compares what it measured with `baseline.json`, and holds the
+profile pass to absolute budgets. It is deselected by default (the slowest scenarios take
+minutes), and `.github/workflows/perf.yml` runs it nightly, on demand, and on a pull request
+labelled `perf`. Add that label to any pull request that is meant to change speed or memory,
+or that touches the engine or a slow check.
 
 The profile scenarios time only `dsbf.profiling` (type inference, `profile_dataset`, stage
 inference), after the file is loaded:
@@ -42,19 +35,18 @@ An engine entry's `peak_rss_mb` is the child's `VmHWM` from `/proc/self/status`.
 | `engine-titanic-parallel` | titanic | 3, median kept | `deep` | the executor's default (one per core, at most 8) | |
 | `engine-kitchen5k-serial` | kitchen5k, `normal_date` as the time index | 1 | `deep` | 1 | |
 | `engine-kitchen5k-parallel` | kitchen5k, `normal_date` as the time index | 1 | `deep` | one per core | |
-| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one per core: the default selection has no legacy task) | under 5 s |
+| `standard-titanic` | titanic | 3, median kept | `standard` | `dsbf.profile()`'s choice (one per core) | under 5 s |
 | `standard-kitchen50k` | kitchen50k, `normal_date` as the time index | 1 | `standard` | `dsbf.profile()`'s choice | under 60 s and 1 GB peak |
 
 ## Run it
 
 ```bash
-uv run pytest -m perf                       # all four, compare with the baseline
-uv run pytest -m perf -k titanic            # one scenario
+uv run pytest -m perf                       # every scenario, compare with the baseline
+uv run pytest -m perf -k titanic            # the titanic scenarios
 uv run pytest -m perf -k profile            # the profile pass only (about 30 s)
 uv run pytest -m perf -k engine             # dsbf.profile() at deep, serial and parallel
 uv run pytest -m perf -k standard           # dsbf.profile() at the standard depth
 uv run pytest -m perf --perf-no-compare     # measure only
-uv run pytest -m perf -k titanic --perf-cprofile   # also write run.prof (slower; diagnosis only)
 ```
 
 Each run writes `perf-results/perf.json` (and a Markdown table next to it, `perf.md`) in the
@@ -67,21 +59,15 @@ anything having regressed. Use `--perf-no-compare` for exploration, and trust th
 ## What is measured
 
 `perf.json` has an `environment` block (Python, platform, CPU count, commit, time) and one
-entry per scenario:
+entry per scenario. An engine entry has:
 
-- `total_seconds`: wall time of `ProfileEngine(...).run()`, without the interpreter start-up
-  and without `cProfile`, which would inflate every number.
+- `total_seconds`: wall time of the `dsbf.profile()` call, without the interpreter start-up.
 - `import_seconds`: time to import `dsbf`.
-- `stages`: wall time of each function `ProfileEngine.run()` calls (loading, sampling,
-  building the graph, `graph.run (all tasks)`, the report, persisting the run).
-- `tasks`: `task_durations` for every task.
-- `peak_rss_mb`: the process's peak resident memory (`ru_maxrss`).
-- `output_bytes`, `report_bytes`: size of the output directory and of `report.json`.
-- `api`: status, bytes and milliseconds of the dashboard requests that open a run (run
-  detail, tasks, figures, data quality, ML readiness, associations, sample), made through the
-  API test client against the run's own database.
-- `task_outcomes` and `failed_tasks`: a scenario fails if any task fails, because the timings
-  of a crashed run describe less work than the baseline did.
+- `tasks`: the wall time of every check.
+- `peak_rss_mb`: the process's peak resident memory.
+- `run_bytes`, `n_checks`, `statuses`: the size of the `Run` as JSON and how its checks ended.
+- `failed_checks`: a scenario fails if any check errors or times out, because the timings of
+  a crashed run describe less work than the baseline did.
 
 ### The profile pass
 
@@ -94,7 +80,7 @@ differences:
   the loaded frame, and `memory_ratio = 1 + pass_overhead_mb / data_mb`: the frame plus what
   the pass adds, over the frame. Where the peak can't be reset (not Linux) `peak_isolated`
   is `false`, the figure includes the load, and the memory budget is not applied.
-- There are no `tasks` and no `api` probe.
+- There are no `tasks`.
 
 ## What fails
 
@@ -107,17 +93,13 @@ kind, so shared-runner noise on small values doesn't fail the job:
 
 | Value | Floor |
 |---|---|
-| total, stage, task | 1 s |
+| total, stage, check | 1 s |
 | peak memory | 100 MB |
-| API payload bytes | 10 KB |
 
-Endpoints that answered 200 in the baseline and no longer do also fail. API milliseconds are
-recorded but not gated. A task or stage that is not in the baseline is not compared.
+A check or stage that is not in the baseline is not compared.
 
-`PYTHONHASHSEED=0` is pinned for every run: the legacy `fuzzy_duplicate_detection` walks sets of
-strings, and its amount of work (and so its time) depends on the iteration order. The
-`fuzzy_duplicates` check that replaces it does not, but the legacy task still runs in the
-legacy-engine scenarios until it is deleted with the legacy pack.
+`dsbf.profile()` has no check whose work depends on the order of a set of strings, so the hash
+seed is not pinned.
 
 ## Update the baseline
 

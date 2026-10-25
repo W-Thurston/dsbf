@@ -11,8 +11,8 @@ import difflib
 import pytest
 
 from tests.golden.datasets import GOLDEN_DATASETS, KITCHEN5K, GoldenDataset
-from tests.golden.migration.snapshot import core_snapshot
 from tests.golden.normalise import render_snapshot
+from tests.golden.snapshot import core_snapshot
 
 pytestmark = pytest.mark.golden
 
@@ -26,11 +26,9 @@ def _param(dataset: GoldenDataset):
 
 @pytest.mark.parametrize("dataset", [_param(d) for d in GOLDEN_DATASETS])
 def test_core_findings_match_the_snapshot(
-    dataset: GoldenDataset, engine_run, request: pytest.FixtureRequest
+    dataset: GoldenDataset, core_run, request: pytest.FixtureRequest
 ) -> None:
-    run = engine_run(dataset)
-    assert run.core is not None
-    actual = render_snapshot(core_snapshot(dataset.name, run.core))
+    actual = render_snapshot(core_snapshot(dataset.name, core_run(dataset)))
     path = dataset.core_snapshot_path
 
     if request.config.getoption("--update-golden"):

@@ -18,7 +18,6 @@ from tests.perf.scenarios import (
     ENGINE_SCENARIOS,
     PER_CORE,
     PROFILE_SCENARIOS,
-    SCENARIOS,
 )
 
 pytestmark = pytest.mark.unit
@@ -30,7 +29,6 @@ def entry(**overrides: Any) -> dict[str, Any]:
         "peak_rss_mb": 1000.0,
         "stages": {"graph.run (all tasks)": 90.0, "persist_run": 0.2},
         "tasks": {"slow_task": 40.0, "quick_task": 0.2},
-        "api": {"run": {"status": 200, "bytes": 200_000, "milliseconds": 5.0}},
     }
     return {**base, **overrides}
 
@@ -63,10 +61,9 @@ def test_every_gated_kind_is_checked() -> None:
         total_seconds=140.0,
         peak_rss_mb=1400.0,
         stages={"graph.run (all tasks)": 120.0, "persist_run": 0.2},
-        api={"run": {"status": 200, "bytes": 400_000, "milliseconds": 5.0}},
     )
     kinds = {r.kind for r in find_regressions("s", entry(), current)}
-    assert kinds == {"total", "peak memory", "stage", "api payload"}
+    assert kinds == {"total", "peak memory", "stage"}
 
 
 def test_worst_regression_comes_first() -> None:
@@ -76,28 +73,8 @@ def test_worst_regression_comes_first() -> None:
 
 
 def test_values_on_one_side_only_are_skipped() -> None:
-    current = entry(
-        tasks={"new_task": 500.0}, api={"new": {"status": 200, "bytes": 10**9}}
-    )
+    current = entry(tasks={"new_task": 500.0})
     assert find_regressions("s", entry(), current) == []
-
-
-def test_endpoint_that_stops_answering_is_reported() -> None:
-    broken = {"run": {"status": 500, "bytes": 21, "milliseconds": 5.0}}
-    [found] = find_regressions("s", entry(), entry(api=broken))
-    assert found.kind == "api status"
-    assert found.describe().endswith("HTTP 200 -> HTTP 500")
-
-
-def test_endpoint_that_already_failed_is_not_reported() -> None:
-    failing = {"run": {"status": 500, "bytes": 21, "milliseconds": 5.0}}
-    assert find_regressions("s", entry(api=failing), entry(api=failing)) == []
-
-
-def test_api_milliseconds_and_errors_are_not_gated() -> None:
-    current = entry(api={"run": {"status": 200, "bytes": 200_000, "milliseconds": 9e5}})
-    assert find_regressions("s", entry(), current) == []
-    assert find_regressions("s", entry(), entry(api={"error": "boom"})) == []
 
 
 def test_summary_marks_a_scenario_without_a_baseline() -> None:
@@ -159,7 +136,7 @@ def test_summary_lists_stages_for_an_entry_without_tasks() -> None:
     assert "`load` 1.0" in rows[2] and "`profile_dataset` 0.5" in rows[2]
 
 
-def test_profile_entry_is_compared_without_tasks_or_api() -> None:
+def test_profile_entry_is_compared_without_tasks() -> None:
     slower = profile_entry(
         stages={"load": 1.0, "infer_column_types": 0.3, "profile_dataset": 2.0}
     )
@@ -212,7 +189,7 @@ def test_committed_baseline_covers_every_scenario() -> None:
     baseline = load_results(BASELINE_PATH)["scenarios"]
     missing = [
         s.name
-        for s in [*SCENARIOS, *PROFILE_SCENARIOS, *ENGINE_SCENARIOS]
+        for s in [*PROFILE_SCENARIOS, *ENGINE_SCENARIOS]
         if s.name not in baseline
     ]
     assert not missing, f"record a baseline for {missing} from the CI runner"

@@ -15,7 +15,6 @@ def test_home_comes_from_the_environment(monkeypatch, tmp_path):
 
     assert paths.dsbf_home() == (tmp_path / "custom").resolve()
     assert paths.default_outputs_dir() == paths.dsbf_home() / "outputs"
-    assert paths.default_db_path() == paths.dsbf_home() / "dsbf.db"
 
 
 def test_home_expands_the_user_directory(monkeypatch, tmp_path):
@@ -38,19 +37,3 @@ def test_home_is_read_on_every_call_and_never_created(monkeypatch, tmp_path):
 
     assert paths.dsbf_home() == target.resolve()
     assert not target.exists()
-
-
-def test_stored_absolute_paths_are_unchanged(tmp_path):
-    figure = tmp_path / "figs" / "a.png"
-
-    assert paths.resolve_stored_path(str(figure)) == figure
-
-
-def test_stored_relative_paths_resolve_against_the_working_directory(
-    monkeypatch, tmp_path
-):
-    monkeypatch.chdir(tmp_path)
-
-    assert paths.resolve_stored_path("dsbf/outputs/x/a.png") == (
-        tmp_path / "dsbf" / "outputs" / "x" / "a.png"
-    )

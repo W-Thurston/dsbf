@@ -2,7 +2,7 @@
 
 Thanks for your interest in contributing. This document covers everything you need
 to know to work effectively in this codebase — from environment setup through writing
-a new task, adding a validation dataset, and submitting a pull request.
+a new check, adding a validation dataset, and submitting a pull request.
 
 ---
 
@@ -11,7 +11,7 @@ a new task, adding a validation dataset, and submitting a pull request.
 1. [Development setup](#development-setup)
 2. [Project structure](#project-structure)
 3. [Code style](#code-style)
-4. [Writing a new task](#writing-a-new-task)
+4. [Writing a new check](#writing-a-new-check)
 5. [Adding a validation dataset](#adding-a-validation-dataset)
 6. [Commit messages](#commit-messages)
 7. [Pull request process](#pull-request-process)
@@ -34,8 +34,8 @@ Run the fast gate to confirm everything is working. It takes about 30 seconds:
 uv run pytest -m "unit and not slow"
 ```
 
-The full suite adds the engine and API tests, and needs network access (the engine
-tests load seaborn's titanic dataset). It takes about 5 minutes:
+The full suite adds the integration tests, which run `dsbf.profile()` end to end. It takes
+a few minutes:
 
 ```bash
 uv run pytest
@@ -49,7 +49,7 @@ one. Set it for a whole module with `pytestmark = pytest.mark.unit`.
 | Marker | Meaning |
 |---|---|
 | `unit` | Fast and isolated: no network and no full engine run. |
-| `integration` | Exercises several components together, such as the engine or the API. |
+| `integration` | Exercises several components together, such as `dsbf.profile()` on a frame or a file. |
 | `golden` | Profiles a dataset end to end and compares it with a committed snapshot. Deselected by default; see [Golden runs](#golden-runs). |
 | `perf` | Times full runs and compares them with a committed baseline. Deselected by default; see [Performance runs](#performance-runs). |
 | `calibration` | Measures each check's detection and false-alarm rates on planted-truth frames against a committed baseline. Deselected by default; see [Calibration runs](#calibration-runs). |
@@ -63,7 +63,7 @@ tier with `-m`, for example `uv run pytest -m "integration and not network"`.
 `tests/golden/` holds snapshots of what DSBF reports on ten datasets (the eight validation
 archetypes, titanic and a 5,000-row kitchen-sink frame). They take about ten minutes, so
 `pytest` skips them. Run them with `uv run pytest -m golden`, and add the `golden` label to
-a pull request to run them in CI. If a change to a task or the engine moves a snapshot,
+a pull request to run them in CI. If a change to a check or the engine moves a snapshot,
 review the diff and accept it with `uv run pytest -m golden --update-golden`. The review
 steps are in [`tests/golden/README.md`](tests/golden/README.md).
 
@@ -72,9 +72,9 @@ its update option is the same: `uv run pytest tests/test_interfaces/test_cli_pla
 
 ### Performance runs
 
-`tests/perf/` times a full run on four datasets (titanic, the adversarial frame, and the
-kitchen-sink frame at 5,000 and 50,000 rows) and fails when a stage, a task, the peak memory
-or a dashboard payload grows by more than 25% against `tests/perf/baseline.json`. The suite
+`tests/perf/` times the profile pass and `dsbf.profile()` on titanic and on the kitchen-sink
+frame at 5,000 and 50,000 rows, and fails when a stage, a check or the peak memory grows by
+more than 25% against `tests/perf/baseline.json`. The suite
 takes about fifteen minutes, so `pytest` skips it. Run it with `uv run pytest -m perf`, and add
 the `perf` label to a pull request to run it in CI, where the baseline was recorded. Local
 numbers from another machine are only roughly comparable. How to read the results and update
@@ -96,11 +96,11 @@ goes in the same commit. How to add a scenario and read the results is in
 
 ### Test isolation
 
-The suite never touches your own runs. `tests/conftest.py` points `DSBF_HOME` and
-`DSBF_DB_PATH` at a temporary root and runs the whole session from a temporary working
-directory. Outputs and the database land under that root and are deleted afterwards, and
-a stray write relative to the working directory lands in the temporary directory. Both
-variables are forced, so values you export are ignored while tests run.
+The suite never touches your own runs. `tests/conftest.py` points `DSBF_HOME` at a
+temporary root and runs the whole session from a temporary working directory. Outputs
+land under that root and are deleted afterwards, and a stray write relative to the
+working directory lands in the temporary directory. The variable is forced, so a value
+you export is ignored while tests run.
 Write tests that don't assume the working directory is the repository root: build paths
 from `Path(dsbf.__file__)` or `tmp_path`.
 
@@ -110,31 +110,29 @@ from `Path(dsbf.__file__)` or `tmp_path`.
 
 ```
 src/dsbf/
-├── core/               # BaseTask, TaskResult, execution graph
-├── eda/
-│   ├── tasks/          # All EDA task implementations (one file per task)
-│   └── task_registry.py
-├── utils/              # Shared utilities (backend, reco_engine, etc.)
-└── config/
-    ├── default_config.yaml
-    └── task_metadata.yaml
+├── checks/             # The core pack: one module per check, and what they share
+├── config/             # ProfileConfig and the settings loader
+├── data/               # Loading, sampling and fingerprinting a Dataset
+├── engine/             # Check contract, registry, planner, executor, cache, tips
+├── interfaces/         # The dsbf command and the schema export
+├── model/              # The Run and every model inside it (published as JSON Schema)
+├── profiling/          # The dataset profile that checks read
+├── static_metadata/    # The recommendation tip library
+├── utils/              # Logging and the version
+├── library.py          # dsbf.profile()
+└── paths.py            # The DSBF home and the output directory
 
-frontend/               # Vue 3 + Vite dashboard app
-
+frontend/               # Vue 3 + Vite dashboard source (not wired to an API; see ROADMAP.md)
 
 tests/
 ├── calibration/        # Planted-truth scenarios, rates per check and their baseline
 ├── generators/         # Dataset generators for the validation suite
-├── golden/             # Golden-run snapshots and the code that compares them
+├── golden/             # Core snapshots on ten datasets and the code that compares them
 ├── perf/               # Performance benchmark and its committed baseline
+├── test_checks/        # One module per check or family of checks
+├── test_engine/        # The engine, registry, planner, executor and cache
 ├── validation/         # The eight archetype datasets against what each should show
-└── unit/               # Pytest unit tests
-
-frontend/
-├── src/
-│   ├── views/          # Tab components (OverviewTab, QualityTab, etc.)
-│   └── components/     # Shared components
-└── ...
+└── ...                 # data, model, profile, config, library and interface tests
 ```
 
 ---
@@ -210,86 +208,91 @@ higher minor version.
 
 ---
 
-## Writing a new task
+## Writing a new check
 
-Every task is a Python class in `src/dsbf/eda/tasks/`. Here is the minimal template:
+Every check is a function in its own module under `src/dsbf/checks/`, declared with
+`@check` at the top level so a worker process can import it by name. Add it to
+`core_pack()` in `src/dsbf/checks/__init__.py`. A minimal check:
 
 ```python
-# src/dsbf/eda/tasks/my_new_task.py
+# src/dsbf/checks/negative_values.py
+"""Flag numeric columns that hold a negative value."""
 
-from dsbf.core.base_task import BaseTask
-from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult, make_failure_result
-
-
-@register_task(
-    display_name="My New Task",
-    description="One sentence describing what this task detects.",
-    depends_on=["infer_types"],  # tasks that must run first
-    profiling_depth="standard",  # basic | standard | full
-    stage="eda",  # eda | modeling
-    domain="core",
-    runtime_estimate="fast",  # fast | medium | slow
-    expected_semantic_types=["continuous"],  # filters matched_cols
+from dsbf.engine import CheckContext, CheckOutput, Requires, SemanticTypes, check
+from dsbf.model import (
+    CheckParams,
+    Confidence,
+    Cost,
+    Dimension,
+    Evidence,
+    NumericProfile,
+    Severity,
+    Subject,
 )
-class MyNewTask(BaseTask):
-    """
-    Detailed docstring explaining what this task computes,
-    what the output data structure looks like, and any known
-    edge cases or limitations.
-    """
 
-    def run(self) -> None:
-        try:
-            df = self.input_data
-            matched_cols, excluded = self.get_columns_by_intent()
 
-            # Guard: return early if nothing to process
-            if not matched_cols:
-                self.output = TaskResult(
-                    name=self.name,
-                    status="success",
-                    summary={"message": "No eligible columns found."},
-                    data={},
-                    metadata={},
-                )
-                return
-
-            # ... your logic here ...
-
-            self.output = TaskResult(
-                name=self.name,
-                status="success",
-                summary={"message": "..."},
-                data={},
-                metadata={},
+@check(
+    id="negative_values",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes("numeric"),
+    dimensions=[Dimension.VALIDITY],
+    requires=Requires(profile=["counts"]),
+    cost=Cost.CHEAP,
+    packs=["core"],
+)
+def negative_values(ctx: CheckContext, params: CheckParams) -> CheckOutput | None:
+    """Flag numeric columns whose smallest value is below zero."""
+    for column in ctx.profile.columns:
+        if not isinstance(column, NumericProfile) or column.stats is None:
+            continue
+        lowest = column.stats.min
+        if lowest is not None and lowest < 0:
+            ctx.finding(
+                code="negative_value",
+                subject=Subject.column(column.name),
+                severity=Severity.INFO,
+                confidence=Confidence.HIGH,
+                title=f"{column.name!r} has negative values",
+                message=f"The smallest value of {column.name!r} is {lowest}.",
+                evidence=Evidence(
+                    metrics={"min": lowest},
+                    n_used=column.counts.non_null,
+                    n_total=ctx.profile.n_rows,
+                    method="minimum",
+                ),
             )
-
-        except Exception as e:
-            if self.context:
-                raise
-            self.output = make_failure_result(self.name, e)
 ```
 
-### Key conventions
+The module docstring of `src/dsbf/checks/__init__.py` lists the conventions every core
+check follows. The ones that matter most:
 
-**Use `get_columns_by_intent()`** — never iterate `df.columns` or call
-`df.select_dtypes()` directly. This applies the semantic type filter so that, for
-example, a boolean stored as `int64` doesn't enter outlier or VIF computation.
+**Let `applies_to` choose the columns** — read them through `ctx.columns`, the profile
+and `ctx.values`; never pick columns by dtype. A boolean stored as `int64` then doesn't
+enter outlier or VIF computation.
 
-**Declare `depends_on` correctly** — missing dependencies cause tasks to run before
-their source data is available. This is a load-bearing declaration.
+**Declare what the check needs** — `Requires` names the profile parts and the checks it
+reads. A check that reads another's result without declaring it runs before that result
+exists.
 
-**Return gracefully when there are no eligible columns** — every task that filters
-by semantic type must handle the zero-column case with `status="success"` and empty
-output, not an error. The all-categorical and single-column validation datasets
-specifically test this.
+**Handle no eligible columns** — the planner marks a check `not applicable` when no
+column matches, so the check body can assume one. The all-categorical and single-column
+validation datasets test that this holds.
 
-**Register in `task_metadata.yaml`** — after writing the task, add an entry to
-`src/dsbf/config/task_metadata.yaml` so it appears in the task registry.
+**State `n_used` and the method on every finding**, bound every parameter, and put
+advice in `src/dsbf/static_metadata/recommendation_library.yaml` as a tip rather than in
+the check.
 
-**Write a unit test** — add `tests/unit/test_my_new_task.py` covering at minimum:
-the happy path, the zero-eligible-columns case, and any numerical edge cases.
+**Bump `version`** when a change alters what the check reports; the cache and the
+calibration baseline key on it.
+
+**Write tests** — add `tests/test_checks/test_negative_values.py` with at least the
+happy path, the no-flag case and a numerical edge case. `tests/test_checks/support.py`
+has `run_core_check(frame, "negative_values")` for a single check. A check with a
+detection or false-alarm rate to protect also gets a scenario in `tests/calibration`.
+
+A check that is not part of DSBF lives in a directory of your own and is loaded with
+`plugins=[...]` or `dsbf profile --plugin`; see the README.
 
 ---
 
@@ -326,7 +329,7 @@ def test_my_dataset(archetype: Archetype) -> None:
 ```
 
 Add the name to `ARCHETYPES` so that "no check fails" covers it, and to
-`tests/validation/DASHBOARD_CHECKLIST.md` with what to look at in the browser.
+`tests/validation/DASHBOARD_CHECKLIST.md` with what to look at once the dashboard is rebuilt.
 
 **Assertion writing principles:**
 - Check both directions where relevant (skewed columns flagged AND clean columns not flagged)
@@ -351,7 +354,7 @@ DSBF uses [Conventional Commits](https://www.conventionalcommits.org/). The form
 
 | Type | When to use |
 |---|---|
-| `feat` | New task, new dashboard feature, new API endpoint |
+| `feat` | New check, new command, new setting |
 | `fix` | Bug fix — include what was wrong and what changed |
 | `refactor` | Code restructuring with no behaviour change |
 | `test` | New or updated tests / validation datasets |
@@ -359,17 +362,17 @@ DSBF uses [Conventional Commits](https://www.conventionalcommits.org/). The form
 | `chore` | Dependency updates, config changes, CI |
 | `style` | Formatting, linting — no logic change |
 
-**Scope** (optional but helpful): `task`, `engine`, `dashboard`, `api`, `config`, `test`
+**Scope** (optional but helpful): `checks`, `engine`, `cli`, `model`, `config`, `test`
 
 **Examples:**
 
 ```
-feat(task): add detect_bimodal_distribution with Hartigan's dip test
+feat(checks): add a bimodality check with Ashman's D
 
-fix(engine): detect_collinear_features — add add_constant to VIF regression
+fix(checks): collinearity — centre the columns before the VIF
 
-Without an intercept term, features with nonzero means produce spuriously
-high VIF (10–35) even when pairwise correlations are near zero.
+Without centring, features with nonzero means produce spuriously high VIF
+(10–35) even when pairwise correlations are near zero.
 
 test(validation): add wide dataset (100 columns) — passes first try
 
@@ -384,10 +387,10 @@ the diff shows what changed.
 ## Pull request process
 
 1. **Branch from `main`** — use a descriptive branch name:
-   `feat/detect-bimodal`, `fix/vif-add-constant`, `test/wide-dataset`
+   `feat/bimodality`, `fix/vif-centring`, `test/wide-dataset`
 
-2. **Keep PRs focused** — one logical change per PR. A PR that adds a new task,
-   refactors the engine, and updates the dashboard is three PRs.
+2. **Keep PRs focused** — one logical change per PR. A PR that adds a new check,
+   refactors the engine, and changes the CLI is three PRs.
 
 3. **Before opening the PR:**
    ```bash
@@ -403,7 +406,7 @@ the diff shows what changed.
    - [ ] Tests pass (`pytest -m "unit and not slow"` and `pytest`), and new tests carry a tier marker
    - [ ] Ruff clean
    - [ ] Docstrings on new public classes and methods
-   - [ ] `task_metadata.yaml` updated (if adding a task)
+   - [ ] The check is in `core_pack()` and its version bumped (if adding or changing one)
    - [ ] CHANGELOG entry added
 
 ---
@@ -423,32 +426,17 @@ result_str = {k: round(v, 1) for k, v in scores.items()}
 message = f"scores: {result_str}"
 ```
 
-**`depends_on` is load-bearing:** Missing a dependency declaration causes the scorer
-or downstream task to run before its source data exists. If a task's output is
-unexpectedly empty, check `depends_on` first.
+**Report the evidence a finding rests on:** `Evidence` needs `n_used`, `n_total` and the
+`method`. A finding without them fails when it is created, and the check ends in
+`error`; read the note on the result.
 
-**`data_quality_scorer._level()` thresholds:** The quality scorer uses a four-state
-system (green / blue / amber / red). `info`-only findings below 10% of columns
-produce `blue`. Any `warn`-or-above finding produces minimum `amber` regardless of
-proportion. Validation assertions for quality dimensions must account for this.
+**Do not catch warnings inside a check:** the engine records a warning a check raises as
+a `python_warning` note with a count. `warnings.catch_warnings()` would also hide the
+warnings of the checks running beside it.
 
-**`detect_high_cardinality` output structure:** Returns `{col: cardinality_count}`
-where the presence of a column name as a key means it was flagged. It does not
-return `{"high_cardinality_columns": [...]}`. Several other tasks follow the same
-`{col: value}` pattern — always inspect the actual report output before writing
-assertions.
+**Fit scikit-learn models on float64:** `GaussianMixture` mis-scores integer input, and
+differently in 1.7 and 1.8.
 
-**Semantic type filtering:** Tasks must use `get_columns_by_intent()` and operate
-only on `matched_cols`, never `df.columns` or `df.select_dtypes()`. The
-`detect_high_cardinality` and `detect_id_columns` bugs both stemmed from iterating
-`df.columns` directly, bypassing the semantic type filter entirely.
-
-**VIF requires `add_constant`:** `variance_inflation_factor` from statsmodels
-regresses each feature against all others without an intercept by default. Without
-`add_constant`, features with nonzero means produce spuriously high VIF regardless
-of actual collinearity. Always use:
-```python
-from statsmodels.tools import add_constant
-
-numeric_df_with_const = add_constant(numeric_df, has_constant="add")
-```
+**A VIF needs centred columns:** `collinearity` takes the diagonal of the inverse
+correlation matrix, so it needs no intercept. A VIF computed from uncentred columns is
+spuriously high wherever the means are far from zero.

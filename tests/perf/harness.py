@@ -12,24 +12,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from tests.perf.scenarios import EngineScenario, ProfileScenario, Scenario
+from tests.perf.scenarios import EngineScenario, ProfileScenario
 
 PERF_DIR = Path(__file__).parent
 BASELINE_PATH = PERF_DIR / "baseline.json"
 RESULTS_SCHEMA = 1
 # The slowest scenario took about twelve minutes before any optimisation.
 RUN_TIMEOUT_SECONDS = 3600
-# Some tasks walk sets of strings, and that order follows PYTHONHASHSEED; pin it so the
-# amount of work, not just its speed, is the same in every run.
-HASH_SEED = "0"
 
 
 def _run_child(command: list[str], workdir: Path, name: str) -> dict[str, Any]:
     """Run a measuring script in a fresh interpreter and return the JSON it wrote."""
     env = {
         **os.environ,
-        "PYTHONHASHSEED": HASH_SEED,
-        "DSBF_DB_PATH": str(workdir / "dsbf.db"),
         "DSBF_HOME": str(workdir / "home"),
     }
     completed = subprocess.run(
@@ -46,31 +41,6 @@ def _run_child(command: list[str], workdir: Path, name: str) -> dict[str, Any]:
             f"{completed.stderr[-4000:]}"
         )
     return json.loads((workdir / "out" / "perf_run.json").read_text())
-
-
-def run_once(
-    scenario: Scenario, workdir: Path, cprofile: bool = False
-) -> dict[str, Any]:
-    """Profile ``scenario`` once under ``workdir`` and return its measurements."""
-    workdir = workdir.resolve()
-    data_dir, out_dir, cwd = workdir / "data", workdir / "out", workdir / "cwd"
-    for directory in (data_dir, out_dir, cwd):
-        directory.mkdir(parents=True, exist_ok=True)
-
-    csv_path = scenario.write_csv(data_dir).resolve()
-    command = [
-        sys.executable,
-        str(PERF_DIR / "measure_one.py"),
-        scenario.name,
-        str(csv_path),
-        str(out_dir),
-    ]
-    if scenario.time_series_column:
-        command += ["--time-series", scenario.time_series_column]
-    if cprofile:
-        command.append("--cprofile")
-
-    return _run_child(command, workdir, name=scenario.name)
 
 
 def run_profile_once(
@@ -113,9 +83,7 @@ def run_engine_once(scenario: EngineScenario, workdir: Path) -> dict[str, Any]:
 
 
 def measure(
-    scenario: Scenario | ProfileScenario | EngineScenario,
-    workdir: Path,
-    cprofile: bool = False,
+    scenario: ProfileScenario | EngineScenario, workdir: Path
 ) -> dict[str, Any]:
     """Run ``scenario`` ``repeats`` times and keep the run with the median total."""
     if isinstance(scenario, ProfileScenario):
@@ -127,14 +95,9 @@ def measure(
             run_profile_once(scenario, data_path, workdir / f"run{i}")
             for i in range(scenario.repeats)
         ]
-    elif isinstance(scenario, EngineScenario):
-        runs = [
-            run_engine_once(scenario, workdir / f"run{i}")
-            for i in range(scenario.repeats)
-        ]
     else:
         runs = [
-            run_once(scenario, workdir / f"run{i}", cprofile)
+            run_engine_once(scenario, workdir / f"run{i}")
             for i in range(scenario.repeats)
         ]
     median_total = statistics.median_low(r["total_seconds"] for r in runs)

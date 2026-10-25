@@ -1,7 +1,11 @@
-"""Child process for the golden runs: profile one CSV and write its run information.
+"""Child process for the golden runs: run one CSV through the core pack.
 
-This is a separate script, run in a fresh interpreter, because ``PYTHONHASHSEED`` can
-only be set before Python starts. It imports nothing from ``tests``.
+A separate interpreter, so a run shares nothing with the test session. It writes the
+``Run`` as ``run.json`` in the output directory. It imports nothing from ``tests``.
+
+Parameters for the core checks that need them come from the environment variable
+``DSBF_GOLDEN_CORE_PARAMS``, a JSON mapping of check id to parameters; the time
+series column, if there is one, is each check's ``time_index``.
 
 Usage: python profile_one.py <name> <csv> <out_dir> [<time_series_column>]
 """
@@ -9,40 +13,38 @@ Usage: python profile_one.py <name> <csv> <out_dir> [<time_series_column>]
 import json
 import os
 import sys
+from pathlib import Path
 
-from dsbf.config import load_default_config
-from dsbf.eda.profile_engine import ProfileEngine
+from dsbf.checks import core_pack
+from dsbf.data import load
+from dsbf.engine import Registry, Selection, execute, make_plan
+from dsbf.profiling import profile_dataset
 
 
 def main() -> None:
-    name, csv_path, out_dir = sys.argv[1:4]
+    _name, csv_path, out_dir = sys.argv[1:4]
     time_series_column = sys.argv[4] if len(sys.argv) > 4 else None
 
-    config = load_default_config()
-    config["output_dir"] = out_dir
-    config["metadata"].update(dataset_name=name, dataset_path=os.path.abspath(csv_path))
-    config["time_series"].update(
-        enabled=time_series_column is not None,
-        datetime_index_column=time_series_column,
+    dataset = load(Path(csv_path))
+    profile = profile_dataset(dataset)
+    registry = Registry()
+    registry.register_pack(core_pack())
+    params = json.loads(os.environ.get("DSBF_GOLDEN_CORE_PARAMS", "{}"))
+    if time_series_column is not None:
+        # As `dsbf.profile(time_index=...)` does: to each check with that parameter.
+        for registered in registry:
+            if "time_index" in registered.spec.params.model_fields:
+                params.setdefault(registered.spec.id, {})["time_index"] = (
+                    time_series_column
+                )
+    plan = make_plan(
+        registry,
+        Selection(depth="deep", entry_points=False),
+        params=params or None,
+        profile=profile,
     )
-
-    engine = ProfileEngine(config)
-    engine.run()
-
-    context = engine.context
-    assert context is not None
-    metadata = context.metadata
-    info = {
-        "shape": list(context.data.shape),
-        "inferred_stage": engine.inferred_stage,
-        "sampling": engine.run_metadata.get("sampling"),
-        "task_count": len(engine.results),
-        "task_outcomes": metadata.get("task_outcomes"),
-        "semantic_types": metadata.get("semantic_types"),
-        "inferred_dtypes": metadata.get("inferred_dtypes"),
-    }
-    with open(os.path.join(out_dir, "golden_run.json"), "w") as f:
-        json.dump(info, f, default=str)
+    run = execute(plan, dataset, profile, dsbf_version="golden")
+    Path(out_dir, "run.json").write_text(run.model_dump_json())
 
 
 if __name__ == "__main__":

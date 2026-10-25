@@ -28,20 +28,3 @@ def dsbf_home() -> Path:
 def default_outputs_dir() -> Path:
     """Return the directory that holds one subdirectory per run."""
     return dsbf_home() / "outputs"
-
-
-def default_db_path() -> Path:
-    """Return the default SQLite database file."""
-    return dsbf_home() / "dsbf.db"
-
-
-def resolve_stored_path(path: str | Path) -> Path:
-    """
-    Turn a path stored in the database into an absolute path.
-
-    Runs recorded before paths were absolute hold paths relative to the
-    working directory they were profiled from, so those resolve against the
-    current one.
-    """
-    p = Path(path).expanduser()
-    return p if p.is_absolute() else Path.cwd() / p

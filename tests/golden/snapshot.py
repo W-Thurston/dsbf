@@ -1,7 +1,7 @@
 """The core pack's findings on one dataset, reduced to what a reviewer judges.
 
 A finding is kept as its id, check, code, subject, severity and evidence metrics, with
-floats rounded as in the legacy snapshots. Messages, titles, timings and run ids are
+floats rounded to six significant figures. Messages, titles, timings and run ids are
 left out: they change without the behaviour changing. A report-only check, which has
 no findings, keeps the part of its output a reviewer judges: the levels, the coverage
 and the columns each dimension flags.
