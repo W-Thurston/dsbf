@@ -94,7 +94,7 @@ jobs:
         run: uv run --no-sync pytest -m "unit and not slow" --tb=short -q
 
   # The source adapters take pandas 3 frames (new string dtype, copy-on-write), but the
-  # legacy tasks still need pandas 2, so the base pin stays `<3` and this leg overlays
+  # base pin stays `<3` until the dependency caps are lifted, so this leg overlays
   # pandas 3 on the locked environment for the adapter tests only. The variable makes
   # one test fail if the overlay didn't take.
   pandas3:

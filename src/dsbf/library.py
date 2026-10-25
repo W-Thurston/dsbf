@@ -1,7 +1,6 @@
 # dsbf/library.py
 """The library entry point: profile a table and get the ``Run`` back."""
 
-import difflib
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, cast
@@ -9,37 +8,26 @@ from typing import Any, cast
 from dsbf.checks import core_pack
 from dsbf.config import (
     DEFAULT_PACKS,
-    Backend,
     ConfigError,
     ConfigIssue,
     LimitsConfig,
     ProfileConfig,
     SampleConfig,
     load_config,
-    load_default_config,
 )
 from dsbf.data import Dataset, load
 from dsbf.data.sampling import Strategy
-from dsbf.eda.task_registry import TASK_REGISTRY
 from dsbf.engine import (
     Depth,
     DiskCache,
     Hook,
     Limits,
-    Plan,
     Reference,
     Registry,
     ResultCache,
     Selection,
     execute,
-)
-from dsbf.legacy import (
-    LEGACY_PACK,
-    SUPERSEDED_PACK,
-    LegacySession,
-    legacy_checks,
-    make_legacy_plan,
-    superseded_tasks,
+    make_plan,
 )
 from dsbf.model import Run
 from dsbf.profiling import profile_dataset
@@ -62,12 +50,10 @@ def profile(
     time_index: str | None = None,
     reference: object | None = None,
     sample: Sample | int | None = None,
-    backend: Backend | str | None = None,
     limits: LimitsConfig | None = None,
     workers: int | None = None,
     plugins: Iterable[str | Path] | str | Path = (),
     params: Mapping[str, Mapping[str, Any]] | None = None,
-    tasks: Mapping[str, Mapping[str, Any]] | None = None,
     cache: bool | ResultCache | None = None,
     hooks: Iterable[Hook] = (),
     config: str | Path | None = None,
@@ -88,26 +74,21 @@ def profile(
     filters still apply) and are restored afterwards, so another thread of yours
     may print a repeated warning more than once meanwhile.
 
-    ``packs`` are the packs whose checks are candidates (``core`` when unset; add
-    ``legacy`` for the tasks not yet migrated). A legacy task that a core check
-    replaces is left out while ``core`` is a candidate, and runs without its findings
-    only when another task needs its result. ``checks`` adjusts that by id: ``"+id"``
-    or ``"id"`` adds a check, ``"-id"`` removes one, and a check that another needs
-    is pulled in regardless. ``depth`` (``quick``, ``standard`` or ``deep``) is the
-    most expensive kind of check to run. ``target`` and ``time_index`` name the
+    ``packs`` are the packs whose checks are candidates (``core`` when unset).
+    ``checks`` adjusts that by id: ``"+id"`` or ``"id"`` adds a check, ``"-id"``
+    removes one, and a check that another needs is pulled in regardless.
+    ``depth`` (``quick``, ``standard`` or ``deep``) is the most expensive kind of
+    check to run. ``target`` and ``time_index`` name the
     columns the checks that need a target or a time axis use. ``reference`` is the
     dataset the checks that compare with one (``reference_drift``) are given: any
     source ``dsbf.data.load`` accepts, profiled like the data (with the same
     ``sample``), or a ``Run`` whose stored profile is used as it is. Without one,
     those checks are not applicable. ``sample`` profiles a
     ``Sample`` of the rows (or the first ``n`` rows, given a number) and the ``Run``
-    records how they were chosen. ``backend`` is the frame library the legacy tasks
-    are handed (``pandas`` unless set). ``limits`` bounds the time of a check and of
-    the run, ``workers`` is how many checks run at once (one while a legacy
-    task is planned, else one per core, at most 8), ``plugins`` are
-    directories of check plugins, ``params`` maps a check's id to the parameters it
-    runs with (they win over ``target`` and ``time_index``), and ``tasks`` maps a
-    legacy task's name to its settings.
+    records how they were chosen. ``limits`` bounds the time of a check and of the
+    run, ``workers`` is how many checks run at once (one per core, at most 8),
+    ``plugins`` are directories of check plugins, and ``params`` maps a check's id to
+    the parameters it runs with (they win over ``target`` and ``time_index``).
 
     ``cache`` keeps results between runs: ``True`` uses the DSBF home directory and
     a ``ResultCache`` is used as given. A ``hook`` receives an event as each check
@@ -117,8 +98,8 @@ def profile(
     read unless you name it.
 
     Raises:
-        ConfigError: a setting is invalid, such as an unknown task or a ``target``
-            that is not a column; every problem is listed.
+        ConfigError: a setting is invalid, such as a ``target`` that is not a
+            column or a ``depth`` that does not exist; every problem is listed.
         SourceError: the data or the ``reference`` cannot be read (see
             ``dsbf.data.load``).
         SamplingError: the sample cannot be drawn as asked.
@@ -131,12 +112,10 @@ def profile(
         target=target,
         time_index=time_index,
         sample=sample,
-        backend=backend,
         limits=limits,
         workers=workers,
         plugins=plugins,
         params=params,
-        tasks=tasks,
         config=config,
     )
     dataset = load(source, name=name)
@@ -145,14 +124,9 @@ def profile(
         dataset = _sampled(dataset, settings.sample)
     data_profile = profile_dataset(dataset)
     reference_data = _reference(reference, settings)
-    session = LegacySession(
-        dataset, data_profile, config=_legacy_config(settings, dataset)
-    )
     registry = Registry()
     registry.register_pack(core_pack())
-    superseded = superseded_tasks(settings.packs, registry.packs, settings.include)
-    registry.register(*legacy_checks(session, superseded=superseded))
-    plan = make_legacy_plan(
+    plan = make_plan(
         registry,
         Selection(
             packs=settings.packs,
@@ -161,14 +135,10 @@ def profile(
             depth=settings.depth,
             plugins=settings.plugins,
         ),
-        superseded,
         params=_setting_params(registry, settings),
         profile=data_profile,
         has_reference=reference_data is not None,
     )
-    workers = settings.workers
-    if workers is None:
-        workers = _default_workers(plan)
     return execute(
         plan,
         dataset,
@@ -176,7 +146,7 @@ def profile(
         dsbf_version=get_dsbf_version(),
         limits=Limits(**settings.limits.model_dump()),
         hooks=hooks,
-        workers=workers,
+        workers=settings.workers,
         cache=DiskCache.default() if cache is True else cache or None,
         reference=reference_data,
     )
@@ -200,8 +170,7 @@ def _setting_params(
     """``target`` and ``time_index``, as the parameter of that name of each check,
     then the ``params`` the caller gave, which win.
 
-    A check takes a setting only if it declares a parameter called the same. The
-    legacy tasks read them from their own keys (``_legacy_config``).
+    A check takes a setting only if it declares a parameter called the same.
     """
     given = {
         name: value
@@ -222,22 +191,6 @@ def _setting_params(
     return params
 
 
-def _default_workers(plan: Plan) -> int | None:
-    """One worker for a plan that has any legacy task, else the default.
-
-    The legacy tasks are mostly Python holding the interpreter lock, so on threads
-    they wait for each other: on the 4-core CI runner every task run at once took
-    3% (titanic) and 7% (kitchen5k) longer than one at a time, and each task's own
-    wall time grew many times over once the analysis checks ran beside them (a
-    `kruskal_wallis` that takes 0.05 s alone took 1.7 s). A core check beside them
-    is as cheap run in turn as in parallel, so the legacy tasks keep the interpreter
-    to themselves until the last of them leaves the default selection. A task
-    superseded by a core check is in its own pack but is still a legacy task.
-    """
-    legacy = any({LEGACY_PACK, SUPERSEDED_PACK} & set(e.check.spec.packs) for e in plan)
-    return 1 if legacy else None
-
-
 def _settings(
     *,
     packs: Iterable[str] | str | None,
@@ -246,12 +199,10 @@ def _settings(
     target: str | None,
     time_index: str | None,
     sample: Sample | int | None,
-    backend: Backend | str | None,
     limits: LimitsConfig | None,
     workers: int | None,
     plugins: Iterable[str | Path] | str | Path,
     params: Mapping[str, Mapping[str, Any]] | None,
-    tasks: Mapping[str, Mapping[str, Any]] | None,
     config: str | Path | None,
 ) -> ProfileConfig:
     include, exclude = parse_checks(checks)
@@ -263,12 +214,10 @@ def _settings(
         "target": target,
         "time_index": time_index,
         "sample": {"rows": sample} if isinstance(sample, int) else sample,
-        "backend": backend,
         "limits": limits,
         "workers": workers,
         "plugins": _names(plugins),
         "params": params,
-        "tasks": tasks,
     }
     overrides = {
         key: _plain(value)
@@ -322,19 +271,6 @@ def _check_columns(settings: ProfileConfig, dataset: Dataset) -> None:
         )
         if column is not None and column not in dataset.columns
     ]
-    issues += [
-        ConfigIssue(
-            f"tasks.{task}",
-            "is not a registered task"
-            + "".join(
-                f"; did you mean {close!r}?"
-                for close in difflib.get_close_matches(task, TASK_REGISTRY, n=1)
-            ),
-            "overrides",
-        )
-        for task in settings.tasks
-        if task not in TASK_REGISTRY
-    ]
     if issues:
         raise ConfigError(tuple(issues))
 
@@ -346,21 +282,3 @@ def _sampled(dataset: Dataset, sample: SampleConfig) -> Dataset:
         seed=sample.seed,
         stratify_by=sample.stratify_by,
     )
-
-
-def _legacy_config(settings: ProfileConfig, dataset: Dataset) -> dict[str, Any]:
-    """``default_config.yaml`` with these settings applied, for the legacy tasks."""
-    config = load_default_config()
-    config["engine"]["backend"] = settings.backend.value
-    config["metadata"]["dataset_name"] = dataset.name
-    for task, values in settings.tasks.items():
-        config["tasks"].setdefault(task, {}).update(values)
-    if settings.target is not None:
-        for values in config["tasks"].values():
-            if "target_column" in values:
-                values["target_column"] = settings.target
-    if settings.time_index is not None:
-        config["time_series"].update(
-            enabled=True, datetime_index_column=settings.time_index
-        )
-    return config

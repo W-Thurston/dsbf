@@ -1,5 +1,6 @@
-"""The check interface depends on the data and the profile, not on the legacy engine."""
+"""The legacy engine is gone, and the check interface needs no application layer."""
 
+import importlib.util
 import subprocess
 import sys
 
@@ -7,13 +8,19 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-LEGACY = ("dsbf.eda", "dsbf.core", "dsbf.interfaces", "dsbf.api", "dsbf.storage")
+REMOVED = ("dsbf.eda", "dsbf.core", "dsbf.legacy", "dsbf.api", "dsbf.storage")
 
 
-def test_importing_the_engine_pulls_in_no_legacy_module():
+@pytest.mark.parametrize("name", REMOVED)
+def test_the_removed_packages_do_not_exist(name):
+    assert importlib.util.find_spec(name) is None
+
+
+def test_importing_the_engine_pulls_in_no_interface_module():
     code = (
         "import sys, dsbf.engine; "
-        f"loaded = [m for m in {LEGACY!r} if m in sys.modules]; "
+        "names = ('dsbf.interfaces', 'dsbf.library'); "
+        "loaded = [m for m in names if m in sys.modules]; "
         "print(','.join(loaded))"
     )
 

@@ -1,0 +1,109 @@
+name: New Check Proposal
+description: Propose a new EDA or ML Readiness check for the DSBF engine.
+title: "[Check]: "
+labels: ["new task", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DSBF checks are functions declared with `@check`, each with a spec: the column
+        types it applies to, what it requires, its cost, and the model of its parameters.
+        Before writing any code, it helps to think through the questions below —
+        they map directly to the decisions you'll make when implementing the check.
+
+        See [`CONTRIBUTING.md`](../blob/main/CONTRIBUTING.md) for the full check
+        writing guide including the `@check` template.
+
+  - type: input
+    id: check-id
+    attributes:
+      label: Proposed check id
+      description: Snake-case, descriptive. This becomes the check's id in the registry.
+      placeholder: "e.g. sparse_columns"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-it-detects
+    attributes:
+      label: What does this check detect or compute?
+      description: One or two sentences. What question does it answer about the data?
+      placeholder: |
+        Flags columns where more than a configurable threshold of values are
+        identical (but not null), indicating low information density that may
+        affect model training.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: semantic-types
+    attributes:
+      label: Which column types does it apply to?
+      multiple: true
+      options:
+        - numeric
+        - categorical
+        - text
+        - boolean
+        - datetime
+        - all columns
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cost
+    attributes:
+      label: How expensive is it, which decides the depth it runs at?
+      options:
+        - cheap (quick)
+        - moderate (standard)
+        - heavy (deep)
+    validations:
+      required: true
+
+  - type: textarea
+    id: requires
+    attributes:
+      label: What does it require?
+      description: Which parts of the profile, and which other checks, must it read? Does it need a target, a time index or a reference dataset?
+      placeholder: "profile: counts, numeric_stats; checks: null_rate"
+
+  - type: textarea
+    id: output-shape
+    attributes:
+      label: What do its findings and output look like?
+      description: >
+        Describe the findings (code, severity, the evidence metrics) and the output
+        model. Every finding states `n_used` and the method.
+      placeholder: |
+        finding: code "sparse_column", severity INFO, metrics {"dominant_share": 0.97}
+        output: {column: {"dominant_share": 0.97, "flagged": true}}
+
+  - type: textarea
+    id: quality-dimension
+    attributes:
+      label: Which Quality or ML Readiness dimension does this feed into?
+      description: >
+        Checks route findings to one of the five Quality dimensions
+        (Completeness, Validity, Usability, Redundancy, Leakage) or one of
+        the five ML Readiness dimensions (Transformations, Encoding,
+        Missingness, Leakage, Unusable). Leave blank if diagnostic only.
+      placeholder: "Quality → Usability"
+
+  - type: textarea
+    id: prior-art
+    attributes:
+      label: Prior art / references
+      description: Is there a standard statistical method, paper, or existing tool this is based on?
+      placeholder: "Similar to ydata-profiling's constant columns check, but extended to near-constant."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting a PR for this check
+      options:
+        - label: I have read the check writing guide in CONTRIBUTING.md
+        - label: I plan to let `applies_to` choose the columns rather than select them by dtype
+        - label: I have considered the case where no column is eligible
+        - label: I will add a unit test covering the happy path and a numerical edge case
+        - label: I will add the check to `core_pack()` and consider a calibration scenario

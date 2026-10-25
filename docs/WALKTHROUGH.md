@@ -1,5 +1,11 @@
 # How a DSBF run works: step by step
 
+> **This describes the legacy run, which was removed.** It traces `ProfileEngine`, the task DAG,
+> the SQLite store and the FastAPI backend as they were on 2026-10-15, with measurements from
+> that date, and is kept as the record the review findings and the refactor plan refer to. The
+> code it names no longer exists. How a run works now is in
+> [`architecture.md`](architecture.md) and [`REFACTOR_PLAN.md`](REFACTOR_PLAN.md).
+
 This document traces one profiling run from the command line to the dashboard. For each stage it
 gives:
 

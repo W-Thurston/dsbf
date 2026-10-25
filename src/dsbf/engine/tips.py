@@ -1,12 +1,11 @@
 # dsbf/engine/tips.py
 """Recommendation tips: conditions on a finding's numbers, evaluated without ``eval``.
 
-The library is a YAML file of tips. Each tip names the checks (``checks``) and the
-legacy tasks (``applicable_to``) it advises, a ``condition`` over named values, and the
-step it recommends. A condition is a comparison, ``{field, op, value}``, or an
-``any`` / ``all`` list of conditions. For a check, the values are the metrics of a
-finding's evidence; a tip that matches becomes an ``Action`` on that finding, after
-the check has returned.
+The library is a YAML file of tips. Each tip names the checks (``checks``) it advises,
+a ``condition`` over named values, and the step it recommends. A condition is a
+comparison, ``{field, op, value}``, or an ``any`` / ``all`` list of conditions. The
+values are the metrics of a finding's evidence; a tip that matches becomes an
+``Action`` on that finding, after the check has returned.
 """
 
 import hashlib
@@ -80,9 +79,6 @@ class Tip(Contract):
     codes: tuple[str, ...] = Field(
         default=(),
         description="The finding codes it advises; empty for any code of the check.",
-    )
-    applicable_to: tuple[str, ...] = Field(
-        default=(), description="The legacy tasks it advises, by task name."
     )
     action: str = Field(min_length=1, description="The verb, for example `drop`.")
     method: str | None = None
@@ -170,23 +166,6 @@ def library_digest() -> str:
         sort_keys=True,
     )
     return hashlib.sha256(text.encode()).hexdigest()[:16]
-
-
-def legacy_tip(task_name: str, values: Mapping[str, Any]) -> str | None:
-    """The message of the first tip for a legacy task that ``values`` meets, if any.
-
-    A library that cannot be used is logged once and gives no tip, because a tip is
-    optional enrichment and must never fail an analysis.
-    """
-    try:
-        library = load_library()
-    except TipLibraryError as error:
-        _warn_once(str(error))
-        return None
-    for tip in library.values():
-        if task_name in tip.applicable_to and holds(tip.condition, values):
-            return tip.message
-    return None
 
 
 @cache

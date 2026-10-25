@@ -12,13 +12,6 @@ from dsbf.engine.selection import Depth
 DEFAULT_PACKS = ("core",)
 
 
-class Backend(StrEnum):
-    """The frame library the legacy tasks are handed."""
-
-    POLARS = "polars"
-    PANDAS = "pandas"
-
-
 class SampleStrategy(StrEnum):
     """How the rows of a sample are chosen."""
 
@@ -76,7 +69,6 @@ class ProfileConfig(_Section):
         default=None, description="The datetime column the time series checks use."
     )
     sample: SampleConfig | None = None
-    backend: Backend = Backend.PANDAS
     limits: LimitsConfig = LimitsConfig()
     workers: int | None = Field(
         default=None, ge=1, description="Checks to run at once; unset is one per core."
@@ -88,10 +80,6 @@ class ProfileConfig(_Section):
         default_factory=dict,
         description="Parameters of checks, by check id; they win over `target` "
         "and `time_index`.",
-    )
-    tasks: dict[str, dict[str, Any]] = Field(
-        default_factory=dict,
-        description="Per-task settings of the legacy tasks, by task name.",
     )
 
     @model_validator(mode="after")

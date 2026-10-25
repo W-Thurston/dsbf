@@ -14,13 +14,9 @@ from dsbf.config import LimitsConfig
 from dsbf.engine import CheckFinished, DiskCache, PlanError
 from dsbf.model import CheckStatus, Run
 from dsbf.utils.versioning import get_dsbf_version
-from tests.test_legacy.support import build_frame
+from tests.test_library.frames import build_frame
 
 pytestmark = pytest.mark.integration
-
-FILE_WRITERS = {"generate_dataset_summary_plots", "generate_univariate_plots"}
-# Asks for the legacy scorers and the tasks that feed them, until they are deleted.
-WITH_LEGACY = {"packs": ["core", "legacy"], "checks": ["+ml_readiness_scorer"]}
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -53,10 +49,9 @@ class TestResult:
         assert quick.health.counts.total == len(quick.results)
         assert quick.health.counts.ok > 0
 
-    def test_a_default_run_has_no_errors_and_no_file_writing_checks(self, quick):
+    def test_a_default_run_has_no_errors(self, quick):
         assert quick.health.counts.error == 0
         assert quick.health.counts.timeout == 0
-        assert not FILE_WRITERS & set(quick.results)
         assert quick.notes == ()
 
     def test_the_version_comes_from_the_installed_package(self, quick):
@@ -112,7 +107,7 @@ def sparse() -> pl.DataFrame:
 
 
 class TestTheDefaultSelection:
-    def test_it_plans_core_checks_and_no_legacy_task(self, quick):
+    def test_it_plans_core_checks_only(self, quick):
         planned = {c.check_id: c for c in quick.plan.checks}
 
         assert {"quality_dimensions", "ml_readiness"} <= set(planned)
@@ -135,41 +130,13 @@ class TestTheDefaultSelection:
         assert output["dimensions"]["leakage"]["assessed"] is True
 
 
-class TestMigratedChecks:
-    """A core check replaces its legacy task, which keeps feeding the scorers."""
-
-    def test_the_default_selection_runs_the_core_check_not_the_task(self, sparse):
+class TestSettings:
+    def test_a_sparse_column_is_reported_by_the_zeros_check(self, sparse):
         run = dsbf.profile(sparse, depth="quick")
 
-        assert "detect_zeros" not in run.results
         assert run.results["zeros"].status is CheckStatus.OK
         zero_findings = [f for f in run.findings if f.subject.columns == ("sparse",)]
         assert {f.check_id for f in zero_findings if "zero" in f.code} == {"zeros"}
-
-    def test_a_scorer_still_gets_the_task_as_a_requirement_without_its_findings(
-        self, sparse
-    ):
-        run = dsbf.profile(sparse, depth="quick", **WITH_LEGACY)
-
-        task = run.results["detect_zeros"]
-        assert task.status is CheckStatus.OK
-        assert task.output is not None
-        assert task.findings == ()
-        assert [n.code for n in task.notes] == ["findings_superseded"]
-        assert run.results["ml_readiness_scorer"].status is CheckStatus.OK
-
-    def test_without_the_core_pack_the_task_reports_its_findings(self, sparse):
-        run = dsbf.profile(sparse, depth="quick", packs=["legacy"])
-
-        assert "zeros" not in run.results
-        assert run.results["detect_zeros"].findings
-        assert not run.results["detect_zeros"].notes
-
-    def test_naming_the_task_asks_for_it_as_it_was(self, sparse):
-        run = dsbf.profile(sparse, depth="quick", checks=["+detect_zeros"])
-
-        assert run.results["detect_zeros"].findings
-        assert run.results["zeros"].findings
 
     def test_the_target_setting_drives_class_imbalance(self, frame):
         run = dsbf.profile(frame, depth="quick", target="flag")
@@ -186,41 +153,23 @@ class TestMigratedChecks:
         assert run.results["class_imbalance"].status is CheckStatus.NOT_APPLICABLE
         assert run.results["schema"].status is CheckStatus.NOT_APPLICABLE
 
-    def test_a_retired_task_runs_only_for_the_scorer_that_reads_it(self, frame):
-        run = dsbf.profile(frame, depth="quick", **WITH_LEGACY)
-
-        for task in ("summarize_unique", "sample_head", "compute_entropy"):
-            assert task not in run.results or run.results[task].findings == ()
-        assert run.results["infer_types"].findings == ()
-
     def test_a_check_in_its_own_pack_can_be_run_alone(self, sparse):
         # `fuzzy_duplicates` is a heavy check, which only the deep depth runs.
         run = dsbf.profile(sparse, packs=["core"], depth="deep")
 
         assert set(run.results) == {check.id for check in core_pack().checks}
-        assert not [r for r in run.results if r.startswith(("detect_", "summarize_"))]
 
 
 class TestSelection:
     def test_a_minus_removes_a_check_nothing_else_needs(self, frame):
-        run = dsbf.profile(
-            frame,
-            depth="quick",
-            packs=["core", "legacy"],
-            checks=["+ml_readiness_scorer", "-detect_duplicate_columns"],
-        )
+        run = dsbf.profile(frame, depth="quick", checks=["-duplicate_columns"])
 
-        assert "detect_duplicate_columns" not in run.results
-        assert "detect_constant_columns" in run.results
+        assert "duplicate_columns" not in run.results
+        assert "constant_columns" in run.results
 
     def test_removing_a_check_another_needs_is_a_plan_error(self, frame):
-        with pytest.raises(PlanError, match="exclude 'ml_readiness_scorer' too"):
-            dsbf.profile(
-                frame,
-                depth="quick",
-                packs=["core", "legacy"],
-                checks=["+ml_readiness_scorer", "-detect_outliers"],
-            )
+        with pytest.raises(PlanError, match="exclude 'imputation' too"):
+            dsbf.profile(frame, depth="quick", checks=["-null_rate"])
 
     def test_an_unknown_pack_is_a_plan_error(self, frame):
         with pytest.raises(PlanError, match="nope"):
@@ -233,45 +182,31 @@ class TestSelection:
         assert quick.plan.depth == "quick"
         assert standard.plan.depth == "standard"
 
-    def test_task_settings_reach_the_check_and_its_recorded_parameters(self, frame):
-        settings = {"detect_outliers": {"flag_threshold": 0.4}}
+    def test_params_reach_the_check_and_its_recorded_parameters(self, frame):
+        params = {"outliers": {"iqr_multiplier": 2.5}}
 
-        run = dsbf.profile(
-            frame,
-            tasks=settings,
-            depth="standard",
-            packs=["core", "legacy"],
-            checks=["+ml_readiness_scorer", "-fuzzy_duplicate_detection"],
-        )
+        run = dsbf.profile(frame, depth="standard", params=params)
 
-        planned = {c.check_id: c for c in run.plan.checks}["detect_outliers"]
-        assert planned.params["task"]["flag_threshold"] == 0.4
-        assert settings == {"detect_outliers": {"flag_threshold": 0.4}}
+        planned = {c.check_id: c for c in run.plan.checks}["outliers"]
+        assert planned.params["iqr_multiplier"] == 2.5
+        assert params == {"outliers": {"iqr_multiplier": 2.5}}
 
-    def test_target_and_time_index_reach_the_tasks_that_read_them(self, frame):
+    def test_target_and_time_index_reach_the_checks_that_declare_them(self, frame):
         run = dsbf.profile(
             frame,
             depth="standard",
             target="flag",
             time_index="when",
-            packs=["core", "legacy"],
-            checks=["+ml_readiness_scorer", "-fuzzy_duplicate_detection"],
+            checks=["-fuzzy_duplicates"],
         )
 
         params = {c.check_id: c.params for c in run.plan.checks}
-        # A superseded task is planned only where a remaining task needs it.
-        assert params["suggest_categorical_encoding"]["task"]["target_column"] == "flag"
         for check in ("class_imbalance", "target_leakage", "mutual_information"):
             assert params[check]["target"] == "flag"
         for check in ("stationarity", "autocorrelation", "seasonal_decomposition"):
             assert params[check]["time_index"] == "when"
         assert "time_index" not in params["temporal_gaps"]
         assert "target" not in params["stationarity"]
-        assert params["suggest_categorical_encoding"]["shared"]["time_series"] == {
-            **params["suggest_categorical_encoding"]["shared"]["time_series"],
-            "enabled": True,
-            "datetime_index_column": "when",
-        }
 
 
 class TestSampling:
@@ -504,17 +439,15 @@ class TestRunsToTheEnd:
 
 
 class TestCache:
-    def test_changing_one_task_setting_runs_only_that_check_and_its_readers(
+    def test_changing_one_parameter_runs_only_that_check_and_its_readers(
         self, frame, tmp_path
     ):
         cache = DiskCache(tmp_path / "results")
-        options = {"depth": "quick", "cache": cache, **WITH_LEGACY}
+        options = {"depth": "quick", "cache": cache}
 
         first = dsbf.profile(frame, **options)
         same = dsbf.profile(frame, **options)
-        changed = dsbf.profile(
-            frame, tasks={"detect_zeros": {"flag_threshold": 0.9}}, **options
-        )
+        changed = dsbf.profile(frame, params={"zeros": {"flag_share": 0.9}}, **options)
 
         assert not any(r.timing.cached for r in first.results.values())
         assert all(
@@ -530,11 +463,11 @@ class TestCache:
             for check_id, planned in {
                 c.check_id: c for c in changed.plan.checks
             }.items()
-            if "detect_zeros" in planned.depends_on
+            if "zeros" in planned.depends_on
         }
         # A reader re-runs only if the changed result is different.
-        assert "detect_zeros" in reran
-        assert reran <= {"detect_zeros"} | readers
+        assert "zeros" in reran
+        assert reran <= {"zeros"} | readers
         assert len(reran) < changed.health.counts.ok / 2
 
     def test_a_cache_that_fails_is_a_run_note_not_an_error(self, frame):

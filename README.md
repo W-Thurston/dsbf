@@ -33,40 +33,32 @@ DSBF takes a different set of design bets:
 
 <img src="docs/assets/Overview_Tab.png" alt="DSBF Dashboard" width="100%">
 
-The Vue 3 SPA dashboard gives you:
+The Vue 3 dashboard in `frontend/` read the results of the old engine through an API that has been removed. It does not run until the store, the API and the dashboard shell are rebuilt on the `Run` (Phase 6 in [`ROADMAP.md`](ROADMAP.md)); the source stays in the repository. Until then, `dsbf profile` writes the whole `Run` to `run.json` and prints a health summary, and `dsbf.profile()` returns the `Run` in memory.
 
-- **Overview tab** — five traffic-light quality indicators (Completeness, Validity, Usability, Redundancy, Leakage) with a trust banner that updates as you profile
-- **Distributions tab** — per-column analysis with outlier detection, normality assessment, skewness findings, and transformation previews
-- **Relationships tab** — pairwise association table (Pearson r, Cramér's V, eta-squared, Kendall's τ), correlation heatmap, and fuzzy duplicate detection
-- **Quality tab** — dimension-by-dimension findings with severity-ranked rows, expandable detail, and inline remediation guidance
-- **ML Readiness tab** — five preparation-action dimensions (Transformations Needed, Encoding Required, Missingness Impact, Leakage Risk, Unusable Features) with a gate banner
-- **Time Series tab** — ACF/PACF, stationarity tests, and seasonal decomposition
+The screenshot shows what the dashboard presented: five traffic-light quality indicators (Completeness, Validity, Usability, Redundancy, Leakage), per-column distributions, pairwise associations, severity-ranked findings, five ML-preparation dimensions with a gate, and time series diagnostics. `run.results["quality_dimensions"]` and `run.results["ml_readiness"]` already carry the quality and readiness levels.
 
 ---
 
 ## Architecture
 
 ```
-CSV / DataFrame
+CSV / Parquet / DataFrame
       │
       ▼
-┌─────────────────────────────────────────────────────┐
-│  Task Engine  (DAG-based, dependency-aware)         │
-│  60+ tasks · topological execution · failure        │
-│  recovery · profiling depth · stage inference       │
-└────────────────────┬────────────────────────────────┘
-                     │  TaskResult objects
-                     ▼
-              SQLite + JSON store
-                     │
-                     ▼
-            FastAPI REST backend
-                     │
-                     ▼
-            Vue 3 SPA dashboard
+ dsbf.data.load ──► Dataset ──► profile_dataset ──► DatasetProfile
+                                                         │
+                                                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Check engine  (plan → execute)                             │
+│  47 core checks · selection by depth, pack and id ·         │
+│  dependency order · limits · cache · failures become notes  │
+└────────────────────────────┬────────────────────────────────┘
+                             │  CheckResult objects (findings, output, notes)
+                             ▼
+                        Run  ──►  run.json
 ```
 
-Every task is a self-contained Python class that declares its dependencies, expected semantic types, and runtime estimate. The DAG engine resolves execution order, handles failures without stopping the run, and writes structured `TaskResult` objects to a SQLite store. The FastAPI backend serves those results to the Vue dashboard over a clean REST API.
+Every check is a function with a declared spec: the semantic types it applies to, what it needs from the profile or from other checks, its cost, and the model of its parameters. The planner selects and orders the checks, the executor runs them (in parallel where it can) under time limits, and a check that raises ends with a status and a note instead of stopping the run. The result is one `Run`, a validated model whose JSON Schema is committed as `schema/run.schema.json`.
 
 ---
 
@@ -78,7 +70,7 @@ Every task is a self-contained Python class that declares its dependencies, expe
 
 **Severity-aware traffic lights.** A four-state system (🟢 green / 🔵 blue / 🟡 amber / 🔴 red) maps both *severity* and *proportion* to color. A single `warn`-level finding on a 500-column dataset is always amber — it never hides behind a green dot just because it affects 0.2% of columns.
 
-**Semantic type filtering.** Tasks that operate on continuous columns filter by `analysis_intent_dtype`, not `pandas dtype`. A boolean stored as `int64` will not enter VIF computation or outlier detection.
+**Semantic type filtering.** A check names the semantic types it applies to, and the planner gives it only the columns of those types, not the columns of a storage dtype. A boolean stored as `int64` will not enter VIF computation or outlier detection.
 
 ---
 
@@ -90,9 +82,9 @@ cd dsbf
 uv sync
 ```
 
-**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries everything the legacy tasks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install. The exception is `text`: `fuzzy_duplicates`, which runs at the `deep` depth, needs `rapidfuzz`, and without it ends `unavailable` with an install hint.
+**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries most of what the checks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install. The exception is `text`: `fuzzy_duplicates`, which runs at the `deep` depth, needs `rapidfuzz`, and without it ends `unavailable` with an install hint.
 
-**Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard) · Graphviz (the `dot` executable, for the task-graph image)
+**Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard source in `frontend/`)
 
 ---
 
@@ -124,12 +116,11 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 | Argument | Meaning |
 |---|---|
 | `depth` | `quick`, `standard` (the default) or `deep`: the most expensive kind of check to run |
-| `packs`, `checks` | The packs to draw checks from (`core`, the checks DSBF ships, by default; add `"legacy"` for the old tasks no core check replaces); `checks=["-outliers", "+zeros"]` removes and adds checks by id |
+| `packs`, `checks` | The packs to draw checks from (`core`, the checks DSBF ships, by default); `checks=["-outliers", "+zeros"]` removes and adds checks by id |
 | `target`, `time_index` | The columns the checks that need a target or a time axis use |
 | `sample` | `dsbf.Sample(rows=100_000, strategy="random", seed=1)`, or a row count for the first rows; the `Run` records how the rows were chosen |
 | `params` | Parameters of a check, by id, which win over `target` and `time_index`: `{"null_rate": {"notice_share": 0.1}}`; an unknown check or parameter is a `PlanError` |
-| `tasks` | Settings for a legacy task, by name, when the `legacy` pack is selected: `{"detect_outliers": {"flag_threshold": 0.05}}` |
-| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one per core, at most 8, unless a legacy task is planned, which runs them one at a time since the legacy tasks run no faster together |
+| `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one per core, at most 8 |
 | `cache` | `True` keeps results under the DSBF home, so a second call re-runs only the checks whose inputs changed; off by default |
 | `hooks`, `plugins` | Functions that receive an event as each check starts and finishes; directories of check plugins |
 | `config` | The path of a settings file with the same names. An argument here overrides the file, and `DSBF__SECTION__KEY` environment variables sit between the two. No file is read unless you name it |
@@ -138,148 +129,102 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 
 A `Run` can be megabytes on data with many columns, because a check's output is kept whole: the titanic `Run` is 0.56 MB (the largest outputs are `group_differences` at 52 KB and `contingency` at 44 KB). It was 8.9 MB until `fuzzy_duplicates`, which lists its 20 closest pairs and counts the rest, replaced `fuzzy_duplicate_detection`'s whole pair list.
 
-### Python API (the original `EDA` class)
-
-```python
-from dsbf.interfaces.api import EDA
-
-results = EDA("data.csv").run()  # dict of task name -> TaskResult
-```
-
-### In-memory DataFrame
-
-```python
-import pandas as pd
-from dsbf.interfaces.api import EDA
-
-df = pd.read_csv("data.csv")  # a Polars DataFrame works too
-results = EDA(df).run()
-```
-
-### Launch the dashboard
-
-```bash
-# Start the FastAPI backend
-uv run uvicorn dsbf.api.main:app --reload
-
-# In a separate terminal, start the Vue dev server
-cd frontend && pnpm install && pnpm dev
-```
+`dsbf plan data.csv` and `dsbf schema export` are the other commands; `dsbf --help` lists them.
 
 ---
 
 ## Profiling depth
 
-Each depth includes the ones above it. Of the 67 registered tasks, 17 run at `basic`, 54 at `standard` and all of them at `full`.
+Each depth includes the ones above it. The 47 core checks are 30 `quick`, 16 `standard` and 1 `deep`.
 
 | Depth | Adds | Best for |
 |---|---|---|
-| `basic` | Shape, nulls, types, duplicates, constant columns, value counts, data quality scoring | Quick triage, large datasets |
-| `standard` | + missingness, distributions and normality, skewness, encoding and binning suggestions, group-difference tests, fuzzy duplicates, time series (when configured), ML readiness | Typical EDA workflow |
-| `full` | + outliers, pairwise associations, mutual information, collinearity (VIF), data leakage, drift, schema validation | Pre-modeling audit |
+| `quick` | The cheap checks: shape, nulls, types, duplicates, constant columns, value counts, distributions, outliers, encoding and imputation advice, time series rules, the quality and ML-readiness summaries | Quick triage, large datasets |
+| `standard` | + the moderate checks: associations, group differences, collinearity, normality and bimodality, missingness mechanism, time series tests, target-aware and reference checks | Typical EDA workflow |
+| `deep` | + `fuzzy_duplicates`, near-duplicate rows by fuzzy matching | Pre-modeling audit |
 
-`dsbf profile` runs at `standard` unless you pass `--depth`.
-
----|---|---|
-| `basic` | Core shape, nulls, types | Quick triage, large datasets |
-| `standard` | + distributions, outliers, associations | Typical EDA workflow |
-| `full` | + ML readiness, time series, fuzzy duplicates | Pre-modeling audit |
+`dsbf profile` runs at `standard` unless you pass `--depth`; `dsbf plan data.csv --depth deep` lists exactly what each depth would run on your data.
 
 ---
 
 ## Output artifacts
 
-Each run writes to a timestamped directory under `<home>/outputs/` and records the run in a SQLite database at `<home>/dsbf.db`, whatever the working directory. The home is `$DSBF_HOME` if set, otherwise the per-user data directory (`~/.local/share/dsbf` on Linux). `DSBF_DB_PATH` overrides the database location alone. Outputs and database paths are stored absolute.
+`dsbf profile` writes one file, `run.json`, to `--out` or to `<home>/outputs/<run id>/`, whatever the working directory. The home is `$DSBF_HOME` if set, otherwise the per-user data directory (`~/.local/share/dsbf` on Linux). `dsbf.profile()` writes nothing unless you pass `cache=True`, which keeps check results under `<home>/cache/`.
 
 | File | Description |
 |---|---|
-| `report.json` | All task results — findings, guidance, reliability warnings |
-| `metadata_report.json` | Timing, system info, task diagnostics |
-| `run.log` | Full execution log |
-| `figs/` | Plots as PNG, plus Plotly figures as JSON |
-| `figs/dag.png` | Task execution graph (when `metadata.visualize_dag` is on and Graphviz is installed) |
-
----|---|
-| `report.json` | All task results — findings, guidance, reliability warnings |
-| `metadata_report.json` | Timing, system info, task diagnostics |
-| `run.log` | Full execution log |
-| `figs/` | Static plots (PNG) and interactive SVG |
-| `dag.png` | Task execution graph (if enabled) |
+| `run.json` | The whole `Run`: dataset identity and sampling, the profile, every check's status, findings and output, notes and timing. It validates against `schema/run.schema.json` |
 
 ---
 
 ## Configuration
 
-`src/dsbf/config/default_config.yaml` holds every option. A few of them, with their default values:
+`dsbf.profile()` takes every setting as an argument (see the table above), or from a settings file you name with `config=` (the same names; `DSBF__SECTION__KEY` environment variables sit between the file and the arguments). Nothing is read from the working directory unless you name it.
 
 ```yaml
-metadata:
-  profiling_depth: full         # basic | standard | full
-  message_verbosity: debug      # quiet | warn | stage | info | debug
-  visualize_dag: true
-
-engine:
-  backend: polars               # polars | pandas
-
-safety:
-  strict_mode: false            # true: halt on config or task-graph errors
-
-tasks:
-  detect_outliers:
-    method: all                 # all | iqr | zscore | mad | isolation_forest
-    flag_threshold: 0.01
-  detect_collinear_features:
-    vif_threshold: 10.0
-
-time_series:
-  enabled: false
-  datetime_index_column: null   # must be set explicitly — DSBF will not guess
+depth: deep
+target: survived
+sample:
+  rows: 100000
+  strategy: random
+  seed: 1
+params:
+  null_rate:
+    notice_share: 0.1
+limits:
+  check_timeout_seconds: 120
 ```
-
-`dsbf.profile()` does not read this file: it has its own settings (see above), and applies `tasks` over the task defaults here.
 
 ---
 
 ## Extending DSBF
 
-Tasks are registered with a decorator. Save this as `custom_plugins/my_domain/numeric_columns.py`:
+A check is a function registered with a decorator. Save this as `my_checks/negative_values.py`:
 
 ```python
-from dsbf.core.base_task import BaseTask
-from dsbf.eda.task_registry import register_task
-from dsbf.eda.task_result import TaskResult
-
-
-@register_task(
-    display_name="Numeric Column Count",
-    domain="my_domain",
-    depends_on=["infer_types"],
-    profiling_depth="standard",
-    expected_semantic_types=["continuous"],
+from dsbf.engine import Requires, SemanticTypes, check
+from dsbf.model import (
+    Confidence,
+    Dimension,
+    Evidence,
+    NumericProfile,
+    Severity,
+    Subject,
 )
-class NumericColumnCount(BaseTask):
-    def run(self) -> None:
-        matched_cols, _ = self.get_columns_by_intent()
-        self.output = TaskResult(
-            name=self.name,
-            status="success",
-            summary={"numeric_columns": len(matched_cols)},
-            data={"columns": matched_cols},
-        )
+
+
+@check(
+    id="negative_values",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes("numeric"),
+    dimensions=[Dimension.VALIDITY],
+    requires=Requires(profile=["counts"]),
+)
+def negative_values(ctx, params):
+    """Flag numeric columns that hold a negative value."""
+    for column in ctx.profile.columns:
+        if not isinstance(column, NumericProfile) or column.stats is None:
+            continue
+        lowest = column.stats.min
+        if lowest is not None and lowest < 0:
+            ctx.finding(
+                code="negative_value",
+                subject=Subject.column(column.name),
+                severity=Severity.INFO,
+                confidence=Confidence.HIGH,
+                title=f"{column.name!r} has negative values",
+                message=f"The smallest value of {column.name!r} is {lowest}.",
+                evidence=Evidence(
+                    metrics={"min": lowest},
+                    n_used=column.counts.non_null,
+                    n_total=ctx.profile.n_rows,
+                    method="minimum",
+                ),
+            )
 ```
 
-Then point the config at the directory (a path relative to the working directory) and include the task's domain, because the default config only runs tasks from the `core` domain:
-
-```yaml
-task_groups:
-  - core
-  - ./custom_plugins/my_domain/
-
-task_selection:
-  include_domains: [core, my_domain]
-```
-
-The built-in `core` group is loaded from `src/dsbf/custom_plugins/core`. `src/dsbf/custom_plugins/example_plugin_domain/` holds a minimal example.
+Then load the directory with `dsbf.profile(df, plugins=["my_checks"], checks=["+negative_values"])`; `dsbf profile data.csv --plugin my_checks` loads it too, and `dsbf plan` lists it. A plugin that fails to import becomes a note on the run, not an error. `tests/test_engine/test_plugins.py` holds working examples, and `docs/REFACTOR_PLAN.md` describes the check contract.
 
 ---
 

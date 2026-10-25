@@ -32,8 +32,7 @@ body:
       label: How were you running DSBF?
       options:
         - CLI (dsbf profile ...)
-        - Python API (profile_file / ProfileEngine)
-        - Dashboard (Vue frontend)
+        - Python library (dsbf.profile)
     validations:
       required: true
 
@@ -42,9 +41,9 @@ body:
     attributes:
       label: Profiling depth
       options:
-        - basic
+        - quick
         - standard
-        - full
+        - deep
         - Not applicable / unknown
 
   - type: textarea
@@ -87,10 +86,10 @@ body:
       render: python
       placeholder: |
         import pandas as pd
-        from dsbf.api import profile_file
+        import dsbf
 
         df = pd.DataFrame({"a": [1, 2, 3], "b": [2, 4, 6]})
-        # ...
+        run = dsbf.profile(df)
 
   - type: textarea
     id: error-output

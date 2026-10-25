@@ -3,12 +3,10 @@
 # A tip advises a finding whose numbers meet its `condition`. A condition is a
 # comparison, {field, op, value} with op one of <, <=, >, >=, ==, != or in (in takes a
 # list), or {any: [...]} / {all: [...]} of conditions. Nothing here is evaluated as
-# code. `field` names a metric of the finding's evidence, or, for a legacy task, a
-# value the task passes.
+# code. `field` names a metric of the finding's evidence.
 #
 #   checks         core check ids whose findings the tip advises
 #   codes          finding codes it is limited to (empty: every code of the check)
-#   applicable_to  legacy task names, until those tasks are deleted
 #   action         the verb of the step, with an optional `method`
 #   when           when the step applies, in words
 #   message        the advice
@@ -17,24 +15,9 @@
 # TRANSFORMATION
 # ===================
 
-mild_skew_transform:
-  condition:
-    any:
-      - {field: skew, op: ">", value: 1}
-      - {field: skew, op: "<", value: -1}
-  applicable_to:
-    - detect_skewness
-    - suggest_numerical_binning
-  action: transform
-  message: >
-    This feature is moderately skewed. Consider log or power transforms
-    to improve linear model performance or reduce sensitivity to outliers.
-
 high_cardinality_feature:
   condition: {field: n_unique, op: ">", value: 50}
   checks: [high_cardinality]
-  applicable_to:
-    - detect_high_cardinality
   action: encode
   method: frequency_encoding
   message: >
@@ -45,38 +28,16 @@ high_cardinality_feature:
 # LEAKAGE / REDUNDANCY
 # ===================
 
-drop_encoded_column:
-  condition: {field: match_type, op: in, value: [base64, uuid, hex]}
-  applicable_to:
-    - detect_encoded_columns
-  action: drop
-  message: >
-    This column appears to be encoded and is unlikely to generalize well.
-    Drop it unless it has domain-specific meaning.
-
 drop_duplicate_column:
   condition: {field: n_columns, op: ">=", value: 2}
   checks: [duplicate_columns]
-  applicable_to:
-    - detect_duplicate_columns
   action: drop
   message: >
     This column is a perfect duplicate of another - remove one to avoid redundant signals.
 
-leaky_feature:
-  condition: {field: correlation_with_target, op: ">", value: 0.99}
-  applicable_to:
-    - detect_data_leakage
-  action: drop
-  message: >
-    This feature is nearly identical to the target - likely due to leakage.
-    Drop it unless it was intentionally derived from the target.
-
 drop_constant_column:
   condition: {field: n_unique, op: "<=", value: 1}
   checks: [constant_columns]
-  applicable_to:
-    - detect_constant_columns
   action: drop
   message: >
     This feature has the same value for all rows - drop it before modeling.
@@ -88,8 +49,6 @@ drop_constant_column:
 drop_zero_variance:
   condition: {field: variance, op: "<=", value: 0.0001}
   checks: [near_zero_variance]
-  applicable_to:
-    - detect_near_zero_variance
   action: drop
   message: >
     This feature has near-zero variance and is unlikely to help model performance.
@@ -103,8 +62,6 @@ high_vif_feature:
   condition: {field: vif, op: ">", value: 10}
   checks: [collinearity]
   codes: [multicollinearity]
-  applicable_to:
-    - detect_collinear_features
   action: drop
   when: the column adds nothing a model needs beyond the columns it correlates with
   message: >
@@ -133,32 +90,6 @@ high_vif_feature_decorrelate:
     Replace the group of correlated columns with principal components, which are
     uncorrelated by construction. The two partners named in the finding are where
     to start.
-
-# ===================
-# CLASS IMBALANCE
-# ===================
-
-severe_class_imbalance:
-  condition: {field: majority_ratio, op: ">=", value: 0.9}
-  applicable_to:
-    - detect_class_imbalance
-  action: resample
-  message: >
-    Your target is highly imbalanced. Use stratified sampling, up/down-sampling,
-    or metrics like ROC-AUC instead of accuracy.
-
-# ===================
-# DRIFT DETECTION
-# ===================
-
-high_drift_score:
-  condition: {field: psi, op: ">=", value: 0.2}
-  applicable_to:
-    - detect_feature_drift
-  action: monitor
-  message: >
-    This feature shows significant drift vs. the reference dataset.
-    Monitor closely or retrain your model periodically.
 
 # ===================
 # SPARSITY

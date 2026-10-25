@@ -32,10 +32,6 @@ class GoldenDataset:
     """Parameters for the core checks that have no default to run on this dataset."""
 
     @property
-    def snapshot_path(self) -> Path:
-        return SNAPSHOT_DIR / f"{self.name}.json"
-
-    @property
     def core_snapshot_path(self) -> Path:
         """The core pack's findings on this dataset."""
         return SNAPSHOT_DIR / "core" / f"{self.name}.json"

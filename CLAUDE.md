@@ -45,7 +45,7 @@ Read this section before planning or modifying the repository.
    ```
 
    Run the `integration`, `slow`, `network`, `golden`, `perf` or `calibration` tiers when the affected boundary requires them (a change to a check's threshold or method needs `calibration`).
-8. **Verify against real artifacts and responses.** After engine, data, storage, API or frontend changes, run DSBF on real data in an isolated scratch directory (with its own `DSBF_DB_PATH`). Then inspect the output directly: the `Run` or report, database rows, API responses, and the rendered dashboard. Check:
+8. **Verify against real artifacts and responses.** After engine, check, data or CLI changes, run DSBF on real data in an isolated scratch directory (with its own `DSBF_HOME`). Then inspect the output directly: the `Run`, `run.json` and the console summary. Check:
    - row and column counts, check statuses and their reasons;
    - identities and uniqueness, coverage of eligible columns;
    - sampling provenance, representative metric values, timestamps;
@@ -56,7 +56,6 @@ Read this section before planning or modifying the repository.
    - lockfiles: `uv lock` / `pnpm install`;
    - JSON Schema and TypeScript types: `dsbf schema export --types frontend/src/generated/run.d.ts` (writes `schema/run.schema.json` too; add `--check` to verify);
    - golden snapshots: the golden suite's update option;
-   - `src/dsbf/static_metadata/task_metadata.json`: `dsbf tasks export --output src/dsbf/static_metadata/task_metadata.json`;
    - performance baselines: the perf harness.
 10. **Close each unit completely.** Follow `.claude/commands/closeout.md` (run it as `/closeout`).
 11. **Don't preserve development-era compatibility without a current need.** DSBF has never had a published release or external users (it isn't on PyPI, and the repo has no forks, as of 2026-10-15). Development-era schemas, configs, commands, tests, generated contracts and historical behaviour can be replaced when the active design requires it, unless a current contract explicitly requires compatibility. Compatibility guarantees begin with the published 1.x result schema.

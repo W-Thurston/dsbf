@@ -1,9 +1,6 @@
 # dsbf/profiling/stage.py
 """How prepared the data is, read from its profile."""
 
-from collections.abc import Mapping
-from typing import Any
-
 from pydantic import Field
 
 from dsbf.model.base import Contract
@@ -44,12 +41,6 @@ class StageThresholds(Contract):
         le=1,
         description="`modeling` needs a mean column null ratio below this.",
     )
-
-    @classmethod
-    def from_config(cls, config: Mapping[str, Any]) -> "StageThresholds":
-        """The thresholds under ``engine.stage_inference``; defaults where absent."""
-        section = (config.get("engine") or {}).get("stage_inference") or {}
-        return cls.model_validate(section)
 
 
 def infer_stage(
