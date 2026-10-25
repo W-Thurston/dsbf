@@ -35,7 +35,6 @@ coverage.xml
 # Generated CSVs, profiler runs, and SQLite stores — large, ephemeral, local-only
 dsbf/outputs/
 dsbf/runs/
-dsbf/dsbf.db
 *dsbf_run.json
 *.sqlite
 *.db

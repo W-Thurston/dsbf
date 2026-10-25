@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Will Thurston", email = "WilliamD.Thurston@gmail.com" }]
-keywords = ["data-profiling", "eda", "data-quality", "pandas", "polars", "fastapi", "vue"]
+keywords = ["data-profiling", "eda", "data-quality", "pandas", "polars"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,40 +19,27 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pyyaml>=6.0.1,<7",
-    "pydantic>=2.12,<3",
-    "pandas>=2.3.0,<3",
-    "seaborn>=0.13.2,<0.14",
-    "scikit-learn>=1.7.0,<1.8",
+    "numpy>=2.3,<3",
+    "scipy>=1.16,<2",
     "polars>=2.0,<3",
-    "scipy>=1.16,<1.18",
     "pyarrow>=20,<27",
-    "networkx>=3.5,<4",
-    "matplotlib>=3.10.3,<4",
-    "graphviz>=0.21,<0.22",
-    "pydot>=4.0.1,<5",
-    "missingno>=0.5.2,<0.6",
-    "statsmodels>=0.14.4,<0.15",
+    "pydantic>=2.12,<3",
+    "pyyaml>=6.0.1,<7",
     "psutil>=7.0.0,<8",
     "platformdirs>=4.3,<5",
     "rich>=14.0.0,<16",
     "typer>=0.16.0,<0.28",
-    "watchfiles>=1.1.0,<2",
-    "fastapi>=0.135.1,<0.144",
-    "uvicorn>=0.41.0,<0.55",
 ]
 
 [project.optional-dependencies]
-# The split from ADR 0009. The base install above still carries every one of these,
-# because the legacy tasks import them eagerly, so for now each extra only repeats a
-# base constraint (keep the two in step; a test checks it) or adds a package nothing
-# imports yet. As checks migrate, the packages leave `dependencies` and these extras
-# become the only way to get them.
-ml = ["scikit-learn>=1.7.0,<1.8"]
-timeseries = ["statsmodels>=0.14.4,<0.15"]
+# The split from ADR 0009. The base install above holds what every run imports at
+# module level; each extra holds what one group of checks or sources imports when it
+# runs, and the engine reports a check whose extra is missing as `unavailable`.
+ml = ["scikit-learn>=1.8,<2"]
+timeseries = ["statsmodels>=0.14.4,<1"]
 text = ["rapidfuzz>=3.14,<4"]
 excel = ["fastexcel>=0.21,<1"]
-pandas = ["pandas>=2.3.0,<3"]
+pandas = ["pandas>=2.3.0,<4"]
 sql = ["ibis-framework>=12,<13"]
 server = [
     "fastapi>=0.135.1,<0.144",
@@ -70,23 +57,27 @@ Repository = "https://github.com/W-Thurston/dsbf"
 dsbf = "dsbf.interfaces.cli:app"
 
 [dependency-groups]
+# The tests exercise every check and the pandas input, so the dev group carries the
+# extras that gate them. The `extras` group is what the CI install matrix adds to one
+# extra at a time.
 dev = [
+    "dsbf[ml,timeseries,text,excel,pandas]",
     "pytest>=8.0.0,<10",
-    "httpx2>=2.13,<3",
-    "pytest-order>=1.3.0,<2",
     "ruff>=0.11.10,<0.18",
     "pre-commit>=4.2.0,<5",
     "ipykernel>=6.29.5,<8",
     "pyrefly>=1.1.1,<2",
     "jsonschema>=4.23,<5",
-    # The Excel round trip in tests/test_data needs a writer and the reader the
-    # `excel` extra carries; the fast gate installs no extras.
+    "packaging>=24",
+    # The Excel round trip in tests/test_data needs a writer; the reader is the
+    # `excel` extra's.
     "xlsxwriter>=3.2,<4",
-    "fastexcel>=0.21,<1",
-    # `fuzzy_duplicates` needs the matcher the `text` extra carries.
-    "rapidfuzz>=3.14,<4",
     "hypothesis>=6.170.5",
+    # Pandas 2 carried the time zone database the tests read through `zoneinfo`; the
+    # runtime reads zones through Polars, which bundles its own.
+    "tzdata>=2025.2",
 ]
+extras = ["pytest>=8.0.0,<10"]
 
 [build-system]
 requires = ["uv_build>=0.11,<0.14"]

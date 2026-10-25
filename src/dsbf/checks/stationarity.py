@@ -6,7 +6,6 @@ from typing import Any, Literal
 
 import numpy as np
 from pydantic import Field
-from statsmodels.tsa.stattools import adfuller, kpss
 
 from dsbf.checks.timeseries import (
     Prepared,
@@ -205,6 +204,8 @@ def _adf(
     errors: dict[str, str],
     regression: Literal["c", "ct"] = "c",
 ) -> UnitRootTest | None:
+    from statsmodels.tsa.stattools import adfuller  # the `timeseries` extra
+
     try:
         found: Any = adfuller(values, maxlag=cap, regression=regression, autolag="AIC")
     except _FAILURES as error:
@@ -221,6 +222,8 @@ def _kpss(
     errors: dict[str, str],
     regression: Literal["c", "ct"] = "c",
 ) -> UnitRootTest | None:
+    from statsmodels.tsa.stattools import kpss  # the `timeseries` extra
+
     n = values.size
     # The long-run variance of the Newey–West estimate; statsmodels' automatic choice
     # is capped at the same number of lags as the ADF regression.

@@ -436,7 +436,7 @@ def _score(
     flagged pairs (first, second, similarity in 0 to 1), the number of pairs scored
     and whether the clock ran out before all were.
     """
-    from rapidfuzz import fuzz, process
+    from rapidfuzz import fuzz, process  # the `text` extra
 
     cutoff = params.threshold - 1e-9
     kept_first: list[np.ndarray] = []

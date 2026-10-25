@@ -34,6 +34,11 @@ Run the fast gate to confirm everything is working. It takes about 30 seconds:
 uv run pytest -m "unit and not slow"
 ```
 
+`uv sync` installs the dev tools and the `ml`, `timeseries`, `text`, `excel` and `pandas`
+extras, since the tests exercise every check. `uv sync --no-dev` is the base install, which is
+what CI's `extras` job installs, with each extra added alone, to test that the core runs without
+the rest.
+
 The full suite adds the integration tests, which run `dsbf.profile()` end to end. It takes
 a few minutes:
 
@@ -74,7 +79,8 @@ its update option is the same: `uv run pytest tests/test_interfaces/test_cli_pla
 
 `tests/perf/` times the profile pass and `dsbf.profile()` on titanic and on the kitchen-sink
 frame at 5,000 and 50,000 rows, and fails when a stage, a check or the peak memory grows by
-more than 25% against `tests/perf/baseline.json`. The suite
+more than 25% against `tests/perf/baseline.json`, or when the standard plan takes over 5 s on
+titanic or over 60 s and 1 GB on kitchen50k. The suite
 takes about fifteen minutes, so `pytest` skips it. Run it with `uv run pytest -m perf`, and add
 the `perf` label to a pull request to run it in CI, where the baseline was recorded. Local
 numbers from another machine are only roughly comparable. How to read the results and update
@@ -282,6 +288,17 @@ validation datasets test that this holds.
 **State `n_used` and the method on every finding**, bound every parameter, and put
 advice in `src/dsbf/static_metadata/recommendation_library.yaml` as a tip rather than in
 the check.
+
+**Import an extra's package inside the function that uses it.** The core pack loads on the
+base install, which holds only NumPy, SciPy, Polars, PyArrow and the tools the engine needs.
+A check that needs scikit-learn, statsmodels or rapidfuzz names the extra in `@check(extras=[...])`,
+imports it at the top of the function that calls it (`from sklearn.mixture import
+GaussianMixture  # the `ml` extra`), and the engine reports it `unavailable` with an install
+hint when the package is missing. Add the module to `PRELOAD` in `src/dsbf/engine/extras.py`:
+the executor imports those modules before the checks run side by side, because a first import
+on a worker thread can hang. `tests/test_packaging.py` fails when an import is at module level
+without a base dependency, when a package is declared nowhere, or when `PRELOAD` and the
+imports disagree. A new dependency goes in the base only if `dsbf` imports it when it loads.
 
 **Bump `version`** when a change alters what the check reports; the cache and the
 calibration baseline key on it.

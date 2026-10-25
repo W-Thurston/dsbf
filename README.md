@@ -82,7 +82,19 @@ cd dsbf
 uv sync
 ```
 
-**Extras.** The package declares optional extras for the heavier parts: `ml`, `timeseries`, `text`, `pandas`, `sql`, `server`, and `all` for every one of them. Today the base install still carries most of what the checks import, so the extras change nothing for a normal `uv sync`; they become the way to opt in as those dependencies move out of the base install. The exception is `text`: `fuzzy_duplicates`, which runs at the `deep` depth, needs `rapidfuzz`, and without it ends `unavailable` with an install hint.
+**Extras.** The base install is the engine and the checks that need only NumPy, SciPy, Polars and PyArrow. Each optional extra adds a group of checks or a source:
+
+| Extra | Adds | What it enables |
+|---|---|---|
+| `ml` | scikit-learn | `bimodality`, `multivariate_outliers`, `mutual_information` |
+| `timeseries` | statsmodels | `stationarity`, `autocorrelation`, `seasonal_decomposition` |
+| `text` | rapidfuzz | `fuzzy_duplicates` (runs at the `deep` depth) |
+| `excel` | fastexcel | reading `.xlsx` files |
+| `pandas` | pandas | passing pandas frames to `dsbf.profile()` |
+| `sql`, `server` | ibis, FastAPI and friends | reserved for later phases; nothing imports them yet |
+| `all` | every extra above | |
+
+A check whose extra is missing ends `unavailable` with the `pip install 'dsbf[...]'` line that fixes it, and the rest of the run is unaffected. In a checkout, `uv sync` installs the extras the tests need as well as the dev tools, and `uv sync --no-dev` is the base install.
 
 **Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard source in `frontend/`)
 

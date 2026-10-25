@@ -17,6 +17,9 @@ Conventions every core check follows:
   `GaussianMixture` mis-scores integer input, differently in 1.7 and 1.8.
 - A check that computes with extreme values skips a column whose arithmetic
   overflows, saying why, and never puts a NaN or an infinity in its output.
+- A check imports an extra's package inside the function that uses it, names the
+  extra in ``extras``, and lists the module in ``dsbf.engine.extras.PRELOAD``: the pack
+  loads on the base install, and a first import on a worker thread can hang.
 - A check states ``n_used`` and the method on every finding's evidence, declares the
   bounds of each parameter, and leaves recommendations to the tips attached after it
   returns.

@@ -90,7 +90,7 @@ See the README for every argument.
 
 ## 8. Dependencies and tooling
 
-- **Install:** `uv sync` (the lockfile is `uv.lock`; dev tools are in `[dependency-groups] dev`).
+- **Install:** `uv sync` (the lockfile is `uv.lock`; dev tools and the extras the tests exercise are in `[dependency-groups] dev`). The base install is `[project] dependencies`: what dsbf imports when it loads. A package a check imports only when it runs (scikit-learn, statsmodels, rapidfuzz) is an optional extra, imported inside the function that uses it, and the check says so in `extras` so the engine reports it `unavailable` when it is missing. `tests/test_packaging.py` holds the code to this split, and the `extras` job in CI installs the base and each extra alone.
 - **Tests:** `uv run pytest`. The fast gate is `uv run pytest -m "unit and not slow"`; every test carries exactly one tier marker.
 - **Format and lint:** Ruff (`uv run ruff check . && uv run ruff format .`), Pyrefly with a committed baseline, and pre-commit. CI pins Ruff to the version in `uv.lock`.
 

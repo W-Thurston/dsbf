@@ -17,6 +17,7 @@ from dsbf.engine.events import (
     NoteRecorded,
 )
 from dsbf.engine.expectation import Expected
+from dsbf.engine.extras import preload_extras
 from dsbf.engine.limits import Limits
 from dsbf.engine.meter import DEFAULT_SAMPLE_SECONDS, Meter, Window
 from dsbf.engine.plan import Plan, PlanEntry
@@ -121,6 +122,12 @@ def execute(
         workers = default_workers()
     elif workers < 1:
         raise ValueError(f"workers must be at least 1, not {workers!r}")
+    preload_extras(
+        extra
+        for entry in plan.entries
+        if entry.expected.status is not Expected.UNAVAILABLE
+        for extra in entry.check.spec.extras
+    )
     events = Dispatcher(hooks)
     total = len(plan.entries)
     positions = {
