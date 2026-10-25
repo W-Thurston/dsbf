@@ -33,7 +33,6 @@ body:
       options:
         - CLI (dsbf profile ...)
         - Python API (profile_file / ProfileEngine)
-        - Quickstart (dsbf quickstart ...)
         - Dashboard (Vue frontend)
     validations:
       required: true

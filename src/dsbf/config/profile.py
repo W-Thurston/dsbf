@@ -84,6 +84,11 @@ class ProfileConfig(_Section):
     plugins: tuple[str, ...] = Field(
         default=(), description="Directories of check plugins to load."
     )
+    params: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Parameters of checks, by check id; they win over `target` "
+        "and `time_index`.",
+    )
     tasks: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
         description="Per-task settings of the legacy tasks, by task name.",

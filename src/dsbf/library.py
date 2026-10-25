@@ -66,6 +66,7 @@ def profile(
     limits: LimitsConfig | None = None,
     workers: int | None = None,
     plugins: Iterable[str | Path] | str | Path = (),
+    params: Mapping[str, Mapping[str, Any]] | None = None,
     tasks: Mapping[str, Mapping[str, Any]] | None = None,
     cache: bool | ResultCache | None = None,
     hooks: Iterable[Hook] = (),
@@ -87,10 +88,10 @@ def profile(
     filters still apply) and are restored afterwards, so another thread of yours
     may print a repeated warning more than once meanwhile.
 
-    ``packs`` are the packs whose checks are candidates (``core`` and ``legacy``, the
-    tasks not yet migrated, when unset). A legacy task that a core check replaces is
-    left out while ``core`` is a candidate, and runs without its findings only when
-    another task needs its result. ``checks`` adjusts that by id: ``"+id"``
+    ``packs`` are the packs whose checks are candidates (``core`` when unset; add
+    ``legacy`` for the tasks not yet migrated). A legacy task that a core check
+    replaces is left out while ``core`` is a candidate, and runs without its findings
+    only when another task needs its result. ``checks`` adjusts that by id: ``"+id"``
     or ``"id"`` adds a check, ``"-id"`` removes one, and a check that another needs
     is pulled in regardless. ``depth`` (``quick``, ``standard`` or ``deep``) is the
     most expensive kind of check to run. ``target`` and ``time_index`` name the
@@ -104,8 +105,9 @@ def profile(
     are handed (``pandas`` unless set). ``limits`` bounds the time of a check and of
     the run, ``workers`` is how many checks run at once (one while a legacy
     task is planned, else one per core, at most 8), ``plugins`` are
-    directories of check plugins, and ``tasks`` maps a legacy task's name to its
-    settings.
+    directories of check plugins, ``params`` maps a check's id to the parameters it
+    runs with (they win over ``target`` and ``time_index``), and ``tasks`` maps a
+    legacy task's name to its settings.
 
     ``cache`` keeps results between runs: ``True`` uses the DSBF home directory and
     a ``ResultCache`` is used as given. A ``hook`` receives an event as each check
@@ -133,6 +135,7 @@ def profile(
         limits=limits,
         workers=workers,
         plugins=plugins,
+        params=params,
         tasks=tasks,
         config=config,
     )
@@ -194,7 +197,8 @@ def _reference(source: object | None, settings: ProfileConfig) -> Reference | No
 def _setting_params(
     registry: Registry, settings: ProfileConfig
 ) -> dict[str, dict[str, Any]]:
-    """``target`` and ``time_index``, as the parameter of that name of each check.
+    """``target`` and ``time_index``, as the parameter of that name of each check,
+    then the ``params`` the caller gave, which win.
 
     A check takes a setting only if it declares a parameter called the same. The
     legacy tasks read them from their own keys (``_legacy_config``).
@@ -213,6 +217,8 @@ def _setting_params(
         wanted = {name: value for name, value in given.items() if name in fields}
         if wanted:
             params[check.spec.id] = wanted
+    for check_id, values in settings.params.items():
+        params.setdefault(check_id, {}).update(values)
     return params
 
 
@@ -244,6 +250,7 @@ def _settings(
     limits: LimitsConfig | None,
     workers: int | None,
     plugins: Iterable[str | Path] | str | Path,
+    params: Mapping[str, Mapping[str, Any]] | None,
     tasks: Mapping[str, Mapping[str, Any]] | None,
     config: str | Path | None,
 ) -> ProfileConfig:
@@ -260,6 +267,7 @@ def _settings(
         "limits": limits,
         "workers": workers,
         "plugins": _names(plugins),
+        "params": params,
         "tasks": tasks,
     }
     overrides = {

@@ -8,17 +8,20 @@ import typer
 import yaml
 
 from dsbf.checks import core_pack
-from dsbf.config import load_default_config
-from dsbf.data import SourceError, load
-from dsbf.eda.profile_engine import ProfileEngine
+from dsbf.config import ConfigError
+from dsbf.data import SamplingError, SourceError, load
 from dsbf.eda.task_registry import load_task_group
 from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
 from dsbf.interfaces import schema_export
+from dsbf.library import profile as dsbf_profile
 from dsbf.model import Cost, Dimension
+from dsbf.paths import default_outputs_dir
 from dsbf.profiling import profile_dataset
 from dsbf.utils.logging_utils import console_logging
 from dsbf.utils.task_utils import build_task_metadata, write_task_metadata
 from dsbf.utils.versioning import get_dsbf_version
+
+RUN_FILE = "run.json"
 
 app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
 tasks_app = typer.Typer(help="Inspect the registered tasks.")
@@ -27,92 +30,57 @@ schema_app = typer.Typer(help="Publish and guard the result schema.")
 app.add_typer(schema_app, name="schema")
 
 
-def _run_engine(cfg: dict[str, Any]) -> None:
-    """Run the legacy engine with its log records printed to the console."""
-    verbosity = cfg.get("metadata", {}).get("message_verbosity", "info")
-    with console_logging(verbosity):
-        ProfileEngine(cfg).run()
-
-
-def _load_config(config_path: str) -> dict:
-    with Path.open(config_path, "r") as f:
-        return yaml.safe_load(f)
-
-
-@app.command()
-def run(
-    config: str = typer.Option(..., "--config", "-c", help="Path to config YAML file."),
-    strict: bool = typer.Option(  # noqa: FBT001
-        False,
-        "--strict",
-        help="Enable strict mode.",
-    ),
-    visualize_dag: bool = typer.Option(  # noqa: FBT001
-        False,
-        "--visualize-dag",
-        help="Save DAG image.",
-    ),
-    no_report: bool = typer.Option(  # noqa: FBT001
-        False,
-        "--no-report",
-        help="Skip writing output report.",
-    ),
-) -> None:
-    """Run profiling using full config."""
-    cfg: dict = _load_config(config)
-    if strict:
-        cfg.setdefault("safety", {})["strict_mode"] = True
-    if visualize_dag:
-        cfg.setdefault("metadata", {})["visualize_dag"] = True
-    if no_report:
-        cfg.setdefault("metadata", {})["disable_report"] = (
-            True  # you can handle this flag in report_utils
-        )
-
-    _run_engine(cfg)
-
-
 @app.command()
 def profile(
-    data: str = typer.Argument(..., help="Path to dataset CSV file."),
-    depth: str = typer.Option(
-        "standard",
-        "--depth",
-        "-d",
-        help="Profiling depth: basic | standard | full",
-    ),
-    name: str = typer.Option(
+    data: Path = typer.Argument(..., help="Dataset to profile (CSV, Parquet, ...)."),
+    out: Path | None = typer.Option(
         None,
-        "--name",
-        "-n",
-        help="Dataset name shown in the dashboard and stored in the run database. "
-        "Defaults to the CSV filename stem (e.g. 'my_data' from 'my_data.csv').",
+        "--out",
+        "-o",
+        help="Directory for run.json (default: <DSBF home>/outputs/<run id>).",
+    ),
+    pack: list[str] = typer.Option([], "--pack", "-p", help="Run only these packs."),
+    depth: Depth = typer.Option(
+        Depth.STANDARD, "--depth", "-d", help="The most expensive checks to allow."
+    ),
+    target: str | None = typer.Option(
+        None, "--target", help="The column to predict, for the checks that need one."
+    ),
+    time_index: str | None = typer.Option(
+        None, "--time-index", help="The datetime column the time series checks use."
+    ),
+    plugin: list[Path] = typer.Option(
+        [], "--plugin", help="A directory of check plugins to load."
+    ),
+    param: list[str] = typer.Option(
+        [], "--param", help="Set a check parameter: check.key=value (repeatable)."
     ),
 ) -> None:
-    """Profile a single dataset using default config."""
-    cfg: dict[str, Any] = load_default_config()
-    cfg["metadata"]["dataset_path"] = data
-    cfg["metadata"]["profiling_depth"] = depth
-    # Use the provided name, or fall back to the CSV filename stem so the
-    # dashboard always shows a meaningful name rather than the default_config value.
-    cfg["metadata"]["dataset_name"] = name or Path(data).stem
-    _run_engine(cfg)
-
-
-@app.command()
-def quickstart(
-    dataset: str = typer.Argument(
-        "iris",
-        help="Built-in dataset name (e.g., iris, titanic).",
-    ),
-) -> None:
-    """Run quick profiling using built-in dataset (e.g., sklearn or seaborn)."""
-    cfg: dict[str, Any] = load_default_config()
-    cfg["metadata"]["dataset_name"] = dataset
-    # Explicitly clear dataset_path so writer.py never stores a stale file path
-    # from default_config.yaml as the source for a built-in dataset.
-    cfg["metadata"]["dataset_path"] = None
-    _run_engine(cfg)
+    """Profile a dataset, write run.json and print the health summary."""
+    params = _parse_params(param)
+    try:
+        with console_logging("info"):
+            run = dsbf_profile(
+                data,
+                packs=pack or None,
+                depth=depth,
+                target=target,
+                time_index=time_index,
+                plugins=plugin,
+                params=params,
+            )
+    except (SourceError, ConfigError, SamplingError) as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(2) from error
+    except PlanError as error:
+        for problem in error.problems:
+            typer.echo(f"error: {problem}", err=True)
+        raise typer.Exit(2) from error
+    directory = (out or default_outputs_dir() / str(run.run_id)).expanduser().resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    run_file = directory / RUN_FILE
+    run_file.write_text(run.model_dump_json(indent=2), encoding="utf-8")
+    typer.echo(run.render_health(pointer=str(run_file)))
 
 
 def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:

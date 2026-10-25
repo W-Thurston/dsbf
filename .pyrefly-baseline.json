@@ -1268,13 +1268,6 @@
       "severity": "error"
     },
     {
-      "column": 19,
-      "path": "src/dsbf/interfaces/cli.py",
-      "name": "no-matching-overload",
-      "concise_description": "No matching overload found for function `pathlib.Path.open` called with arguments: (str, Literal['r'])",
-      "severity": "error"
-    },
-    {
       "column": 9,
       "path": "src/dsbf/utils/dag_layout.py",
       "name": "unexpected-keyword",

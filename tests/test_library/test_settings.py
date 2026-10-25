@@ -13,7 +13,7 @@ from dsbf.config import (
     ProfileConfig,
     SampleConfig,
 )
-from dsbf.engine import Depth
+from dsbf.engine import Depth, PlanError
 from dsbf.library import _default_workers, parse_checks
 from dsbf.profiling import profile_dataset
 from tests.test_engine.toys import declare, make_dataset, plan_for
@@ -149,3 +149,26 @@ class TestDefaultWorkers:
 
     def test_a_plan_with_no_legacy_task_uses_the_executors_default(self):
         assert self.plan((("core",), "rule")) is None
+
+
+class TestParams:
+    def test_a_params_setting_reaches_the_check(self):
+        run = dsbf.profile(
+            pl.DataFrame({"x": [1.0, None, 3.0, 4.0]}),
+            params={"null_rate": {"notice_share": 0.1}},
+        )
+
+        assert run.results["null_rate"].params["notice_share"] == 0.1
+
+    def test_params_win_over_the_target_setting(self):
+        frame = pl.DataFrame({"a": ["u", "v"] * 20, "b": ["p", "p", "q", "q"] * 10})
+
+        run = dsbf.profile(
+            frame, target="a", params={"class_imbalance": {"target": "b"}}
+        )
+
+        assert run.results["class_imbalance"].params["target"] == "b"
+
+    def test_an_unknown_check_is_a_planning_error(self):
+        with pytest.raises(PlanError, match="unknown check 'nulls'"):
+            dsbf.profile(pl.DataFrame({"x": [1, 2]}), params={"nulls": {}})
