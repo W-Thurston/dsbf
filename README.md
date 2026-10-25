@@ -98,21 +98,15 @@ uv sync
 
 ## Quickstart
 
-### CLI — profile a CSV
+### CLI — profile a dataset
 
 ```bash
 uv run dsbf profile data.csv
-uv run dsbf profile data.csv --depth full --name my_data
+uv run dsbf profile data.parquet --depth deep --target survived --out results/
+uv run dsbf profile data.csv --time-index date --param null_rate.notice_share=0.1
 ```
 
-`--depth` defaults to `standard` here (`basic | standard | full`), and `--name` sets the dataset name shown in the dashboard (the default is the file name without its extension).
-
-### CLI — built-in datasets
-
-```bash
-uv run dsbf quickstart titanic     # seaborn built-in
-uv run dsbf quickstart iris        # sklearn built-in
-```
+`dsbf profile` runs `dsbf.profile()`, writes the whole `Run` to `run.json` and prints the health summary with the path of that file. The file is written to `--out` (made absolute), or to `<home>/outputs/<run id>/` without it. `--depth` is `quick | standard | deep` and defaults to `standard`. `--pack`, `--plugin` and `--param check.key=value` can be repeated; a parameter named here wins over `--target` and `--time-index`. The exit code is 0 once a run completes, whatever its findings or failed checks (the summary says which), and 2 when the run cannot be set up (an unreadable file, an unknown check or parameter, a target that is not a column). `uv run dsbf plan data.csv` shows what would run, without running it.
 
 ### Python library — `dsbf.profile()`
 
@@ -133,6 +127,7 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 | `packs`, `checks` | The packs to draw checks from (`core`, the checks DSBF ships, by default; add `"legacy"` for the old tasks no core check replaces); `checks=["-outliers", "+zeros"]` removes and adds checks by id |
 | `target`, `time_index` | The columns the checks that need a target or a time axis use |
 | `sample` | `dsbf.Sample(rows=100_000, strategy="random", seed=1)`, or a row count for the first rows; the `Run` records how the rows were chosen |
+| `params` | Parameters of a check, by id, which win over `target` and `time_index`: `{"null_rate": {"notice_share": 0.1}}`; an unknown check or parameter is a `PlanError` |
 | `tasks` | Settings for a legacy task, by name, when the `legacy` pack is selected: `{"detect_outliers": {"flag_threshold": 0.05}}` |
 | `limits`, `workers` | `LimitsConfig(check_timeout_seconds=…, run_budget_seconds=…)`, and how many checks run at once: one per core, at most 8, unless a legacy task is planned, which runs them one at a time since the legacy tasks run no faster together |
 | `cache` | `True` keeps results under the DSBF home, so a second call re-runs only the checks whose inputs changed; off by default |
@@ -183,7 +178,7 @@ Each depth includes the ones above it. Of the 67 registered tasks, 17 run at `ba
 | `standard` | + missingness, distributions and normality, skewness, encoding and binning suggestions, group-difference tests, fuzzy duplicates, time series (when configured), ML readiness | Typical EDA workflow |
 | `full` | + outliers, pairwise associations, mutual information, collinearity (VIF), data leakage, drift, schema validation | Pre-modeling audit |
 
-`dsbf profile` runs at `standard` unless you pass `--depth`. The default config sets `full`, which `dsbf quickstart` and `dsbf run` use.
+`dsbf profile` runs at `standard` unless you pass `--depth`.
 
 ---|---|---|
 | `basic` | Core shape, nulls, types | Quick triage, large datasets |
@@ -241,7 +236,7 @@ time_series:
   datetime_index_column: null   # must be set explicitly — DSBF will not guess
 ```
 
-Pass a config of your own with `uv run dsbf run --config my_config.yaml`. `dsbf.profile()` does not read this file: it has its own settings (see above), and applies `tasks` over the task defaults here.
+`dsbf.profile()` does not read this file: it has its own settings (see above), and applies `tasks` over the task defaults here.
 
 ---
 

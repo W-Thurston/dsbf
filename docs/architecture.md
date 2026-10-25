@@ -80,7 +80,7 @@ Under **`dsbf/outputs/<run_key>/`**. The folder name is a `%Y%m%d_%H%M%S` timest
   - The database path is `DSBF_DB_PATH` if set, else the `db_path` argument, else **`<repo_root>/dsbf/dsbf.db`**.
 - **Writes:** `src/dsbf/storage/writer.py`, **`persist_run(engine)`** after each successful profile:
   - datasets, runs, per-task rows and the figure index;
-  - `dataset_path` is handled apart from built-in datasets (CLI `quickstart` clears the path so the database doesn't keep a stale file path).
+  - `dataset_path` is handled apart from built-in datasets (the removed `quickstart` command cleared the path so the database didn't keep a stale file path).
 
 The **FastAPI layer does not re-run profiling**. It **reads the database** and **serves figure files from disk** using the paths stored there.
 
@@ -127,7 +127,7 @@ uv run uvicorn dsbf.api.main:app --reload
 
 **Operational recipe:**
 
-1. Run a profile (`dsbf profile ...` or `dsbf run --config ...`) so SQLite is populated.
+1. Run a profile (`dsbf profile ...`).
 2. Start the API: `uv run uvicorn dsbf.api.main:app --reload`
 3. Start the UI: `cd frontend && pnpm install && pnpm dev`
 
@@ -139,9 +139,8 @@ uv run uvicorn dsbf.api.main:app --reload
 
 | Command | Role |
 |---------|------|
-| `dsbf run -c config.yaml [--strict] [--visualize-dag] [--no-report]` | Full YAML-driven run |
-| `dsbf profile DATA.csv [-d depth] [-n name]` | Default config. `--name` sets `metadata.dataset_name` (else the file's stem) for database and dashboard labels |
-| `dsbf quickstart [dataset]` | Built-in dataset; clears `dataset_path` |
+| `dsbf profile DATA [-o DIR] [-p pack] [-d depth] [--target COL] [--time-index COL] [--plugin DIR] [--param check.key=value]` | Runs `dsbf.profile()` and writes `run.json` to `DIR` (default `$DSBF_HOME/outputs/<run_id>/`); prints `Run.render_health()`. Exit 2 when setup fails |
+| `dsbf plan DATA` | Shows the checks a run would plan |
 | `dsbf version` | Version string |
 
 There is no CLI command that renders the dashboard; the dashboard is the Vue app served by Vite, against the FastAPI backend.
@@ -172,7 +171,7 @@ results = EDA("data.csv").run()
 
 ```bash
 uv sync
-uv run dsbf quickstart titanic
+uv run dsbf profile tests/golden/data/titanic.csv
 uv run uvicorn dsbf.api.main:app --reload
 # other terminal:
 cd frontend && pnpm install && pnpm dev
