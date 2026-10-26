@@ -9,13 +9,15 @@ models below when they are validated, so the models also read back what they dum
 
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from enum import StrEnum
+from operator import eq, ge, gt, le, lt, ne
 from typing import Annotated, Any, Literal, Self
 
 from pydantic import BeforeValidator, ConfigDict, Field, model_validator
 
 from dsbf.model.base import Contract, FiniteFloat
+from dsbf.model.finding import Finding
 from dsbf.model.vocabulary import CheckStatus, Confidence, Dimension, Severity
 
 
@@ -30,6 +32,14 @@ class Operator(StrEnum):
     LT = "<"
 
 
+_COMPARE: dict[Operator, Callable[[Any, Any], bool]] = {
+    Operator.EQ: eq,
+    Operator.NE: ne,
+    Operator.GE: ge,
+    Operator.GT: gt,
+    Operator.LE: le,
+    Operator.LT: lt,
+}
 _ORDERING = frozenset({Operator.GE, Operator.GT, Operator.LE, Operator.LT})
 # Two-character operators first, so ">=" is not read as ">" followed by "=".
 _OPERATORS = (">=", "<=", "==", "!=", ">", "<")
@@ -211,6 +221,47 @@ class Matcher(Contract):
     def selects_checks(self) -> bool:
         """True when the matcher is about check health rather than findings."""
         return self.health_status is not None
+
+    def matches(self, finding: Finding) -> bool:
+        """True when every finding condition the matcher gives holds for ``finding``."""
+        return (
+            (self.dimension is None or finding.dimension == self.dimension)
+            and (self.code is None or finding.code == self.code)
+            and (self.check is None or finding.check_id == self.check)
+            and (self.column is None or self.column in finding.subject.columns)
+            and (self.tag is None or self.tag in finding.tags)
+            and (
+                self.severity is None
+                or _COMPARE[self.severity.op](finding.severity, self.severity.value)
+            )
+            and (
+                self.confidence is None
+                or _COMPARE[self.confidence.op](
+                    finding.confidence, self.confidence.value
+                )
+            )
+            and all(
+                _metric_holds(finding.evidence.metrics.get(name), comparison)
+                for name, comparison in (self.metric or {}).items()
+            )
+        )
+
+
+def _metric_holds(observed: Any, comparison: MetricComparison) -> bool:
+    """A missing, null, list or mapping metric never holds; a bool is not a number."""
+    if observed is None or isinstance(observed, tuple | list | dict):
+        return False
+    wanted = comparison.value
+    if _is_number(observed) != _is_number(wanted):
+        # A number is never equal to text or a flag, but it is different from them.
+        return comparison.op is Operator.NE
+    if isinstance(observed, bool) != isinstance(wanted, bool):
+        return comparison.op is Operator.NE
+    return _COMPARE[comparison.op](observed, wanted)
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 class ActionKind(StrEnum):

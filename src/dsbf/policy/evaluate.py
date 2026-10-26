@@ -1,16 +1,9 @@
 # dsbf/policy/evaluate.py
 """Decide which policy rules a run triggers. Nothing here reads or writes anything."""
 
-import operator
-from collections.abc import Callable
-from typing import Any
-
 from dsbf.model import (
-    Finding,
     Matcher,
-    MetricComparison,
     Note,
-    Operator,
     Policy,
     PolicyOutcome,
     Rule,
@@ -19,15 +12,6 @@ from dsbf.model import (
 )
 
 __all__ = ["evaluate_policy"]
-
-_COMPARE: dict[Operator, Callable[[Any, Any], bool]] = {
-    Operator.EQ: operator.eq,
-    Operator.NE: operator.ne,
-    Operator.GE: operator.ge,
-    Operator.GT: operator.gt,
-    Operator.LE: operator.le,
-    Operator.LT: operator.lt,
-}
 
 
 def evaluate_policy(
@@ -73,7 +57,7 @@ def _outcome(run: Run, rule: Rule, known: set[str] | None) -> RuleOutcome:
     ids = tuple(
         finding.id
         for finding in run.findings
-        if _matches(finding, when)
+        if when.matches(finding)
         and (when.new_since is None or finding.id not in (known or ()))
     )
     return RuleOutcome(rule=rule, finding_ids=ids)
@@ -86,43 +70,3 @@ def _checks(run: Run, when: Matcher) -> tuple[str, ...]:
         if result.status == when.health_status
         and (when.check is None or check_id == when.check)
     )
-
-
-def _matches(finding: Finding, when: Matcher) -> bool:
-    """True when every condition the matcher gives holds for the finding."""
-    return (
-        (when.dimension is None or finding.dimension == when.dimension)
-        and (when.code is None or finding.code == when.code)
-        and (when.check is None or finding.check_id == when.check)
-        and (when.column is None or when.column in finding.subject.columns)
-        and (when.tag is None or when.tag in finding.tags)
-        and (
-            when.severity is None
-            or _COMPARE[when.severity.op](finding.severity, when.severity.value)
-        )
-        and (
-            when.confidence is None
-            or _COMPARE[when.confidence.op](finding.confidence, when.confidence.value)
-        )
-        and all(
-            _metric_holds(finding.evidence.metrics.get(name), comparison)
-            for name, comparison in (when.metric or {}).items()
-        )
-    )
-
-
-def _metric_holds(observed: Any, comparison: MetricComparison) -> bool:
-    """A missing, null, list or mapping metric never holds; a bool is not a number."""
-    if observed is None or isinstance(observed, tuple | list | dict):
-        return False
-    wanted = comparison.value
-    if _is_number(observed) != _is_number(wanted):
-        # A number is never equal to text or a flag, but it is different from them.
-        return comparison.op is Operator.NE
-    if isinstance(observed, bool) != isinstance(wanted, bool):
-        return comparison.op is Operator.NE
-    return _COMPARE[comparison.op](observed, wanted)
-
-
-def _is_number(value: Any) -> bool:
-    return isinstance(value, int | float) and not isinstance(value, bool)
