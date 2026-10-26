@@ -109,7 +109,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `Run.findings` is a `Findings` tuple view with `filter` (the policy matcher's keys and operators; the matching code moved to `Matcher.matches`), `to_polars` (11 flat columns, no evidence metrics) and `to_pandas` (`ImportError` with the install hint without the extra, not a loader error). `Run._repr_html_` shows the health summary and the top 10 findings, escaped.
 
 ### U5-03 · JSON and NDJSON sinks, and reading a run back
-- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
+- **Status:** done (2026-10-26, PR #136, `aa0c552`) · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
 - **Note from U5-01:** `dsbf.profile(previous=)` takes a `Run` only; once `Run.read` exists, accept a `run.json` path (read it in `dsbf.library` before evaluating the policy).
 - **Note from U4-00 (was on U4-02):** every core check declares a params and output model from U4-02 on, but nothing in Phase 4 reads them as JSON Schema, so their export lands here, with the published run schema.
 - **Goal:** `run.write(dir, sinks=["json", "ndjson"])` writes `run.json` and `findings.ndjson`, and `dsbf.Run.read(path)` round-trips. The stopgap CLI's writer moves onto it. `dsbf schema export` also writes each core check's params and output schema (`schema/checks/<id>.schema.json`), and `--check` covers them.
@@ -119,13 +119,14 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.sinks` holds a name-keyed sink registry (`json`, `ndjson`) that U5-04 and U5-05 extend; `Run.write` and `Run.read` (`dsbf.Run`) use it, and `dsbf.profile(previous=)` takes a `run.json` path. `dsbf profile` writes through `Run.write` and gains `--sink`. `dsbf schema export` writes 47 `schema/checks/<id>.schema.json` files (params and output), and `schema check` guards them by each check's `check_version`. Policy schema gating stays with U5-09.
 
 ### U5-04 · Parquet sinks and the consumer schema guide
-- **Status:** todo · **Size:** M · **Depends on:** U5-03
+- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-03
 - **Note from U5-02:** build the findings table from the columns of `Findings.to_polars` (`id`, `check_id`, `code`, `dimension`, `severity`, `confidence`, `subject_kind`, `columns`, `title`, `message`, `tags`), adding the evidence metrics.
 - **Goal:** `findings.parquet`, `profile.parquet` and `results.parquet` with documented, versioned columns, plus a guide for loading them into a warehouse or BI tool.
 - **Decided in U5-00:** the Parquet files carry a `schema_version` in their key-value metadata, and the breaking-change check compares column names, types and nullability against a checked-in schema listing.
 - **Assumptions to confirm:** the profile's per-column stats and histograms flatten to one row per column, with the bins in a list column; a finding's evidence flattens to JSON text or a map, chosen by what DuckDB reads back; `pyarrow` is in the base install (it is).
 - **Steps:** three writers on the U5-03 sink registry; the column listing and its check; the guide in `docs/` with queries that a test runs through DuckDB (a dev dependency only).
 - **Acceptance:** The Parquet schemas have their own breaking-change check. DuckDB reads the example queries in the guide back.
+- **Outcome:** `findings_parquet`, `profile_parquet` and `results_parquet` sinks (the `parquet` alias writes all three) build their tables from fixed Arrow schemas in `dsbf.sinks.tables`, each starting with `run_id` and carrying `schema_version` 0.1.0 in its metadata. Evidence metrics, check params and output are JSON text. `schema/tables.schema.json` lists the columns, `dsbf schema export` writes it and `schema check` guards it by `TABLES_SCHEMA_VERSION`. `docs/CONSUMING_PARQUET.md` has the guide, whose SQL a test runs through DuckDB (dev group only).
 
 ### U5-05 · Static HTML report
 - **Status:** todo · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
@@ -140,6 +141,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Note from U3-09:** give the Typer app one callback that attaches the console handler, with a `--verbosity` option, so every command prints log records. **Note from U1-09:** CLI v2 builds the `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser.
 - **Note from U4-05:** `dsbf.profile()` takes no per-check parameters beyond the `target` setting, so a core check's params (such as `schema`'s expectations) reach it only through `make_plan(params=)` and `dsbf plan --param`; add `params=` to `profile()` and a section to `ProfileConfig`. Eligibility ignores parameters, so `dsbf plan` says `class_imbalance` and `schema` "will run" where they end `not_applicable` without a target or schema: let a check declare the parameters it needs.
 - **Goal:** `dsbf profile` and `dsbf check` (with `--config`, `--set`, `--policy`, `--previous`, `--out` and `--sink`), plus `plan` and `schema export`. Every run prints the health summary. The exit code is 0, or 1 when the policy fails the run, or 2 on a setup error.
+- **Note from U5-04:** `known_sinks()` lists the `parquet` alias after the sinks, so the `--sink` help shows it; fold that into the generated CLI reference.
 - **Decided in U5-00:** `profile` and `check` share one implementation; `check` differs by requiring a policy-aware exit code (a policy is optional, and with none the exit code is 0 as in §7.1). The `extras` CI job's profile step (U4-19 note) folds into U5-09's clean-venv job.
 - **Assumptions to confirm:** `dsbf.config.load_config` takes a `cli` layer; the stopgap `profile` command and `plan` exist (audited 2026-10-25); `schema export` and `schema check` exist, so only their naming is checked against the goal.
 - **Steps:** the Typer callback with `--verbosity`; `--config`, `--set`, `--policy`, `--previous`, `--out`, `--sink`; `params=` on `dsbf.profile` and a `ProfileConfig` section; parameter-needed declarations so `plan` stops saying "will run" for a check that ends `not_applicable`; exit codes 0, 1, 2; generated help and config reference.

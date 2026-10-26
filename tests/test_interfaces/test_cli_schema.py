@@ -295,3 +295,47 @@ def test_removing_a_check_schema_fails(checks_repo):
     result = check()
     assert result.exit_code == 1
     assert "null_rate" in result.output
+
+
+@pytest.fixture
+def tables_repo(checks_repo):
+    """The `checks_repo` fixture's main, with the Parquet column listing published."""
+    return checks_repo
+
+
+def edit_tables(repo: Path, edit, *, version=None) -> None:
+    path = repo / "schema" / "tables.schema.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    edit(document)
+    if version is not None:
+        document["schema_version"] = version
+    path.write_text(schema_text(document), encoding="utf-8")
+
+
+def drop_column(document: dict) -> None:
+    document["tables"]["findings"]["columns"].pop()
+
+
+@pytest.mark.unit
+def test_unchanged_table_schemas_pass(tables_repo):
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_dropping_a_column_without_a_version_bump_fails(tables_repo):
+    edit_tables(tables_repo, drop_column)
+    result = check()
+    assert result.exit_code == 1
+    assert "findings.non_finite_metrics" in result.output
+
+
+@pytest.mark.unit
+def test_dropping_a_column_with_a_minor_bump_passes(tables_repo):
+    edit_tables(tables_repo, drop_column, version="0.2.0")
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_removing_the_table_listing_fails(tables_repo):
+    (tables_repo / "schema" / "tables.schema.json").unlink()
+    assert check().exit_code == 2

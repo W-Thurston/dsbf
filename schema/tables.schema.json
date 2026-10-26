@@ -1,0 +1,431 @@
+{
+  "schema_version": "0.1.0",
+  "tables": {
+    "findings": {
+      "file": "findings.parquet",
+      "description": "One row per finding, in the run's order (most severe first).",
+      "columns": [
+        {
+          "name": "run_id",
+          "type": "string",
+          "nullable": false,
+          "description": "The run these rows belong to; joins the three tables."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "nullable": false,
+          "description": "Stable across runs for the same check, subject and code."
+        },
+        {
+          "name": "check_id",
+          "type": "string",
+          "nullable": false,
+          "description": "The check that raised the finding."
+        },
+        {
+          "name": "check_version",
+          "type": "string",
+          "nullable": false,
+          "description": "The version of that check."
+        },
+        {
+          "name": "code",
+          "type": "string",
+          "nullable": false,
+          "description": "Machine-readable kind, for example `high_null_rate`."
+        },
+        {
+          "name": "dimension",
+          "type": "string",
+          "nullable": false,
+          "description": "The quality dimension: `completeness`, `validity` and so on."
+        },
+        {
+          "name": "severity",
+          "type": "string",
+          "nullable": false,
+          "description": "`info`, `warn`, `error` or `critical`."
+        },
+        {
+          "name": "confidence",
+          "type": "string",
+          "nullable": false,
+          "description": "`low`, `medium` or `high`."
+        },
+        {
+          "name": "subject_kind",
+          "type": "string",
+          "nullable": false,
+          "description": "`dataset`, `column`, `column_pair`, `column_group` or `row_set`."
+        },
+        {
+          "name": "columns",
+          "type": "list<item: string>",
+          "nullable": false,
+          "description": "The columns the finding is about, in order; empty for the dataset."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "nullable": false,
+          "description": "A short heading."
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "nullable": false,
+          "description": "A self-contained sentence with the observed values."
+        },
+        {
+          "name": "tags",
+          "type": "list<item: string>",
+          "nullable": false,
+          "description": "Free-form labels."
+        },
+        {
+          "name": "method",
+          "type": "string",
+          "nullable": false,
+          "description": "The statistic or method behind the evidence."
+        },
+        {
+          "name": "n_used",
+          "type": "int64",
+          "nullable": false,
+          "description": "Rows the evidence used."
+        },
+        {
+          "name": "n_total",
+          "type": "int64",
+          "nullable": false,
+          "description": "Rows the evidence could have used."
+        },
+        {
+          "name": "metrics",
+          "type": "string",
+          "nullable": false,
+          "description": "The evidence metrics as a JSON object; read one with `json_extract`."
+        },
+        {
+          "name": "non_finite_metrics",
+          "type": "list<item: string>",
+          "nullable": false,
+          "description": "Metrics that were NaN or infinite, so null in `metrics`."
+        }
+      ]
+    },
+    "profile": {
+      "file": "profile.parquet",
+      "description": "One row per column, in the dataset's column order.",
+      "columns": [
+        {
+          "name": "run_id",
+          "type": "string",
+          "nullable": false,
+          "description": "The run these rows belong to; joins the three tables."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": false,
+          "description": "The column's name."
+        },
+        {
+          "name": "position",
+          "type": "int64",
+          "nullable": false,
+          "description": "Zero-based place in the dataset."
+        },
+        {
+          "name": "semantic_type",
+          "type": "string",
+          "nullable": false,
+          "description": "The kind of column: `numeric`, `categorical`, `text` and so on."
+        },
+        {
+          "name": "physical_dtype",
+          "type": "string",
+          "nullable": false,
+          "description": "The storage type."
+        },
+        {
+          "name": "semantic_confidence",
+          "type": "string",
+          "nullable": false,
+          "description": "How firmly the semantic type is held."
+        },
+        {
+          "name": "rows",
+          "type": "int64",
+          "nullable": false,
+          "description": "Rows profiled, after any sampling."
+        },
+        {
+          "name": "nulls",
+          "type": "int64",
+          "nullable": false,
+          "description": "Null values."
+        },
+        {
+          "name": "distinct",
+          "type": "int64",
+          "nullable": false,
+          "description": "Distinct non-null values."
+        },
+        {
+          "name": "distinct_exact",
+          "type": "bool",
+          "nullable": false,
+          "description": "False when `distinct` is an estimate."
+        },
+        {
+          "name": "content_hash",
+          "type": "string",
+          "nullable": true,
+          "description": "A 64-bit digest of the values (16 hex digits)."
+        },
+        {
+          "name": "zeros",
+          "type": "int64",
+          "nullable": true,
+          "description": "Zero values (numeric columns)."
+        },
+        {
+          "name": "non_finite",
+          "type": "int64",
+          "nullable": true,
+          "description": "NaN and infinite values (numeric columns)."
+        },
+        {
+          "name": "min",
+          "type": "double",
+          "nullable": true,
+          "description": "Smallest finite value (numeric columns)."
+        },
+        {
+          "name": "max",
+          "type": "double",
+          "nullable": true,
+          "description": "Largest finite value (numeric columns)."
+        },
+        {
+          "name": "mean",
+          "type": "double",
+          "nullable": true,
+          "description": "Mean of the finite values (numeric columns)."
+        },
+        {
+          "name": "std",
+          "type": "double",
+          "nullable": true,
+          "description": "Standard deviation (numeric columns)."
+        },
+        {
+          "name": "skewness",
+          "type": "double",
+          "nullable": true,
+          "description": "Skewness (numeric columns)."
+        },
+        {
+          "name": "kurtosis",
+          "type": "double",
+          "nullable": true,
+          "description": "Excess kurtosis (numeric columns)."
+        },
+        {
+          "name": "quantiles",
+          "type": "list<item: struct<p: double, value: double>>",
+          "nullable": true,
+          "description": "Quantiles as (p, value) pairs in increasing p (numeric columns)."
+        },
+        {
+          "name": "histogram_edges",
+          "type": "list<item: double>",
+          "nullable": true,
+          "description": "Equal-width bin edges: one more than the counts (numeric columns)."
+        },
+        {
+          "name": "histogram_counts",
+          "type": "list<item: int64>",
+          "nullable": true,
+          "description": "Values per bin (numeric columns)."
+        },
+        {
+          "name": "empty_strings",
+          "type": "int64",
+          "nullable": true,
+          "description": "Empty strings (categorical and text columns)."
+        },
+        {
+          "name": "entropy_bits",
+          "type": "double",
+          "nullable": true,
+          "description": "Shannon entropy in bits (categorical, text and boolean columns)."
+        },
+        {
+          "name": "top_values",
+          "type": "list<item: struct<value: string, count: int64>>",
+          "nullable": true,
+          "description": "The most common values as text, most common first (categorical, text)."
+        },
+        {
+          "name": "mode_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "Rows holding the most frequent value (categorical columns)."
+        },
+        {
+          "name": "length_min",
+          "type": "int64",
+          "nullable": true,
+          "description": "Shortest string in characters (categorical and text columns)."
+        },
+        {
+          "name": "length_max",
+          "type": "int64",
+          "nullable": true,
+          "description": "Longest string in characters (categorical and text columns)."
+        },
+        {
+          "name": "length_mean",
+          "type": "double",
+          "nullable": true,
+          "description": "Mean string length (categorical and text columns)."
+        },
+        {
+          "name": "true_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "True values (boolean columns)."
+        },
+        {
+          "name": "false_count",
+          "type": "int64",
+          "nullable": true,
+          "description": "False values (boolean columns)."
+        },
+        {
+          "name": "min_time",
+          "type": "string",
+          "nullable": true,
+          "description": "Earliest instant, ISO 8601 (datetime columns)."
+        },
+        {
+          "name": "max_time",
+          "type": "string",
+          "nullable": true,
+          "description": "Latest instant, ISO 8601 (datetime columns)."
+        },
+        {
+          "name": "timezone",
+          "type": "string",
+          "nullable": true,
+          "description": "The time zone (datetime columns)."
+        },
+        {
+          "name": "inferred_frequency",
+          "type": "string",
+          "nullable": true,
+          "description": "An offset alias such as `D`, when the spacing is regular (datetime)."
+        },
+        {
+          "name": "n_gaps",
+          "type": "int64",
+          "nullable": true,
+          "description": "Gaps in a regular series (datetime columns)."
+        },
+        {
+          "name": "unparsed",
+          "type": "int64",
+          "nullable": true,
+          "description": "Values that did not read as an instant (datetime columns)."
+        }
+      ]
+    },
+    "results": {
+      "file": "results.parquet",
+      "description": "One row per check that was planned, whatever its status.",
+      "columns": [
+        {
+          "name": "run_id",
+          "type": "string",
+          "nullable": false,
+          "description": "The run these rows belong to; joins the three tables."
+        },
+        {
+          "name": "check_id",
+          "type": "string",
+          "nullable": false,
+          "description": "The check."
+        },
+        {
+          "name": "check_version",
+          "type": "string",
+          "nullable": false,
+          "description": "The check's version."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "nullable": false,
+          "description": "How the check ended: `ok`, `skipped`, `error` and so on."
+        },
+        {
+          "name": "findings",
+          "type": "int64",
+          "nullable": false,
+          "description": "Findings the check raised."
+        },
+        {
+          "name": "note_code",
+          "type": "string",
+          "nullable": true,
+          "description": "The code of the first note, which says why a check did not finish."
+        },
+        {
+          "name": "note_message",
+          "type": "string",
+          "nullable": true,
+          "description": "The message of that note."
+        },
+        {
+          "name": "wall_seconds",
+          "type": "double",
+          "nullable": false,
+          "description": "Wall time the executor spent on the check."
+        },
+        {
+          "name": "cpu_seconds",
+          "type": "double",
+          "nullable": true,
+          "description": "Approximate CPU time."
+        },
+        {
+          "name": "peak_memory_bytes",
+          "type": "int64",
+          "nullable": true,
+          "description": "Approximate peak resident memory."
+        },
+        {
+          "name": "cached",
+          "type": "bool",
+          "nullable": false,
+          "description": "True when the result came from the cache."
+        },
+        {
+          "name": "params",
+          "type": "string",
+          "nullable": false,
+          "description": "The resolved parameters as a JSON object."
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "nullable": true,
+          "description": "The check's own output as a JSON object; null when it has none."
+        }
+      ]
+    }
+  }
+}

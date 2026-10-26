@@ -23,9 +23,11 @@ from dsbf.model.schema import (
     typescript_schema,
     unannounced,
 )
+from dsbf.sinks.tables import tables_schema
 
 SCHEMA_FILE = "run.schema.json"
 POLICY_SCHEMA_FILE = "policy.schema.json"
+TABLES_SCHEMA_FILE = "tables.schema.json"
 CHECKS_DIR = "checks"
 CHECK_SCHEMA_SUFFIX = ".schema.json"
 TYPESCRIPT_BANNER = (
@@ -119,6 +121,7 @@ def export_schema(out_dir: Path, *, check: bool) -> dict[Path, str]:
     files = {
         out_dir / SCHEMA_FILE: schema_text(run_schema()),
         out_dir / POLICY_SCHEMA_FILE: schema_text(policy_schema()),
+        out_dir / TABLES_SCHEMA_FILE: schema_text(tables_schema()),
     }
     for check_id, schema in check_schemas().items():
         files[check_schema_path(out_dir, check_id)] = schema_text(schema)
@@ -248,3 +251,58 @@ def base_check_schemas(ref: str, directory: Path) -> dict[str, str]:
             if text is not None:
                 texts[name.removesuffix(CHECK_SCHEMA_SUFFIX)] = text
     return texts
+
+
+def compare_table_schemas(old: dict[str, Any], new: dict[str, Any]) -> list[Change]:
+    """What changed between two column listings of the Parquet tables.
+
+    A removed table or column, a changed type, and a column that stops allowing
+    nulls (or a new column that does not allow them) are breaking; a new nullable
+    column or table is additive. Descriptions are ignored.
+    """
+    changes: list[Change] = []
+    old_tables, new_tables = old["tables"], new["tables"]
+    for name in old_tables.keys() - new_tables.keys():
+        changes.append(Change(name, True, "table removed"))
+    for name in new_tables.keys() - old_tables.keys():
+        changes.append(Change(name, False, "table added"))
+    for name in sorted(old_tables.keys() & new_tables.keys()):
+        was = {c["name"]: c for c in old_tables[name]["columns"]}
+        now = {c["name"]: c for c in new_tables[name]["columns"]}
+        if old_tables[name]["file"] != new_tables[name]["file"]:
+            changes.append(Change(name, True, "file name changed"))
+        for column in was.keys() - now.keys():
+            changes.append(Change(f"{name}.{column}", True, "column removed"))
+        for column in now.keys() - was.keys():
+            breaking = not now[column]["nullable"]
+            note = "column added" + (" and not nullable" if breaking else "")
+            changes.append(Change(f"{name}.{column}", breaking, note))
+        for column in was.keys() & now.keys():
+            before, after = was[column], now[column]
+            if before["type"] != after["type"]:
+                message = f"type {before['type']} became {after['type']}"
+                changes.append(Change(f"{name}.{column}", True, message))
+            if before["nullable"] and not after["nullable"]:
+                changes.append(
+                    Change(f"{name}.{column}", True, "no longer allows nulls")
+                )
+            elif not before["nullable"] and after["nullable"]:
+                changes.append(Change(f"{name}.{column}", True, "now allows nulls"))
+    return changes
+
+
+def compare_tables_with_base(ref: str, schema_file: Path) -> SchemaComparison | None:
+    """Compare the tables listing with its committed version at ``ref``.
+
+    None means the base has no listing yet, so there is nothing to break.
+    """
+    base_text = schema_at_ref(ref, schema_file)
+    if base_text is None:
+        return None
+    if not schema_file.is_file():
+        raise SchemaToolError(f"{schema_file} doesn't exist; run `dsbf schema export`")
+    old, new = json.loads(base_text), json.loads(schema_file.read_text("utf-8"))
+    changes = compare_table_schemas(old, new)
+    old_version, new_version = old["schema_version"], new["schema_version"]
+    problems = unannounced(old_version, new_version, changes)
+    return SchemaComparison(old_version, new_version, changes, problems)

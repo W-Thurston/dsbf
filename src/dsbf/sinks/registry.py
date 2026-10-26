@@ -22,6 +22,7 @@ class Sink:
 
 
 _SINKS: dict[str, Sink] = {}
+_ALIASES: dict[str, tuple[str, ...]] = {}
 
 
 def register_sink(sink: Sink) -> None:
@@ -31,17 +32,25 @@ def register_sink(sink: Sink) -> None:
     _SINKS[sink.name] = sink
 
 
+def register_alias(alias: str, names: tuple[str, ...]) -> None:
+    """Let ``alias`` stand for several sinks, for example one format in many files."""
+    if alias in _SINKS or alias in _ALIASES:
+        raise ValueError(f"sink {alias!r} is already registered")
+    _ALIASES[alias] = names
+
+
 def known_sinks() -> tuple[str, ...]:
-    """The names of the registered sinks, in registration order."""
-    return tuple(_SINKS)
+    """The names a caller may ask for: the sinks in registration order, then aliases."""
+    return (*_SINKS, *_ALIASES)
 
 
 def get_sinks(names: tuple[str, ...]) -> list[Sink]:
-    """The sinks for ``names``; every unknown name is listed in one error."""
-    unknown = [name for name in names if name not in _SINKS]
+    """The sinks for ``names``, aliases expanded; every unknown name is in one error."""
+    unknown = [name for name in names if name not in _SINKS and name not in _ALIASES]
     if unknown:
         raise ValueError(
             f"unknown sink {', '.join(map(repr, unknown))}; "
-            f"known sinks: {', '.join(_SINKS)}"
+            f"known sinks: {', '.join(known_sinks())}"
         )
-    return [_SINKS[name] for name in dict.fromkeys(names)]
+    expanded = [m for name in names for m in _ALIASES.get(name, (name,))]
+    return [_SINKS[name] for name in dict.fromkeys(expanded)]

@@ -76,6 +76,7 @@ dev = [
     # Pandas 2 carried the time zone database the tests read through `zoneinfo`; the
     # runtime reads zones through Polars, which bundles its own.
     "tzdata>=2025.2",
+    "duckdb>=2.0.0",
 ]
 extras = ["pytest>=8.0.0,<10"]
 

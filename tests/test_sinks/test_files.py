@@ -72,7 +72,7 @@ def test_ndjson_of_a_run_without_findings_is_empty(run, tmp_path):
 
 def test_an_unknown_sink_writes_nothing(run, tmp_path):
     with pytest.raises(
-        ValueError, match="unknown sink 'csv'.*known sinks: json, ndjson"
+        ValueError, match="unknown sink 'csv'.*known sinks: json, ndjson, "
     ):
         run.write(tmp_path / "out", sinks=["json", "csv"])
     assert not (tmp_path / "out").exists()
