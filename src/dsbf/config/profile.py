@@ -28,7 +28,9 @@ class SampleConfig(_Section):
     """Profile a sample of the rows rather than all of them."""
 
     rows: int = Field(ge=1, description="How many rows to keep.")
-    strategy: SampleStrategy = SampleStrategy.HEAD
+    strategy: SampleStrategy = Field(
+        default=SampleStrategy.HEAD, description="How the rows are chosen."
+    )
     seed: int | None = Field(
         default=None, description="Seeds a random or stratified sample."
     )
@@ -40,8 +42,12 @@ class SampleConfig(_Section):
 class LimitsConfig(_Section):
     """How long a check, and the whole run, may take; unset leaves a limit off."""
 
-    check_timeout_seconds: float | None = Field(default=None, gt=0)
-    run_budget_seconds: float | None = Field(default=None, gt=0)
+    check_timeout_seconds: float | None = Field(
+        default=None, gt=0, description="Seconds one check may take."
+    )
+    run_budget_seconds: float | None = Field(
+        default=None, gt=0, description="Seconds the whole run may take."
+    )
 
     @field_validator("check_timeout_seconds", "run_budget_seconds")
     @classmethod
@@ -61,7 +67,9 @@ class ProfileConfig(_Section):
         default=(), description="Checks to add by id, whatever the filters say."
     )
     exclude: tuple[str, ...] = Field(default=(), description="Checks to remove by id.")
-    depth: Depth = Depth.STANDARD
+    depth: Depth = Field(
+        default=Depth.STANDARD, description="The most expensive checks to allow."
+    )
     target: str | None = Field(
         default=None, description="The column to predict, for the checks that need one."
     )

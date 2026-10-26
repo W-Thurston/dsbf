@@ -312,7 +312,7 @@ def _noise_floor(
     dimensions=[Dimension.RELATIONSHIP],
     params=MutualInformationParams,
     output=MutualInformationOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.MODERATE,
     extras=["ml"],
     packs=["core"],

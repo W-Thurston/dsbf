@@ -128,7 +128,7 @@ class SeasonalDecompositionOutput(TimeSeriesOutput):
     dimensions=[Dimension.TEMPORAL],
     params=SeasonalDecompositionParams,
     output=SeasonalDecompositionOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
     packs=["core"],

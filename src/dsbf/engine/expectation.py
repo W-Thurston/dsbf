@@ -4,6 +4,7 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 
 from dsbf.engine.check import Check
 from dsbf.engine.eligibility import eligibility
@@ -41,13 +42,15 @@ def expect(
     upstream: Mapping[str, Expectation],
     *,
     has_reference: bool = False,
+    params: Mapping[str, Any] | None = None,
 ) -> Expectation:
     """The status ``check`` is expected to end with.
 
     A missing extra comes first, then a hard requirement that cannot run (``upstream``
     holds the expectations of the checks already judged), then a profile with
     nothing for the check to read, or a reference it needs and ``has_reference`` is
-    false. Without a ``profile`` only the first two are judged.
+    false, or a parameter it requires (``params``) that is unset. Without a
+    ``profile`` only the first two are judged.
     """
     spec = check.spec
     missing = missing_extras(spec.extras)
@@ -74,15 +77,23 @@ def expect(
         )
     if profile is None:
         return Expectation(Expected.WILL_RUN)
-    return _from_profile(check, profile, has_reference)
+    return _from_profile(check, profile, has_reference, params)
 
 
 def _from_profile(
-    check: Check, profile: DatasetProfile, has_reference: bool
+    check: Check,
+    profile: DatasetProfile,
+    has_reference: bool,
+    params: Mapping[str, Any] | None,
 ) -> Expectation:
-    eligible = eligibility(check.spec, profile, has_reference=has_reference)
+    eligible = eligibility(
+        check.spec, profile, has_reference=has_reference, params=params
+    )
     if not eligible.applicable:
         return Expectation(
-            Expected.NOT_APPLICABLE, reason=eligible.reason, columns=eligible.columns
+            Expected.NOT_APPLICABLE,
+            reason=eligible.reason,
+            hint=eligible.hint,
+            columns=eligible.columns,
         )
     return Expectation(Expected.WILL_RUN, columns=eligible.columns)

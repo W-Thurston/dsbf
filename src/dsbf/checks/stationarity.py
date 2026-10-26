@@ -129,7 +129,7 @@ class StationarityOutput(TimeSeriesOutput):
     dimensions=[Dimension.TEMPORAL],
     params=StationarityParams,
     output=StationarityOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
     packs=["core"],

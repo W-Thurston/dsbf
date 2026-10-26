@@ -132,6 +132,34 @@ def profile(
         params=params,
         config=config,
     )
+    return profile_with(
+        source,
+        settings,
+        name=name,
+        reference=reference,
+        cache=cache,
+        hooks=hooks,
+        policy=policy,
+        previous=previous,
+    )
+
+
+def profile_with(
+    source: object,
+    settings: ProfileConfig,
+    *,
+    name: str | None = None,
+    reference: object | None = None,
+    cache: bool | ResultCache | None = None,
+    hooks: Iterable[Hook] = (),
+    policy: Policy | Mapping[str, Any] | str | Path | None = None,
+    previous: Run | str | Path | None = None,
+) -> Run:
+    """Profile ``source`` with settings already built, such as the command line's.
+
+    ``profile`` builds its settings from its arguments and calls this; the other
+    arguments and the errors are those of ``profile``.
+    """
     rules = None if policy is None else load_policy(policy)
     earlier: Run | None = None
     if rules is not None and previous is not None:
@@ -286,7 +314,6 @@ def _check_columns(settings: ProfileConfig, dataset: Dataset) -> None:
         ConfigIssue(
             path,
             f"{column!r} is not a column of the data",
-            "overrides",
             allowed=tuple(dataset.columns) if dataset.n_columns <= 30 else (),
         )
         for path, column in (

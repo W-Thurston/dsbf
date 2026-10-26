@@ -92,7 +92,7 @@ class SchemaOutput(CheckOutputModel):
     dimensions=[Dimension.VALIDITY],
     params=SchemaParams,
     output=SchemaOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["columns"]),
     # The profile keeps ten top values and a minimum and maximum, so allowed values
     # and the count of values out of range are read from the column; one pass each.
     cost=Cost.CHEAP,
@@ -104,7 +104,7 @@ def schema(ctx: CheckContext, params: SchemaParams) -> CheckOutput:
     if not params.columns:
         return ctx.stop(
             CheckStatus.NOT_APPLICABLE,
-            "no_schema",
+            "no_columns",
             "No schema is declared, so there is nothing to validate the data against.",
             severity=Severity.INFO,
             hint="Set the `columns` parameter to a mapping of column name to "

@@ -120,7 +120,7 @@ class AutocorrelationOutput(TimeSeriesOutput):
     dimensions=[Dimension.TEMPORAL],
     params=AutocorrelationParams,
     output=AutocorrelationOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
     packs=["core"],

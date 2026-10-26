@@ -550,7 +550,7 @@ class TestSchema:
         result = self.run()
 
         assert result.status is CheckStatus.NOT_APPLICABLE
-        assert [n.code for n in result.notes] == ["no_schema"]
+        assert [n.code for n in result.notes] == ["no_columns"]
 
     def test_a_schema_the_data_meets_is_valid_with_no_finding(self):
         result = self.run(
