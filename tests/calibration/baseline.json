@@ -4,11 +4,11 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0313],
+      "false_alarm_interval": [0.0, 0.0298],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 40,
-      "trials": 119,
+      "trials": 125,
       "unscored": {
         "not_applicable": 20
       },
@@ -18,27 +18,27 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0157, 0.0984],
-      "false_alarm_rate": 0.04,
-      "false_alarm_trials": 4,
+      "false_alarm_interval": [0.0153, 0.0809],
+      "false_alarm_rate": 0.0357,
+      "false_alarm_trials": 5,
       "plants": 40,
-      "trials": 100,
+      "trials": 140,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
     "bimodality": {
-      "detected": 20,
-      "detection_interval": [0.8389, 1.0],
-      "detection_rate": 1.0,
-      "false_alarm_interval": [0.0115, 0.0945],
-      "false_alarm_rate": 0.0337,
-      "false_alarm_trials": 3,
-      "plants": 20,
-      "trials": 89,
+      "detected": 59,
+      "detection_interval": [0.9114, 0.9971],
+      "detection_rate": 0.9833,
+      "false_alarm_interval": [0.0159, 0.0838],
+      "false_alarm_rate": 0.037,
+      "false_alarm_trials": 5,
+      "plants": 60,
+      "trials": 135,
       "unscored": {},
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "categorical_encoding": {
       "detected": 60,
@@ -62,7 +62,7 @@
       "plants": 20,
       "trials": 40,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
@@ -70,11 +70,11 @@
       "detected": 100,
       "detection_interval": [0.963, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0313],
+      "false_alarm_interval": [0.0, 0.0298],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 100,
-      "trials": 119,
+      "trials": 125,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -82,11 +82,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -100,7 +100,7 @@
       "plants": 20,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.0.0"
     },
@@ -114,7 +114,7 @@
       "plants": 20,
       "trials": 20,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.0.0"
     },
@@ -128,7 +128,7 @@
       "plants": 20,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.1.0"
     },
@@ -136,11 +136,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -148,11 +148,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_interval": [0.0, 0.0323],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 109,
+      "trials": 115,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -166,7 +166,7 @@
       "plants": 120,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.1.0"
     },
@@ -178,7 +178,7 @@
       "plants": 0,
       "trials": 45,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.0.0"
     },
@@ -192,35 +192,35 @@
       "plants": 40,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.0.0"
     },
     "fuzzy_duplicates": {
-      "detected": 70,
-      "detection_interval": [0.6815, 0.8513],
-      "detection_rate": 0.7778,
-      "false_alarm_interval": [0.0079, 0.0657],
-      "false_alarm_rate": 0.0231,
-      "false_alarm_trials": 3,
+      "detected": 100,
+      "detection_interval": [0.963, 1.0],
+      "detection_rate": 1.0,
+      "false_alarm_interval": [0.0, 0.0267],
+      "false_alarm_rate": 0.0,
+      "false_alarm_trials": 0,
       "metrics": {
         "extra_pairs_per_record": {
           "higher_is_better": false,
           "mean": 0.0,
-          "n": 90
+          "n": 100
         },
         "pair_recall": {
           "higher_is_better": true,
-          "mean": 0.7572,
-          "n": 90
+          "mean": 0.9968,
+          "n": 100
         }
       },
-      "plants": 90,
-      "trials": 130,
+      "plants": 100,
+      "trials": 140,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "group_differences": {
       "detected": 20,
@@ -232,7 +232,7 @@
       "plants": 20,
       "trials": 105,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.1.0"
     },
@@ -246,7 +246,7 @@
       "plants": 20,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.0.0"
     },
@@ -254,11 +254,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_interval": [0.0, 0.0323],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 109,
+      "trials": 115,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -278,11 +278,11 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0251],
+      "false_alarm_interval": [0.0, 0.0242],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 40,
-      "trials": 149,
+      "trials": 155,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -290,11 +290,11 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.005, 0.0633],
-      "false_alarm_rate": 0.018,
-      "false_alarm_trials": 2,
+      "false_alarm_interval": [0.0134, 0.0846],
+      "false_alarm_rate": 0.0342,
+      "false_alarm_trials": 4,
       "plants": 40,
-      "trials": 111,
+      "trials": 117,
       "unscored": {
         "not_applicable": 48
       },
@@ -310,17 +310,17 @@
       "plants": 40,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.0.0"
     },
     "ml_readiness": {
       "detected": 0,
-      "false_alarm_interval": [0.0, 0.0527],
+      "false_alarm_interval": [0.0, 0.0487],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 0,
-      "trials": 69,
+      "trials": 75,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -328,15 +328,22 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0428],
-      "false_alarm_rate": 0.0,
-      "false_alarm_trials": 0,
+      "false_alarm_interval": [0.0042, 0.0536],
+      "false_alarm_rate": 0.0152,
+      "false_alarm_trials": 2,
+      "metrics": {
+        "far_share": {
+          "higher_is_better": false,
+          "mean": 0.0,
+          "n": 40
+        }
+      },
       "plants": 20,
-      "trials": 86,
+      "trials": 132,
       "unscored": {
         "not_applicable": 3
       },
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "mutual_information": {
       "detected": 40,
@@ -348,7 +355,7 @@
       "plants": 40,
       "trials": 100,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
@@ -356,11 +363,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -368,11 +375,11 @@
       "detected": 230,
       "detection_interval": [0.9836, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0012, 0.037],
-      "false_alarm_rate": 0.0067,
+      "false_alarm_interval": [0.0011, 0.0356],
+      "false_alarm_rate": 0.0065,
       "false_alarm_trials": 1,
       "plants": 230,
-      "trials": 149,
+      "trials": 155,
       "unscored": {},
       "version": "1.1.0"
     },
@@ -380,11 +387,11 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 40,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -410,7 +417,7 @@
       "plants": 20,
       "trials": 40,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.0.0"
     },
@@ -418,30 +425,30 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0012, 0.037],
-      "false_alarm_rate": 0.0067,
+      "false_alarm_interval": [0.0011, 0.0356],
+      "false_alarm_rate": 0.0065,
       "false_alarm_trials": 1,
       "plants": 40,
-      "trials": 149,
+      "trials": 155,
       "unscored": {},
       "version": "1.1.0"
     },
     "quality_dimensions": {
       "detected": 0,
-      "false_alarm_interval": [0.0, 0.0527],
+      "false_alarm_interval": [0.0, 0.0487],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "metrics": {
         "level": {
           "higher_is_better": true,
           "mean": 1.0,
-          "n": 24
+          "n": 30
         }
       },
       "plants": 0,
-      "trials": 69,
+      "trials": 75,
       "unscored": {},
-      "version": "1.1.0"
+      "version": "1.1.1"
     },
     "reference_drift": {
       "detected": 100,
@@ -453,7 +460,7 @@
       "plants": 100,
       "trials": 120,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
@@ -461,11 +468,11 @@
       "detected": 40,
       "detection_interval": [0.9124, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.034],
+      "false_alarm_interval": [0.0, 0.0323],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 40,
-      "trials": 109,
+      "trials": 115,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -479,7 +486,7 @@
       "plants": 40,
       "trials": 20,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.0.0"
     },
@@ -493,7 +500,7 @@
       "plants": 40,
       "trials": 100,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
@@ -501,27 +508,27 @@
       "detected": 80,
       "detection_interval": [0.9542, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0251],
+      "false_alarm_interval": [0.0, 0.0242],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 80,
-      "trials": 149,
+      "trials": 155,
       "unscored": {},
       "version": "1.1.0"
     },
     "stationarity": {
-      "detected": 37,
-      "detection_interval": [0.8014, 0.9742],
-      "detection_rate": 0.925,
-      "false_alarm_interval": [0.0, 0.037],
+      "detected": 70,
+      "detection_interval": [0.785, 0.9307],
+      "detection_rate": 0.875,
+      "false_alarm_interval": [0.0, 0.0267],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
-      "plants": 40,
-      "trials": 100,
+      "plants": 80,
+      "trials": 140,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "string_anomalies": {
       "detected": 80,
@@ -533,7 +540,7 @@
       "plants": 80,
       "trials": 65,
       "unscored": {
-        "not_applicable": 24
+        "not_applicable": 30
       },
       "version": "1.1.0"
     },
@@ -547,7 +554,7 @@
       "plants": 180,
       "trials": 140,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.1.0"
     },
@@ -561,7 +568,7 @@
       "plants": 20,
       "trials": 40,
       "unscored": {
-        "not_applicable": 69
+        "not_applicable": 75
       },
       "version": "1.0.0"
     },
@@ -569,11 +576,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     },
@@ -593,11 +600,11 @@
       "detected": 20,
       "detection_interval": [0.8389, 1.0],
       "detection_rate": 1.0,
-      "false_alarm_interval": [0.0, 0.0414],
+      "false_alarm_interval": [0.0, 0.0389],
       "false_alarm_rate": 0.0,
       "false_alarm_trials": 0,
       "plants": 20,
-      "trials": 89,
+      "trials": 95,
       "unscored": {},
       "version": "1.0.0"
     }
@@ -611,6 +618,20 @@
     "statsmodels": "0.15.0"
   },
   "scenarios": {
+    "bimodal_few_values": {
+      "bimodality": {
+        "detected": 39,
+        "detection_interval": [0.8712, 0.9956],
+        "detection_rate": 0.975,
+        "false_alarm_interval": [0.0138, 0.165],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 2,
+        "plants": 40,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.1.0"
+      }
+    },
     "binning_planted": {
       "numeric_binning": {
         "detected": 100,
@@ -815,26 +836,52 @@
           },
           "pair_recall": {
             "higher_is_better": true,
-            "mean": 0.9625,
+            "mean": 0.9975,
             "n": 10
           }
         },
         "plants": 10,
         "trials": 10,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
+      }
+    },
+    "fuzzy_blocked_every_token": {
+      "fuzzy_duplicates": {
+        "detected": 10,
+        "detection_interval": [0.7225, 1.0],
+        "detection_rate": 1.0,
+        "false_alarm_interval": [0.0, 0.2775],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "extra_pairs_per_record": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 10
+          },
+          "pair_recall": {
+            "higher_is_better": true,
+            "mean": 0.985,
+            "n": 10
+          }
+        },
+        "plants": 10,
+        "trials": 10,
+        "unscored": {},
+        "version": "1.2.0"
       }
     },
     "fuzzy_look_alikes": {
       "fuzzy_duplicates": {
         "detected": 0,
-        "false_alarm_interval": [0.0524, 0.3604],
-        "false_alarm_rate": 0.15,
-        "false_alarm_trials": 3,
+        "false_alarm_interval": [0.0, 0.1611],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "fuzzy_one_edit": {
@@ -853,14 +900,14 @@
           },
           "pair_recall": {
             "higher_is_better": true,
-            "mean": 0.9725,
+            "mean": 1.0,
             "n": 20
           }
         },
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "fuzzy_two_edits": {
@@ -879,14 +926,14 @@
           },
           "pair_recall": {
             "higher_is_better": true,
-            "mean": 0.9537,
+            "mean": 0.9925,
             "n": 20
           }
         },
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "fuzzy_two_sources": {
@@ -912,14 +959,14 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "fuzzy_two_sources_unaided": {
       "fuzzy_duplicates": {
-        "detected": 0,
-        "detection_interval": [0.0, 0.1611],
-        "detection_rate": 0.0,
+        "detected": 20,
+        "detection_interval": [0.8389, 1.0],
+        "detection_rate": 1.0,
         "false_alarm_interval": [0.0, 0.1611],
         "false_alarm_rate": 0.0,
         "false_alarm_trials": 0,
@@ -931,14 +978,14 @@
           },
           "pair_recall": {
             "higher_is_better": true,
-            "mean": 0.0,
+            "mean": 1.0,
             "n": 20
           }
         },
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "groups_shifted": {
@@ -1018,7 +1065,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "outliers": {
         "detected": 0,
@@ -1029,6 +1076,25 @@
         "trials": 20,
         "unscored": {},
         "version": "1.1.0"
+      }
+    },
+    "joint_skewed_nulls": {
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0138, 0.165],
+        "false_alarm_rate": 0.05,
+        "false_alarm_trials": 2,
+        "metrics": {
+          "far_share": {
+            "higher_is_better": false,
+            "mean": 0.0,
+            "n": 40
+          }
+        },
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.2.0"
       }
     },
     "leakage_exact": {
@@ -1250,7 +1316,7 @@
         "plants": 0,
         "trials": 5,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -1370,7 +1436,7 @@
         "unscored": {
           "not_applicable": 5
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -1450,7 +1516,7 @@
         "plants": 0,
         "trials": 5,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -1522,7 +1588,7 @@
         "plants": 0,
         "trials": 5,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -1582,7 +1648,7 @@
         "unscored": {
           "not_applicable": 5
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -1664,7 +1730,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -1784,7 +1850,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -1864,7 +1930,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -1936,7 +2002,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -1996,7 +2062,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -2078,7 +2144,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -2198,7 +2264,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -2278,7 +2344,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -2350,7 +2416,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -2412,7 +2478,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -2670,7 +2736,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -2790,7 +2856,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -2870,7 +2936,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -2947,7 +3013,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -3007,7 +3073,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -3089,7 +3155,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -3209,7 +3275,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -3289,7 +3355,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -3366,7 +3432,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -3426,7 +3492,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -3508,7 +3574,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -3628,7 +3694,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -3708,7 +3774,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -3785,7 +3851,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -3845,7 +3911,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -3927,7 +3993,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -4047,7 +4113,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -4127,7 +4193,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -4204,7 +4270,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -4264,7 +4330,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -4346,7 +4412,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -4466,7 +4532,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -4546,7 +4612,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -4623,7 +4689,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -4683,7 +4749,426 @@
         "unscored": {
           "not_applicable": 3
         },
+        "version": "1.2.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
         "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_warning_four_of_ten": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.2.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0615, 0.7923],
+        "false_alarm_rate": 0.3333,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.2.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.1"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -4765,7 +5250,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -4885,7 +5370,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -4965,7 +5450,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -5042,7 +5527,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -5102,7 +5587,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -5184,7 +5669,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -5304,7 +5789,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -5384,7 +5869,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -5461,7 +5946,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -5521,7 +6006,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -5603,7 +6088,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "class_imbalance": {
         "detected": 0,
@@ -5723,7 +6208,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "group_differences": {
         "detected": 0,
@@ -5803,7 +6288,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "mutual_information": {
         "detected": 0,
@@ -5880,7 +6365,7 @@
         "plants": 0,
         "trials": 3,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.1.1"
       },
       "reference_drift": {
         "detected": 0,
@@ -5940,7 +6425,426 @@
         "unscored": {
           "not_applicable": 3
         },
+        "version": "1.2.0"
+      },
+      "string_anomalies": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
         "version": "1.1.0"
+      },
+      "target_leakage": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "temporal_gaps": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "text_encoding": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "zeros": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      }
+    },
+    "quality_warning_six_of_ten": {
+      "associations": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "bimodality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "class_imbalance": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "collinearity": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "constant_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "contingency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "datetime_consistency": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "dominant_value": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "duplicate_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "duplicate_rows": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "encoded_columns": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "entropy": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "format_violations": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "fuzzy_duplicates": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.2.0"
+      },
+      "group_differences": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "high_cardinality": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "id_columns": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "kurtosis": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "missingness_mechanism": {
+        "detected": 0,
+        "false_alarm_interval": [0.0615, 0.7923],
+        "false_alarm_rate": 0.3333,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "mixed_types": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "ml_readiness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "multivariate_outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.2.0"
+      },
+      "mutual_information": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "near_zero_variance": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "normality": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "null_rate": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "out_of_bounds": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "outliers": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "quality_dimensions": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "metrics": {
+          "level": {
+            "higher_is_better": true,
+            "mean": 1.0,
+            "n": 3
+          }
+        },
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.1"
+      },
+      "reference_drift": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "sample_size": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.0.0"
+      },
+      "schema": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.0.0"
+      },
+      "seasonal_decomposition": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.1.0"
+      },
+      "skewness": {
+        "detected": 0,
+        "false_alarm_interval": [0.0, 0.5615],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 3,
+        "unscored": {},
+        "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 0,
+        "false_alarm_trials": 0,
+        "plants": 0,
+        "trials": 0,
+        "unscored": {
+          "not_applicable": 3
+        },
+        "version": "1.2.0"
       },
       "string_anomalies": {
         "detected": 0,
@@ -6012,7 +6916,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "id_columns": {
         "detected": 0,
@@ -6227,16 +7131,16 @@
         "version": "1.1.0"
       },
       "stationarity": {
-        "detected": 37,
-        "detection_interval": [0.8014, 0.9742],
-        "detection_rate": 0.925,
+        "detected": 39,
+        "detection_interval": [0.8712, 0.9956],
+        "detection_rate": 0.975,
         "false_alarm_interval": [0.0, 0.1611],
         "false_alarm_rate": 0.0,
         "false_alarm_trials": 0,
         "plants": 40,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "series_short_noise": {
@@ -6268,7 +7172,31 @@
         "plants": 0,
         "trials": 40,
         "unscored": {},
+        "version": "1.2.0"
+      }
+    },
+    "series_walks": {
+      "autocorrelation": {
+        "detected": 0,
+        "false_alarm_interval": [0.0044, 0.1288],
+        "false_alarm_rate": 0.025,
+        "false_alarm_trials": 1,
+        "plants": 0,
+        "trials": 40,
+        "unscored": {},
         "version": "1.1.0"
+      },
+      "stationarity": {
+        "detected": 31,
+        "detection_interval": [0.625, 0.8768],
+        "detection_rate": 0.775,
+        "false_alarm_interval": [0.0, 0.0876],
+        "false_alarm_rate": 0.0,
+        "false_alarm_trials": 0,
+        "plants": 40,
+        "trials": 40,
+        "unscored": {},
+        "version": "1.2.0"
       }
     },
     "series_white_noise": {
@@ -6300,7 +7228,7 @@
         "plants": 0,
         "trials": 40,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       }
     },
     "shapes_planted": {
@@ -6314,7 +7242,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.0.0"
+        "version": "1.1.0"
       },
       "kurtosis": {
         "detected": 20,

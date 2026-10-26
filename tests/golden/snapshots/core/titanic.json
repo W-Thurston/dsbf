@@ -98,7 +98,7 @@
   "bimodality": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [
@@ -1950,7 +1950,7 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [
@@ -2862,7 +2862,7 @@
       ],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 7,
+      "findings": 6,
       "level": "amber"
      },
      "unusable": {
@@ -2879,55 +2879,9 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
-   "findings": [
-    {
-     "check": "multivariate_outliers",
-     "code": "multivariate_anomalies",
-     "id": "d44a433a5ece8920",
-     "metrics": {
-      "contamination": 0.05,
-      "example_rows": [
-       258,
-       737,
-       679,
-       27,
-       88,
-       341,
-       311,
-       742,
-       438,
-       118,
-       299,
-       700,
-       557,
-       716,
-       380,
-       527,
-       689,
-       377,
-       730,
-       779
-      ],
-      "excess": 0.0594164,
-      "far_limit": 22.795,
-      "far_rows": 164,
-      "max_anomaly_score": 0.760383,
-      "n_features": 2,
-      "n_flagged": 45,
-      "reference_max_score": 0.700967
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age",
-       "fare"
-      ],
-      "kind": "row_set"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [],
@@ -3169,7 +3123,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -3256,7 +3210,7 @@
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [],

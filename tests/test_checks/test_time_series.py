@@ -421,6 +421,24 @@ class TestStationarity:
         assert (finding.code, finding.subject.columns) == ("non_stationary", ("walk",))
         assert finding.severity is Severity.WARN
 
+    def test_a_short_walk_kpss_misses_is_read_from_the_trend_tests(
+        self,
+    ):
+        values = np.cumsum(np.random.default_rng(4).normal(size=150))
+
+        result = run_core_check(daily({"walk": values}), "stationarity", time_index="t")
+
+        column = output_of(result)["columns"]["walk"]
+        assert column["kpss"]["rejects"] is False
+        assert not column["adf"]["rejects"] and not column["adf_trend"]["rejects"]
+        assert column["kpss_trend"]["rejects"]
+        assert column["assessment"] == "consistent_with_non_stationary"
+        assert column["confidence"] == "low"
+        (finding,) = result.findings
+        assert finding.code == "non_stationary"
+        assert "with a constant or with a trend" in finding.message
+        assert "kpss_trend_p_value" in finding.evidence.metrics
+
     def test_the_evidence_states_frequency_lag_cap_and_series_length(self):
         result = run_core_check(daily({"walk": walk()}), "stationarity", time_index="t")
 

@@ -13,7 +13,7 @@
   "bimodality": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [
@@ -184,12 +184,12 @@
      "id": "29ff14ae47801c63",
      "metrics": {
       "columns_compared": 1,
-      "coverage": 0.013372,
-      "pairs_compared": 178744,
-      "pairs_flagged": 196,
+      "coverage": 0.0157564,
+      "pairs_compared": 210617,
+      "pairs_flagged": 90,
       "pairs_possible": 13367035,
-      "rows_involved": 306,
-      "rows_involved_share": 0.0548977,
+      "rows_involved": 189,
+      "rows_involved_share": 0.0339074,
       "threshold": 0.92
      },
      "severity": "warn",
@@ -202,7 +202,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [],
@@ -291,7 +291,7 @@
   "multivariate_outliers": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [],
@@ -370,7 +370,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -400,7 +400,7 @@
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [

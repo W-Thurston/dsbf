@@ -31,8 +31,10 @@ class QualityDimension(Contract):
     )
     level: Level | None = Field(
         description="None when the dimension was not assessed. Green is no finding; "
-        "an error is red; a warning is amber, or red above half the columns; a "
-        "finding below a warning is blue up to 30% of the columns and amber above."
+        "an error is red; a warning is amber, or red above half the columns (a "
+        "judgement, not a measured rate; the calibration scenarios put it between 40% "
+        "and 60%); a finding below a warning is blue up to 30% of the columns and "
+        "amber above."
     )
     coverage: float = Field(
         ge=0,
@@ -64,7 +66,7 @@ class QualityDimensionsOutput(CheckOutputModel):
 
 @check(
     id="quality_dimensions",
-    version="1.1.0",
+    version="1.1.1",
     kind="synthesis",
     applies_to=None,
     dimensions=QUALITY_DIMENSIONS,

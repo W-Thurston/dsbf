@@ -90,6 +90,18 @@ def quality_warning_most(seed: int) -> Planted:
     return _expect(_table(np.random.default_rng(seed), 10, 7, 0.3), "red", "level", 7)
 
 
+@scenario("quality_warning_four_of_ten", seeds=3)
+def quality_warning_four_of_ten(seed: int) -> Planted:
+    """Ten columns, four of them 30% null: a minority, just under the red share."""
+    return _expect(_table(np.random.default_rng(seed), 10, 4, 0.3), "amber", "level", 4)
+
+
+@scenario("quality_warning_six_of_ten", seeds=3)
+def quality_warning_six_of_ten(seed: int) -> Planted:
+    """Ten columns, six of them 30% null: a majority, just over the red share."""
+    return _expect(_table(np.random.default_rng(seed), 10, 6, 0.3), "red", "level", 6)
+
+
 @scenario("quality_error_one_of_twenty", seeds=3)
 def quality_error_one_of_twenty(seed: int) -> Planted:
     """Twenty columns, one 95% null."""

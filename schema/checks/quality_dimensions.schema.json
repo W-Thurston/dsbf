@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "quality_dimensions",
   "check_id": "quality_dimensions",
-  "check_version": "1.1.0",
+  "check_version": "1.1.1",
   "params": {
     "additionalProperties": false,
     "description": "The parameters of a check that has none.",
@@ -212,7 +212,7 @@
                 "type": "null"
               }
             ],
-            "description": "None when the dimension was not assessed. Green is no finding; an error is red; a warning is amber, or red above half the columns; a finding below a warning is blue up to 30% of the columns and amber above."
+            "description": "None when the dimension was not assessed. Green is no finding; an error is red; a warning is amber, or red above half the columns (a judgement, not a measured rate; the calibration scenarios put it between 40% and 60%); a finding below a warning is blue up to 30% of the columns and amber above."
           },
           "coverage": {
             "description": "The share of input checks that were read, or had no column of their kind to read. A check that was not planned, failed, or needs a setting the caller did not give lowers it.",

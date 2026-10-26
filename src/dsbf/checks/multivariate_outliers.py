@@ -49,8 +49,10 @@ class MultivariateOutliersParams(CheckParams):
         0.01,
         gt=0,
         lt=1,
-        description="Chance that jointly normal data has a row called far, over all "
-        "its rows. A row is far when its robust Mahalanobis distance is beyond the "
+        description="Chance that data whose columns are jointly normal after ranking "
+        "has a row called far, over all its rows. A row is far when its robust "
+        "Mahalanobis distance, taken on each column's normal scores (so a skewed or "
+        "heavy-tailed column does not make rows far by itself), is beyond the "
         "chi-squared point that leaves `alpha / rows` above it.",
     )
     min_rows_per_column: int = Field(
@@ -64,8 +66,10 @@ class MultivariateOutliersParams(CheckParams):
         ge=0,
         description="How far the forest's top anomaly score must be above the top "
         "score it gives a normal sample of the same shape for a row to stand out. "
-        "Scores vary by 0.01 to 0.02 between samples of that shape, and a median "
-        "standing in for missing values lifts them by 0.02.",
+        "Scores vary by 0.01 to 0.02 between samples of that shape (by up to 0.08 "
+        "now and then at 1 000 rows, so about 5% of clean tables of that size get "
+        "a low-confidence finding), and a median standing in for missing values "
+        "lifts them by 0.02.",
     )
     n_estimators: int = Field(100, ge=10, le=1000, description="Trees in the forest.")
     min_n: int = Field(
@@ -97,9 +101,9 @@ class MultivariateOutliersOutput(CheckOutputModel):
     )
     far_rows: int = Field(
         ge=0,
-        description="Rows whose robust Mahalanobis distance is beyond the limit, so "
-        "far from the rest of the cloud together; 0 too when there are too few rows "
-        "per column to say.",
+        description="Rows whose robust Mahalanobis distance, on the rank-normalised "
+        "columns, is beyond the limit, so far from the rest of the cloud together; 0 "
+        "too when there are too few rows per column to say.",
     )
     far_limit: float | None = Field(
         description="That limit, a squared distance; None when it was not applied."
@@ -114,14 +118,14 @@ class MultivariateOutliersOutput(CheckOutputModel):
     )
     reference_max_score: float = Field(
         description="The highest score the same forest gives a normal sample of the "
-        "same rows and columns: what chance alone reaches."
+        "same rows, columns and correlations: what chance alone reaches."
     )
     excess: float = Field(description="`max_anomaly_score` less that reference.")
 
 
 @check(
     id="multivariate_outliers",
-    version="1.1.0",
+    version="1.2.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -198,9 +202,8 @@ def multivariate_outliers(
             continue
         if width == 0:
             continue
-        # The forest splits each column at random between its smallest and largest
-        # value, so rescaling a column to 0..1 changes nothing it does, and keeps the
-        # values inside the single precision it works in.
+        # Rescaling to 0..1 keeps the values inside the single precision the forest
+        # works in, and the ranks taken below do not depend on it.
         names.append(name)
         scaled.append((column - low) / width)
     if len(names) < _MIN_FEATURES:
@@ -211,7 +214,9 @@ def multivariate_outliers(
             severity=Severity.INFO,
         )
     features = tuple(names)
-    matrix = np.column_stack(scaled)
+    # Ranks, not values: the reference below is a normal sample, so a skewed column
+    # would score above it by its shape alone.
+    matrix = _normal_scores(np.column_stack(scaled))
     forest = IsolationForest(
         n_estimators=params.n_estimators,
         contamination=params.contamination,
@@ -221,8 +226,9 @@ def multivariate_outliers(
     flagged = forest.fit_predict(matrix) == -1
     anomaly = -forest.score_samples(matrix)
     n_flagged = int(np.count_nonzero(flagged))
-    # What chance reaches: the same forest on a normal sample of the same shape.
-    reference = np.random.default_rng(params.seed).standard_normal(matrix.shape)
+    # What chance reaches: the same forest on a normal sample of the same shape and
+    # correlation, since columns that move together isolate rows more easily.
+    reference = _normal_like(matrix, np.random.default_rng(params.seed))
     reference_forest = IsolationForest(
         n_estimators=params.n_estimators,
         contamination=params.contamination,
@@ -263,6 +269,25 @@ def multivariate_outliers(
     if far.size or excess >= params.min_excess:
         _report(ctx, output, params, features, int(positions.size), rows)
     return ctx.output(output)
+
+
+def _normal_like(matrix: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """A normal sample shaped like ``matrix`` with the correlation of its columns."""
+    values, vectors = np.linalg.eigh(np.atleast_2d(np.corrcoef(matrix, rowvar=False)))
+    root = vectors * np.sqrt(np.clip(values, 0, None))
+    return rng.standard_normal(matrix.shape) @ root.T
+
+
+def _normal_scores(matrix: np.ndarray) -> np.ndarray:
+    """Each column replaced by the normal quantile of its rank (ties share a rank).
+
+    A skewed or heavy-tailed column puts rows far from the centre on its own, at a rate
+    the chi-squared limit knows nothing about; ranks leave only how the columns
+    move together, which is what the distance is for. A single column's extreme value is
+    the ``outliers`` check's finding.
+    """
+    ranks = stats.rankdata(matrix, axis=0)
+    return np.asarray(stats.norm.ppf((ranks - 0.5) / matrix.shape[0]))
 
 
 def _robust_distances(matrix: np.ndarray) -> tuple[np.ndarray, int]:
@@ -307,12 +332,13 @@ def _report(
     far = output.far_rows
     evidence = (
         f"{far:,} of {rows_used:,} rows are beyond the limit of a robust Mahalanobis "
-        f"distance (squared {output.far_limit:.1f}), which jointly normal data "
-        f"reaches in {params.alpha:.0%} of samples"
+        f"distance on the rank-normalised columns (squared {output.far_limit:.1f}), "
+        f"which columns that are jointly normal after ranking reach in "
+        f"{params.alpha:.0%} of samples"
         if far
         else f"the forest's highest anomaly score, {output.max_anomaly_score:.2f}, is "
         f"{output.excess:.2f} above the {output.reference_max_score:.2f} it gives a "
-        "normal sample of the same shape"
+        "normal sample of the same shape and correlation"
     )
     ctx.finding(
         code="multivariate_anomalies",

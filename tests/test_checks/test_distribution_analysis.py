@@ -350,8 +350,23 @@ class TestBimodality:
 
         assert column["bic_delta"] > 10
         assert column["separation"] >= 2
-        assert column["valley_ratio"] > 0.75  # the histogram has no dip
+        assert column["valley_ratio"] > 0.75  # the density has no dip
         assert column["bimodal"] is False
+
+    def test_peaks_four_spreads_apart_are_found_in_a_few_hundred_values(self):
+        generator = rng()
+        found = 0
+        for _ in range(10):
+            n = 200
+            values = np.where(
+                generator.random(n) < 0.5,
+                generator.normal(0, 1, n),
+                generator.normal(4, 1, n),
+            )
+            result = run_core_check(pl.DataFrame({"x": values}), "bimodality")
+            found += output_of(result)["columns"]["x"]["bimodal"]
+
+        assert found >= 9
 
     def test_two_peaks_have_a_deep_valley_between_them(self):
         column = output_of(run_core_check(self.frame(), "bimodality"))["columns"][
@@ -494,18 +509,38 @@ class TestMultivariateOutliers:
         assert finding.evidence.method == "robust_mahalanobis+isolation_forest"
         assert not run_core_check(frame, "outliers").findings
 
-    def test_a_far_row_does_not_stretch_the_ruler_that_measures_it(self):
+    def test_far_rows_do_not_stretch_the_ruler_that_measures_them(self):
         generator = rng()
-        frame = pl.DataFrame(
-            {
-                "a": np.r_[generator.normal(size=2000), [9.0, 9.0, 9.0, 9.0]],
-                "b": np.r_[generator.normal(size=2000), [9.0, -9.0, 9.0, -9.0]],
-            }
-        )
+        n = 3000
+        x = generator.normal(size=n)
+        y = 0.9 * x + np.sqrt(0.19) * generator.normal(size=n)
+        broken = generator.choice(n, 90, replace=False)
+        x[broken], y[broken] = 2.2, -2.2
+        frame = pl.DataFrame({"x": x, "y": y})
 
         output = output_of(run_core_check(frame, "multivariate_outliers"))
 
-        assert output["far_rows"] == 4
+        assert output["far_rows"] == 90
+
+    def test_skewed_and_heavy_tailed_columns_do_not_make_rows_far(self):
+        generator = rng()
+        n = 2000
+        shared = (
+            generator.normal(size=(n, 4))
+            @ np.linalg.cholesky(np.full((4, 4), 0.5) + 0.5 * np.eye(4)).T
+        )
+        frame = pl.DataFrame(
+            {
+                "lognormal_a": np.exp(shared[:, 0]),
+                "lognormal_b": np.exp(shared[:, 1]),
+                "cubed_a": shared[:, 2] ** 3,
+                "cubed_b": shared[:, 3] ** 3,
+            }
+        )
+
+        result = run_core_check(frame, "multivariate_outliers")
+
+        assert output_of(result)["far_rows"] == 0
 
     def test_with_too_few_rows_per_column_no_row_is_called_far(self):
         generator = rng()
