@@ -86,7 +86,7 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
 | U4-16 | test: add a calibration suite of planted-truth datasets | #123 | `111bd9c` | 2026-10-24 |
 | U4-17 | feat(cli): run dsbf profile on the new engine | #125 | `73b361a` | 2026-10-25 |
 | U4-18 | refactor!: remove the legacy engine, tasks, store and API | #126 | `d75ded1` | 2026-10-25 |
-| U4-19 | build: shrink the base install to the core dependency set | | | |
+| U4-19 | build: shrink the base install to the core dependency set | #130 | `5c4b0bd` | 2026-10-25 |
 
 ---
 
@@ -223,4 +223,4 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
   - `fuzzy_duplicates` runs at the `deep` depth only, so the standard depth no longer reports fuzzy duplicates, and the `text` extra shows as unavailable only there.
   - Schema: `SCHEMA_VERSION` went from 0.6.0 to 0.10.0 over the phase (notes with a count, profile fields for rule checks, datetime fields, and others), all additive before the 1.x guarantee.
   - U4-19 lifted the caps and moved two golden snapshots: `wide` (three `normality` p-values in the sixth significant digit, scipy 1.18) and `kitchen5k` (`multivariate_outliers` scores, scikit-learn 1.8 and later).
-- **PRs:** #100 (U4-00, `0ef2161`), #101 (U4-01, `91c064d`), #102 (U4-02, `aa2703a`), #103 (U4-03, `97c9d6d`), #104 (U4-04, `56a24d4`), #105 (U4-05, `9f5c5ea`), #108 (U4-06, `63c2bbe`), #109 (U4-07, `a6641b7`), #110 (U4-08, `5bb5a65`), #111 (U4-09, `fb07cdb`), #115 (U4-10, `05de0dd`), #116 (U4-11, `cddf99d`), #117 (U4-12, `70fe926`), #118 (U4-13, `2564726`), #119 (U4-14, `7df24ea`), #121 (U4-15, `9fe8873`), #123 (U4-16, `111bd9c`), #125 (U4-17, `73b361a`), #126 (U4-18, `d75ded1`), and U4-19 (the PR is recorded when the next unit starts).
+- **PRs:** #100 (U4-00, `0ef2161`), #101 (U4-01, `91c064d`), #102 (U4-02, `aa2703a`), #103 (U4-03, `97c9d6d`), #104 (U4-04, `56a24d4`), #105 (U4-05, `9f5c5ea`), #108 (U4-06, `63c2bbe`), #109 (U4-07, `a6641b7`), #110 (U4-08, `5bb5a65`), #111 (U4-09, `fb07cdb`), #115 (U4-10, `05de0dd`), #116 (U4-11, `cddf99d`), #117 (U4-12, `70fe926`), #118 (U4-13, `2564726`), #119 (U4-14, `7df24ea`), #121 (U4-15, `9fe8873`), #123 (U4-16, `111bd9c`), #125 (U4-17, `73b361a`), #126 (U4-18, `d75ded1`), #130 (U4-19, `5c4b0bd`).
