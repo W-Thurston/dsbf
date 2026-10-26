@@ -11,7 +11,7 @@ import zoneinfo
 import pandas as pd
 import polars as pl
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from dsbf.checks import core_pack
@@ -228,12 +228,19 @@ KINDS = [
 ]
 
 
+def _refused(name: str) -> bool:
+    # `dsbf.data.load` refuses these names (tests/test_data/test_errors.py).
+    return name == "*" or (name.startswith("^") and name.endswith("$"))
+
+
 @st.composite
 def frames(draw) -> pd.DataFrame:
     n = draw(st.integers(1, 30))
     names = draw(
         st.lists(
-            st.one_of(st.sampled_from(ODD_NAMES), st.text(max_size=6)),
+            st.one_of(st.sampled_from(ODD_NAMES), st.text(max_size=6)).filter(
+                lambda name: not _refused(name)
+            ),
             min_size=1,
             max_size=6,
             unique=True,
@@ -286,9 +293,6 @@ def test_the_time_series_checks_survive_a_generated_index(frame: pd.DataFrame) -
 def test_reference_drift_survives_a_generated_frame_and_reference(
     frame: pd.DataFrame,
 ) -> None:
-    # The profile fails on a column named `*` beside an all-null one, with or without
-    # a reference; that is not what this test is about.
-    assume("*" not in frame.columns)
     reference = frame.iloc[: max(1, len(frame) // 2)]
     run = run_core(frame, name="generated", reference=reference)
 
