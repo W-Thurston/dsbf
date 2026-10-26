@@ -179,7 +179,9 @@ class Run(Contract):
         """Write the run into ``directory``; return the file each sink wrote.
 
         ``sinks`` names the formats: ``json`` (``run.json``, the whole run) and
-        ``ndjson`` (``findings.ndjson``, one finding per line).
+        ``ndjson`` (``findings.ndjson``, one finding per line), and ``parquet``
+        (``findings.parquet``, ``profile.parquet`` and ``results.parquet``; each of
+        ``findings_parquet``, ``profile_parquet`` and ``results_parquet`` writes one).
 
         Raises:
             ValueError: a sink name is unknown; nothing is written.

@@ -184,7 +184,7 @@ def export_schema(
         False, "--check", help="Write nothing; fail if the files are out of date."
     ),
 ) -> None:
-    """Write the JSON Schemas of a run and a policy, and optionally TypeScript types."""
+    """Write the JSON Schemas and the Parquet column listing; optionally TypeScript."""
     try:
         expected = schema_export.export_schema(out, check=check)
         if types is not None:
@@ -225,6 +225,9 @@ def check_schema(
         check_comparisons = schema_export.compare_check_schemas(
             base, schema_file.parent
         )
+        tables = schema_export.compare_tables_with_base(
+            base, schema_file.parent / schema_export.TABLES_SCHEMA_FILE
+        )
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(2) from error
@@ -247,6 +250,18 @@ def check_schema(
             typer.echo(
                 f"schema {comparison.base_version} to {comparison.version}: "
                 f"{len(comparison.changes)} change(s), announced"
+            )
+    if tables is not None:
+        for change in tables.changes:
+            typer.echo(f"tables: {change}")
+        for problem in tables.problems:
+            failed = True
+            typer.echo(f"error: tables: {problem}", err=True)
+        if tables.problems:
+            typer.echo(
+                "bump TABLES_SCHEMA_VERSION in dsbf/sinks/tables.py, then run "
+                "`dsbf schema export`",
+                err=True,
             )
     for check_id, found in check_comparisons:
         for change in found.changes:
