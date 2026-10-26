@@ -5,6 +5,8 @@ import os
 from dataclasses import replace
 from pathlib import Path
 
+import polars as pl
+
 from dsbf.data.dataset import Dataset
 from dsbf.data.errors import SourceReadError, UnsupportedSourceError
 from dsbf.data.files import read_file
@@ -51,7 +53,7 @@ def load(
             ),
         )
     frame, coerced = adapted
-    _require_columns(frame.width, label)
+    _require_columns(frame, label)
     return Dataset(
         frame=frame,
         name=name or _IN_MEMORY_NAME,
@@ -72,7 +74,7 @@ def _load_file(
         )
     path = Path(text).expanduser()
     frame, used = read_file(path, format)
-    _require_columns(frame.width, str(path))
+    _require_columns(frame, str(path))
     return Dataset(
         frame=frame,
         name=name or path.stem or _IN_MEMORY_NAME,
@@ -80,8 +82,23 @@ def _load_file(
     )
 
 
-def _require_columns(width: int, label: str) -> None:
-    if width == 0:
+def _require_columns(frame: pl.DataFrame, label: str) -> None:
+    if frame.width == 0:
         raise SourceReadError(
             "The source has no columns", source=label, hint="Check that it holds data."
         )
+    unsafe = [name for name in frame.columns if _is_pattern(name)]
+    if unsafe:
+        raise SourceReadError(
+            "Column names Polars reads as patterns cannot be profiled: "
+            + ", ".join(repr(name) for name in unsafe),
+            source=label,
+            hint="Rename them, for example 'star' for '*'.",
+        )
+
+
+def _is_pattern(name: str) -> bool:
+    # `pl.col` reads `*` as every column and `^...$` as a regular expression, and
+    # every Series method selects its own name that way, so a Series called this
+    # fails or selects nothing wherever it goes.
+    return name == "*" or (name.startswith("^") and name.endswith("$"))

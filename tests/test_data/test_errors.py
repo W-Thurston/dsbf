@@ -95,6 +95,13 @@ CASES = [
         SourceReadError,
         "unique",
     ),
+    (
+        "pattern column names",
+        lambda p: pl.DataFrame({"^a$": [1], "*": [2], "ok": [3]}),
+        {},
+        SourceReadError,
+        "Rename",
+    ),
     ("no columns", lambda p: pl.DataFrame(), {}, SourceReadError, "holds data"),
 ]
 
@@ -151,3 +158,28 @@ def test_excel_without_fastexcel_names_the_extra(tmp_path, monkeypatch):
         load(path)
 
     assert caught.value.hint and "dsbf[excel]" in caught.value.hint
+
+
+def test_pattern_column_error_lists_only_the_unsafe_names():
+    with pytest.raises(SourceReadError) as caught:
+        load(pl.DataFrame({"^a$": [1], "*": [2], ".*": [3], "a.b": [4]}))
+
+    assert "'^a$', '*'" in caught.value.message
+    assert ".*'" not in caught.value.message
+
+
+def test_pattern_column_names_are_refused_from_files(tmp_path):
+    path = _write(tmp_path, "p.csv", "^a$,b\n1,2\n")
+
+    with pytest.raises(SourceReadError, match=r"\^a\$"):
+        load(path)
+
+
+def test_names_that_only_resemble_patterns_still_profile():
+    import dsbf
+
+    frame = pl.DataFrame({name: [1, 2, 3] for name in (".*", "a.b", "^a", "a$")})
+
+    run = dsbf.profile(frame)
+
+    assert run.dataset.n_columns == 4
