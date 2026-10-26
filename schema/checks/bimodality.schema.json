@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bimodality",
+  "check_id": "bimodality",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "bic_threshold": {
+        "default": 10.0,
+        "description": "Improvement in BIC from a second component above which it is worth having. Raftery's scale calls 10 'very strong'.",
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_separation": {
+        "default": 2.0,
+        "description": "Ashman's D between the components, from which they are two peaks and not one skewed or heavy-tailed one.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "max_valley_ratio": {
+        "default": 0.75,
+        "description": "Most the histogram may dip between the peaks, as the density at the valley over that at the lower peak. A flat or one-humped column has a ratio near 1, and a mixture fits it as two Gaussians all the same.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_weight": {
+        "default": 0.05,
+        "description": "Share of the values the smaller component must hold.",
+        "exclusiveMaximum": 0.5,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "strong_bic_per_value": {
+        "default": 0.05,
+        "description": "Improvement in BIC per value from which, with a clean separation, the finding is a warning.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "skewness_guard": {
+        "default": 2.0,
+        "description": "|skewness| above which a column is not fitted: a long tail looks like a second component.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 10,
+        "description": "Finite values a column needs.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 10000,
+        "description": "Most values fitted; a larger column is sampled with `seed`.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the mixture fits and of the sample.",
+        "type": "integer"
+      }
+    },
+    "title": "BimodalityParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnBimodality": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Values fitted, after any sampling.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "n_finite": {
+            "description": "Finite values in the column.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "bic_1_component": {
+            "type": "number"
+          },
+          "bic_2_components": {
+            "type": "number"
+          },
+          "bic_delta": {
+            "description": "BIC of one component minus BIC of two; the larger, the better two fit. Unlike either BIC, it doesn't depend on the likelihood's convention.",
+            "type": "number"
+          },
+          "separation": {
+            "description": "Ashman's D: the gap between the means over their spread.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "means": {
+            "description": "Component means, low first.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "stds": {
+            "description": "Component std deviations.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "weights": {
+            "description": "Component shares, in the order of the means.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "valley_ratio": {
+            "description": "Density of the histogram at its lowest point between the component means over that at the lower of the two peaks; 1 when there is no dip.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "bimodal": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "n_used",
+          "n_finite",
+          "bic_1_component",
+          "bic_2_components",
+          "bic_delta",
+          "separation",
+          "means",
+          "stds",
+          "weights",
+          "valley_ratio",
+          "bimodal"
+        ],
+        "title": "ColumnBimodality",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnBimodality"
+        },
+        "description": "Every numeric column that was fitted, by name.",
+        "type": "object"
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns not fitted, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped"
+    ],
+    "title": "BimodalityOutput",
+    "type": "object"
+  }
+}

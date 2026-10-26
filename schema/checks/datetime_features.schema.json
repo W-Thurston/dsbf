@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "datetime_features",
+  "check_id": "datetime_features",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {},
+    "title": "DatetimeFeaturesParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnFeatures": {
+        "additionalProperties": false,
+        "properties": {
+          "features": {
+            "description": "Features worth extracting, in the order they are listed.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "range_days": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "time_of_day": {
+            "type": "boolean"
+          },
+          "distinct_years": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "distinct_months": {
+            "maximum": 12,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "distinct_weekdays": {
+            "maximum": 7,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "distinct_hours": {
+            "maximum": 24,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "features",
+          "range_days",
+          "time_of_day",
+          "distinct_years",
+          "distinct_months",
+          "distinct_weekdays",
+          "distinct_hours"
+        ],
+        "title": "ColumnFeatures",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnFeatures"
+        },
+        "description": "Every datetime column with two or more instants, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "DatetimeFeaturesOutput",
+    "type": "object"
+  }
+}

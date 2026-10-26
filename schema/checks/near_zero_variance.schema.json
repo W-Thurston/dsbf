@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "near_zero_variance",
+  "check_id": "near_zero_variance",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "max_variance": {
+        "default": 0.0001,
+        "description": "Variance (the square of the standard deviation) at or below which a column is reported. It is in the column's own units, so it does not suit a column measured in very small units.",
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "NearZeroVarianceParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnVariance": {
+        "additionalProperties": false,
+        "properties": {
+          "variance": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "low": {
+            "description": "The variance is at most `max_variance`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "variance",
+          "low"
+        ],
+        "title": "ColumnVariance",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnVariance"
+        },
+        "description": "Every numeric column with a standard deviation, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "NearZeroVarianceOutput",
+    "type": "object"
+  }
+}

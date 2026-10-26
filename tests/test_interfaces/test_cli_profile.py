@@ -65,6 +65,37 @@ class TestWritesTheRun:
         assert result.stdout.startswith("DSBF run ")
         assert str(tmp_path / "out" / "run.json") in result.stdout
 
+    def test_sink_adds_the_findings_file(self, csv, tmp_path):
+        result = runner.invoke(
+            app,
+            [
+                "profile",
+                str(csv),
+                "-o",
+                str(tmp_path / "o"),
+                "-s",
+                "json",
+                "-s",
+                "ndjson",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        document = read_run(tmp_path / "o" / "run.json")
+        lines = (tmp_path / "o" / "findings.ndjson").read_text("utf-8").splitlines()
+        assert len(lines) == sum(
+            len(r["findings"]) for r in document["results"].values()
+        )
+
+    def test_an_unknown_sink_fails_before_profiling(self, csv, tmp_path):
+        result = runner.invoke(
+            app, ["profile", str(csv), "-o", str(tmp_path / "o"), "--sink", "csv"]
+        )
+
+        assert result.exit_code == 2
+        assert "unknown sink 'csv'" in result.output
+        assert not (tmp_path / "o").exists()
+
     def test_a_parquet_file_with_a_datetime_column_is_profiled(self, tmp_path):
         start = datetime(2024, 1, 1)
         path = tmp_path / "events.parquet"

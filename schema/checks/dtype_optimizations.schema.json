@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dtype_optimizations",
+  "check_id": "dtype_optimizations",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_saving_bytes": {
+        "default": 1024,
+        "description": "The estimated saving below which a column is not reported, so a small column does not add noise.",
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "title": "DtypeOptimizationsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "DtypeSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "current_dtype": {
+            "type": "string"
+          },
+          "suggested_dtype": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "fits_bool",
+              "fits_int",
+              "dictionary"
+            ],
+            "type": "string"
+          },
+          "estimated_saving_bytes": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current_dtype",
+          "suggested_dtype",
+          "reason",
+          "estimated_saving_bytes"
+        ],
+        "title": "DtypeSuggestion",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "suggestions": {
+        "additionalProperties": {
+          "$ref": "#/$defs/DtypeSuggestion"
+        },
+        "description": "Each column with a narrower type that holds its values, by name.",
+        "type": "object"
+      },
+      "total_saving_bytes": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "suggestions",
+      "total_saving_bytes"
+    ],
+    "title": "DtypeOptimizationsOutput",
+    "type": "object"
+  }
+}

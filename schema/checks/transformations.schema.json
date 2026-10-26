@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "transformations",
+  "check_id": "transformations",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "skew_threshold": {
+        "default": 1.0,
+        "description": "Absolute skewness from which a column is previewed.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "target_skew": {
+        "default": 0.5,
+        "description": "Absolute skewness after the transform at which the simplest transform that gets there is suggested.",
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_reduction": {
+        "default": 0.25,
+        "description": "Share of the absolute skewness a transform must remove to be suggested when none reaches the target, and it must also leave the column under `skew_threshold`.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 10,
+        "description": "Finite values a column needs.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 20000,
+        "description": "Most values transformed; a larger column is sampled with `seed`.",
+        "minimum": 100,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the row sample.",
+        "type": "integer"
+      }
+    },
+    "title": "TransformationsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Candidate": {
+        "additionalProperties": false,
+        "properties": {
+          "skewness_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Skewness of the transformed values; None when it was not tried."
+          },
+          "reduction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of the absolute skewness the transform removes."
+          },
+          "lam": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The fitted power for Box–Cox and Yeo–Johnson."
+          },
+          "skipped": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the transform was not tried or used."
+          }
+        },
+        "required": [
+          "skewness_after",
+          "reduction",
+          "lam",
+          "skipped"
+        ],
+        "title": "Candidate",
+        "type": "object"
+      },
+      "ColumnTransforms": {
+        "additionalProperties": false,
+        "properties": {
+          "skewness_before": {
+            "type": "number"
+          },
+          "n_used": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sampled": {
+            "type": "boolean"
+          },
+          "recommended": {
+            "anyOf": [
+              {
+                "enum": [
+                  "log1p",
+                  "sqrt",
+                  "square",
+                  "box_cox",
+                  "yeo_johnson"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidates": {
+            "additionalProperties": {
+              "$ref": "#/$defs/Candidate"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "skewness_before",
+          "n_used",
+          "sampled",
+          "recommended",
+          "candidates"
+        ],
+        "title": "ColumnTransforms",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnTransforms"
+        },
+        "description": "Each skewed numeric column that was tried, by name.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Skewed columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped_columns"
+    ],
+    "title": "TransformationsOutput",
+    "type": "object"
+  }
+}

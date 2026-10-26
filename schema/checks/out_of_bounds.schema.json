@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "out_of_bounds",
+  "check_id": "out_of_bounds",
+  "check_version": "1.0.0",
+  "params": {
+    "$defs": {
+      "Bounds": {
+        "additionalProperties": false,
+        "description": "The range a column's values belong in; either end may be open.",
+        "properties": {
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "No value may be below this."
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "No value may be above this."
+          }
+        },
+        "title": "Bounds",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "bounds": {
+        "additionalProperties": {
+          "$ref": "#/$defs/Bounds"
+        },
+        "description": "The range of each column, by name. With none, the check is not applicable: a column's name does not say what range it should hold.",
+        "type": "object"
+      }
+    },
+    "title": "OutOfBoundsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnBounds": {
+        "additionalProperties": false,
+        "properties": {
+          "below": {
+            "description": "Values under `min`.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "above": {
+            "description": "Values over `max`.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "lowest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest value under `min`."
+          },
+          "highest": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The highest value over `max`."
+          }
+        },
+        "required": [
+          "below",
+          "above",
+          "lowest",
+          "highest"
+        ],
+        "title": "ColumnBounds",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnBounds"
+        },
+        "description": "Every numeric column that has bounds, by name.",
+        "type": "object"
+      },
+      "unchecked": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns with bounds that were not checked, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "unchecked"
+    ],
+    "title": "OutOfBoundsOutput",
+    "type": "object"
+  }
+}

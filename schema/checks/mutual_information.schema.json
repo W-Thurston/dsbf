@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mutual_information",
+  "check_id": "mutual_information",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The column to predict. `dsbf.profile(target=...)` sets it; without one the check is not applicable."
+      },
+      "n_neighbors": {
+        "default": 3,
+        "description": "Neighbours of the estimator for a continuous feature or target; more smooth the estimate and bias it low.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "min_normalised": {
+        "default": 0.05,
+        "description": "Normalised mutual information from which a feature is reported, when it also exceeds the noise floor.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 30,
+        "description": "Complete rows a feature needs to be measured.",
+        "minimum": 5,
+        "type": "integer"
+      },
+      "max_levels": {
+        "default": 50,
+        "description": "Most levels a class column or target may have; the estimate over more is inflated by the levels' own noise.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 10000,
+        "description": "Most rows read; more are sampled with `seed`. The estimator searches neighbours, so its cost grows faster than the rows.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "null_draws": {
+        "default": 40,
+        "description": "Estimates against a shuffled target that set a noise floor, the highest of them: a truly independent feature passes it about once in `null_draws + 1`. A class feature gets that many of its own, since its estimate is biased up by its number of levels; the continuous features share one floor.",
+        "minimum": 12,
+        "type": "integer"
+      },
+      "null_features": {
+        "default": 6,
+        "description": "Continuous features measured against shuffled targets to set their shared noise floor.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "null_shuffles": {
+        "default": 2,
+        "description": "Shuffled copies of the target each of those features is measured against, or more when that leaves fewer than `null_draws` estimates.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the row sample, shuffles and estimator.",
+        "type": "integer"
+      },
+      "max_findings": {
+        "default": 20,
+        "description": "Most findings; the most informative first.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "MutualInformationParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "FeatureInformation": {
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "type": "string"
+          },
+          "discrete": {
+            "description": "A class column, estimated from counts; else continuous.",
+            "type": "boolean"
+          },
+          "mutual_information": {
+            "description": "Estimated mutual information with the target, in nats.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "normalised": {
+            "description": "The share of the target's uncertainty the feature removes: for a class target its mutual information over the target's entropy; for a numeric one 1 - exp(-2 MI), which is r² for a bivariate normal pair.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "n_used": {
+            "description": "Rows the estimate used: those where the feature and target exist.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "noise_floor": {
+            "description": "The highest mutual information, in nats, this feature shows with a shuffled copy of the target.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "notable": {
+            "description": "At least `min_normalised` and above the noise floor.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "feature",
+          "discrete",
+          "mutual_information",
+          "normalised",
+          "n_used",
+          "noise_floor",
+          "notable"
+        ],
+        "title": "FeatureInformation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "type": "string"
+      },
+      "target_kind": {
+        "enum": [
+          "class",
+          "numeric"
+        ],
+        "type": "string"
+      },
+      "target_classes": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Classes of a class target; None for a numeric one."
+      },
+      "normalisation": {
+        "description": "`target_entropy` for a class target, `information_r2` for a numeric one.",
+        "type": "string"
+      },
+      "features": {
+        "description": "Every feature that was measured, most informative first.",
+        "items": {
+          "$ref": "#/$defs/FeatureInformation"
+        },
+        "type": "array"
+      },
+      "noise_floor": {
+        "additionalProperties": {
+          "type": "number"
+        },
+        "description": "The highest noise floor, in nats, among the features of a kind (`discrete`, `continuous`): what a feature of that kind shows with a shuffled copy of the target.",
+        "type": "object"
+      },
+      "features_tested": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "features_notable": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "untested": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "description": "Features not measured, by reason: too_few_rows or no_variation.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out, with the reason.",
+        "type": "object"
+      },
+      "rows_used": {
+        "description": "Rows read, after any sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_total": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "target",
+      "target_kind",
+      "target_classes",
+      "normalisation",
+      "features",
+      "noise_floor",
+      "features_tested",
+      "features_notable",
+      "untested",
+      "skipped_columns",
+      "rows_used",
+      "rows_total"
+    ],
+    "title": "MutualInformationOutput",
+    "type": "object"
+  }
+}

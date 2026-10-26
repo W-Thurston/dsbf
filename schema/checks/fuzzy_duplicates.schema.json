@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fuzzy_duplicates",
+  "check_id": "fuzzy_duplicates",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "threshold": {
+        "default": 0.92,
+        "description": "Similarity from which two records are near-duplicates: the mean of the normalised Indel ratio of the two values, over the columns either has a value in, weighted by each column's entropy in bits, so one long shared field or a column that hardly varies cannot make unlike rows alike.",
+        "maximum": 1.0,
+        "minimum": 0.5,
+        "type": "number"
+      },
+      "number_cap": {
+        "default": 0.7,
+        "description": "The most two values alike when they are the same but for their digits, which both hold and which differ. The same text with another number (an email's serial, a street number, a sequential code) is evidence of a different record, which a typo in letters is not; 1 reads digits as letters, so a typo in a number is a typo.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "max_label_levels": {
+        "default": 20,
+        "description": "A column with at most this many distinct values is a label and is left out of the row string: it says what kind of record a row is, not which one.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_chars": {
+        "default": 200,
+        "description": "Characters of a value that are compared; the rest is cut.",
+        "maximum": 5000,
+        "minimum": 20,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 50000,
+        "description": "Most distinct records compared; more are sampled with `seed`.",
+        "minimum": 10,
+        "type": "integer"
+      },
+      "max_pairs": {
+        "default": 2000000,
+        "description": "Most pairs scored. When every pair fits all are scored, otherwise only the pairs that share a rare token.",
+        "minimum": 100,
+        "type": "integer"
+      },
+      "max_block_size": {
+        "default": 50,
+        "description": "Most records that may share a token for it to block: a token shared by more says nothing about which records belong together.",
+        "maximum": 1000,
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_seconds": {
+        "default": 60.0,
+        "description": "Seconds of scoring after which the check stops.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "max_pairs_listed": {
+        "default": 20,
+        "description": "Most similar pairs listed in the output.",
+        "maximum": 200,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "warn_share": {
+        "default": 0.01,
+        "description": "Share of rows in a flagged pair above which the finding is a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "exclude_columns": {
+        "default": [],
+        "description": "Columns left out of the comparison, such as a key that differs between copies of a record.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the sample taken above `max_rows`.",
+        "type": "integer"
+      }
+    },
+    "title": "FuzzyDuplicatesParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "NearDuplicatePair": {
+        "additionalProperties": false,
+        "properties": {
+          "first": {
+            "$ref": "#/$defs/PairSide"
+          },
+          "second": {
+            "$ref": "#/$defs/PairSide"
+          },
+          "similarity": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "differing_columns": {
+            "description": "Columns whose values differ, case and padding included.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "values": {
+            "additionalProperties": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              ],
+              "type": "array"
+            },
+            "description": "The differing columns' values on each side, cut short.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "first",
+          "second",
+          "similarity",
+          "differing_columns",
+          "values"
+        ],
+        "title": "NearDuplicatePair",
+        "type": "object"
+      },
+      "PairSide": {
+        "additionalProperties": false,
+        "properties": {
+          "row": {
+            "description": "First row of this record.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows": {
+            "description": "Rows holding this record.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "row",
+          "rows"
+        ],
+        "title": "PairSide",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "description": "The columns compared.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "column_weights": {
+        "additionalProperties": {
+          "type": "number"
+        },
+        "description": "Each compared column's weight in a pair's similarity: its entropy in bits.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out of it, with the reason.",
+        "type": "object"
+      },
+      "rows": {
+        "description": "Rows with a value in at least one column.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "records": {
+        "description": "Distinct rows of those columns.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "records_compared": {
+        "description": "Records after the sample taken above `max_rows`.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "exact_repeats": {
+        "description": "Rows beyond the first of a record; `duplicate_rows` owns them.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "blocking": {
+        "enum": [
+          "exhaustive",
+          "rare_tokens"
+        ],
+        "type": "string"
+      },
+      "pairs_possible": {
+        "description": "Pairs among all the records.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "pairs_compared": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "coverage": {
+        "description": "`pairs_compared` over `pairs_possible`.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "stopped_by": {
+        "anyOf": [
+          {
+            "enum": [
+              "rows",
+              "pairs",
+              "seconds"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The budget that left candidate pairs unscored, if any."
+      },
+      "threshold": {
+        "type": "number"
+      },
+      "pairs_flagged": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_involved": {
+        "description": "Rows holding a record that is in a flagged pair.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "top_pairs": {
+        "description": "The most similar flagged pairs; the bulk is not stored.",
+        "items": {
+          "$ref": "#/$defs/NearDuplicatePair"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "columns",
+      "column_weights",
+      "skipped_columns",
+      "rows",
+      "records",
+      "records_compared",
+      "exact_repeats",
+      "blocking",
+      "pairs_possible",
+      "pairs_compared",
+      "coverage",
+      "stopped_by",
+      "threshold",
+      "pairs_flagged",
+      "rows_involved",
+      "top_pairs"
+    ],
+    "title": "FuzzyDuplicatesOutput",
+    "type": "object"
+  }
+}

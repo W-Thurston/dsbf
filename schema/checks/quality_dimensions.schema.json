@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "quality_dimensions",
+  "check_id": "quality_dimensions",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "description": "The parameters of a check that has none.",
+    "properties": {},
+    "title": "NoParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Action": {
+        "additionalProperties": false,
+        "description": "A step a person or an agent can take, in a form a program can read.",
+        "properties": {
+          "action": {
+            "description": "The verb, for example `transform`.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "columns": {
+            "default": [],
+            "description": "The columns the step applies to; empty for the dataset.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "For example `log1p`."
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "When the step applies, in words."
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "What the step does, in words."
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Anything else the step needs, for example `from_dtype`.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action",
+          "columns",
+          "method",
+          "condition",
+          "detail",
+          "params"
+        ],
+        "title": "Action",
+        "type": "object"
+      },
+      "FindingRef": {
+        "additionalProperties": false,
+        "description": "A finding a dimension counted, by reference.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "check_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/$defs/Severity"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "actions": {
+            "default": [],
+            "description": "The `ml` actions the finding carries.",
+            "items": {
+              "$ref": "#/$defs/Action"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "check_id",
+          "code",
+          "severity",
+          "columns",
+          "title",
+          "actions"
+        ],
+        "title": "FindingRef",
+        "type": "object"
+      },
+      "InputReport": {
+        "additionalProperties": false,
+        "description": "One check a dimension reads, and whether it could be read.",
+        "properties": {
+          "check_id": {
+            "type": "string"
+          },
+          "state": {
+            "description": "`assessed`: the check completed. `nothing_to_check`: the data held no column of the kind it reads. `needs_setting`: it needs what the caller did not give (a target, bounds, a schema or a reference). `not_run`: it was not in the plan. `failed`: it errored, timed out, was skipped or lacked an extra.",
+            "enum": [
+              "assessed",
+              "nothing_to_check",
+              "needs_setting",
+              "not_run",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "findings": {
+            "description": "How many findings the dimension took.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's own note, for any state but `assessed`."
+          }
+        },
+        "required": [
+          "check_id",
+          "state",
+          "findings",
+          "reason"
+        ],
+        "title": "InputReport",
+        "type": "object"
+      },
+      "QualityDimension": {
+        "additionalProperties": false,
+        "properties": {
+          "assessed": {
+            "description": "False when no input check was read or had nothing to read, such as Leakage without a target: the dimension has no level, and green would claim a clean bill.",
+            "type": "boolean"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "green",
+                  "blue",
+                  "amber",
+                  "red"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the dimension was not assessed. Green is no finding; an error is red; a warning is amber, or red above half the columns; a finding below a warning is blue up to 30% of the columns and amber above."
+          },
+          "coverage": {
+            "description": "The share of input checks that were read, or had no column of their kind to read. A check that was not planned, failed, or needs a setting the caller did not give lowers it.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/$defs/InputReport"
+            },
+            "type": "array"
+          },
+          "affected_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "affected_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "pct_affected": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "max_severity": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "findings": {
+            "description": "The findings counted, the most severe first.",
+            "items": {
+              "$ref": "#/$defs/FindingRef"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "assessed",
+          "level",
+          "coverage",
+          "inputs",
+          "affected_columns",
+          "affected_count",
+          "pct_affected",
+          "max_severity",
+          "findings"
+        ],
+        "title": "QualityDimension",
+        "type": "object"
+      },
+      "Severity": {
+        "description": "How much a finding matters, from informational to blocking.",
+        "enum": [
+          "info",
+          "notice",
+          "warn",
+          "error"
+        ],
+        "title": "Severity",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "total_columns": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "dimensions": {
+        "additionalProperties": {
+          "$ref": "#/$defs/QualityDimension"
+        },
+        "description": "Completeness, validity, usability, redundancy and leakage.",
+        "type": "object"
+      },
+      "clean_columns": {
+        "description": "The columns no dimension flags. A column no check could read is here too: read it with the coverage of the dimensions.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "total_columns",
+      "dimensions",
+      "clean_columns"
+    ],
+    "title": "QualityDimensionsOutput",
+    "type": "object"
+  }
+}

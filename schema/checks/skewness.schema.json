@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "skewness",
+  "check_id": "skewness",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "mild": {
+        "default": 0.5,
+        "description": "Absolute skewness above which a column is reported.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "moderate": {
+        "default": 1.0,
+        "description": "Absolute skewness above which the finding is a warning.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "heavy": {
+        "default": 2.0,
+        "description": "Absolute skewness above which the skew is called heavy.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "gap_notice": {
+        "default": 0.35,
+        "description": "Distance between the mean and the median, in standard deviations, from which the gap is reported. A long tail alone puts them up to about a third apart (an exponential, 0.31); a mix of two groups or a column that is mostly zero goes beyond that.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "gap_warn": {
+        "default": 0.45,
+        "description": "Gap, in standard deviations, from which the finding is a warning. The two can be at most 1 apart; a column that is 55% zero and exponential beyond that has a gap of 0.55, and one that is 70% zero 0.42.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "gap_min_variance": {
+        "default": 0.0001,
+        "description": "Variance at or below which the gap is not reported: a column that barely varies is `near_zero_variance`'s to report.",
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "SkewnessParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnSkew": {
+        "additionalProperties": false,
+        "properties": {
+          "skewness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bias-corrected sample skewness; None when undefined, as for a constant column or fewer than three values."
+          },
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "symmetric",
+                  "mild",
+                  "moderate",
+                  "heavy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How far the skewness is from zero; None when it is undefined."
+          },
+          "gap_in_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "|mean − median| in standard deviations; None without a spread."
+          }
+        },
+        "required": [
+          "skewness",
+          "level",
+          "gap_in_std"
+        ],
+        "title": "ColumnSkew",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnSkew"
+        },
+        "description": "Every numeric column with summary statistics, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "SkewnessOutput",
+    "type": "object"
+  }
+}

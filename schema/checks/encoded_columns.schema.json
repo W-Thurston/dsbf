@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "encoded_columns",
+  "check_id": "encoded_columns",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_values": {
+        "default": 10,
+        "description": "Non-null values a column needs to be read.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "min_share": {
+        "default": 0.9,
+        "description": "Share of a column's values that must look encoded.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "detect_uuid": {
+        "default": true,
+        "description": "Look for UUIDs.",
+        "type": "boolean"
+      },
+      "detect_hex": {
+        "default": true,
+        "description": "Look for hexadecimal digests of 32 to 128 digits, and shorter hexadecimal keys (see `min_hex_length`).",
+        "type": "boolean"
+      },
+      "min_hex_length": {
+        "default": 8,
+        "description": "Digits a hexadecimal key of another length than a digest has at least, when it holds both a digit and a letter: a request id or a short commit hash. Random hexadecimal has no digit or no letter in about one value in fifty at 8 digits and almost never at more.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "detect_base64": {
+        "default": true,
+        "description": "Look for base64 strings.",
+        "type": "boolean"
+      },
+      "detect_tokens": {
+        "default": true,
+        "description": "Look for opaque tokens: long strings of one length with a high entropy per character.",
+        "type": "boolean"
+      },
+      "min_base64_length": {
+        "default": 12,
+        "description": "Characters a base64 string has at least; shorter words that mix cases and digits are too often plain text.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "min_token_length": {
+        "default": 16,
+        "description": "Characters an opaque token has at least.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "min_entropy": {
+        "default": 5.0,
+        "description": "Shannon entropy, in bits per character, of the characters of all the candidate tokens together from which they look random. Random letters and digits have 5.2 to 6, email addresses and other text 4.1 to 4.7.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "length_std_threshold": {
+        "default": 2.0,
+        "description": "Largest standard deviation of the length of the opaque tokens: hashes and keys are of one length.",
+        "minimum": 0,
+        "type": "number"
+      },
+      "max_examples": {
+        "default": 3,
+        "description": "Examples listed per column.",
+        "maximum": 10,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "EncodedColumnsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "EncodedColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "description": "The kind most of the encoded values are.",
+            "enum": [
+              "uuid",
+              "hex",
+              "base64",
+              "opaque_token"
+            ],
+            "type": "string"
+          },
+          "share": {
+            "description": "Share of the rows whose value looks encoded.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "That share, by kind.",
+            "type": "object"
+          },
+          "n_used": {
+            "description": "Non-null values read.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "distinct": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "mean_length": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "length_std": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "share",
+          "shares",
+          "n_used",
+          "distinct",
+          "mean_length",
+          "length_std",
+          "examples"
+        ],
+        "title": "EncodedColumn",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/EncodedColumn"
+        },
+        "description": "Each column whose values look encoded, by name.",
+        "type": "object"
+      },
+      "columns_read": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "columns_read",
+      "skipped_columns"
+    ],
+    "title": "EncodedColumnsOutput",
+    "type": "object"
+  }
+}

@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "reference_drift",
+  "check_id": "reference_drift",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "psi_warn": {
+        "default": 0.1,
+        "description": "Population stability index from which a numeric column has moderate drift. 0.1 and 0.25 are the conventional limits.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "psi_high": {
+        "default": 0.25,
+        "description": "Index from which the drift is high.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "tvd_warn": {
+        "default": 0.2,
+        "description": "Total variation distance between the shares of a categorical column's values from which it has moderate drift.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "tvd_high": {
+        "default": 0.4,
+        "description": "Distance from which the drift is high.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "bins": {
+        "default": 10,
+        "description": "Most bins a numeric distribution is compared on. The reference's histogram is merged into bins that each hold at least this share of it; PSI grows with the number of bins, and its usual limits assume about ten.",
+        "maximum": 100,
+        "minimum": 2,
+        "type": "integer"
+      },
+      "significance": {
+        "default": 0.01,
+        "description": "Level of the chi-squared test that the two samples are of one distribution (on the PSI for a number, on the counts for a category). A distance below its limits or a test above this level is no drift: a small sample has a large distance by chance, and a huge one a significant difference too small to matter.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "missing_shift": {
+        "default": 0.1,
+        "description": "Change in a column's share of nulls from which it is reported; twice the change is a warning.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "target": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The column to predict. `dsbf.profile(target=...)` sets it; drift in the target is reported one level higher."
+      },
+      "target_scale": {
+        "default": 0.5,
+        "description": "The target is held to this share of the PSI and distance limits: a model learns the target itself, and a 15-point move in the share of positives is a total variation distance of 0.15.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      }
+    },
+    "title": "ReferenceDriftParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnDrift": {
+        "additionalProperties": false,
+        "properties": {
+          "compared": {
+            "description": "`numeric` or `categorical` by the distance used, `none` when the column's distribution is not compared.",
+            "enum": [
+              "numeric",
+              "categorical",
+              "none"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why a column is not compared, else None."
+          },
+          "drift": {
+            "enum": [
+              "none",
+              "moderate",
+              "high"
+            ],
+            "type": "string"
+          },
+          "psi": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Population stability index; numeric only."
+          },
+          "js_divergence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Jensen–Shannon divergence in bits, between 0 and 1; numeric only."
+          },
+          "tvd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Total variation distance; categorical only."
+          },
+          "null_share": {
+            "type": "number"
+          },
+          "reference_null_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the reference lacks the column."
+          }
+        },
+        "required": [
+          "compared",
+          "reason",
+          "drift",
+          "psi",
+          "js_divergence",
+          "tvd",
+          "null_share",
+          "reference_null_share"
+        ],
+        "title": "ColumnDrift",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "reference": {
+        "type": "string"
+      },
+      "reference_kind": {
+        "type": "string"
+      },
+      "reference_rows": {
+        "description": "Rows of the reference's source.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "reference_rows_profiled": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows": {
+        "description": "Rows profiled in this dataset.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "columns_added": {
+        "description": "Columns of this dataset the reference lacks.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "columns_dropped": {
+        "description": "Columns of the reference this dataset lacks.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnDrift"
+        },
+        "type": "object"
+      },
+      "drifted": {
+        "description": "Columns with moderate or high drift.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "reference",
+      "reference_kind",
+      "reference_rows",
+      "reference_rows_profiled",
+      "rows",
+      "columns_added",
+      "columns_dropped",
+      "columns",
+      "drifted"
+    ],
+    "title": "ReferenceDriftOutput",
+    "type": "object"
+  }
+}

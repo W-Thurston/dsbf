@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "seasonal_decomposition",
+  "check_id": "seasonal_decomposition",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "time_index": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The datetime column that orders the rows. `dsbf.profile(time_index=...)` sets it; without one the check is not applicable."
+      },
+      "frequency": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The spacing of the series, as an offset alias: a count and a unit (`D`, `h`, `min`, `s`, `ms`, `W`: fixed spans; `MS`, `ME`, `QS`, `QE`, `YS`, `YE`: calendar months), such as `15min` or `2W`. Unset, the spacing the profile found in the index is used."
+      },
+      "aggregate": {
+        "default": "mean",
+        "description": "How the values of one period are combined, which is what repeated timestamps and rows finer than the frequency need.",
+        "enum": [
+          "mean",
+          "median",
+          "sum",
+          "last"
+        ],
+        "type": "string"
+      },
+      "max_periods": {
+        "default": 2000,
+        "description": "Most periods used: the most recent ones. Tests on tens of thousands of points reject trivial deviations, and the cost of the lag regressions grows with them.",
+        "maximum": 100000,
+        "minimum": 30,
+        "type": "integer"
+      },
+      "max_fill_share": {
+        "default": 0.2,
+        "description": "Largest share of a series' periods that may be empty and interpolated; a column with more has no series.",
+        "maximum": 0.9,
+        "minimum": 0,
+        "type": "number"
+      },
+      "value_columns": {
+        "default": [],
+        "description": "The numeric columns to analyse; empty is every numeric column.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "period": {
+        "anyOf": [
+          {
+            "maximum": 10000,
+            "minimum": 2,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Periods in one seasonal cycle. Unset, it follows from the frequency: 7 for daily data, 12 for monthly, 4 for quarterly, 24 for hourly."
+      },
+      "robust": {
+        "default": true,
+        "description": "Fit STL robustly, so outliers do not bend the components.",
+        "type": "boolean"
+      },
+      "min_cycles": {
+        "default": 2,
+        "description": "Whole cycles of the period a series needs.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "min_strength": {
+        "default": 0.4,
+        "description": "Smallest trend or seasonal strength that is reported: a moderate one. A series with few cycles or periods must also beat what white noise of its length reaches by chance, which is higher.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "SeasonalDecompositionParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnDecomposition": {
+        "additionalProperties": false,
+        "properties": {
+          "periods": {
+            "description": "Periods in the series: its length.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "periods_filled": {
+            "description": "Empty periods filled by linear interpolation.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows_used": {
+            "description": "Rows whose value entered the series.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "series_start": {
+            "description": "Start of the first period, UTC.",
+            "type": "string"
+          },
+          "period": {
+            "description": "Periods in one seasonal cycle.",
+            "minimum": 2,
+            "type": "integer"
+          },
+          "robust": {
+            "type": "boolean"
+          },
+          "trend_strength": {
+            "description": "1 - Var(remainder) / Var(trend + remainder), at least 0 (Wang, Smith and Hyndman 2006).",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "seasonal_strength": {
+            "description": "1 - Var(remainder) / Var(seasonal + remainder), at least 0.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "remainder_share": {
+            "description": "Variance of the remainder over the variance of the series.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "seasonal_floor": {
+            "description": "The seasonal strength that white noise of this many cycles reaches in 1% of series: a seasonal strength below it is not reported.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "trend_floor": {
+            "description": "The same for the trend strength, by number of periods.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "periods",
+          "periods_filled",
+          "rows_used",
+          "series_start",
+          "period",
+          "robust",
+          "trend_strength",
+          "seasonal_strength",
+          "remainder_share",
+          "seasonal_floor",
+          "trend_floor"
+        ],
+        "title": "ColumnDecomposition",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "index": {
+        "description": "The datetime column that ordered the rows.",
+        "type": "string"
+      },
+      "frequency": {
+        "description": "The period of every series, as an alias.",
+        "type": "string"
+      },
+      "frequency_source": {
+        "enum": [
+          "configured",
+          "profile"
+        ],
+        "type": "string"
+      },
+      "aggregate": {
+        "description": "How the values of one period combine.",
+        "enum": [
+          "mean",
+          "median",
+          "sum",
+          "last"
+        ],
+        "type": "string"
+      },
+      "max_periods": {
+        "description": "Most recent periods used.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "periods_total": {
+        "description": "Periods the index spans, before the cut to `max_periods`.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "truncated": {
+        "description": "The index spans more than `max_periods`.",
+        "type": "boolean"
+      },
+      "timezone": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Time zone of the index; instants are read as UTC."
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns with no result, and why.",
+        "type": "object"
+      },
+      "period": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The period used for every column; None when none was found."
+      },
+      "period_source": {
+        "description": "`configured`, or the frequency it was derived from.",
+        "type": "string"
+      },
+      "min_strength": {
+        "type": "number"
+      },
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnDecomposition"
+        },
+        "description": "Every column that was decomposed, by name. The component series are not kept.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "index",
+      "frequency",
+      "frequency_source",
+      "aggregate",
+      "max_periods",
+      "periods_total",
+      "truncated",
+      "timezone",
+      "skipped",
+      "period",
+      "period_source",
+      "min_strength",
+      "columns"
+    ],
+    "title": "SeasonalDecompositionOutput",
+    "type": "object"
+  }
+}

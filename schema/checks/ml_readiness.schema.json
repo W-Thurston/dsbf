@@ -1,0 +1,344 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ml_readiness",
+  "check_id": "ml_readiness",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "description": "The parameters of a check that has none.",
+    "properties": {},
+    "title": "NoParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Action": {
+        "additionalProperties": false,
+        "description": "A step a person or an agent can take, in a form a program can read.",
+        "properties": {
+          "action": {
+            "description": "The verb, for example `transform`.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "columns": {
+            "default": [],
+            "description": "The columns the step applies to; empty for the dataset.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "For example `log1p`."
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "When the step applies, in words."
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "What the step does, in words."
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Anything else the step needs, for example `from_dtype`.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action",
+          "columns",
+          "method",
+          "condition",
+          "detail",
+          "params"
+        ],
+        "title": "Action",
+        "type": "object"
+      },
+      "FindingRef": {
+        "additionalProperties": false,
+        "description": "A finding a dimension counted, by reference.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "check_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/$defs/Severity"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "actions": {
+            "default": [],
+            "description": "The `ml` actions the finding carries.",
+            "items": {
+              "$ref": "#/$defs/Action"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "check_id",
+          "code",
+          "severity",
+          "columns",
+          "title",
+          "actions"
+        ],
+        "title": "FindingRef",
+        "type": "object"
+      },
+      "InputReport": {
+        "additionalProperties": false,
+        "description": "One check a dimension reads, and whether it could be read.",
+        "properties": {
+          "check_id": {
+            "type": "string"
+          },
+          "state": {
+            "description": "`assessed`: the check completed. `nothing_to_check`: the data held no column of the kind it reads. `needs_setting`: it needs what the caller did not give (a target, bounds, a schema or a reference). `not_run`: it was not in the plan. `failed`: it errored, timed out, was skipped or lacked an extra.",
+            "enum": [
+              "assessed",
+              "nothing_to_check",
+              "needs_setting",
+              "not_run",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "findings": {
+            "description": "How many findings the dimension took.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's own note, for any state but `assessed`."
+          }
+        },
+        "required": [
+          "check_id",
+          "state",
+          "findings",
+          "reason"
+        ],
+        "title": "InputReport",
+        "type": "object"
+      },
+      "ReadinessDimension": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "assessed": {
+            "description": "False when no input check was read or had nothing to read, such as Leakage risk without a target.",
+            "type": "boolean"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "green",
+                  "amber",
+                  "red"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Red for an error, amber for a warning, else green; None when the dimension was not assessed. Unlike a quality dimension it does not depend on how many columns are flagged: one leaking column is enough."
+          },
+          "coverage": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/$defs/InputReport"
+            },
+            "type": "array"
+          },
+          "action_columns": {
+            "description": "The columns with a warning or an error in this dimension.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "advisory_columns": {
+            "description": "The columns whose findings here are all below a warning.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "findings": {
+            "description": "The most severe first, with the `ml` actions each carries.",
+            "items": {
+              "$ref": "#/$defs/FindingRef"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "assessed",
+          "level",
+          "coverage",
+          "inputs",
+          "action_columns",
+          "advisory_columns",
+          "findings"
+        ],
+        "title": "ReadinessDimension",
+        "type": "object"
+      },
+      "Severity": {
+        "description": "How much a finding matters, from informational to blocking.",
+        "enum": [
+          "info",
+          "notice",
+          "warn",
+          "error"
+        ],
+        "title": "Severity",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "gate": {
+        "description": "`not_ready` if an assessed dimension is red, `needs_work` if one is amber, else `ready`; `not_assessed` when no dimension was.",
+        "enum": [
+          "ready",
+          "needs_work",
+          "not_ready",
+          "not_assessed"
+        ],
+        "type": "string"
+      },
+      "complete": {
+        "description": "False when a dimension was not assessed, so `ready` holds only for the dimensions that were.",
+        "type": "boolean"
+      },
+      "unassessed": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "total_columns": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "dimensions": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ReadinessDimension"
+        },
+        "type": "object"
+      },
+      "action_columns": {
+        "description": "Columns with a warning or an error in any dimension.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "advisory_columns": {
+        "description": "Columns with only findings below a warning, in every dimension.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "clean_columns": {
+        "description": "Columns no dimension has a finding for.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "gate",
+      "complete",
+      "unassessed",
+      "total_columns",
+      "dimensions",
+      "action_columns",
+      "advisory_columns",
+      "clean_columns"
+    ],
+    "title": "MlReadinessOutput",
+    "type": "object"
+  }
+}

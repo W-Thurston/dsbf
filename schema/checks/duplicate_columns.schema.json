@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "duplicate_columns",
+  "check_id": "duplicate_columns",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "description": "The parameters of a check that has none.",
+    "properties": {},
+    "title": "NoParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "groups": {
+        "description": "Each set of columns equal to one another, in dataset order.",
+        "items": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "pairs": {
+        "description": "Pairs of equal columns in all the groups.",
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "groups",
+      "pairs"
+    ],
+    "title": "DuplicateColumnsOutput",
+    "type": "object"
+  }
+}

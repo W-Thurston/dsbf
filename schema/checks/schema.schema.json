@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "schema",
+  "check_id": "schema",
+  "check_version": "1.0.0",
+  "params": {
+    "$defs": {
+      "ColumnExpectation": {
+        "additionalProperties": false,
+        "description": "What one column must look like. Every field but `required` is optional.",
+        "properties": {
+          "required": {
+            "default": true,
+            "description": "The column must exist.",
+            "type": "boolean"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "numeric",
+                  "categorical",
+                  "boolean",
+                  "datetime",
+                  "text",
+                  "identifier",
+                  "unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The semantic type the profile gives the column."
+          },
+          "dtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The storage type as the profile names it, such as `Int64` or `String`; compared without regard to case."
+          },
+          "nullable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "False when the column must have no nulls."
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "No value may be below this."
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "No value may be above this."
+          },
+          "allowed": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The only values the column may hold."
+          }
+        },
+        "title": "ColumnExpectation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnExpectation"
+        },
+        "description": "The expectation for each column, by name. With none, the check is not applicable.",
+        "type": "object"
+      }
+    },
+    "title": "SchemaParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "checked": {
+        "description": "Columns with an expectation.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "missing_columns": {
+        "description": "Required columns the data does not have.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "violations": {
+        "additionalProperties": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": "For each column that breaks its expectation, the finding codes.",
+        "type": "object"
+      },
+      "valid": {
+        "description": "The data meets every expectation.",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "checked",
+      "missing_columns",
+      "violations",
+      "valid"
+    ],
+    "title": "SchemaOutput",
+    "type": "object"
+  }
+}

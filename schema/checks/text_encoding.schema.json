@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "text_encoding",
+  "check_id": "text_encoding",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "warn_share": {
+        "default": 0.01,
+        "description": "Share of a column's non-null values above which damaged values are a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "TextEncodingParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnEncoding": {
+        "additionalProperties": false,
+        "properties": {
+          "name_damaged": {
+            "type": "boolean"
+          },
+          "values_with_replacement_char": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "values_with_nul": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name_damaged",
+          "values_with_replacement_char",
+          "values_with_nul"
+        ],
+        "title": "ColumnEncoding",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnEncoding"
+        },
+        "description": "Each column with a damaged name or damaged values, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "TextEncodingOutput",
+    "type": "object"
+  }
+}

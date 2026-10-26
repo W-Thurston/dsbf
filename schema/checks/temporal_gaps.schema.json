@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "temporal_gaps",
+  "check_id": "temporal_gaps",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_instants": {
+        "default": 10,
+        "description": "Distinct values a column needs before its spacing is judged.",
+        "minimum": 3,
+        "type": "integer"
+      },
+      "warn_gaps": {
+        "default": 5,
+        "description": "Gaps from which the finding is a warning rather than information.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "TemporalGapsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnGaps": {
+        "additionalProperties": false,
+        "properties": {
+          "distinct": {
+            "description": "Distinct values of the column.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "first": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The dominant spacing, as an offset alias; None when no step covers half of the intervals."
+          },
+          "n_gaps": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Steps between distinct values longer than 1.5 times the dominant step; None without a dominant step."
+          },
+          "largest_gap_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "distinct",
+          "first",
+          "last",
+          "frequency",
+          "n_gaps",
+          "largest_gap_seconds"
+        ],
+        "title": "ColumnGaps",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnGaps"
+        },
+        "description": "Every datetime column that was judged, by name.",
+        "type": "object"
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns not judged, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped"
+    ],
+    "title": "TemporalGapsOutput",
+    "type": "object"
+  }
+}

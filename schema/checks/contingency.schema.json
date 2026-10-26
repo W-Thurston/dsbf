@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "contingency",
+  "check_id": "contingency",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "alpha": {
+        "default": 0.05,
+        "description": "Significance level of the chi-squared test.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_v": {
+        "default": 0.1,
+        "description": "Bias-corrected V from which a significant pair is reported and gets a bootstrap interval.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 10,
+        "description": "Complete rows a pair needs.",
+        "minimum": 5,
+        "type": "integer"
+      },
+      "max_levels": {
+        "default": 50,
+        "description": "Most levels a column may have to be compared.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "top_n": {
+        "default": 10,
+        "description": "Levels per column printed in a pair's table; the statistics always use all the levels.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "interval_level": {
+        "default": 0.95,
+        "description": "Coverage of the bootstrap interval.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "n_boot": {
+        "default": 500,
+        "description": "Bootstrap resamples of a table.",
+        "minimum": 100,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the bootstrap.",
+        "type": "integer"
+      },
+      "max_pairs": {
+        "default": 5000,
+        "description": "Most pairs tested; with more, the check is skipped rather than test an arbitrary part of them.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_findings": {
+        "default": 50,
+        "description": "Most findings; the strongest pairs first.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "ContingencyParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Interval": {
+        "additionalProperties": false,
+        "description": "A confidence interval for a statistic.",
+        "properties": {
+          "low": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "level": {
+            "description": "Coverage, for example 0.95.",
+            "exclusiveMaximum": 1,
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "low",
+          "high",
+          "level",
+          "method"
+        ],
+        "title": "Interval",
+        "type": "object"
+      },
+      "PairTable": {
+        "additionalProperties": false,
+        "properties": {
+          "first": {
+            "type": "string"
+          },
+          "second": {
+            "type": "string"
+          },
+          "n_used": {
+            "description": "Rows where both columns have a value.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "levels": {
+            "description": "Levels of `first` and of `second` among those rows.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "chi2": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "dof": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "p_value": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "cramers_v": {
+            "description": "Plain V, which grows with the number of levels.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "cramers_v_corrected": {
+            "description": "V with Bergsma's (2013) correction for small samples.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "strength": {
+            "description": "The band of the corrected V.",
+            "enum": [
+              "negligible",
+              "weak",
+              "moderate",
+              "strong"
+            ],
+            "type": "string"
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percentile bootstrap interval of the corrected V; only for a pair that reaches `min_v`."
+          },
+          "sparse_share": {
+            "description": "Share of cells with an expected count under 5.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "table": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "description": "Counts for the most frequent levels, `first` down the side.",
+            "type": "object"
+          },
+          "truncated": {
+            "description": "The table leaves out some levels.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "first",
+          "second",
+          "n_used",
+          "levels",
+          "chi2",
+          "dof",
+          "p_value",
+          "cramers_v",
+          "cramers_v_corrected",
+          "strength",
+          "interval",
+          "sparse_share",
+          "table",
+          "truncated"
+        ],
+        "title": "PairTable",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "pairs": {
+        "description": "Every pair that was tested.",
+        "items": {
+          "$ref": "#/$defs/PairTable"
+        },
+        "type": "array"
+      },
+      "pairs_tested": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "pairs_flagged": {
+        "description": "Pairs that are significant and reach `min_v`.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "untested": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "description": "Pairs not tested, by reason: too_few_rows or too_few_levels.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "pairs",
+      "pairs_tested",
+      "pairs_flagged",
+      "untested",
+      "skipped_columns"
+    ],
+    "title": "ContingencyOutput",
+    "type": "object"
+  }
+}

@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "autocorrelation",
+  "check_id": "autocorrelation",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "time_index": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The datetime column that orders the rows. `dsbf.profile(time_index=...)` sets it; without one the check is not applicable."
+      },
+      "frequency": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The spacing of the series, as an offset alias: a count and a unit (`D`, `h`, `min`, `s`, `ms`, `W`: fixed spans; `MS`, `ME`, `QS`, `QE`, `YS`, `YE`: calendar months), such as `15min` or `2W`. Unset, the spacing the profile found in the index is used."
+      },
+      "aggregate": {
+        "default": "mean",
+        "description": "How the values of one period are combined, which is what repeated timestamps and rows finer than the frequency need.",
+        "enum": [
+          "mean",
+          "median",
+          "sum",
+          "last"
+        ],
+        "type": "string"
+      },
+      "max_periods": {
+        "default": 2000,
+        "description": "Most periods used: the most recent ones. Tests on tens of thousands of points reject trivial deviations, and the cost of the lag regressions grows with them.",
+        "maximum": 100000,
+        "minimum": 30,
+        "type": "integer"
+      },
+      "max_fill_share": {
+        "default": 0.2,
+        "description": "Largest share of a series' periods that may be empty and interpolated; a column with more has no series.",
+        "maximum": 0.9,
+        "minimum": 0,
+        "type": "number"
+      },
+      "value_columns": {
+        "default": [],
+        "description": "The numeric columns to analyse; empty is every numeric column.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "alpha": {
+        "default": 0.05,
+        "description": "Significance level of the confidence bands: Bartlett's for the ACF, ±z/√n for the PACF.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "omnibus_alpha": {
+        "default": 0.01,
+        "description": "Level of the Ljung-Box test over the first lags that a column must fail before any one lag is reported. With 20 or 40 lags a lag lies outside its band by chance in most white-noise series, so a lag counts only in a series that is not white noise as a whole.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "max_lags": {
+        "default": 40,
+        "description": "Most lags computed; n periods allow at most n // 2 - 1.",
+        "maximum": 365,
+        "minimum": 2,
+        "type": "integer"
+      },
+      "min_abs": {
+        "default": 0.2,
+        "description": "Smallest |autocorrelation| a lag is flagged at, besides lying outside the band: over many periods a negligible lag is significant.",
+        "exclusiveMaximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_periods": {
+        "default": 20,
+        "description": "Periods a series needs to be analysed.",
+        "minimum": 10,
+        "type": "integer"
+      }
+    },
+    "title": "AutocorrelationParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnAutocorrelation": {
+        "additionalProperties": false,
+        "properties": {
+          "periods": {
+            "description": "Periods in the series: its length.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "periods_filled": {
+            "description": "Empty periods filled by linear interpolation.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows_used": {
+            "description": "Rows whose value entered the series.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "series_start": {
+            "description": "Start of the first period, UTC.",
+            "type": "string"
+          },
+          "max_lags": {
+            "description": "Lags computed for this series' length.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "acf": {
+            "description": "Autocorrelation at lags 0 to max_lags.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "acf_band": {
+            "description": "Half-width of the confidence band around zero at each lag.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "pacf": {
+            "description": "Partial autocorrelation at lags 0 to max_lags.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "pacf_band": {
+            "description": "Half-width of the PACF's band.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "ljung_box_p": {
+            "description": "Ljung-Box test of no autocorrelation over the first lags: up to 20, and at most a fifth of the periods.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "significant_acf": {
+            "description": "Lags from 1 whose ACF is outside the band.",
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "significant_pacf": {
+            "description": "Lags from 1 whose PACF is outside the band.",
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "flagged_acf": {
+            "description": "Significant ACF lags with |ACF| of at least `min_abs`, in a series the Ljung-Box test says is not white noise.",
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "flagged_pacf": {
+            "description": "Significant PACF lags with |PACF| of at least `min_abs`, in such a series.",
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "strongest_lag": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The flagged ACF lag with the largest |ACF|; None without one."
+          }
+        },
+        "required": [
+          "periods",
+          "periods_filled",
+          "rows_used",
+          "series_start",
+          "max_lags",
+          "acf",
+          "acf_band",
+          "pacf",
+          "pacf_band",
+          "ljung_box_p",
+          "significant_acf",
+          "significant_pacf",
+          "flagged_acf",
+          "flagged_pacf",
+          "strongest_lag"
+        ],
+        "title": "ColumnAutocorrelation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "index": {
+        "description": "The datetime column that ordered the rows.",
+        "type": "string"
+      },
+      "frequency": {
+        "description": "The period of every series, as an alias.",
+        "type": "string"
+      },
+      "frequency_source": {
+        "enum": [
+          "configured",
+          "profile"
+        ],
+        "type": "string"
+      },
+      "aggregate": {
+        "description": "How the values of one period combine.",
+        "enum": [
+          "mean",
+          "median",
+          "sum",
+          "last"
+        ],
+        "type": "string"
+      },
+      "max_periods": {
+        "description": "Most recent periods used.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "periods_total": {
+        "description": "Periods the index spans, before the cut to `max_periods`.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "truncated": {
+        "description": "The index spans more than `max_periods`.",
+        "type": "boolean"
+      },
+      "timezone": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Time zone of the index; instants are read as UTC."
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns with no result, and why.",
+        "type": "object"
+      },
+      "alpha": {
+        "type": "number"
+      },
+      "min_abs": {
+        "type": "number"
+      },
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnAutocorrelation"
+        },
+        "description": "Every column that was analysed, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "index",
+      "frequency",
+      "frequency_source",
+      "aggregate",
+      "max_periods",
+      "periods_total",
+      "truncated",
+      "timezone",
+      "skipped",
+      "alpha",
+      "min_abs",
+      "columns"
+    ],
+    "title": "AutocorrelationOutput",
+    "type": "object"
+  }
+}

@@ -212,3 +212,86 @@ def test_an_unknown_base_is_an_error_not_a_pass(repo):
 
     assert result.exit_code == 2
     assert "not a git revision" in result.output
+
+
+# --- check schemas -----------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_export_writes_one_schema_per_core_check(tmp_path):
+    result = runner.invoke(app, ["schema", "export", "--out", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    written = sorted((tmp_path / "checks").glob("*.schema.json"))
+    assert len(written) == len(schema_export.check_schemas())
+    document = json.loads((tmp_path / "checks" / "null_rate.schema.json").read_text())
+    assert document["check_id"] == "null_rate"
+    assert set(document) >= {"check_version", "params", "output"}
+
+
+@pytest.mark.unit
+def test_the_committed_check_schemas_are_current():
+    result = runner.invoke(
+        app, ["schema", "export", "--out", str(REPO / "schema"), "--check"]
+    )
+    assert result.exit_code == 0, result.output
+
+
+@pytest.mark.unit
+def test_check_mode_flags_a_schema_file_with_no_check(tmp_path):
+    runner.invoke(app, ["schema", "export", "--out", str(tmp_path)])
+    (tmp_path / "checks" / "gone.schema.json").write_text("{}", encoding="utf-8")
+    result = runner.invoke(app, ["schema", "export", "--out", str(tmp_path), "--check"])
+    assert result.exit_code == 1
+    assert "gone.schema.json" in result.output
+    runner.invoke(app, ["schema", "export", "--out", str(tmp_path)])
+    assert not (tmp_path / "checks" / "gone.schema.json").exists()
+
+
+@pytest.fixture
+def checks_repo(repo):
+    """The `repo` fixture's main, with the check schemas published too."""
+    runner.invoke(app, ["schema", "export", "--out", str(repo / "schema")])
+    for command in (["add", "-A"], ["commit", "-q", "-m", "checks"]):
+        subprocess.run([*GIT, *command], cwd=repo, check=True)
+    return repo
+
+
+def edit_check(repo: Path, check_id: str, edit, *, version=None) -> None:
+    path = repo / "schema" / "checks" / f"{check_id}.schema.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    edit(document)
+    if version is not None:
+        document["check_version"] = version
+    path.write_text(schema_text(document), encoding="utf-8")
+
+
+def drop_output_property(document: dict) -> None:
+    properties = document["output"]["properties"]
+    properties.pop(next(iter(properties)))
+
+
+@pytest.mark.unit
+def test_unchanged_check_schemas_pass(checks_repo):
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_a_breaking_output_change_without_a_version_bump_fails(checks_repo):
+    edit_check(checks_repo, "null_rate", drop_output_property)
+    result = check()
+    assert result.exit_code == 1
+    assert "null_rate" in result.output
+
+
+@pytest.mark.unit
+def test_a_breaking_output_change_with_a_major_bump_passes(checks_repo):
+    edit_check(checks_repo, "null_rate", drop_output_property, version="99.0.0")
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_removing_a_check_schema_fails(checks_repo):
+    (checks_repo / "schema" / "checks" / "null_rate.schema.json").unlink()
+    result = check()
+    assert result.exit_code == 1
+    assert "null_rate" in result.output

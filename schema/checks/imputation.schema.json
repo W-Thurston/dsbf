@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "imputation",
+  "check_id": "imputation",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_null_share": {
+        "default": 0.01,
+        "description": "Share of rows that must be null for a column to be advised.",
+        "exclusiveMaximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "skew_threshold": {
+        "default": 1.0,
+        "description": "Absolute skewness from which the median, not the mean, fills a numeric column.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "ImputationParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnImputation": {
+        "additionalProperties": false,
+        "properties": {
+          "semantic_type": {
+            "type": "string"
+          },
+          "null_share": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "tier": {
+            "description": "From the severity `null_rate` gave the column: info is moderate, warn significant, error severe, and a share it did not report is low.",
+            "enum": [
+              "low",
+              "moderate",
+              "significant",
+              "severe"
+            ],
+            "type": "string"
+          },
+          "strategy": {
+            "enum": [
+              "mean",
+              "median",
+              "mode",
+              "constant_missing",
+              "forward_fill",
+              "iterative",
+              "indicator_only",
+              "indicator_and_drop"
+            ],
+            "type": "string"
+          },
+          "add_indicator": {
+            "type": "boolean"
+          },
+          "mechanism": {
+            "anyOf": [
+              {
+                "enum": [
+                  "depends_on_observed",
+                  "no_dependence_found",
+                  "untestable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What `missingness_mechanism` found; None when it did not analyse the column or did not run."
+          }
+        },
+        "required": [
+          "semantic_type",
+          "null_share",
+          "tier",
+          "strategy",
+          "add_indicator",
+          "mechanism"
+        ],
+        "title": "ColumnImputation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnImputation"
+        },
+        "description": "Each column with nulls that can be filled, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "ImputationOutput",
+    "type": "object"
+  }
+}

@@ -4,6 +4,7 @@
 import re
 from collections.abc import Iterable
 from functools import cached_property
+from pathlib import Path
 from typing import Self
 from uuid import UUID
 
@@ -171,6 +172,33 @@ class Run(Contract):
             f"{len(self.results)} checks"
         )
         return self.health.render(header=header, pointer=pointer, notes=self.notes)
+
+    def write(
+        self, directory: str | Path, sinks: Iterable[str] = ("json",)
+    ) -> dict[str, Path]:
+        """Write the run into ``directory``; return the file each sink wrote.
+
+        ``sinks`` names the formats: ``json`` (``run.json``, the whole run) and
+        ``ndjson`` (``findings.ndjson``, one finding per line).
+
+        Raises:
+            ValueError: a sink name is unknown; nothing is written.
+        """
+        from dsbf.sinks import write_run  # noqa: PLC0415 (the model stays free of I/O)
+
+        return write_run(self, directory, sinks)
+
+    @classmethod
+    def read(cls, path: str | Path) -> Self:
+        """Read a run back from a ``run.json`` or the directory that holds one.
+
+        Raises:
+            RunReadError: the file is missing, is not JSON, or does not match the
+                run schema (including a schema from another major version).
+        """
+        from dsbf.sinks import read_run  # noqa: PLC0415
+
+        return read_run(path)  # type: ignore[return-value]
 
     def _repr_html_(self) -> str:
         """What a notebook shows: the health summary and the top findings."""

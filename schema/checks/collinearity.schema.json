@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "collinearity",
+  "check_id": "collinearity",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "vif_threshold": {
+        "default": 10.0,
+        "description": "VIF from which a column is a warning.",
+        "exclusiveMinimum": 1,
+        "type": "number"
+      },
+      "moderate_threshold": {
+        "default": 5.0,
+        "description": "VIF from which a column is reported at all.",
+        "exclusiveMinimum": 1,
+        "type": "number"
+      },
+      "max_missing_share": {
+        "default": 0.4,
+        "description": "Share of missing values above which a column is left out before any row is dropped, so a sparse column does not cost every row.",
+        "exclusiveMaximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_rows": {
+        "default": 10,
+        "description": "Complete rows needed, at least the number of columns plus one.",
+        "minimum": 3,
+        "type": "integer"
+      },
+      "max_columns": {
+        "default": 200,
+        "description": "Most columns; with more, the check is skipped rather than read an arbitrary part of them.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 100000,
+        "description": "Most rows read; a larger frame is sampled with `seed`.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the row sample.",
+        "type": "integer"
+      },
+      "max_findings": {
+        "default": 50,
+        "description": "Most findings; the highest VIFs first.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "CollinearityParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnVif": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "vif": {
+            "description": "1 for a column the others do not predict.",
+            "maximum": 1000000.0,
+            "minimum": 1,
+            "type": "number"
+          },
+          "capped": {
+            "description": "The column is an exact linear combination of others and its VIF is reported as 1e+06.",
+            "type": "boolean"
+          },
+          "tier": {
+            "description": "low under 5, moderate, high from 10, severe from 20.",
+            "enum": [
+              "low",
+              "moderate",
+              "high",
+              "severe"
+            ],
+            "type": "string"
+          },
+          "partners": {
+            "description": "The columns it correlates with most; empty for a low VIF.",
+            "items": {
+              "$ref": "#/$defs/Partner"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "column",
+          "vif",
+          "capped",
+          "tier",
+          "partners"
+        ],
+        "title": "ColumnVif",
+        "type": "object"
+      },
+      "Partner": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "r": {
+            "description": "Pearson r with the column.",
+            "maximum": 1,
+            "minimum": -1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "column",
+          "r"
+        ],
+        "title": "Partner",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "definition": {
+        "description": "How the VIF is defined: `vif_centred`.",
+        "type": "string"
+      },
+      "columns": {
+        "description": "Every column the VIF is defined for.",
+        "items": {
+          "$ref": "#/$defs/ColumnVif"
+        },
+        "type": "array"
+      },
+      "n_used": {
+        "description": "Rows with a value in every column used, after sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "n_columns": {
+        "description": "Columns the VIFs were computed from.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_total": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_read": {
+        "description": "Rows read, after any sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "columns_flagged": {
+        "description": "Columns at or above the threshold.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out before rows were dropped, with the reason.",
+        "type": "object"
+      },
+      "dropped_for_rows": {
+        "description": "Columns dropped, sparsest first, so that enough rows were left with a value in every column.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "condition_number": {
+        "description": "Largest over smallest eigenvalue of the correlation matrix.",
+        "minimum": 1,
+        "type": "number"
+      }
+    },
+    "required": [
+      "definition",
+      "columns",
+      "n_used",
+      "n_columns",
+      "rows_total",
+      "rows_read",
+      "columns_flagged",
+      "skipped_columns",
+      "dropped_for_rows",
+      "condition_number"
+    ],
+    "title": "CollinearityOutput",
+    "type": "object"
+  }
+}

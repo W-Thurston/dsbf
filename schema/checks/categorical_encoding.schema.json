@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "categorical_encoding",
+  "check_id": "categorical_encoding",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "max_one_hot": {
+        "default": 10,
+        "description": "Most distinct values for which one-hot columns are suggested.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "min_rows_per_level": {
+        "default": 20,
+        "description": "Rows per distinct value below which one-hot columns would be too sparse to estimate, so the frequency of each value is suggested.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "target_folds": {
+        "default": 5,
+        "description": "Folds of the out-of-fold target encoding suggested for a column that predicts the target.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "target_smoothing": {
+        "default": 20,
+        "description": "Rows of prior the target encoding adds to each value, which pulls the mean of a rare value toward the overall mean.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "CategoricalEncodingParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnEncoding": {
+        "additionalProperties": false,
+        "properties": {
+          "cardinality": {
+            "description": "Distinct non-null values.",
+            "minimum": 2,
+            "type": "integer"
+          },
+          "rows_per_level": {
+            "description": "Non-null rows per distinct value.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "strategy": {
+            "enum": [
+              "binary",
+              "one_hot",
+              "frequency"
+            ],
+            "type": "string"
+          },
+          "rarest_level_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows of the least frequent value; known only when the profile lists every value."
+          },
+          "target_encoding": {
+            "description": "An out-of-fold target encoding is suggested too: the column has a frequency encoding, `mutual_information` finds it informative about the target, and `target_leakage` does not flag it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "cardinality",
+          "rows_per_level",
+          "strategy",
+          "rarest_level_count",
+          "target_encoding"
+        ],
+        "title": "ColumnEncoding",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnEncoding"
+        },
+        "description": "Each categorical column with at least two values, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "CategoricalEncodingOutput",
+    "type": "object"
+  }
+}

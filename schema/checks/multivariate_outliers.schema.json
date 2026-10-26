@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "multivariate_outliers",
+  "check_id": "multivariate_outliers",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "contamination": {
+        "default": 0.05,
+        "description": "Share of the rows the forest ranks as most anomalous. It flags exactly this share of whatever it is given, so the count is only a ranking; whether any row stands out is `alpha` and `min_excess`.",
+        "exclusiveMinimum": 0,
+        "maximum": 0.5,
+        "type": "number"
+      },
+      "alpha": {
+        "default": 0.01,
+        "description": "Chance that jointly normal data has a row called far, over all its rows. A row is far when its robust Mahalanobis distance is beyond the chi-squared point that leaves `alpha / rows` above it.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_rows_per_column": {
+        "default": 15,
+        "description": "Rows per column below which no row is called far: the spread of so few rows is too loose a ruler.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "min_excess": {
+        "default": 0.05,
+        "description": "How far the forest's top anomaly score must be above the top score it gives a normal sample of the same shape for a row to stand out. Scores vary by 0.01 to 0.02 between samples of that shape, and a median standing in for missing values lifts them by 0.02.",
+        "minimum": 0,
+        "type": "number"
+      },
+      "n_estimators": {
+        "default": 100,
+        "description": "Trees in the forest.",
+        "maximum": 1000,
+        "minimum": 10,
+        "type": "integer"
+      },
+      "min_n": {
+        "default": 10,
+        "description": "Finite values a column needs to be a feature.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "max_missing_share": {
+        "default": 0.2,
+        "description": "Share of missing values above which a column is not a feature. A missing value takes the column's median, so a column that is mostly missing makes the rows that have a value look far from the rest.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "max_rows": {
+        "default": 100000,
+        "description": "Most rows fitted; a larger frame is sampled with `seed`.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the forest and of the sample.",
+        "type": "integer"
+      }
+    },
+    "title": "MultivariateOutliersParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "feature_columns": {
+        "description": "Columns the forest saw.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "rows_used": {
+        "description": "Rows fitted, after any sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_total": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "contamination": {
+        "type": "number"
+      },
+      "n_flagged": {
+        "description": "Rows the forest ranks as most anomalous (`contamination`).",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "far_rows": {
+        "description": "Rows whose robust Mahalanobis distance is beyond the limit, so far from the rest of the cloud together; 0 too when there are too few rows per column to say.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "far_limit": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "That limit, a squared distance; None when it was not applied."
+      },
+      "example_rows": {
+        "description": "Positions in the data of the rows that stand out most: the far rows, then the forest's ranking.",
+        "items": {
+          "type": "integer"
+        },
+        "type": "array"
+      },
+      "max_anomaly_score": {
+        "description": "Highest anomaly score, from 0 to 1; near 0.5 for all rows when none stands out, and approaching 1 for a clear anomaly.",
+        "type": "number"
+      },
+      "reference_max_score": {
+        "description": "The highest score the same forest gives a normal sample of the same rows and columns: what chance alone reaches.",
+        "type": "number"
+      },
+      "excess": {
+        "description": "`max_anomaly_score` less that reference.",
+        "type": "number"
+      }
+    },
+    "required": [
+      "feature_columns",
+      "rows_used",
+      "rows_total",
+      "contamination",
+      "n_flagged",
+      "far_rows",
+      "far_limit",
+      "example_rows",
+      "max_anomaly_score",
+      "reference_max_score",
+      "excess"
+    ],
+    "title": "MultivariateOutliersOutput",
+    "type": "object"
+  }
+}
