@@ -119,7 +119,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.sinks` holds a name-keyed sink registry (`json`, `ndjson`) that U5-04 and U5-05 extend; `Run.write` and `Run.read` (`dsbf.Run`) use it, and `dsbf.profile(previous=)` takes a `run.json` path. `dsbf profile` writes through `Run.write` and gains `--sink`. `dsbf schema export` writes 47 `schema/checks/<id>.schema.json` files (params and output), and `schema check` guards them by each check's `check_version`. Policy schema gating stays with U5-09.
 
 ### U5-04 · Parquet sinks and the consumer schema guide
-- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-03
+- **Status:** done (2026-10-26, PR #137, `569b60b`) · **Size:** M · **Depends on:** U5-03
 - **Note from U5-02:** build the findings table from the columns of `Findings.to_polars` (`id`, `check_id`, `code`, `dimension`, `severity`, `confidence`, `subject_kind`, `columns`, `title`, `message`, `tags`), adding the evidence metrics.
 - **Goal:** `findings.parquet`, `profile.parquet` and `results.parquet` with documented, versioned columns, plus a guide for loading them into a warehouse or BI tool.
 - **Decided in U5-00:** the Parquet files carry a `schema_version` in their key-value metadata, and the breaking-change check compares column names, types and nullability against a checked-in schema listing.
@@ -129,18 +129,20 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `findings_parquet`, `profile_parquet` and `results_parquet` sinks (the `parquet` alias writes all three) build their tables from fixed Arrow schemas in `dsbf.sinks.tables`, each starting with `run_id` and carrying `schema_version` 0.1.0 in its metadata. Evidence metrics, check params and output are JSON text. `schema/tables.schema.json` lists the columns, `dsbf schema export` writes it and `schema check` guards it by `TABLES_SCHEMA_VERSION`. `docs/CONSUMING_PARQUET.md` has the guide, whose SQL a test runs through DuckDB (dev group only).
 
 ### U5-05 · Static HTML report
-- **Status:** todo · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
+- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
 - **Goal:** One self-contained HTML file per run (no server, no CDN) with the health summary, findings by dimension and severity, and per-column profiles drawn from the profile's equal-width bins.
 - **Decided in U5-00:** scope is the health summary, findings by dimension and severity, and per-column profiles (histogram, top values, counts) as inline SVG. Quality and ML-readiness sections, relationships and time-series views are left to the Phase 6 dashboard. The size budget is 1 MB for the titanic report (its `run.json` is 665 KB on 2026-10-25), measured on the first build and tightened if the report comes in far under.
 - **Assumptions to confirm:** the profile carries the bins each chart needs, so the report reads the `Run` only; no template dependency is needed (string building with `html.escape`); dataset, column and finding text all pass through one escaping function.
 - **Steps:** a renderer module in `dsbf.sinks`; the HTML sink on the registry; tests with hostile names (`<script>`, quotes, `&`) and a no-network check (no `http` URL in the output).
 - **Acceptance:** The titanic report is under a size budget set in U5-00 and opens offline. User text is escaped (the F-14 lesson).
+- **Outcome:** `dsbf.sinks.report` renders one offline page (health, findings by dimension and severity, a card with an inline SVG chart per column) and registers the `html` sink (`report.html`). Every string goes through one escaping function. The titanic report is 78 KB, so the budget is tightened from 1 MB to 150 KB. The report omits the policy outcome.
 
 ### U5-06 · CLI v2
 - **Status:** todo · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
 - **Note from U3-09:** give the Typer app one callback that attaches the console handler, with a `--verbosity` option, so every command prints log records. **Note from U1-09:** CLI v2 builds the `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser.
 - **Note from U4-05:** `dsbf.profile()` takes no per-check parameters beyond the `target` setting, so a core check's params (such as `schema`'s expectations) reach it only through `make_plan(params=)` and `dsbf plan --param`; add `params=` to `profile()` and a section to `ProfileConfig`. Eligibility ignores parameters, so `dsbf plan` says `class_imbalance` and `schema` "will run" where they end `not_applicable` without a target or schema: let a check declare the parameters it needs.
 - **Goal:** `dsbf profile` and `dsbf check` (with `--config`, `--set`, `--policy`, `--previous`, `--out` and `--sink`), plus `plan` and `schema export`. Every run prints the health summary. The exit code is 0, or 1 when the policy fails the run, or 2 on a setup error.
+- **Note from U5-05:** the HTML report does not show `Run.policy`; show the outcome there if the CLI exit-code work wants it. The `--sink` help now lists `html`.
 - **Note from U5-04:** `known_sinks()` lists the `parquet` alias after the sinks, so the `--sink` help shows it; fold that into the generated CLI reference.
 - **Decided in U5-00:** `profile` and `check` share one implementation; `check` differs by requiring a policy-aware exit code (a policy is optional, and with none the exit code is 0 as in §7.1). The `extras` CI job's profile step (U4-19 note) folds into U5-09's clean-venv job.
 - **Assumptions to confirm:** `dsbf.config.load_config` takes a `cli` layer; the stopgap `profile` command and `plan` exist (audited 2026-10-25); `schema export` and `schema check` exist, so only their naming is checked against the goal.
