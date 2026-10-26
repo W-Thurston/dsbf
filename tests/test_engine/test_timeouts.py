@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from dsbf.engine import CheckCancelled, Limits
+from dsbf.engine import CheckCancelled, CheckOverride, Limits
 from dsbf.engine import extras as extras_module
 from dsbf.engine.scheduler import Scheduler
 from dsbf.model import CheckStatus
@@ -279,3 +279,52 @@ class TestOtherBaseExceptions:
             run_plan([declare("polite", function=polite)], limits=FAST)
 
         assert stopped.wait(1)
+
+
+class TestCheckOverrides:
+    def test_a_check_timeout_applies_to_that_check_alone(self):
+        slow = declare("slow", function=sleeper(6.0))
+        also_slow = declare("also_slow", function=sleeper(0.4))
+        started = time.perf_counter()
+
+        run = run_plan(
+            [slow, also_slow],
+            limits=Limits(cancel_grace_seconds=0.05),
+            check_overrides={"slow": CheckOverride(timeout_seconds=0.15)},
+        )
+
+        assert time.perf_counter() - started < 4.0
+        assert statuses(run) == {
+            "slow": CheckStatus.TIMEOUT,
+            "also_slow": CheckStatus.OK,
+        }
+        (note,) = run.results["slow"].notes
+        assert note.message == "Did not finish within 0.15s."
+
+    def test_it_replaces_the_run_wide_check_timeout_either_way(self):
+        run = run_plan(
+            [declare("patient", function=sleeper(0.4))],
+            limits=Limits(check_timeout_seconds=0.1, cancel_grace_seconds=0.05),
+            check_overrides={"patient": CheckOverride(timeout_seconds=5.0)},
+        )
+
+        assert statuses(run) == {"patient": CheckStatus.OK}
+
+    def test_the_run_budget_still_caps_it(self):
+        run = run_plan(
+            [declare("slow", function=sleeper(6.0))],
+            limits=Limits(run_budget_seconds=0.15, cancel_grace_seconds=0.05),
+            check_overrides={"slow": CheckOverride(timeout_seconds=60.0)},
+        )
+
+        (note,) = run.results["slow"].notes
+        assert note.code == "run_budget_exhausted"
+
+    @pytest.mark.parametrize("seconds", [0, -1.0, float("inf"), float("nan")])
+    def test_a_timeout_is_a_positive_finite_number(self, seconds):
+        with pytest.raises(ValueError, match="timeout_seconds"):
+            CheckOverride(timeout_seconds=seconds)
+
+    def test_runs_in_is_thread_or_process(self):
+        with pytest.raises(ValueError, match="runs_in"):
+            CheckOverride(runs_in="fiber")  # pyrefly: ignore[bad-argument-type]

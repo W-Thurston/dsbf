@@ -508,3 +508,77 @@ class TestDiskCache:
 
         assert calls == []
         assert comparable(second) == comparable(first)
+
+
+class TestPrune:
+    def fill(self, cache, count):
+        """``count`` entries, the first the oldest, last used 1000 seconds apart."""
+        result = go([null_share], None).results["null_share"]
+        keys = [CacheKey("null_share", f"{n:064x}", {}) for n in range(count)]
+        for age, key in enumerate(reversed(keys)):
+            cache.put(key, result)
+            stamp = time.time() - (age + 1) * 1000
+            os.utime(cache.path(key), (stamp, stamp))
+        return keys
+
+    def size(self, cache, key):
+        return cache.path(key).stat().st_size
+
+    def test_clear_removes_every_entry_and_the_folders(self, tmp_path):
+        cache = DiskCache(tmp_path / "results")
+        keys = self.fill(cache, 3)
+        total = sum(self.size(cache, key) for key in keys)
+
+        cleared = cache.clear()
+
+        assert (cleared.removed, cleared.freed_bytes) == (3, total)
+        assert cleared.remaining == 0
+        assert list((tmp_path / "results").iterdir()) == []
+
+    def test_clearing_a_cache_that_does_not_exist_removes_nothing(self, tmp_path):
+        assert DiskCache(tmp_path / "none").clear().removed == 0
+
+    def test_the_size_cap_keeps_the_most_recently_used_under_it(self, tmp_path):
+        cache = DiskCache(tmp_path)
+        keys = self.fill(cache, 5)
+        each = self.size(cache, keys[0])
+
+        pruned = cache.prune(max_bytes=each * 2 + 1)
+
+        assert pruned.removed == 3
+        assert pruned.remaining == 2 and pruned.remaining_bytes <= each * 2 + 1
+        assert [cache.path(key).exists() for key in keys] == [False] * 3 + [True] * 2
+
+    def test_a_hit_protects_an_entry_from_eviction(self, tmp_path):
+        cache = DiskCache(tmp_path)
+        keys = self.fill(cache, 3)
+        assert cache.get(keys[0]) is not None  # the oldest, now the newest
+
+        cache.prune(max_bytes=self.size(cache, keys[0]))
+
+        assert [cache.path(key).exists() for key in keys] == [True, False, False]
+
+    def test_the_age_cap_removes_what_was_not_used_for_that_long(self, tmp_path):
+        cache = DiskCache(tmp_path)
+        keys = self.fill(cache, 4)  # idle for 4000, 3000, 2000 and 1000 seconds
+
+        pruned = cache.prune(max_age_seconds=2500)
+
+        assert pruned.removed == 2
+        assert [cache.path(key).exists() for key in keys] == [False, False, True, True]
+
+    def test_no_cap_removes_nothing(self, tmp_path):
+        cache = DiskCache(tmp_path)
+        self.fill(cache, 3)
+
+        assert cache.prune().removed == 0
+
+    def test_a_fresh_temporary_file_is_left_for_the_process_writing_it(self, tmp_path):
+        cache = DiskCache(tmp_path)
+        self.fill(cache, 1)
+        partial = tmp_path / "null_share" / "x.tmp"
+        partial.write_text("{")
+
+        cache.prune(max_bytes=0)
+
+        assert partial.exists()

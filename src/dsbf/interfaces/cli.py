@@ -9,7 +9,15 @@ import yaml
 from dsbf.checks import core_pack
 from dsbf.config import ConfigError, ProfileConfig, load_config
 from dsbf.data import SamplingError, SourceError, load
-from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
+from dsbf.engine import (
+    Depth,
+    DiskCache,
+    PlanError,
+    Registry,
+    Selection,
+    format_plan,
+    make_plan,
+)
 from dsbf.interfaces import reference, schema_export
 from dsbf.library import profile_with
 from dsbf.model import Cost, Dimension, PolicyOutcome
@@ -126,6 +134,28 @@ Params = Annotated[
         "--param", help="Set a check parameter: check.key=value (repeatable)."
     ),
 ]
+Workers = Annotated[
+    int | None,
+    typer.Option(
+        "--workers", min=1, help="Checks to run at once (default: one per core)."
+    ),
+]
+CheckTimeout = Annotated[
+    float | None,
+    typer.Option("--check-timeout", min=0, help="Seconds one check may take."),
+]
+RunBudget = Annotated[
+    float | None,
+    typer.Option("--run-budget", min=0, help="Seconds the whole run may take."),
+]
+UseCache = Annotated[
+    bool | None,
+    typer.Option(
+        "--cache/--no-cache",
+        help="Reuse results of unchanged checks kept under the DSBF home "
+        "(default: the cache.enabled setting, off).",
+    ),
+]
 
 
 @app.command()
@@ -145,6 +175,10 @@ def profile(
     time_index: TimeIndex = None,
     plugin: Plugins = None,
     param: Params = None,
+    workers: Workers = None,
+    check_timeout: CheckTimeout = None,
+    run_budget: RunBudget = None,
+    cache: UseCache = None,
 ) -> None:
     """Profile a dataset, write run.json and print the health summary.
 
@@ -158,7 +192,20 @@ def profile(
         overrides=set_,
         policy=policy,
         previous=previous,
-        flags=_flags(pack, include, exclude, depth, target, time_index, plugin, param),
+        flags=_flags(
+            pack,
+            include,
+            exclude,
+            depth,
+            target,
+            time_index,
+            plugin,
+            param,
+            workers,
+            check_timeout,
+            run_budget,
+            cache,
+        ),
         fail_on_policy=False,
     )
 
@@ -180,6 +227,10 @@ def check(
     time_index: TimeIndex = None,
     plugin: Plugins = None,
     param: Params = None,
+    workers: Workers = None,
+    check_timeout: CheckTimeout = None,
+    run_budget: RunBudget = None,
+    cache: UseCache = None,
 ) -> None:
     """Profile a dataset and judge it by a policy, for a pipeline step.
 
@@ -194,7 +245,20 @@ def check(
         overrides=set_,
         policy=policy,
         previous=previous,
-        flags=_flags(pack, include, exclude, depth, target, time_index, plugin, param),
+        flags=_flags(
+            pack,
+            include,
+            exclude,
+            depth,
+            target,
+            time_index,
+            plugin,
+            param,
+            workers,
+            check_timeout,
+            run_budget,
+            cache,
+        ),
         fail_on_policy=True,
     )
 
@@ -208,6 +272,10 @@ def _flags(  # noqa: PLR0913
     time_index: str | None,
     plugin: list[Path] | None,
     param: list[str] | None,
+    workers: int | None,
+    check_timeout: float | None,
+    run_budget: float | None,
+    cache: bool | None,
 ) -> dict[str, Any]:
     """The options that were given, as the nested mapping of the ``cli`` layer."""
     given: dict[str, Any] = {
@@ -219,7 +287,15 @@ def _flags(  # noqa: PLR0913
         "time_index": time_index,
         "plugins": [str(path) for path in plugin or []],
         "params": _parse_params(param or []),
+        "workers": workers,
+        "limits": {
+            "check_timeout_seconds": check_timeout,
+            "run_budget_seconds": run_budget,
+        },
+        "cache": {"enabled": cache},
     }
+    for section in ("limits", "cache"):
+        given[section] = {k: v for k, v in given[section].items() if v is not None}
     return {key: value for key, value in given.items() if value}
 
 
@@ -502,6 +578,24 @@ def check_schema(
         typer.echo("bump the check's version, then run `dsbf schema export`", err=True)
     if failed:
         raise typer.Exit(1)
+
+
+cache_app = typer.Typer(help="Manage the results kept between runs.")
+app.add_typer(cache_app, name="cache")
+
+
+@cache_app.command("clear")
+def clear_cache() -> None:
+    """Remove every result kept under <DSBF home>/cache/results."""
+    cache = DiskCache.default()
+    try:
+        cleared = cache.clear()
+    except OSError as error:
+        _fail(error)
+    typer.echo(
+        f"removed {cleared.removed} cached result{'' if cleared.removed == 1 else 's'} "
+        f"({cleared.freed_bytes:,} bytes) from {cache.root}"
+    )
 
 
 docs_app = typer.Typer(help="Publish the command-line and settings reference.")

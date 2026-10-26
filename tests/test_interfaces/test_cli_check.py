@@ -29,6 +29,24 @@ id,amount,group,note
 6,10.9,b,z
 """
 
+SLEEPY = '''\
+from dsbf.engine import SemanticTypes, check
+
+
+@check(
+    id="sleepy",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes("numeric"),
+    dimensions=["validity"],
+)
+def sleepy(ctx, params):
+    """Takes its time."""
+    import time
+
+    time.sleep(3)
+'''
+
 FAILING = """\
 rules:
   - name: any-missing-values
@@ -375,3 +393,95 @@ class TestReference:
             assert f"`{heading}`" in text
         for setting in ("`limits.run_budget_seconds`", "`sample.rows`", "`params`"):
             assert setting in text
+
+
+@pytest.mark.integration
+class TestExecutionOptions:
+    def test_the_options_reach_the_settings(self, csv, tmp_path):
+        out = tmp_path / "out"
+
+        result = runner.invoke(
+            app,
+            ["profile", str(csv), "--out", str(out), "--workers", "1"]
+            + ["--check-timeout", "30", "--run-budget", "60", "--cache"],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert any((tmp_path / "home" / "cache" / "results").rglob("*.json"))
+
+    def test_a_second_cached_run_reuses_the_first(self, csv, tmp_path):
+        args = ["check", str(csv), "--cache", "--depth", "quick"]
+
+        runner.invoke(app, [*args, "--out", str(tmp_path / "one")])
+        result = runner.invoke(app, [*args, "--out", str(tmp_path / "two")])
+
+        assert result.exit_code == 0, result.output
+        timings = [r["timing"] for r in run_json(tmp_path / "two")["results"].values()]
+        assert any(t.get("cached") for t in timings)
+
+    def test_no_cache_beats_the_settings_file(self, csv, tmp_path):
+        config = write(tmp_path, "dsbf.yaml", "cache: {enabled: true}\n")
+
+        result = runner.invoke(
+            app,
+            ["check", str(csv), "--config", str(config), "--no-cache"]
+            + ["--out", str(tmp_path / "out")],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert not (tmp_path / "home" / "cache").exists()
+
+    def test_a_per_check_timeout_can_be_set_with_set(self, csv, tmp_path):
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+        (plugin / "sleepy.py").write_text(SLEEPY, encoding="utf-8")
+        out = tmp_path / "out"
+
+        result = runner.invoke(
+            app,
+            ["profile", str(csv), "--out", str(out), "--include", "sleepy"]
+            + ["--plugin", str(plugin)]
+            + ["--set", "check_settings.sleepy.timeout_seconds=0.3"],
+        )
+
+        assert result.exit_code == 0, result.output
+        statuses = {k: v["status"] for k, v in run_json(out)["results"].items()}
+        assert statuses["sleepy"] == "timeout"
+        assert statuses["null_rate"] == "ok"
+
+    def test_an_unknown_check_in_the_settings_exits_2(self, csv, tmp_path):
+        result = runner.invoke(
+            app,
+            ["profile", str(csv), "--out", str(tmp_path / "out")]
+            + ["--set", "check_settings.nope.runs_in=process"],
+        )
+
+        assert result.exit_code == 2
+        assert "'nope' is not a check" in result.output
+
+    @pytest.mark.parametrize("option", ["--workers", "--check-timeout"])
+    def test_a_zero_is_a_usage_error(self, csv, option):
+        result = runner.invoke(app, ["profile", str(csv), option, "0"])
+
+        assert result.exit_code == 2
+
+
+@pytest.mark.integration
+class TestCacheClear:
+    def test_it_removes_what_a_cached_run_kept(self, csv, tmp_path):
+        out = str(tmp_path / "o")
+        runner.invoke(app, ["profile", str(csv), "--cache", "--out", out])
+        results = tmp_path / "home" / "cache" / "results"
+        assert any(results.rglob("*.json"))
+
+        result = runner.invoke(app, ["cache", "clear"])
+
+        assert result.exit_code == 0, result.output
+        assert re.search(r"removed \d+ cached results? \([\d,]+ bytes\)", result.output)
+        assert not any(results.rglob("*.json"))
+
+    def test_an_empty_cache_clears_to_nothing(self):
+        result = runner.invoke(app, ["cache", "clear"])
+
+        assert result.exit_code == 0
+        assert "removed 0 cached results" in result.output

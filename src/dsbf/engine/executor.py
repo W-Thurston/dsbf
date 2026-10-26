@@ -2,7 +2,7 @@
 """Execute a plan: every check ends in an explicit status, and the run completes."""
 
 import time
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -18,7 +18,7 @@ from dsbf.engine.events import (
 )
 from dsbf.engine.expectation import Expected
 from dsbf.engine.extras import preload_extras
-from dsbf.engine.limits import Limits
+from dsbf.engine.limits import CheckOverride, Limits
 from dsbf.engine.meter import DEFAULT_SAMPLE_SECONDS, Meter, Window
 from dsbf.engine.plan import Plan, PlanEntry
 from dsbf.engine.reference import Reference
@@ -55,6 +55,7 @@ def execute(
     workers: int | None = None,
     cache: ResultCache | None = None,
     reference: Reference | None = None,
+    check_overrides: Mapping[str, CheckOverride] | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
@@ -70,7 +71,8 @@ def execute(
     rest are ``skipped``. Every planned check has a result, in plan order, and
     ``Run.health`` says why any did not complete. ``KeyboardInterrupt`` and
     ``SystemExit`` are not caught. Apart from ``timing``, the run does not depend
-    on ``workers``.
+    on ``workers``. ``check_overrides`` gives a check its own timeout or ``runs_in``,
+    by id, in place of the limit and the spec's.
 
     A Python warning a check raises does not reach ``warnings.showwarning``: the
     check's result gets one ``python_warning`` note for each category and message,
@@ -128,6 +130,7 @@ def execute(
         if entry.expected.status is not Expected.UNAVAILABLE
         for extra in entry.check.spec.extras
     )
+    overrides = check_overrides or {}
     events = Dispatcher(hooks)
     total = len(plan.entries)
     positions = {
@@ -166,7 +169,7 @@ def execute(
                 level,
                 results,
                 prepare=lambda entry: _prepare(
-                    entry, results, limits, budget_left(), session
+                    entry, results, limits, budget_left(), session, overrides
                 ),
                 started=lambda entry: events.emit(
                     CheckStarted(entry.id, positions[entry.id], total)
@@ -200,6 +203,7 @@ def _prepare(
     limits: Limits,
     budget_left: float | None,
     session: CacheSession | None,
+    overrides: Mapping[str, CheckOverride],
 ) -> CheckResult | Launch:
     """The result of a check that will not run, or how to run the one that will."""
     expected = entry.expected
@@ -257,11 +261,12 @@ def _prepare(
                 hint=_BUDGET_HINT,
             ),
         )
-    limit = limits.check_timeout_seconds
+    override = overrides.get(entry.id, CheckOverride())
+    limit = override.timeout_seconds or limits.check_timeout_seconds
     by_budget = budget_left is not None and (limit is None or budget_left < limit)
     if by_budget:
         limit = budget_left
-    return Launch(entry, limit, by_budget)
+    return Launch(entry, limit, by_budget, override.runs_in or entry.check.spec.runs_in)
 
 
 def _finish(

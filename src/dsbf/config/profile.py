@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from dsbf.engine.check import RunsIn
 from dsbf.engine.selection import Depth
 
 DEFAULT_PACKS = ("core",)
@@ -57,6 +58,52 @@ class LimitsConfig(_Section):
         return value
 
 
+class CheckSettings(_Section):
+    """What one run changes about one check; unset keeps the check's own."""
+
+    timeout_seconds: float | None = Field(
+        default=None, gt=0, description="Seconds this check may take."
+    )
+    runs_in: RunsIn | None = Field(
+        default=None,
+        description="`process` to run the check in a worker process, which a timeout "
+        "can kill; `thread` for a thread.",
+    )
+
+    @field_validator("timeout_seconds")
+    @classmethod
+    def _finite(cls, value: float | None) -> float | None:
+        if value is not None and not math.isfinite(value):
+            raise ValueError("must be a finite number")
+        return value
+
+
+class CacheConfig(_Section):
+    """Keep the results of checks between runs under the DSBF home."""
+
+    enabled: bool = Field(
+        default=False, description="Reuse results of checks whose inputs are unchanged."
+    )
+    max_megabytes: int | None = Field(
+        default=500,
+        ge=0,
+        description="Evict the least recently used entries past this size; "
+        "unset keeps all.",
+    )
+    max_age_days: float | None = Field(
+        default=90,
+        gt=0,
+        description="Evict entries not used for this long; unset keeps all.",
+    )
+
+    @field_validator("max_age_days")
+    @classmethod
+    def _finite(cls, value: float | None) -> float | None:
+        if value is not None and not math.isfinite(value):
+            raise ValueError("must be a finite number")
+        return value
+
+
 class ProfileConfig(_Section):
     """Every setting of one profiling run, with its default."""
 
@@ -81,6 +128,11 @@ class ProfileConfig(_Section):
     workers: int | None = Field(
         default=None, ge=1, description="Checks to run at once; unset is one per core."
     )
+    check_settings: dict[str, CheckSettings] = Field(
+        default_factory=dict,
+        description="A timeout or `runs_in` for single checks, by check id.",
+    )
+    cache: CacheConfig = CacheConfig()
     plugins: tuple[str, ...] = Field(
         default=(), description="Directories of check plugins to load."
     )

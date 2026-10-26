@@ -138,7 +138,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.sinks.report` renders one offline page (health, findings by dimension and severity, a card with an inline SVG chart per column) and registers the `html` sink (`report.html`). Every string goes through one escaping function. The titanic report is 78 KB, so the budget is tightened from 1 MB to 150 KB. The report omits the policy outcome.
 
 ### U5-06 · CLI v2
-- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
+- **Status:** done (2026-10-26, PR #139, `92810b4`) · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
 - **Note from U3-09:** give the Typer app one callback that attaches the console handler, with a `--verbosity` option, so every command prints log records. **Note from U1-09:** CLI v2 builds the `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser.
 - **Note from U4-05:** `dsbf.profile()` takes no per-check parameters beyond the `target` setting, so a core check's params (such as `schema`'s expectations) reach it only through `make_plan(params=)` and `dsbf plan --param`; add `params=` to `profile()` and a section to `ProfileConfig`. Eligibility ignores parameters, so `dsbf plan` says `class_imbalance` and `schema` "will run" where they end `not_applicable` without a target or schema: let a check declare the parameters it needs.
 - **Goal:** `dsbf profile` and `dsbf check` (with `--config`, `--set`, `--policy`, `--previous`, `--out` and `--sink`), plus `plan` and `schema export`. Every run prints the health summary. The exit code is 0, or 1 when the policy fails the run, or 2 on a setup error.
@@ -151,11 +151,12 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf profile` and the new `dsbf check` take `--config`, `--set`, `--policy`, `--previous`, `--out`, `--sink` and the check-selection options, building `ProfileConfig` through `load_config` (file, environment, options, `--set`) and running it with `dsbf.library.profile_with`. `check` exits 1 when a policy rule fails the run, 2 on a setup error; `profile` stays report-only. A top-level `--verbosity` attaches the console handler for every command. `Requires(params=…)` makes `plan` and the run mark `class_imbalance`, `mutual_information`, `target_leakage`, `schema` and the time-series checks `not_applicable` until their parameter is set (`schema`'s code is now `no_columns`). `dsbf docs export` writes `docs/CLI_REFERENCE.md` from the Typer app and `ProfileConfig`.
 
 ### U5-07 · Execution settings and cache management
-- **Status:** todo · **Size:** S · **Depends on:** U5-06
+- **Status:** done (2026-10-26) · **Size:** S · **Depends on:** U5-06
 - **Note from U3-07:** expose the worker count in the CLI and config, with per-check `runs_in` and timeout overrides (U3-06 deferred those too). **Note from U3-08:** add `dsbf cache clear` and a size or age eviction for `<DSBF_HOME>/cache/results/`, and expose cache on/off in the CLI and config.
 - **Assumptions to confirm:** the executor takes `workers` and `Limits` (it does); `DiskCache` has no eviction and no `clear` yet; a per-check `runs_in` and timeout are fields the registry can override from config.
 - **Steps:** config section and CLI flags; `dsbf cache clear`; eviction by size and age under `<DSBF_HOME>/cache/results/`.
 - **Acceptance:** A per-check timeout set in config applies. Eviction keeps the cache under its cap, which a test checks.
+- **Outcome:** `ProfileConfig` gains `check_settings.<id>` (`timeout_seconds`, `runs_in`, carried on the launch because `CheckSpec` is frozen; unknown ids are a `ConfigError`) and `cache` (`enabled`, off by default; `max_megabytes` 500; `max_age_days` 90). `DiskCache.prune` evicts by age then least recent use (a hit refreshes the entry), `clear` empties it, and a run on the default cache prunes afterwards. `profile` and `check` gain `--workers`, `--check-timeout`, `--run-budget` and `--cache/--no-cache`; `dsbf cache clear` is new.
 
 ### U5-11 · Calibration fixes
 - **Status:** todo · **Size:** M · **Depends on:** U5-07

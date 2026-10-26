@@ -7,6 +7,8 @@ from pydantic import ValidationError
 import dsbf
 from dsbf.config import (
     DEFAULT_PACKS,
+    CacheConfig,
+    CheckSettings,
     ConfigError,
     LimitsConfig,
     ProfileConfig,
@@ -16,6 +18,24 @@ from dsbf.engine import Depth, PlanError
 from dsbf.library import parse_checks
 
 pytestmark = pytest.mark.unit
+
+SLEEPY = '''
+from dsbf.engine import SemanticTypes, check
+
+
+@check(
+    id="sleepy",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes("numeric"),
+    dimensions=["validity"],
+)
+def sleepy(ctx, params):
+    """Takes its time."""
+    import time
+
+    time.sleep(3)
+'''
 
 
 class TestChecksSyntax:
@@ -142,3 +162,95 @@ class TestParams:
     def test_an_unknown_check_is_a_planning_error(self):
         with pytest.raises(PlanError, match="unknown check 'nulls'"):
             dsbf.profile(pl.DataFrame({"x": [1, 2]}), params={"nulls": {}})
+
+
+class TestExecutionSettings:
+    @pytest.fixture
+    def frame(self):
+        return pl.DataFrame({"x": [1.0, None, 3.0, 4.0], "g": ["a", "b", "a", "b"]})
+
+    @pytest.fixture
+    def home(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("DSBF_HOME", str(tmp_path / "home"))
+        return tmp_path / "home" / "cache" / "results"
+
+    def settings(self, tmp_path, text):
+        path = tmp_path / "dsbf.yaml"
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def test_the_defaults_leave_the_cache_off_and_capped(self):
+        config = ProfileConfig()
+
+        assert config.check_settings == {}
+        assert config.cache == CacheConfig(
+            enabled=False, max_megabytes=500, max_age_days=90
+        )
+
+    @pytest.mark.parametrize("seconds", [0, -1.0, float("inf"), float("nan")])
+    def test_a_check_timeout_is_a_positive_finite_number(self, seconds):
+        with pytest.raises(ValidationError):
+            CheckSettings(timeout_seconds=seconds)
+
+    def test_runs_in_is_thread_or_process(self):
+        with pytest.raises(ValidationError):
+            CheckSettings.model_validate({"runs_in": "fiber"})
+
+    def test_a_check_timeout_in_the_settings_applies_to_that_check(
+        self, frame, tmp_path
+    ):
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+        (plugin / "sleepy.py").write_text(SLEEPY, encoding="utf-8")
+        path = self.settings(
+            tmp_path, "check_settings:\n  sleepy: {timeout_seconds: 0.3}\n"
+        )
+
+        run = dsbf.profile(
+            frame, depth="quick", config=path, plugins=[plugin], checks=["+sleepy"]
+        )
+
+        assert run.results["sleepy"].status.value == "timeout"
+        assert run.results["sleepy"].notes[0].message == "Did not finish within 0.3s."
+        assert run.results["null_rate"].status.value == "ok"
+
+    def test_a_setting_for_a_check_that_does_not_exist_is_refused(
+        self, frame, tmp_path
+    ):
+        path = self.settings(
+            tmp_path, "check_settings:\n  null_rat: {timeout_seconds: 5}\n"
+        )
+
+        with pytest.raises(ConfigError, match="'null_rat' is not a check") as caught:
+            dsbf.profile(frame, config=path)
+
+        assert caught.value.issues[0].path == "check_settings.null_rat"
+
+    def test_the_cache_setting_turns_the_cache_on(self, frame, tmp_path, home):
+        path = self.settings(tmp_path, "cache: {enabled: true}\n")
+
+        first = dsbf.profile(frame, depth="quick", config=path)
+        second = dsbf.profile(frame, depth="quick", config=path)
+
+        assert any(home.rglob("*.json"))
+        assert not any(r.timing.cached for r in first.results.values())
+        assert any(r.timing.cached for r in second.results.values())
+
+    def test_the_cache_is_off_without_the_setting(self, frame, home):
+        dsbf.profile(frame, depth="quick")
+
+        assert not home.exists()
+
+    def test_the_cache_argument_wins_over_the_setting(self, frame, tmp_path, home):
+        path = self.settings(tmp_path, "cache: {enabled: true}\n")
+
+        dsbf.profile(frame, depth="quick", config=path, cache=False)
+
+        assert not home.exists()
+
+    def test_the_size_cap_is_enforced_after_the_run(self, frame, tmp_path, home):
+        path = self.settings(tmp_path, "cache: {enabled: true, max_megabytes: 0}\n")
+
+        dsbf.profile(frame, depth="quick", config=path)
+
+        assert list(home.rglob("*.json")) == []

@@ -10,6 +10,8 @@ from dsbf.config.loader import (
 )
 from dsbf.config.profile import (
     DEFAULT_PACKS,
+    CacheConfig,
+    CheckSettings,
     LimitsConfig,
     ProfileConfig,
     SampleConfig,
@@ -20,6 +22,8 @@ __all__ = [
     "DEFAULT_PACKS",
     "ENV_PREFIX",
     "PROJECT_FILE_NAME",
+    "CacheConfig",
+    "CheckSettings",
     "ConfigError",
     "ConfigIssue",
     "LimitsConfig",

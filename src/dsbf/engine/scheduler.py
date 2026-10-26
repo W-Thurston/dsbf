@@ -12,6 +12,7 @@ from types import TracebackType
 import psutil
 
 from dsbf.data import Dataset
+from dsbf.engine.check import RunsIn
 from dsbf.engine.meter import Meter, Window
 from dsbf.engine.plan import PlanEntry
 from dsbf.engine.process import NotShippable, ProcessRun, WorkerHost
@@ -38,6 +39,7 @@ class Launch:
     entry: PlanEntry
     limit: float | None
     by_budget: bool  # ``limit`` is what was left of the run budget
+    runs_in: RunsIn
 
 
 @dataclass
@@ -144,7 +146,7 @@ class Scheduler:
             if name in upstream
         }
         fallback = None
-        if entry.check.spec.runs_in == "process":
+        if launch.runs_in == "process":
             try:
                 run, window = self._start_worker(entry, visible, deadline)
                 return _Active(launch, run, window, None)
