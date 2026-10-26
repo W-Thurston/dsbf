@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "class_imbalance",
+  "check_id": "class_imbalance",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The column to predict. `dsbf.profile(target=...)` sets it; without one the check is not applicable."
+      },
+      "majority_share": {
+        "default": 0.9,
+        "description": "Share of the non-null target from which the majority class makes the target imbalanced.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      }
+    },
+    "title": "ClassImbalanceParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "type": "string"
+      },
+      "n_classes": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "majority_class": {
+        "type": "string"
+      },
+      "majority_count": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "majority_share": {
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "minority_class": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The rarest class; None when the profile lists too few values to know it."
+      },
+      "minority_count": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "imbalance_ratio": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Majority count over minority count, when both are known."
+      },
+      "imbalanced": {
+        "description": "The share is at least `majority_share`.",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "target",
+      "n_classes",
+      "majority_class",
+      "majority_count",
+      "majority_share",
+      "minority_class",
+      "minority_count",
+      "imbalance_ratio",
+      "imbalanced"
+    ],
+    "title": "ClassImbalanceOutput",
+    "type": "object"
+  }
+}

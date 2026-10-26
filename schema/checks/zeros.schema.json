@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "zeros",
+  "check_id": "zeros",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "notice_share": {
+        "default": 0.3,
+        "description": "Zero share from which a column is reported.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "warn_share": {
+        "default": 0.5,
+        "description": "Zero share from which the finding is a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "flag_share": {
+        "default": 0.95,
+        "description": "Zero share above which a column is flagged.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "ZerosParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnZeros": {
+        "additionalProperties": false,
+        "properties": {
+          "zero_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "non_null": {
+            "description": "Non-null values, which the share is taken over.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "zero_share": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "flagged": {
+            "description": "The share is above `flag_share`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "zero_count",
+          "non_null",
+          "zero_share",
+          "flagged"
+        ],
+        "title": "ColumnZeros",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnZeros"
+        },
+        "description": "Every numeric column, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "ZerosOutput",
+    "type": "object"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dominant_value",
+  "check_id": "dominant_value",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "notice_share": {
+        "default": 0.7,
+        "description": "Share from which a value is reported.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "warn_share": {
+        "default": 0.9,
+        "description": "Share from which the finding is a warning.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "flag_share": {
+        "default": 0.95,
+        "description": "Share from which a column is flagged.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      }
+    },
+    "title": "DominantValueParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnDominance": {
+        "additionalProperties": false,
+        "properties": {
+          "top_value": {
+            "description": "The most frequent value, as text.",
+            "type": "string"
+          },
+          "top_count": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "non_null": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "top_share": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "distinct": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "flagged": {
+            "description": "The share is at least `flag_share`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "top_value",
+          "top_count",
+          "non_null",
+          "top_share",
+          "distinct",
+          "flagged"
+        ],
+        "title": "ColumnDominance",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnDominance"
+        },
+        "description": "Each categorical or boolean column whose most frequent value is known, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "DominantValueOutput",
+    "type": "object"
+  }
+}

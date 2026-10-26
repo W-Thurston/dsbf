@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "outliers",
+  "check_id": "outliers",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "methods": {
+        "default": [
+          "iqr",
+          "zscore",
+          "mad"
+        ],
+        "description": "The rules to apply. Consensus needs at least two of them.",
+        "items": {
+          "enum": [
+            "iqr",
+            "zscore",
+            "mad"
+          ],
+          "type": "string"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "iqr_multiplier": {
+        "default": 1.5,
+        "description": "Tukey's fence distance, in interquartile ranges.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "zscore_threshold": {
+        "default": 3.0,
+        "description": "|z| above which a value is flagged.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "mad_threshold": {
+        "default": 3.5,
+        "description": "Modified z-score (Iglewicz and Hoaglin, 1993) above which a value is flagged.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "false_flag_rate": {
+        "default": 0.01,
+        "description": "Chance that a normal column of any length has a value flagged by a rule. The cutoffs of the three rules rise with the number of values until a normal column of n values breaks one with this probability, since the fixed cutoffs (3 deviations, 1.5 interquartile ranges) flag a few values of every long column by chance. They never fall below the fixed cutoffs; 1 uses those alone.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 10,
+        "description": "Finite values a column needs to be examined.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "warn_share": {
+        "default": 0.05,
+        "description": "Share of the values one rule flags from which the finding is a warning even without consensus.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      }
+    },
+    "title": "OutliersParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnOutliers": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Finite values examined.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "iqr": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/IqrResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "zscore": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ZScoreResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the column has no spread (std is 0)."
+          },
+          "mad": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/MadResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when more than half the values equal the median (MAD is 0)."
+          },
+          "methods_flagging": {
+            "description": "The rules that flag at least one value.",
+            "items": {
+              "enum": [
+                "iqr",
+                "zscore",
+                "mad"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "consensus": {
+            "description": "At least two rules flag the column.",
+            "type": "boolean"
+          },
+          "top_values": {
+            "description": "Up to ten flagged values farthest from the median.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "n_used",
+          "iqr",
+          "zscore",
+          "mad",
+          "methods_flagging",
+          "consensus",
+          "top_values"
+        ],
+        "title": "ColumnOutliers",
+        "type": "object"
+      },
+      "IqrResult": {
+        "additionalProperties": false,
+        "properties": {
+          "multiplier": {
+            "description": "The fence distance used, in IQRs.",
+            "type": "number"
+          },
+          "count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "share": {
+            "description": "Of the finite values.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "q1": {
+            "type": "number"
+          },
+          "q3": {
+            "type": "number"
+          },
+          "lower_fence": {
+            "type": "number"
+          },
+          "upper_fence": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "multiplier",
+          "count",
+          "share",
+          "q1",
+          "q3",
+          "lower_fence",
+          "upper_fence"
+        ],
+        "title": "IqrResult",
+        "type": "object"
+      },
+      "MadResult": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "share": {
+            "description": "Of the finite values.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "median": {
+            "type": "number"
+          },
+          "mad": {
+            "description": "Median absolute deviation from the median.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "threshold": {
+            "description": "The cutoff used, in modified z-scores.",
+            "type": "number"
+          },
+          "max_score": {
+            "description": "The largest modified z-score.",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "share",
+          "median",
+          "mad",
+          "threshold",
+          "max_score"
+        ],
+        "title": "MadResult",
+        "type": "object"
+      },
+      "ZScoreResult": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "share": {
+            "description": "Of the finite values.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "mean": {
+            "type": "number"
+          },
+          "std": {
+            "type": "number"
+          },
+          "threshold": {
+            "description": "The cutoff used, in deviations.",
+            "type": "number"
+          },
+          "max_score": {
+            "description": "The largest |z|.",
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "count",
+          "share",
+          "mean",
+          "std",
+          "threshold",
+          "max_score"
+        ],
+        "title": "ZScoreResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnOutliers"
+        },
+        "description": "Every numeric column with enough values, by name.",
+        "type": "object"
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns not examined, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped"
+    ],
+    "title": "OutliersOutput",
+    "type": "object"
+  }
+}

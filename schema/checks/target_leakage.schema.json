@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "target_leakage",
+  "check_id": "target_leakage",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The column to predict. `dsbf.profile(target=...)` sets it; without one the check is not applicable."
+      },
+      "time_index": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The datetime column that dates each row's event. `dsbf.profile(time_index=...)` sets it; without one, timestamps are not compared with it."
+      },
+      "warn_at": {
+        "default": 0.93,
+        "description": "Association with the target from which a feature is reported as a possible leak. A feature that gets 3 labels in 100 wrong is at 0.94, one that gets 5 in 100 wrong at 0.90, and an honest feature seldom gets within 10.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "error_at": {
+        "default": 0.99,
+        "description": "Association from which the finding is an error: the feature is, to within noise, a copy or a recode of the target.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "after_share": {
+        "default": 0.95,
+        "description": "Share of the rows in which a datetime column is later than the time index from which it is reported as known only after the event.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 30,
+        "description": "Complete rows a feature needs to be measured.",
+        "minimum": 5,
+        "type": "integer"
+      },
+      "max_levels": {
+        "default": 50,
+        "description": "Most levels a class column, or a part of an identifier, may have; V over more is inflated by the levels' own noise.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 200000,
+        "description": "Most rows read; more are sampled with `seed`.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the row sample.",
+        "type": "integer"
+      },
+      "max_findings": {
+        "default": 50,
+        "description": "Most findings, strongest first.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "TargetLeakageParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "FeatureAssociation": {
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "type": "string"
+          },
+          "source": {
+            "description": "What was tested: the column's `value`, a `part` of its text, its `null_indicator`, or a `timestamp` compared with the time index.",
+            "enum": [
+              "value",
+              "part",
+              "null_indicator",
+              "timestamp"
+            ],
+            "type": "string"
+          },
+          "part": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a `part`, its position in the text, from 1."
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pearson_r",
+                  "spearman_r",
+                  "eta",
+                  "cramers_v"
+                ],
+                "type": "string"
+              },
+              {
+                "const": "later_share",
+                "type": "string"
+              }
+            ]
+          },
+          "value": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "n_used": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "flagged": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "feature",
+          "source",
+          "part",
+          "metric",
+          "value",
+          "n_used",
+          "flagged"
+        ],
+        "title": "FeatureAssociation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "target": {
+        "type": "string"
+      },
+      "target_kind": {
+        "enum": [
+          "class",
+          "numeric"
+        ],
+        "type": "string"
+      },
+      "features": {
+        "description": "Every test that was made, strongest first.",
+        "items": {
+          "$ref": "#/$defs/FeatureAssociation"
+        },
+        "type": "array"
+      },
+      "features_tested": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "features_flagged": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "untested": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "description": "Tests not made, by reason: too_few_rows, too_few_groups, no_variation or overflow.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns whose value was not measured, with the reason.",
+        "type": "object"
+      },
+      "rows_used": {
+        "description": "Rows read, after any sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_total": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "target",
+      "target_kind",
+      "features",
+      "features_tested",
+      "features_flagged",
+      "untested",
+      "skipped_columns",
+      "rows_used",
+      "rows_total"
+    ],
+    "title": "TargetLeakageOutput",
+    "type": "object"
+  }
+}

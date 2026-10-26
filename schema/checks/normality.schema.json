@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "normality",
+  "check_id": "normality",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "alpha": {
+        "default": 0.05,
+        "description": "Chance that a normal column is rejected. Two tests are run, so each is held to half of it.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_deviation": {
+        "default": 0.05,
+        "description": "Average distance of the column's quantiles from a normal's, in standard deviations, below which a rejection is not reported. At thousands of rows the tests reject deviations too small to matter: a t distribution with 30 degrees of freedom is 0.02 away, a gamma with skew 0.3 is 0.05.",
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_n": {
+        "default": 8,
+        "description": "Finite values a column needs to be tested.",
+        "minimum": 4,
+        "type": "integer"
+      },
+      "shapiro_max_n": {
+        "default": 5000,
+        "description": "Largest sample for Shapiro-Wilk, which rejects trivial deviations above it; larger columns get a Kolmogorov-Smirnov test.",
+        "minimum": 20,
+        "type": "integer"
+      },
+      "qq_points": {
+        "default": 100,
+        "description": "Quantile pairs kept for a Q-Q plot.",
+        "maximum": 1000,
+        "minimum": 10,
+        "type": "integer"
+      },
+      "qq_all_columns": {
+        "default": false,
+        "description": "Keep Q-Q quantiles for the columns that pass as well as the ones that fail.",
+        "type": "boolean"
+      }
+    },
+    "title": "NormalityParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnNormality": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Finite values tested.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "primary": {
+            "$ref": "#/$defs/NormalityTest",
+            "description": "Shapiro-Wilk up to `shapiro_max_n` values, Kolmogorov-Smirnov above it."
+          },
+          "jarque_bera": {
+            "$ref": "#/$defs/NormalityTest"
+          },
+          "rejected": {
+            "description": "Either test rejects normality.",
+            "type": "boolean"
+          },
+          "mean_abs_deviation_in_std": {
+            "description": "Average Q-Q gap from a normal, in standard deviations.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "non_normal": {
+            "description": "A test rejects normality and the gap is at least `min_deviation`.",
+            "type": "boolean"
+          },
+          "qq": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/QQData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None for a column that passes, unless `qq_all_columns` is set."
+          }
+        },
+        "required": [
+          "n_used",
+          "primary",
+          "jarque_bera",
+          "rejected",
+          "mean_abs_deviation_in_std",
+          "non_normal",
+          "qq"
+        ],
+        "title": "ColumnNormality",
+        "type": "object"
+      },
+      "NormalityTest": {
+        "additionalProperties": false,
+        "properties": {
+          "test": {
+            "enum": [
+              "shapiro_wilk",
+              "ks_fitted_normal",
+              "jarque_bera"
+            ],
+            "type": "string"
+          },
+          "statistic": {
+            "type": "number"
+          },
+          "p_value": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rejects": {
+            "description": "p is below its share of `alpha`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "test",
+          "statistic",
+          "p_value",
+          "rejects"
+        ],
+        "title": "NormalityTest",
+        "type": "object"
+      },
+      "QQData": {
+        "additionalProperties": false,
+        "description": "Quantiles of the column against a normal fitted to it, ready to plot.",
+        "properties": {
+          "theoretical": {
+            "description": "Normal quantiles, in the column's units.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "empirical": {
+            "description": "The column's quantiles at the same probabilities.",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "reference_x": {
+            "description": "Theoretical Q1 and Q3: the x of the reference line.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "reference_y": {
+            "description": "Empirical Q1 and Q3: the y of the reference line.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "fit_mean": {
+            "type": "number"
+          },
+          "fit_std": {
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "mean_abs_deviation_in_std": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "max_deviation_in_std": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "lower_tail_deviation_in_std": {
+            "description": "Mean deviation over the lowest tenth of the points.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "upper_tail_deviation_in_std": {
+            "description": "Mean deviation over the highest tenth of the points.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "pattern": {
+            "enum": [
+              "heavy_tails",
+              "right_tail",
+              "left_tail",
+              "close_to_normal",
+              "moderate_deviation"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "theoretical",
+          "empirical",
+          "reference_x",
+          "reference_y",
+          "fit_mean",
+          "fit_std",
+          "mean_abs_deviation_in_std",
+          "max_deviation_in_std",
+          "lower_tail_deviation_in_std",
+          "upper_tail_deviation_in_std",
+          "pattern"
+        ],
+        "title": "QQData",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnNormality"
+        },
+        "description": "Every numeric column that was tested, by name.",
+        "type": "object"
+      },
+      "skipped": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns not tested, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped"
+    ],
+    "title": "NormalityOutput",
+    "type": "object"
+  }
+}

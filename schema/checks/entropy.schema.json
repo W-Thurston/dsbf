@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "entropy",
+  "check_id": "entropy",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_rows": {
+        "default": 30,
+        "description": "Non-null values below which the estimates are called unstable: rare values may be missing, so the entropy is underestimated.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "EntropyParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnEntropy": {
+        "additionalProperties": false,
+        "properties": {
+          "entropy_bits": {
+            "description": "Shannon entropy, in bits.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "max_bits": {
+            "description": "The most it could be: log2 of the distinct values.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "evenness": {
+            "description": "Entropy over its maximum: 0 when one value dominates, 1 when all are equally likely (and 1 for a column of one value).",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "distinct": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "non_null": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entropy_bits",
+          "max_bits",
+          "evenness",
+          "distinct",
+          "non_null"
+        ],
+        "title": "ColumnEntropy",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnEntropy"
+        },
+        "description": "Each categorical, boolean or text column with values, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "EntropyOutput",
+    "type": "object"
+  }
+}

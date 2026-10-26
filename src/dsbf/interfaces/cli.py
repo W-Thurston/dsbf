@@ -15,10 +15,9 @@ from dsbf.library import profile as dsbf_profile
 from dsbf.model import Cost, Dimension
 from dsbf.paths import default_outputs_dir
 from dsbf.profiling import profile_dataset
+from dsbf.sinks import get_sinks, known_sinks
 from dsbf.utils.logging_utils import console_logging
 from dsbf.utils.versioning import get_dsbf_version
-
-RUN_FILE = "run.json"
 
 app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
 schema_app = typer.Typer(help="Publish and guard the result schema.")
@@ -32,7 +31,15 @@ def profile(
         None,
         "--out",
         "-o",
-        help="Directory for run.json (default: <DSBF home>/outputs/<run id>).",
+        help="Directory for the output files (default: <DSBF home>/outputs/<run id>).",
+    ),
+    sink: list[str] = typer.Option(
+        [],
+        "--sink",
+        "-s",
+        help="Output to write (repeatable, default json): "
+        + ", ".join(known_sinks())
+        + ".",
     ),
     pack: list[str] = typer.Option([], "--pack", "-p", help="Run only these packs."),
     depth: Depth = typer.Option(
@@ -53,6 +60,12 @@ def profile(
 ) -> None:
     """Profile a dataset, write run.json and print the health summary."""
     params = _parse_params(param)
+    sinks = tuple(sink) or ("json",)
+    try:
+        get_sinks(sinks)
+    except ValueError as error:
+        typer.echo(f"error: {error}", err=True)
+        raise typer.Exit(2) from error
     try:
         with console_logging("info"):
             run = dsbf_profile(
@@ -72,10 +85,9 @@ def profile(
             typer.echo(f"error: {problem}", err=True)
         raise typer.Exit(2) from error
     directory = (out or default_outputs_dir() / str(run.run_id)).expanduser().resolve()
-    directory.mkdir(parents=True, exist_ok=True)
-    run_file = directory / RUN_FILE
-    run_file.write_text(run.model_dump_json(indent=2), encoding="utf-8")
-    typer.echo(run.render_health(pointer=str(run_file)))
+    written = run.write(directory, sinks=sinks)
+    pointer = written.get("json", next(iter(written.values())))
+    typer.echo(run.render_health(pointer=str(pointer)))
 
 
 def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:
@@ -183,6 +195,7 @@ def export_schema(
         raise typer.Exit(2) from error
     if check:
         stale = schema_export.stale_files(expected)
+        stale += schema_export.orphaned_check_schemas(out, expected)
         for path in stale:
             typer.echo(f"out of date: {path}", err=True)
         if stale:
@@ -209,26 +222,42 @@ def check_schema(
     """Fail if the schema changed in a way its version number doesn't announce."""
     try:
         comparison = schema_export.compare_with_base(base, schema_file)
+        check_comparisons = schema_export.compare_check_schemas(
+            base, schema_file.parent
+        )
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(2) from error
+    failed = False
     if comparison is None:
         typer.echo(f"{base} has no {schema_file}; nothing to compare")
-        return
-    for change in comparison.changes:
-        typer.echo(str(change))
-    if comparison.problems:
-        for problem in comparison.problems:
-            typer.echo(f"error: {problem}", err=True)
-        typer.echo(
-            "bump SCHEMA_VERSION in dsbf/model/run.py, then run `dsbf schema export`",
-            err=True,
-        )
+    else:
+        for change in comparison.changes:
+            typer.echo(str(change))
+        if comparison.problems:
+            failed = True
+            for problem in comparison.problems:
+                typer.echo(f"error: {problem}", err=True)
+            typer.echo(
+                "bump SCHEMA_VERSION in dsbf/model/run.py, then run "
+                "`dsbf schema export`",
+                err=True,
+            )
+        else:
+            typer.echo(
+                f"schema {comparison.base_version} to {comparison.version}: "
+                f"{len(comparison.changes)} change(s), announced"
+            )
+    for check_id, found in check_comparisons:
+        for change in found.changes:
+            typer.echo(f"{check_id}: {change}")
+        for problem in found.problems:
+            failed = True
+            typer.echo(f"error: {check_id}: {problem}", err=True)
+    if any(found.problems for _, found in check_comparisons):
+        typer.echo("bump the check's version, then run `dsbf schema export`", err=True)
+    if failed:
         raise typer.Exit(1)
-    typer.echo(
-        f"schema {comparison.base_version} to {comparison.version}: "
-        f"{len(comparison.changes)} change(s), announced"
-    )
 
 
 @app.command()

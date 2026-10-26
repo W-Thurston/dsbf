@@ -101,7 +101,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.policy` loads a policy (`load_policy`, errors named by rule) and evaluates it (`evaluate_policy`); `dsbf.profile(policy=, previous=)` fills `Run.policy` without revalidating the run, and `schema/policy.schema.json` is exported beside the run schema. The §7.2 example filtered on `null_rate`, a metric no check emits, so it now reads `null_share`. `previous` takes a `Run` only until U5-03; the perf baseline was promoted from the 2026-10-26 run on `main`.
 
 ### U5-02 · Findings query API and notebook display
-- **Status:** done (2026-10-26) · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
+- **Status:** done (2026-10-26, PR #135, `502dbec`) · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
 - **Goal:** `run.findings.filter(severity=">=warn", dimension=..., column=...)`, `.to_polars()` and `.to_pandas()` (with the `pandas` extra). `Run._repr_html_` shows the health summary and the top findings in a notebook.
 - **Assumptions to confirm:** `Run.findings` is a tuple ordered by `order_findings`; `pandas` is an optional extra, so `.to_pandas()` raises the `unavailable` style error without it; `Finding` subjects include column pairs and the whole dataset, so `column=` matches a pair on either column (as the policy matcher does).
 - **Steps:** a `Findings` view with `filter`, `to_polars` and `to_pandas`; `Run._repr_html_` built with escaping; the §9 example as a test.
@@ -109,13 +109,14 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `Run.findings` is a `Findings` tuple view with `filter` (the policy matcher's keys and operators; the matching code moved to `Matcher.matches`), `to_polars` (11 flat columns, no evidence metrics) and `to_pandas` (`ImportError` with the install hint without the extra, not a loader error). `Run._repr_html_` shows the health summary and the top 10 findings, escaped.
 
 ### U5-03 · JSON and NDJSON sinks, and reading a run back
-- **Status:** todo · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
+- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
 - **Note from U5-01:** `dsbf.profile(previous=)` takes a `Run` only; once `Run.read` exists, accept a `run.json` path (read it in `dsbf.library` before evaluating the policy).
 - **Note from U4-00 (was on U4-02):** every core check declares a params and output model from U4-02 on, but nothing in Phase 4 reads them as JSON Schema, so their export lands here, with the published run schema.
 - **Goal:** `run.write(dir, sinks=["json", "ndjson"])` writes `run.json` and `findings.ndjson`, and `dsbf.Run.read(path)` round-trips. The stopgap CLI's writer moves onto it. `dsbf schema export` also writes each core check's params and output schema (`schema/checks/<id>.schema.json`), and `--check` covers them.
 - **Assumptions to confirm:** `Run` serialises through `model_dump_json` with no non-finite numbers (F-36); `schema export` is the one place that writes `schema/`; every core check declares a params and an output model (47 do, per the Phase 4 summary).
 - **Steps:** `Run.write` with a sink registry that U5-04 and U5-05 extend; `Run.read`; NDJSON of findings, one finding per line; per-check schemas under `schema/checks/`; move the CLI writer onto `Run.write`; extend the breaking-change gate to the check schemas.
 - **Acceptance:** A round-trip test passes. The files validate against the published schema with `jsonschema`, and each check's output in a titanic run validates against its exported schema. `dsbf schema export --check` covers the check schemas.
+- **Outcome:** `dsbf.sinks` holds a name-keyed sink registry (`json`, `ndjson`) that U5-04 and U5-05 extend; `Run.write` and `Run.read` (`dsbf.Run`) use it, and `dsbf.profile(previous=)` takes a `run.json` path. `dsbf profile` writes through `Run.write` and gains `--sink`. `dsbf schema export` writes 47 `schema/checks/<id>.schema.json` files (params and output), and `schema check` guards them by each check's `check_version`. Policy schema gating stays with U5-09.
 
 ### U5-04 · Parquet sinks and the consumer schema guide
 - **Status:** todo · **Size:** M · **Depends on:** U5-03

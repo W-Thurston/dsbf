@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "format_violations",
+  "check_id": "format_violations",
+  "check_version": "1.0.0",
+  "params": {
+    "$defs": {
+      "FormatRule": {
+        "additionalProperties": false,
+        "description": "A pattern the values of one column must match.",
+        "properties": {
+          "column": {
+            "description": "The column the rule is about.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "pattern": {
+            "description": "A Python regular expression (the `re` module).",
+            "minLength": 1,
+            "type": "string"
+          },
+          "mode": {
+            "default": "fullmatch",
+            "description": "`fullmatch` needs the whole value to match; `search` needs the pattern to occur in it.",
+            "enum": [
+              "fullmatch",
+              "search"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "column",
+          "pattern"
+        ],
+        "title": "FormatRule",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "rules": {
+        "default": [],
+        "description": "The rules to check, one per column. With none, only the mixed date formats are reported.",
+        "items": {
+          "$ref": "#/$defs/FormatRule"
+        },
+        "type": "array"
+      },
+      "check_date_formats": {
+        "default": true,
+        "description": "Report string columns that write dates in several formats.",
+        "type": "boolean"
+      },
+      "min_date_share": {
+        "default": 0.9,
+        "description": "Share of a column's values that must be dates for it to be read as a column of dates.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_format_share": {
+        "default": 0.05,
+        "description": "Share of the values a date format needs to count as in use.",
+        "exclusiveMinimum": 0,
+        "maximum": 0.5,
+        "type": "number"
+      },
+      "min_values": {
+        "default": 10,
+        "description": "Values a column needs for the date formats.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "warn_share": {
+        "default": 0.01,
+        "description": "Share of a column's values that break its rule above which the finding is a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "max_examples": {
+        "default": 5,
+        "description": "Examples listed per rule.",
+        "maximum": 20,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "FormatViolationsParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "DateFormat": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "description": "The `strptime` format.",
+            "type": "string"
+          },
+          "signature": {
+            "description": "The shape of an example: runs of capitals, lowercase letters and digits become `A`, `a` and `9`, as in the profile.",
+            "type": "string"
+          },
+          "rows": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "share": {
+            "description": "Of the column's non-null values.",
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "format",
+          "signature",
+          "rows",
+          "share",
+          "examples"
+        ],
+        "title": "DateFormat",
+        "type": "object"
+      },
+      "MixedDates": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Values counted, null tokens excluded.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "date_share": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "formats": {
+            "description": "Most used first.",
+            "items": {
+              "$ref": "#/$defs/DateFormat"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "n_used",
+          "date_share",
+          "formats"
+        ],
+        "title": "MixedDates",
+        "type": "object"
+      },
+      "RuleResult": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "type": "string"
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "fullmatch",
+              "search"
+            ],
+            "type": "string"
+          },
+          "n_used": {
+            "description": "Non-null values checked.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "violations": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "share": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "distinct_violations": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "column",
+          "pattern",
+          "mode",
+          "n_used",
+          "violations",
+          "share",
+          "distinct_violations",
+          "examples"
+        ],
+        "title": "RuleResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "rules": {
+        "description": "The result of every rule run.",
+        "items": {
+          "$ref": "#/$defs/RuleResult"
+        },
+        "type": "array"
+      },
+      "unchecked_rules": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Rules not run, by column, with the reason.",
+        "type": "object"
+      },
+      "mixed_dates": {
+        "additionalProperties": {
+          "$ref": "#/$defs/MixedDates"
+        },
+        "description": "Each string column that writes dates in several formats.",
+        "type": "object"
+      },
+      "columns_read": {
+        "description": "String columns read for dates.",
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "rules",
+      "unchecked_rules",
+      "mixed_dates",
+      "columns_read"
+    ],
+    "title": "FormatViolationsOutput",
+    "type": "object"
+  }
+}

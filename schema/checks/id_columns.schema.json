@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "id_columns",
+  "check_id": "id_columns",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_unique_share": {
+        "default": 0.95,
+        "description": "Distinct values per non-null value from which a string or categorical column is read as an identifier.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_rows": {
+        "default": 20,
+        "description": "Non-null values a column needs before its uniqueness means anything.",
+        "minimum": 2,
+        "type": "integer"
+      }
+    },
+    "title": "IdColumnsParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "id_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Each column read as an identifier, with the rule that read it: `unique_share` or `dense_integer_sequence`.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "id_columns"
+    ],
+    "title": "IdColumnsOutput",
+    "type": "object"
+  }
+}

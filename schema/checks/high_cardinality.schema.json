@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "high_cardinality",
+  "check_id": "high_cardinality",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "max_distinct": {
+        "default": 50,
+        "description": "Distinct values above which a categorical column is reported.",
+        "minimum": 2,
+        "type": "integer"
+      }
+    },
+    "title": "HighCardinalityParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnCardinality": {
+        "additionalProperties": false,
+        "properties": {
+          "distinct": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "distinct_share": {
+            "description": "Distinct values per non-null value.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "high": {
+            "description": "The column has more than `max_distinct` values.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "distinct",
+          "distinct_share",
+          "high"
+        ],
+        "title": "ColumnCardinality",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnCardinality"
+        },
+        "description": "Every categorical column, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "HighCardinalityOutput",
+    "type": "object"
+  }
+}

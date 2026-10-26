@@ -59,7 +59,7 @@ def profile(
     hooks: Iterable[Hook] = (),
     config: str | Path | None = None,
     policy: Policy | Mapping[str, Any] | str | Path | None = None,
-    previous: Run | None = None,
+    previous: Run | str | Path | None = None,
 ) -> Run:
     """Profile ``source`` and return the ``Run``, which stays in memory.
 
@@ -104,12 +104,14 @@ def profile(
     are evaluated over the findings and the health of the run, and ``Run.policy`` says
     which fired. A policy is report-only unless a rule says ``fail``, and then it
     only sets ``Run.policy.exit_code``; the run still completes. ``previous`` is the
-    earlier ``Run`` that ``new_since: previous_run`` compares with, and is ignored
-    without a policy.
+    earlier ``Run`` (or the path of its ``run.json``) that ``new_since: previous_run``
+    compares with, and is ignored without a policy.
 
     Raises:
         PolicyError: the ``policy`` cannot be read or a rule is invalid, found before
             the data is read; every problem is listed under its rule's name.
+        RunReadError: ``previous`` is a path that does not hold a readable run, found
+            before the data is read.
         ConfigError: a setting is invalid, such as a ``target`` that is not a
             column or a ``depth`` that does not exist; every problem is listed.
         SourceError: the data or the ``reference`` cannot be read (see
@@ -131,6 +133,9 @@ def profile(
         config=config,
     )
     rules = None if policy is None else load_policy(policy)
+    earlier: Run | None = None
+    if rules is not None and previous is not None:
+        earlier = previous if isinstance(previous, Run) else Run.read(previous)
     dataset = load(source, name=name)
     _check_columns(settings, dataset)
     if settings.sample is not None:
@@ -165,7 +170,7 @@ def profile(
     )
     if rules is None:
         return run
-    outcome, notes = evaluate_policy(run, rules, previous)
+    outcome, notes = evaluate_policy(run, rules, earlier)
     # Not revalidated, which would walk a megabyte-sized run again: the outcome is
     # built from this run's own ids and statuses.
     return run.model_copy(update={"policy": outcome, "notes": (*run.notes, *notes)})

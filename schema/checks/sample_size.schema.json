@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sample_size",
+  "check_id": "sample_size",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "n_features": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "The number of predictors, when only some columns will be used. By default every column except identifiers, datetimes and unknown types."
+      },
+      "linear_rows_per_feature": {
+        "default": 20,
+        "description": "Rows per predictor a linear or logistic regression needs (Harrell 2001; Peduzzi 1996).",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "linear_min_rows": {
+        "default": 50,
+        "description": "Rows it needs at least.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "tree_rows_per_feature": {
+        "default": 10,
+        "description": "Rows per predictor a tree-based model needs.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "tree_min_rows": {
+        "default": 100,
+        "description": "Rows it needs at least.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "general_rows_per_feature": {
+        "default": 5,
+        "description": "Rows per predictor for a train, validation, test split.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "general_min_rows": {
+        "default": 1000,
+        "description": "Rows a 60/20/20 split needs for a validation set that gives reliable metrics.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "SampleSizeParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "RuleResult": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "required_rows": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "adequate": {
+            "type": "boolean"
+          },
+          "shortfall": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "required_rows",
+          "adequate",
+          "shortfall"
+        ],
+        "title": "RuleResult",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "rows": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "n_features": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "rows_per_feature": {
+        "minimum": 0,
+        "type": "number"
+      },
+      "verdict": {
+        "description": "`adequate` when every rule passes, `insufficient` when neither the linear nor the tree rule does, `limited` otherwise.",
+        "enum": [
+          "adequate",
+          "limited",
+          "insufficient"
+        ],
+        "type": "string"
+      },
+      "rules": {
+        "additionalProperties": {
+          "$ref": "#/$defs/RuleResult"
+        },
+        "description": "`linear_model`, `tree_model` and `general_ml`.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "rows",
+      "n_features",
+      "rows_per_feature",
+      "verdict",
+      "rules"
+    ],
+    "title": "SampleSizeOutput",
+    "type": "object"
+  }
+}

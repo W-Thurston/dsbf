@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "datetime_consistency",
+  "check_id": "datetime_consistency",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "warn_share": {
+        "default": 0.05,
+        "description": "Share of a column's non-null values that do not read, from which the finding is a warning rather than information.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      }
+    },
+    "title": "DatetimeConsistencyParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnConsistency": {
+        "additionalProperties": false,
+        "properties": {
+          "non_null": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "unparsed": {
+            "description": "Non-null values that did not read.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "share": {
+            "description": "`unparsed` over `non_null`.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The format the text was read with."
+          },
+          "epoch_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The unit of Unix timestamps."
+          }
+        },
+        "required": [
+          "non_null",
+          "unparsed",
+          "share",
+          "format",
+          "epoch_unit"
+        ],
+        "title": "ColumnConsistency",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnConsistency"
+        },
+        "description": "Every datetime column, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "DatetimeConsistencyOutput",
+    "type": "object"
+  }
+}

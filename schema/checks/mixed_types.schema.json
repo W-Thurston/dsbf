@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mixed_types",
+  "check_id": "mixed_types",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_share": {
+        "default": 0.05,
+        "description": "Share of the values a kind needs to count as present.",
+        "exclusiveMinimum": 0,
+        "maximum": 0.5,
+        "type": "number"
+      },
+      "ignore_null_tokens": {
+        "default": true,
+        "description": "Leave out values that stand for a missing value (`NA`, `null`, `none`, `-`, an empty or blank string). Off, they are a kind of their own.",
+        "type": "boolean"
+      },
+      "min_values": {
+        "default": 10,
+        "description": "Values a column needs to be read.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_examples": {
+        "default": 3,
+        "description": "Examples listed per kind.",
+        "maximum": 10,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "MixedTypesParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "KindCount": {
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "share": {
+            "exclusiveMinimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "share",
+          "examples"
+        ],
+        "title": "KindCount",
+        "type": "object"
+      },
+      "MixedColumn": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Values counted, null tokens excluded.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "kinds": {
+            "additionalProperties": {
+              "$ref": "#/$defs/KindCount"
+            },
+            "description": "The kinds present, by name.",
+            "type": "object"
+          },
+          "source": {
+            "description": "`content` if the values mix kinds, `load` if the column held mixed Python types when it was loaded, `both` if both.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "n_used",
+          "kinds",
+          "source"
+        ],
+        "title": "MixedColumn",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/MixedColumn"
+        },
+        "description": "Each column that mixes kinds, by name.",
+        "type": "object"
+      },
+      "columns_read": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "columns_read",
+      "skipped_columns"
+    ],
+    "title": "MixedTypesOutput",
+    "type": "object"
+  }
+}

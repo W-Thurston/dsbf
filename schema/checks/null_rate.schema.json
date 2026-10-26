@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "null_rate",
+  "check_id": "null_rate",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "notice_share": {
+        "default": 0.05,
+        "description": "Null share from which a column is reported.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "warn_share": {
+        "default": 0.2,
+        "description": "Null share from which the finding is a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "error_share": {
+        "default": 0.5,
+        "description": "Null share from which the finding is an error and the column is listed as mostly missing.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "NullRateParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnNulls": {
+        "additionalProperties": false,
+        "properties": {
+          "null_count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rows": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "null_share": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "mostly_missing": {
+            "description": "The share is at least `error_share`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "null_count",
+          "rows",
+          "null_share",
+          "mostly_missing"
+        ],
+        "title": "ColumnNulls",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnNulls"
+        },
+        "description": "Every column, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "NullRateOutput",
+    "type": "object"
+  }
+}

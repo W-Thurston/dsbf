@@ -10,12 +10,14 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dsbf.library import Sample, profile
+    from dsbf.model import Run
 
-__all__ = ["Sample", "__version__", "profile"]
+__all__ = ["Run", "Sample", "__version__", "profile"]
 
 _LAZY = {
     "profile": "dsbf.library",
     "Sample": "dsbf.library",
+    "Run": "dsbf.model",
     "__version__": "dsbf.utils.versioning",
 }
 

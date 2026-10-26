@@ -12,7 +12,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from pydantic.json_schema import GenerateJsonSchema
+from pydantic import BaseModel
+from pydantic.json_schema import GenerateJsonSchema, JsonSchemaMode
 
 from dsbf.model.policy import Policy
 from dsbf.model.run import Run
@@ -50,6 +51,11 @@ def policy_schema() -> dict[str, Any]:
         mode="validation", schema_generator=_SchemaGenerator
     )
     return {"$schema": JSON_SCHEMA_DIALECT, **schema}
+
+
+def model_schema(model: type[BaseModel], mode: JsonSchemaMode) -> dict[str, Any]:
+    """The JSON Schema of any model, written the way the published ones are."""
+    return model.model_json_schema(mode=mode, schema_generator=_SchemaGenerator)
 
 
 def schema_text(schema: dict[str, Any]) -> str:

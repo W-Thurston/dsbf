@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "constant_columns",
+  "check_id": "constant_columns",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "description": "The parameters of a check that has none.",
+    "properties": {},
+    "title": "NoParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "constant_columns": {
+        "description": "Columns with at most one distinct non-null value, in order.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "constant_columns"
+    ],
+    "title": "ConstantColumnsOutput",
+    "type": "object"
+  }
+}

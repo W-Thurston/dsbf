@@ -112,3 +112,25 @@ def test_a_bad_policy_fails_before_the_data_is_read():
             "/nonexistent/data.csv",
             policy={"rules": [{"name": "r", "when": {"nope": 1}}]},
         )
+
+
+def test_previous_can_be_the_path_of_a_stored_run(frame, tmp_path):
+    first = dsbf.profile(frame, depth="quick")
+    stored = first.write(tmp_path)["json"]
+    policy = {"rules": [{"name": "new", "when": {"new_since": "previous_run"}}]}
+    from_path = dsbf.profile(frame, depth="quick", policy=policy, previous=stored)
+    from_run = dsbf.profile(frame, depth="quick", policy=policy, previous=first)
+    assert from_path.policy is not None
+    assert from_run.policy is not None
+    assert from_path.policy.rules == from_run.policy.rules
+    assert not any("previous run" in n.message for n in from_path.notes)
+
+
+def test_an_unreadable_previous_path_fails_before_the_data_is_read(tmp_path):
+    from dsbf.sinks import RunReadError
+
+    policy = {"rules": [{"name": "new", "when": {"new_since": "previous_run"}}]}
+    with pytest.raises(RunReadError, match="cannot read run"):
+        dsbf.profile(
+            tmp_path / "missing.csv", policy=policy, previous=tmp_path / "nope.json"
+        )

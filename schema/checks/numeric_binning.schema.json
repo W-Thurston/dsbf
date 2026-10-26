@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "numeric_binning",
+  "check_id": "numeric_binning",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "skew_threshold": {
+        "default": 1.0,
+        "description": "Absolute skewness from which equal-width bins would crowd most rows into a few of them, so bins of equal row count are suggested.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "min_core_span": {
+        "default": 0.5,
+        "description": "Share of the range (max − min) that the middle 98% of the values must cover for equal-width bins to be suggested; below it a long tail leaves most bins nearly empty.",
+        "exclusiveMinimum": 0,
+        "maximum": 1,
+        "type": "number"
+      },
+      "min_distinct": {
+        "default": 10,
+        "description": "Distinct values at or below which a column is already discrete and is left alone.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_bins": {
+        "default": 10,
+        "description": "Most bins suggested.",
+        "minimum": 3,
+        "type": "integer"
+      },
+      "min_rows_per_bin": {
+        "default": 30,
+        "description": "Rows each bin should hold; fewer bins are suggested.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "NumericBinningParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnBinning": {
+        "additionalProperties": false,
+        "properties": {
+          "strategy": {
+            "enum": [
+              "quantile",
+              "equal_width"
+            ],
+            "type": "string"
+          },
+          "n_bins": {
+            "minimum": 2,
+            "type": "integer"
+          },
+          "skewness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "core_span": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of the range the middle 98% of the values covers; None when the profile has no 1% and 99% quantiles."
+          },
+          "spike_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A value that holds at least 1/n_bins of the rows, which quantile edges collapse onto."
+          },
+          "spike_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "strategy",
+          "n_bins",
+          "skewness",
+          "core_span",
+          "spike_value",
+          "spike_share"
+        ],
+        "title": "ColumnBinning",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnBinning"
+        },
+        "description": "Each numeric column with a suggestion, by name.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Numeric columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "skipped_columns"
+    ],
+    "title": "NumericBinningOutput",
+    "type": "object"
+  }
+}

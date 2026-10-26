@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "duplicate_rows",
+  "check_id": "duplicate_rows",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "warn_share": {
+        "default": 0.01,
+        "description": "Share of rows above which the finding is a warning.",
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "title": "DuplicateRowsParams",
+    "type": "object"
+  },
+  "output": {
+    "additionalProperties": false,
+    "properties": {
+      "duplicate_rows": {
+        "description": "Rows equal to an earlier row.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "duplicate_share": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "required": [
+      "duplicate_rows",
+      "rows",
+      "duplicate_share"
+    ],
+    "title": "DuplicateRowsOutput",
+    "type": "object"
+  }
+}

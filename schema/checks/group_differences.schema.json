@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "group_differences",
+  "check_id": "group_differences",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "alpha": {
+        "default": 0.05,
+        "description": "Level of the adjusted p-value for a difference.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "correction": {
+        "default": "fdr_bh",
+        "description": "Adjustment of the p-values for the number of pairs tested, separately for each method. `fdr_bh` controls the false discovery rate.",
+        "enum": [
+          "fdr_bh",
+          "bonferroni",
+          "holm",
+          "none"
+        ],
+        "type": "string"
+      },
+      "equal_variances": {
+        "default": false,
+        "description": "Take the p-values from the classic ANOVA F and the Kruskal–Wallis H, which assume the groups have the same spread. Off, they come from Welch's ANOVA on the values and on their ranks, which do not: with groups of unequal size and spread, the classic tests call equal groups different half the time (5% is the promise).",
+        "type": "boolean"
+      },
+      "min_effect": {
+        "default": 0.01,
+        "description": "Effect size (ω² or ε²) from which a significant pair is reported; a huge sample makes a negligible difference significant.",
+        "exclusiveMaximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "min_group_n": {
+        "default": 5,
+        "description": "Rows a group needs; a smaller group is left out.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_levels": {
+        "default": 20,
+        "description": "Most levels a categorical column may have.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "max_contrast_levels": {
+        "default": 10,
+        "description": "Most groups for which a flagged pair gets every pairwise Mann–Whitney contrast.",
+        "minimum": 2,
+        "type": "integer"
+      },
+      "interval_level": {
+        "default": 0.95,
+        "description": "Coverage of the bootstrap intervals.",
+        "exclusiveMaximum": 1,
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "n_boot": {
+        "default": 200,
+        "description": "Bootstrap resamples of a pair.",
+        "minimum": 100,
+        "type": "integer"
+      },
+      "seed": {
+        "default": 42,
+        "description": "Seed of the bootstrap and of the row sample.",
+        "type": "integer"
+      },
+      "max_pairs": {
+        "default": 5000,
+        "description": "Most pairs tested; with more, the check is skipped rather than test an arbitrary part of them.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_rows": {
+        "default": 200000,
+        "description": "Most rows read; a larger frame is sampled with `seed`.",
+        "minimum": 1000,
+        "type": "integer"
+      },
+      "max_findings": {
+        "default": 50,
+        "description": "Most findings; the largest effects first.",
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "GroupDifferencesParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "Contrast": {
+        "additionalProperties": false,
+        "properties": {
+          "first_level": {
+            "type": "string"
+          },
+          "second_level": {
+            "type": "string"
+          },
+          "n_first": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "n_second": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "p_value": {
+            "description": "Mann–Whitney U, two-sided.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "p_adjusted": {
+            "description": "Holm adjustment over this pair's contrasts.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "rank_biserial": {
+            "description": "Probability that a row of the first level is above one of the second, minus the reverse; positive when the first level is higher.",
+            "maximum": 1,
+            "minimum": -1,
+            "type": "number"
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bootstrap interval of `rank_biserial`; only for a significant contrast."
+          }
+        },
+        "required": [
+          "first_level",
+          "second_level",
+          "n_first",
+          "n_second",
+          "p_value",
+          "p_adjusted",
+          "rank_biserial",
+          "interval"
+        ],
+        "title": "Contrast",
+        "type": "object"
+      },
+      "Interval": {
+        "additionalProperties": false,
+        "description": "A confidence interval for a statistic.",
+        "properties": {
+          "low": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "level": {
+            "description": "Coverage, for example 0.95.",
+            "exclusiveMaximum": 1,
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "low",
+          "high",
+          "level",
+          "method"
+        ],
+        "title": "Interval",
+        "type": "object"
+      },
+      "PairComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "numeric": {
+            "type": "string"
+          },
+          "categorical": {
+            "type": "string"
+          },
+          "n_used": {
+            "description": "Rows in the groups compared.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "n_groups": {
+            "minimum": 2,
+            "type": "integer"
+          },
+          "groups_dropped": {
+            "description": "Levels left out for having too few rows.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "smallest_group": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "largest_group": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "f_statistic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Welch's F, or the classic F with `equal_variances`; None when the groups have no spread within them."
+          },
+          "anova_p": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "anova_p_adjusted": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "omega_squared": {
+            "description": "Share of variance the groups explain, corrected for bias; the effect size of the ANOVA.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "eta_squared": {
+            "description": "The uncorrected share.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "h_statistic": {
+            "description": "Kruskal–Wallis H, tie-corrected.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "kruskal_p": {
+            "description": "From Welch's ANOVA on the ranks (H with `equal_variances`).",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "kruskal_p_adjusted": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "epsilon_squared": {
+            "description": "H / (n - 1): the effect size of the rank test.",
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "sd_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Largest over smallest group standard deviation; ANOVA is doubtful above 2. None when a group has no spread."
+          },
+          "flagged": {
+            "type": "boolean"
+          },
+          "flagged_by": {
+            "items": {
+              "enum": [
+                "anova",
+                "kruskal"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "omega_interval": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percentile bootstrap interval of ω²; only for a flagged pair."
+          },
+          "epsilon_interval": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percentile bootstrap interval of ε², on the ranks; only for a flagged pair."
+          },
+          "top_group": {
+            "description": "The level with the highest mean rank.",
+            "type": "string"
+          },
+          "bottom_group": {
+            "description": "The level with the lowest mean rank.",
+            "type": "string"
+          },
+          "contrasts": {
+            "description": "Every pair of groups, for a flagged pair.",
+            "items": {
+              "$ref": "#/$defs/Contrast"
+            },
+            "type": "array"
+          },
+          "contrasts_skipped": {
+            "description": "A flagged pair with more groups than `max_contrast_levels`.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "numeric",
+          "categorical",
+          "n_used",
+          "n_groups",
+          "groups_dropped",
+          "smallest_group",
+          "largest_group",
+          "f_statistic",
+          "anova_p",
+          "anova_p_adjusted",
+          "omega_squared",
+          "eta_squared",
+          "h_statistic",
+          "kruskal_p",
+          "kruskal_p_adjusted",
+          "epsilon_squared",
+          "sd_ratio",
+          "flagged",
+          "flagged_by",
+          "omega_interval",
+          "epsilon_interval",
+          "top_group",
+          "bottom_group",
+          "contrasts",
+          "contrasts_skipped"
+        ],
+        "title": "PairComparison",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "pairs": {
+        "description": "Every pair that was tested.",
+        "items": {
+          "$ref": "#/$defs/PairComparison"
+        },
+        "type": "array"
+      },
+      "pairs_tested": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "pairs_flagged": {
+        "description": "Pairs significant after adjustment with a reportable effect.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "tests_run": {
+        "description": "Hypothesis tests run: two per pair, plus the contrasts.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "correction": {
+        "type": "string"
+      },
+      "alpha": {
+        "type": "number"
+      },
+      "untested": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "description": "Pairs not tested, by reason: too_few_groups, no_variation or overflow.",
+        "type": "object"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Categorical columns left out, with the reason.",
+        "type": "object"
+      },
+      "rows_used": {
+        "description": "Rows read, after any sampling.",
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rows_total": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "pairs",
+      "pairs_tested",
+      "pairs_flagged",
+      "tests_run",
+      "correction",
+      "alpha",
+      "untested",
+      "skipped_columns",
+      "rows_used",
+      "rows_total"
+    ],
+    "title": "GroupDifferencesOutput",
+    "type": "object"
+  }
+}

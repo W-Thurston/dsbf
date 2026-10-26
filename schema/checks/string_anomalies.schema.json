@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "string_anomalies",
+  "check_id": "string_anomalies",
+  "check_version": "1.1.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "min_values": {
+        "default": 10,
+        "description": "Non-null values a column needs to be read.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "fence": {
+        "default": 3.0,
+        "description": "Multiples of the interquartile range beyond the quartiles of the value lengths from which a length is an outlier.",
+        "exclusiveMinimum": 0,
+        "type": "number"
+      },
+      "max_examples": {
+        "default": 5,
+        "description": "Examples listed per anomaly.",
+        "maximum": 20,
+        "minimum": 1,
+        "type": "integer"
+      }
+    },
+    "title": "StringAnomaliesParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "CaseGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "folded": {
+            "description": "The lower-cased form the variants share.",
+            "type": "string"
+          },
+          "variants": {
+            "description": "The spellings, most frequent first.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rows": {
+            "minimum": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "folded",
+          "variants",
+          "rows"
+        ],
+        "title": "CaseGroup",
+        "type": "object"
+      },
+      "ColumnAnomalies": {
+        "additionalProperties": false,
+        "properties": {
+          "n_used": {
+            "description": "Non-null values read.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "mixed_case": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/MixedCase"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "edge_whitespace": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Counted"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "invisible_characters": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Counted"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "length_outliers": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LengthOutliers"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "n_used",
+          "mixed_case",
+          "edge_whitespace",
+          "invisible_characters",
+          "length_outliers"
+        ],
+        "title": "ColumnAnomalies",
+        "type": "object"
+      },
+      "Counted": {
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "values": {
+            "description": "Distinct values affected.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "examples": {
+            "description": "The most frequent affected values; invisible characters are shown as escapes.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "values",
+          "examples"
+        ],
+        "title": "Counted",
+        "type": "object"
+      },
+      "LengthOutliers": {
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "values": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "lower_fence": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "upper_fence": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "values",
+          "lower_fence",
+          "upper_fence",
+          "examples"
+        ],
+        "title": "LengthOutliers",
+        "type": "object"
+      },
+      "MixedCase": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "description": "Sets of values that differ only by case.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "values": {
+            "description": "Distinct values in those sets.",
+            "minimum": 2,
+            "type": "integer"
+          },
+          "rows": {
+            "description": "Rows holding a value of such a set.",
+            "minimum": 2,
+            "type": "integer"
+          },
+          "minority_rows": {
+            "description": "Rows that do not hold the most frequent spelling of their set.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "examples": {
+            "description": "The sets with most rows.",
+            "items": {
+              "$ref": "#/$defs/CaseGroup"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "groups",
+          "values",
+          "rows",
+          "minority_rows",
+          "examples"
+        ],
+        "title": "MixedCase",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnAnomalies"
+        },
+        "description": "Each column with at least one anomaly, by name.",
+        "type": "object"
+      },
+      "columns_read": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "skipped_columns": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "Columns left out, with the reason.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns",
+      "columns_read",
+      "skipped_columns"
+    ],
+    "title": "StringAnomaliesOutput",
+    "type": "object"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "kurtosis",
+  "check_id": "kurtosis",
+  "check_version": "1.0.0",
+  "params": {
+    "additionalProperties": false,
+    "properties": {
+      "mild": {
+        "default": 1.0,
+        "description": "Excess kurtosis from which tails are called heavier than normal.",
+        "type": "number"
+      },
+      "strong": {
+        "default": 3.0,
+        "description": "Excess kurtosis from which tails are heavy and the finding is a warning.",
+        "type": "number"
+      },
+      "thin": {
+        "default": -1.0,
+        "description": "Excess kurtosis at or below which tails are called thin.",
+        "type": "number"
+      }
+    },
+    "title": "KurtosisParams",
+    "type": "object"
+  },
+  "output": {
+    "$defs": {
+      "ColumnKurtosis": {
+        "additionalProperties": false,
+        "properties": {
+          "kurtosis": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bias-corrected excess kurtosis (0 for a normal distribution); None when undefined, as for fewer than four values or a constant column."
+          },
+          "tails": {
+            "anyOf": [
+              {
+                "enum": [
+                  "thin",
+                  "normal",
+                  "mild",
+                  "heavy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the kurtosis is undefined."
+          }
+        },
+        "required": [
+          "kurtosis",
+          "tails"
+        ],
+        "title": "ColumnKurtosis",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "columns": {
+        "additionalProperties": {
+          "$ref": "#/$defs/ColumnKurtosis"
+        },
+        "description": "Every numeric column with summary statistics, by name.",
+        "type": "object"
+      }
+    },
+    "required": [
+      "columns"
+    ],
+    "title": "KurtosisOutput",
+    "type": "object"
+  }
+}

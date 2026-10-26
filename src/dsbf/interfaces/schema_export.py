@@ -7,10 +7,15 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
+from dsbf.checks import core_pack
+from dsbf.engine import Registry
 from dsbf.model.schema import (
+    JSON_SCHEMA_DIALECT,
     Change,
     compare_schemas,
+    model_schema,
     policy_schema,
     run_schema,
     schema_text,
@@ -21,6 +26,8 @@ from dsbf.model.schema import (
 
 SCHEMA_FILE = "run.schema.json"
 POLICY_SCHEMA_FILE = "policy.schema.json"
+CHECKS_DIR = "checks"
+CHECK_SCHEMA_SUFFIX = ".schema.json"
 TYPESCRIPT_BANNER = (
     "/* eslint-disable */\n"
     "/**\n"
@@ -77,17 +84,60 @@ def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
     return done.stdout
 
 
+def check_schemas() -> dict[str, dict[str, Any]]:
+    """Each core check's parameters and output as JSON Schema, keyed by check id.
+
+    The document names the check and its version, which is what a change to either
+    schema has to announce (``compare_check_schemas``).
+    """
+    registry = Registry()
+    registry.register_pack(core_pack())
+    schemas: dict[str, dict[str, Any]] = {}
+    for check in sorted(registry, key=lambda c: c.spec.id):
+        spec = check.spec
+        schemas[spec.id] = {
+            "$schema": JSON_SCHEMA_DIALECT,
+            "title": spec.id,
+            "check_id": spec.id,
+            "check_version": spec.version,
+            "params": model_schema(spec.params, "validation"),
+            "output": (
+                None
+                if spec.output is None
+                else model_schema(spec.output, "serialization")
+            ),
+        }
+    return schemas
+
+
+def check_schema_path(out_dir: Path, check_id: str) -> Path:
+    return out_dir / CHECKS_DIR / f"{check_id}{CHECK_SCHEMA_SUFFIX}"
+
+
 def export_schema(out_dir: Path, *, check: bool) -> dict[Path, str]:
     """The JSON Schema files and their fresh text; written unless ``check`` is set."""
     files = {
         out_dir / SCHEMA_FILE: schema_text(run_schema()),
         out_dir / POLICY_SCHEMA_FILE: schema_text(policy_schema()),
     }
+    for check_id, schema in check_schemas().items():
+        files[check_schema_path(out_dir, check_id)] = schema_text(schema)
     if not check:
-        out_dir.mkdir(parents=True, exist_ok=True)
         for path, text in files.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding="utf-8")
+        for path in orphaned_check_schemas(out_dir, files):
+            path.unlink()
     return files
+
+
+def orphaned_check_schemas(out_dir: Path, expected: dict[Path, str]) -> list[Path]:
+    """Check schema files on disk that no core check exports any more."""
+    directory = out_dir / CHECKS_DIR
+    if not directory.is_dir():
+        return []
+    found = directory.glob(f"*{CHECK_SCHEMA_SUFFIX}")
+    return sorted(path for path in found if path not in expected)
 
 
 def stale_files(expected: dict[Path, str]) -> list[Path]:
@@ -136,3 +186,65 @@ def compare_with_base(ref: str, schema_file: Path) -> SchemaComparison | None:
     old_version, new_version = schema_version(old), schema_version(new)
     problems = unannounced(old_version, new_version, changes)
     return SchemaComparison(old_version, new_version, changes, problems)
+
+
+def compare_check_schemas(
+    ref: str, out_dir: Path
+) -> list[tuple[str, SchemaComparison]]:
+    """Compare each check's schema file with its committed version at ``ref``.
+
+    A check's params and output are compared as two schemas under the check's
+    version; a check whose file is gone is a breaking change that needs a major
+    version, so it is reported against the version it had. A base without the
+    check schemas yields nothing.
+    """
+    directory = out_dir / CHECKS_DIR
+    comparisons: list[tuple[str, SchemaComparison]] = []
+    for check_id, base_text in base_check_schemas(ref, directory).items():
+        path = directory / f"{check_id}{CHECK_SCHEMA_SUFFIX}"
+        old = json.loads(base_text)
+        if not path.is_file():
+            change = Change("#", True, "check removed")
+            version = old["check_version"]
+            problems = unannounced(version, version, [change])
+            comparisons.append(
+                (check_id, SchemaComparison(version, version, [change], problems))
+            )
+            continue
+        new = json.loads(path.read_text("utf-8"))
+        changes: list[Change] = []
+        for part in ("params", "output"):
+            changes += [
+                Change(f"{part}{c.path[1:]}", c.breaking, c.message)
+                for c in compare_schemas(old[part] or {}, new[part] or {})
+            ]
+        problems = unannounced(old["check_version"], new["check_version"], changes)
+        comparisons.append(
+            (
+                check_id,
+                SchemaComparison(
+                    old["check_version"], new["check_version"], changes, problems
+                ),
+            )
+        )
+    return comparisons
+
+
+def base_check_schemas(ref: str, directory: Path) -> dict[str, str]:
+    """The check schema files committed at ``ref``, by check id."""
+    schema_at_ref(ref, directory / "_")  # raises if ``ref`` is not a revision
+    listed = subprocess.run(
+        ["git", "ls-tree", "--name-only", f"{ref}:./{directory.as_posix()}/"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if listed.returncode != 0:
+        return {}
+    texts: dict[str, str] = {}
+    for name in listed.stdout.split():
+        if name.endswith(CHECK_SCHEMA_SUFFIX):
+            text = schema_at_ref(ref, directory / name)
+            if text is not None:
+                texts[name.removesuffix(CHECK_SCHEMA_SUFFIX)] = text
+    return texts
