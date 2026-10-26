@@ -15,6 +15,7 @@ from dsbf.model.evidence import (
     SamplingInfo,
 )
 from dsbf.model.finding import Action, Finding, Guidance, GuidancePhase
+from dsbf.model.findings import Findings
 from dsbf.model.health import HealthIssue, RunHealth, StatusCounts
 from dsbf.model.manifest import (
     DatasetManifest,
@@ -92,6 +93,7 @@ __all__ = [
     "Dimension",
     "Evidence",
     "Finding",
+    "Findings",
     "FiniteFloat",
     "Guidance",
     "GuidancePhase",

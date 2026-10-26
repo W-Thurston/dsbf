@@ -500,3 +500,22 @@ class TestPackage:
         table = pa.Table.from_pandas(frame.to_pandas())
 
         assert dsbf.profile(table, depth="quick").dataset.n_columns == 8
+
+
+def test_the_findings_view_filters_a_real_run_and_converts_to_a_dataframe(quick):
+    warned = quick.findings.filter(severity=">=warn")
+
+    assert len(warned) == quick.health.findings_at_warn_or_above
+    table = warned.to_polars()
+    assert table["id"].to_list() == [f.id for f in warned]
+    assert quick.findings.to_pandas().shape[0] == len(quick.findings)
+
+
+def test_the_notebook_display_survives_hostile_column_names():
+    from tests.fixtures.adversarial import build_adversarial_frame
+
+    run = dsbf.profile(pl.from_pandas(build_adversarial_frame()), depth="quick")
+    html = run._repr_html_()
+
+    assert html.startswith("<div>")
+    assert "<script" not in html

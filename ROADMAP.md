@@ -89,7 +89,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.data.load` refuses a column named `*` or one that starts with `^` and ends with `$` with a `SourceReadError` that lists them; the alias option was dropped because every Polars `Series` method selects its own name as a pattern, so an alias would have to cover every series a check receives. The adversarial suite's strategy skips those two name shapes. The perf baseline was not promoted: no Performance run on `main` exists after U4-19 merged.
 
 ### U5-01 · Policy evaluator
-- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-00
+- **Status:** done (2026-10-26, PR #134, `b68ae76`) · **Size:** M · **Depends on:** U5-00
 - **Note from U5-10:** promote the perf baseline from the first scheduled Performance run on `main` after 2026-10-25 14:35 -06:00 (the committed one is the 2026-10-25 nightly, `a2bda9e`); do it as the first step if that run exists.
 - **Note from U4-06:** `out_of_bounds` (plausibility range, `warn`) and `schema` (contract, with min and max per column) both take bounds for a column. Decide whether a policy rule reads one as the other.
 - **Note from U1-10:** (1) the policy loader turns `yaml.safe_load` and `Policy.model_validate` failures into a `ConfigError`-style report that names the rule; (2) decide what `new_since: previous_run` does without a previous run; (3) add a range on one setting (`>0.1` and `<0.5`) only if users ask. **Note from U1-11:** publish `schema/policy.schema.json` with the loose spellings documented, together with its loader.
@@ -101,11 +101,12 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.policy` loads a policy (`load_policy`, errors named by rule) and evaluates it (`evaluate_policy`); `dsbf.profile(policy=, previous=)` fills `Run.policy` without revalidating the run, and `schema/policy.schema.json` is exported beside the run schema. The §7.2 example filtered on `null_rate`, a metric no check emits, so it now reads `null_share`. `previous` takes a `Run` only until U5-03; the perf baseline was promoted from the 2026-10-26 run on `main`.
 
 ### U5-02 · Findings query API and notebook display
-- **Status:** todo · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
+- **Status:** done (2026-10-26) · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
 - **Goal:** `run.findings.filter(severity=">=warn", dimension=..., column=...)`, `.to_polars()` and `.to_pandas()` (with the `pandas` extra). `Run._repr_html_` shows the health summary and the top findings in a notebook.
 - **Assumptions to confirm:** `Run.findings` is a tuple ordered by `order_findings`; `pandas` is an optional extra, so `.to_pandas()` raises the `unavailable` style error without it; `Finding` subjects include column pairs and the whole dataset, so `column=` matches a pair on either column (as the policy matcher does).
 - **Steps:** a `Findings` view with `filter`, `to_polars` and `to_pandas`; `Run._repr_html_` built with escaping; the §9 example as a test.
 - **Acceptance:** The REFACTOR_PLAN §9 library example runs as a test. The HTML display renders the adversarial run without breaking on odd column names.
+- **Outcome:** `Run.findings` is a `Findings` tuple view with `filter` (the policy matcher's keys and operators; the matching code moved to `Matcher.matches`), `to_polars` (11 flat columns, no evidence metrics) and `to_pandas` (`ImportError` with the install hint without the extra, not a loader error). `Run._repr_html_` shows the health summary and the top 10 findings, escaped.
 
 ### U5-03 · JSON and NDJSON sinks, and reading a run back
 - **Status:** todo · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
@@ -118,6 +119,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U5-04 · Parquet sinks and the consumer schema guide
 - **Status:** todo · **Size:** M · **Depends on:** U5-03
+- **Note from U5-02:** build the findings table from the columns of `Findings.to_polars` (`id`, `check_id`, `code`, `dimension`, `severity`, `confidence`, `subject_kind`, `columns`, `title`, `message`, `tags`), adding the evidence metrics.
 - **Goal:** `findings.parquet`, `profile.parquet` and `results.parquet` with documented, versioned columns, plus a guide for loading them into a warehouse or BI tool.
 - **Decided in U5-00:** the Parquet files carry a `schema_version` in their key-value metadata, and the breaking-change check compares column names, types and nullability against a checked-in schema listing.
 - **Assumptions to confirm:** the profile's per-column stats and histograms flatten to one row per column, with the bins in a list column; a finding's evidence flattens to JSON text or a map, chosen by what DuckDB reads back; `pyarrow` is in the base install (it is).

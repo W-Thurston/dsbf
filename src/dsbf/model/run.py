@@ -12,8 +12,10 @@ from pydantic import AwareDatetime, Field, field_validator, model_validator
 from dsbf.model.base import Contract
 from dsbf.model.check import CheckResult, Note
 from dsbf.model.finding import Finding
+from dsbf.model.findings import Findings
 from dsbf.model.health import RunHealth
 from dsbf.model.manifest import DatasetManifest, PlanManifest
+from dsbf.model.notebook import render_run_html
 from dsbf.model.policy import PolicyOutcome
 from dsbf.model.profile import DatasetProfile
 from dsbf.model.vocabulary import Severity
@@ -58,12 +60,16 @@ class Run(Contract):
     )
 
     @cached_property
-    def findings(self) -> tuple[Finding, ...]:
+    def findings(self) -> Findings:
         """Every result's findings, highest severity first.
 
         Derived from ``results`` rather than stored, so a run carries each finding once.
+        The view filters (``run.findings.filter(severity=">=warn")``) and converts to
+        a dataframe.
         """
-        return order_findings(f for r in self.results.values() for f in r.findings)
+        return Findings(
+            order_findings(f for r in self.results.values() for f in r.findings)
+        )
 
     @field_validator("schema_version")
     @classmethod
@@ -165,3 +171,7 @@ class Run(Contract):
             f"{len(self.results)} checks"
         )
         return self.health.render(header=header, pointer=pointer, notes=self.notes)
+
+    def _repr_html_(self) -> str:
+        """What a notebook shows: the health summary and the top findings."""
+        return render_run_html(self)
