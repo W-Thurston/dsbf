@@ -1,0 +1,408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ActionKind": {
+      "description": "What a rule does when it matches.",
+      "enum": [
+        "annotate",
+        "warn",
+        "fail",
+        "notify"
+      ],
+      "title": "ActionKind",
+      "type": "string"
+    },
+    "CheckStatus": {
+      "description": "How one check's execution ended. Every status but `ok` comes with a note.",
+      "enum": [
+        "ok",
+        "not_applicable",
+        "unavailable",
+        "skipped",
+        "error",
+        "timeout"
+      ],
+      "title": "CheckStatus",
+      "type": "string"
+    },
+    "Confidence": {
+      "description": "How firmly a check stands behind a finding; each check caps its own.",
+      "enum": [
+        "low",
+        "moderate",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "ConfidenceComparison": {
+      "additionalProperties": false,
+      "description": "Compare a finding's confidence, for example ``>=moderate``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "$ref": "#/$defs/Confidence"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "ConfidenceComparison",
+      "type": "object"
+    },
+    "Dimension": {
+      "description": "The aspect of the data a finding speaks to.\n\nThe first five are the quality dimensions; the rest describe the shape of\nthe data.",
+      "enum": [
+        "completeness",
+        "validity",
+        "usability",
+        "redundancy",
+        "leakage",
+        "distribution",
+        "relationship",
+        "temporal"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "Matcher": {
+      "additionalProperties": false,
+      "description": "The ``when`` of a rule: every key given must hold, and at least one is needed.\n\nFinding keys select findings; ``health.status`` selects checks that ended in that\nstatus and may be narrowed with ``check`` only. A bare value means equality;\n``severity``, ``confidence`` and ``metric`` values may carry an operator\n(``\">=error\"``, ``\">0.3\"``), which must be quoted in YAML.",
+      "properties": {
+        "dimension": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Dimension"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "code": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A finding's machine-readable kind, for example `high_null_rate`."
+        },
+        "check": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The id of the check concerned."
+        },
+        "column": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A column the finding's subject names; a pair matches on either."
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A tag the finding carries."
+        },
+        "severity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/SeverityComparison"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ConfidenceComparison"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metric": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/MetricComparison"
+                  }
+                ]
+              },
+              "minProperties": 1,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Evidence metric name to comparison; every entry must hold."
+        },
+        "new_since": {
+          "anyOf": [
+            {
+              "const": "previous_run",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only findings absent from the previous run; needs one to compare."
+        },
+        "health.status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only checks that ended in this status."
+        }
+      },
+      "title": "Matcher",
+      "type": "object"
+    },
+    "MetricComparison": {
+      "additionalProperties": false,
+      "description": "Compare one number in a finding's evidence, for example ``>0.3``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "MetricComparison",
+      "type": "object"
+    },
+    "Operator": {
+      "description": "How a comparison relates the observed value to the one in the rule.",
+      "enum": [
+        "==",
+        "!=",
+        ">=",
+        ">",
+        "<=",
+        "<"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PolicyAction": {
+      "additionalProperties": false,
+      "description": "One step a matched rule takes. Only `fail` affects the exit code.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/ActionKind"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where `notify` sends it, as `scheme:destination`."
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "PolicyAction",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "description": "When findings or checks match, take these actions.",
+      "properties": {
+        "name": {
+          "description": "Unique within the policy.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "when": {
+          "$ref": "#/$defs/Matcher"
+        },
+        "then": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PolicyAction"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PolicyAction"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            }
+          ],
+          "default": [
+            {
+              "kind": "annotate",
+              "target": null
+            }
+          ],
+          "description": "One action or a list. Written `fail`, `{notify: scheme:destination}` or a list of those; stored as `{kind, target}` entries.",
+          "minItems": 1
+        }
+      },
+      "required": [
+        "name",
+        "when"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How much a finding matters, from informational to blocking.",
+      "enum": [
+        "info",
+        "notice",
+        "warn",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SeverityComparison": {
+      "additionalProperties": false,
+      "description": "Compare a finding's severity, for example ``>=error``.",
+      "properties": {
+        "op": {
+          "$ref": "#/$defs/Operator",
+          "default": "=="
+        },
+        "value": {
+          "$ref": "#/$defs/Severity"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "SeverityComparison",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The contents of a `policy.yaml`.",
+  "properties": {
+    "version": {
+      "const": 1,
+      "default": 1,
+      "type": "integer"
+    },
+    "rules": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Rule"
+      },
+      "type": "array"
+    }
+  },
+  "title": "Policy",
+  "type": "object"
+}

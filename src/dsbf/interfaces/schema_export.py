@@ -11,6 +11,7 @@ from pathlib import Path
 from dsbf.model.schema import (
     Change,
     compare_schemas,
+    policy_schema,
     run_schema,
     schema_text,
     schema_version,
@@ -19,6 +20,7 @@ from dsbf.model.schema import (
 )
 
 SCHEMA_FILE = "run.schema.json"
+POLICY_SCHEMA_FILE = "policy.schema.json"
 TYPESCRIPT_BANNER = (
     "/* eslint-disable */\n"
     "/**\n"
@@ -75,14 +77,17 @@ def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
     return done.stdout
 
 
-def export_schema(out_dir: Path, *, check: bool) -> tuple[Path, str]:
-    """The schema file's path and fresh text; written unless ``check`` is set."""
-    path = out_dir / SCHEMA_FILE
-    text = schema_text(run_schema())
+def export_schema(out_dir: Path, *, check: bool) -> dict[Path, str]:
+    """The JSON Schema files and their fresh text; written unless ``check`` is set."""
+    files = {
+        out_dir / SCHEMA_FILE: schema_text(run_schema()),
+        out_dir / POLICY_SCHEMA_FILE: schema_text(policy_schema()),
+    }
     if not check:
         out_dir.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
-    return path, text
+        for path, text in files.items():
+            path.write_text(text, encoding="utf-8")
+    return files
 
 
 def stale_files(expected: dict[Path, str]) -> list[Path]:
