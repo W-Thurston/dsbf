@@ -66,6 +66,27 @@ def series_shapes(seed: int) -> Planted:
     )
 
 
+@scenario("series_walks", seeds=40)
+def series_walks(seed: int) -> Planted:
+    """150 days of a random walk beside white noise."""
+    rng = np.random.default_rng(seed)
+    n = 150
+    frame = pd.DataFrame(
+        {
+            "date": _dates(n),
+            "walk": np.cumsum(rng.normal(0, 1, n)),
+            "noise": rng.normal(0, 1, n),
+        }
+    )
+    return Planted(
+        frame,
+        plants=(plant("stationarity", "walk", codes=["non_stationary"]),),
+        allowed=(plant("autocorrelation", "walk"),),
+        time_index="date",
+        checks=("stationarity", "autocorrelation"),
+    )
+
+
 @scenario("series_white_noise", seeds=40)
 def series_white_noise(seed: int) -> Planted:
     """Six columns of independent noise over 500 days."""

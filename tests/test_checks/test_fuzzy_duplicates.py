@@ -208,6 +208,54 @@ class TestColumnNames:
         }
 
 
+class TestEvidenceBeyondTheSharedKey:
+    def systems(self, key_columns: int = 1) -> pl.DataFrame:
+        """People in two systems: the same name and address, a different key."""
+        frame = people(120).with_columns(
+            key=pl.Series([f"A-{i:05d}" for i in range(120)])
+        )
+        copy = frame.head(5).with_columns(
+            key=pl.Series([f"B-{90000 + 7 * i}" for i in range(5)])
+        )
+        return pl.concat([frame, copy])
+
+    def test_the_same_person_under_another_key_is_found_without_excluding_it(self):
+        result = run_core_check(self.systems(), CHECK)
+
+        assert pairs_of(result) == {(i, 120 + i) for i in range(5)}
+        assert output_of(result)["top_pairs"][0]["differing_columns"] == ["key"]
+
+    def test_a_pair_that_matches_only_on_what_chance_would_give_is_not_found(self):
+        # Two columns of eight names each: some pair agrees on both by chance.
+        rng = np.random.default_rng(1)
+        pool = words(rng, 40, 12)
+        frame = pl.DataFrame(
+            {
+                "brand": rng.choice(pool[:30], 400).tolist(),
+                "model": rng.choice(pool[30:], 400).tolist(),
+                "code": [f"SKU-{i:05d}-{'AB'[i % 2]}" for i in range(400)],
+            }
+        )
+
+        assert output_of(run_core_check(frame, CHECK))["pairs_flagged"] == 0
+
+    def test_a_dropped_character_in_every_word_is_blocked_with_its_source(self):
+        rng = np.random.default_rng(2)
+        names = words(rng, 2400, 12)
+        frame = pl.DataFrame({"name": names, "city": words(rng, 2400, 11)})
+        copy = pl.DataFrame(
+            {
+                "name": [names[7][:5] + names[7][6:]],
+                "city": [frame["city"][7][:3] + frame["city"][7][4:]],
+            }
+        )
+
+        result = run_core_check(pl.concat([frame, copy]), CHECK, max_pairs=500_000)
+
+        assert output_of(result)["blocking"] == "rare_tokens"
+        assert (7, 2400) in pairs_of(result)
+
+
 class TestBlockingAndBudgets:
     def planted(self) -> tuple[pl.DataFrame, set[tuple[int, int]]]:
         frame = people(120)
@@ -237,10 +285,10 @@ class TestBlockingAndBudgets:
     def test_a_pair_budget_that_holds_every_block_leaves_no_note(self):
         frame, _ = self.planted()
 
-        result = run_core_check(frame, CHECK, max_pairs=100, max_block_size=2)
+        result = run_core_check(frame, CHECK, max_pairs=150, max_block_size=2)
 
         output = output_of(result)
-        assert output["blocking"] == "rare_tokens" and output["pairs_compared"] <= 100
+        assert output["blocking"] == "rare_tokens" and output["pairs_compared"] <= 150
         assert output["stopped_by"] is None
         assert [n.code for n in result.notes] == []
 

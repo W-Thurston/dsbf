@@ -13,7 +13,7 @@
   "bimodality": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [
@@ -384,7 +384,7 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [],
@@ -495,7 +495,7 @@
   "multivariate_outliers": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [],
@@ -574,7 +574,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -604,7 +604,7 @@
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [],

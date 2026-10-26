@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "fuzzy_duplicates",
   "check_id": "fuzzy_duplicates",
-  "check_version": "1.1.0",
+  "check_version": "1.2.0",
   "params": {
     "additionalProperties": false,
     "properties": {
@@ -15,7 +15,7 @@
       },
       "number_cap": {
         "default": 0.7,
-        "description": "The most two values alike when they are the same but for their digits, which both hold and which differ. The same text with another number (an email's serial, a street number, a sequential code) is evidence of a different record, which a typo in letters is not; 1 reads digits as letters, so a typo in a number is a typo.",
+        "description": "The most two values alike when both hold digits and the digits differ. Another number (an email's serial, a street number, a sequential code) is evidence of a different record, which a typo in letters is not; 1 reads digits as letters, so a typo in a number is a typo.",
         "maximum": 1,
         "minimum": 0,
         "type": "number"

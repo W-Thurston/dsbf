@@ -50,11 +50,10 @@ class FuzzyDuplicatesParams(CheckParams):
         0.7,
         ge=0,
         le=1,
-        description="The most two values alike when they are the same but for their "
-        "digits, which both hold and which differ. The same text with another "
-        "number (an email's serial, a street number, a sequential code) is evidence "
-        "of a different record, which a typo in letters is not; 1 reads digits as "
-        "letters, so a typo in a number is a typo.",
+        description="The most two values alike when both hold digits and the digits "
+        "differ. Another number (an email's serial, a street number, a sequential "
+        "code) is evidence of a different record, which a typo in letters is not; "
+        "1 reads digits as letters, so a typo in a number is a typo.",
     )
     max_label_levels: int = Field(
         20,
@@ -164,7 +163,7 @@ class FuzzyDuplicatesOutput(CheckOutputModel):
 
 @check(
     id="fuzzy_duplicates",
-    version="1.1.0",
+    version="1.2.0",
     kind="analysis",
     applies_to=SemanticTypes("categorical", "text", "identifier"),
     dimensions=[Dimension.VALIDITY],
@@ -225,7 +224,7 @@ def fuzzy_duplicates(ctx: CheckContext, params: FuzzyDuplicatesParams) -> CheckO
             stopped_by = "pairs"
 
     flagged_first, flagged_second, similarity, scored, timed_out = _score(
-        ctx, table, first, second, params, started + params.max_seconds
+        ctx, table, first, second, params, started + params.max_seconds, possible
     )
     if timed_out:
         stopped_by = "seconds"
@@ -294,9 +293,9 @@ class _Records:
     frame: pl.DataFrame
     values: list[list[str]]  # per column, normalised; "" where there is no value
     digits: list[list[str]]  # per column, only the digits of the value
-    others: list[list[str]]  # per column, the value without its digits
     present: list[np.ndarray]  # per column, whether the record has a value
     weights: tuple[float, ...]  # per column
+    bits: tuple[float, ...]  # per column, what a match is worth: -log2 of the chance
     tokens: list[str]  # per record, every column's value joined by a space
 
     def take(self, index: np.ndarray) -> "_Records":
@@ -305,9 +304,9 @@ class _Records:
             frame=self.frame[picked],
             values=[[column[i] for i in picked] for column in self.values],
             digits=[[column[i] for i in picked] for column in self.digits],
-            others=[[column[i] for i in picked] for column in self.others],
             present=[column[index] for column in self.present],
             weights=self.weights,
+            bits=self.bits,
             tokens=[self.tokens[i] for i in picked],
         )
 
@@ -361,12 +360,9 @@ def _records(
             normal[c].fill_null("").str.replace_all(r"[^0-9]", "").to_list()
             for c in normal.columns
         ],
-        others=[
-            normal[c].fill_null("").str.replace_all(r"[0-9]", "").to_list()
-            for c in normal.columns
-        ],
         present=[normal[c].is_not_null().to_numpy() for c in normal.columns],
         weights=weights,
+        bits=tuple(_match_bits(normal[c]) for c in normal.columns),
         tokens=normal.select(
             pl.concat_str(pl.all().fill_null(""), separator=" ")
             .str.replace_all(r"\s+", " ")
@@ -377,22 +373,74 @@ def _records(
     )
 
 
+def _match_bits(column: pl.Series) -> float:
+    """Bits of evidence in two records holding the same value of ``column``.
+
+    ``-log2`` of the chance that two different records picked at random agree on it,
+    counted over pairs of records, with one coincidence added so that a column of
+    values all different is worth the bits of its pairs and no more: a thousand
+    names are worth 20 bits, a column of two cities about one.
+    """
+    counts = column.drop_nulls().value_counts()["count"].to_numpy().astype(float)
+    n = counts.sum()
+    if n < 2:
+        return 0.0
+    agreeing = float(np.sum(counts * (counts - 1))) + 1
+    return float(-np.log2(agreeing / (n * (n - 1))))
+
+
+def _with_deletions(held: pl.DataFrame, threshold: float) -> pl.DataFrame:
+    """``held`` (record, token) with a row for each token and for each of its
+    one-character deletions, so that tokens one character apart share a key.
+
+    Two tokens one character apart (one dropped, added, changed or swapped with its
+    neighbour) both reduce to a common deletion, so records whose every token is
+    mistyped still meet. Only tokens long enough to lose a character and stay
+    above the threshold are expanded, since a shorter one cannot be a typo of
+    another that scores as a duplicate.
+    """
+    if threshold >= 1:
+        return held
+    shortest = max(3, math.floor(1 / (2 * (1 - threshold))))
+    distinct = held["token"].unique().to_list()
+    pairs = [
+        (token, token[:i] + token[i + 1 :])
+        for token in distinct
+        if len(token) >= shortest
+        for i in range(len(token))
+    ]
+    if not pairs:
+        return held
+    expanded = held.join(
+        pl.DataFrame(
+            {"token": [p[0] for p in pairs], "key": [p[1] for p in pairs]},
+            schema={"token": pl.String, "key": pl.String},
+        ),
+        on="token",
+    ).select("record", pl.col("key").alias("token"))
+    return pl.concat([held, expanded]).unique()
+
+
 def _blocked_pairs(
     ctx: CheckContext, texts: list[str], params: FuzzyDuplicatesParams
 ) -> tuple[np.ndarray, np.ndarray, bool]:
     """Pairs of records that share a rare token, rarest tokens first.
 
-    A token is a block when 2 to ``max_block_size`` records hold it. Blocks are taken
+    A token is a block when 2 to ``max_block_size`` records hold it, or hold a token
+    that is one character away (see ``_with_deletions``). Blocks are taken
     in order of size, then of the token, until the pairs would pass ``max_pairs``, so
     neither the hash order of the tokens nor the number of workers changes the pairs.
     Returns the first and second record of each pair, sorted, and whether the budget
     cut the last blocks.
     """
-    tokens = (
+    held = (
         pl.DataFrame({"record": np.arange(len(texts)), "token": texts})
         .with_columns(pl.col("token").str.split(" "))
         .explode("token")
         .unique()
+    )
+    tokens = (
+        _with_deletions(held, params.threshold)
         .group_by("token")
         .agg(pl.col("record").sort(), size=pl.len())
         .filter(pl.col("size").is_between(2, params.max_block_size))
@@ -428,11 +476,15 @@ def _score(
     second: np.ndarray,
     params: FuzzyDuplicatesParams,
     deadline: float,
+    pairs_possible: int,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, int, bool]:
     """Score the pairs and keep those at or above the threshold.
 
     A pair scores the weighted mean, over the columns either record has a value in,
-    of the Indel ratio of the two values (0 where only one has a value). Returns the
+    of the Indel ratio of the two values (0 where only one has a value). A pair also
+    scores with any one column left out, so a key that differs between two systems
+    does not hide the same person, but only when the columns that match carry more
+    evidence than chance would give some pair among all those possible. Returns the
     flagged pairs (first, second, similarity in 0 to 1), the number of pairs scored
     and whether the clock ran out before all were.
     """
@@ -453,16 +505,24 @@ def _score(
         high = second[start : start + _CHUNK]
         total = np.zeros(low.size)
         used = np.zeros(low.size)
-        for values, digits, others, present, weight in zip(
+        # Per column: its weighted ratio, its weight where it counts, and the bits of
+        # evidence it gives where the two values agree.
+        shares: list[np.ndarray] = []
+        weighed: list[np.ndarray] = []
+        evidence: list[np.ndarray] = []
+        for values, digits, present, weight, bits in zip(
             table.values,
             table.digits,
-            table.others,
             table.present,
             table.weights,
+            table.bits,
             strict=True,
         ):
             either = present[low] | present[high]
             if not either.any():
+                shares.append(np.zeros(low.size))
+                weighed.append(np.zeros(low.size))
+                evidence.append(np.zeros(low.size))
                 continue
             ratio = process.cpdist(  # type: ignore[no-matching-overload]
                 [values[i] for i in low],
@@ -472,23 +532,32 @@ def _score(
                 workers=1,
             )
             if params.number_cap < 1:
-                # The same text with another number is another record. A digit typed
-                # as a letter, against none, or beside other letters, is a typo.
+                # Another number is another record, whatever else differs: a letter and
+                # a digit changed at once is two edits, not a typo. A digit typed as
+                # a letter, against none, is a typo.
                 differ = np.array(
                     [
-                        others[i] == others[j]
-                        and bool(digits[i])
-                        and bool(digits[j])
-                        and digits[i] != digits[j]
+                        bool(digits[i]) and bool(digits[j]) and digits[i] != digits[j]
                         for i, j in zip(low, high, strict=True)
                     ]
                 )
                 ratio = np.where(
                     differ, np.minimum(ratio, 100 * params.number_cap), ratio
                 )
-            total += np.where(either, ratio, 0.0) * weight
+            share = np.where(either, ratio, 0.0) * weight
+            total += share
             used += either * weight
+            shares.append(share)
+            weighed.append(either * weight)
+            evidence.append(np.where(either & (ratio >= 100 * cutoff), bits, 0.0))
         similarity = total / np.maximum(used, 1e-12) / 100
+        if len(shares) > 1:
+            similarity = np.maximum(
+                similarity,
+                _best_without_one(
+                    total, used, shares, weighed, evidence, pairs_possible
+                ),
+            )
         scored += low.size
         hit = similarity >= cutoff
         kept_first.append(low[hit])
@@ -502,6 +571,28 @@ def _score(
         scored,
         timed_out,
     )
+
+
+def _best_without_one(
+    total: np.ndarray,
+    used: np.ndarray,
+    shares: list[np.ndarray],
+    weighed: list[np.ndarray],
+    evidence: list[np.ndarray],
+    pairs_possible: int,
+) -> np.ndarray:
+    """The best similarity of each pair with one column left out, 0 where not enough
+    evidence is left: a pair must match on more bits than ``log2(pairs possible)``,
+    or some pair would match by chance."""
+    needed = math.log2(max(pairs_possible, 2)) + 1
+    matched = np.sum(evidence, axis=0)
+    best = np.zeros(total.size)
+    for share, weight, bits in zip(shares, weighed, evidence, strict=True):
+        left = used - weight
+        similarity = (total - share) / np.maximum(left, 1e-12) / 100
+        enough = (left > 0) & (matched - bits >= needed)
+        best = np.maximum(best, np.where(enough, similarity, 0.0))
+    return best
 
 
 def _top_pairs(

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "bimodality",
   "check_id": "bimodality",
-  "check_version": "1.0.0",
+  "check_version": "1.1.0",
   "params": {
     "additionalProperties": false,
     "properties": {
@@ -46,7 +46,7 @@
       },
       "min_n": {
         "default": 10,
-        "description": "Finite values a column needs.",
+        "description": "Finite values a column needs. Below about 100 the BIC rarely separates two peaks, even 4 spreads apart.",
         "minimum": 4,
         "type": "integer"
       },

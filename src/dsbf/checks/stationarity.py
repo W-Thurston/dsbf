@@ -64,6 +64,12 @@ _MEANING: dict[Assessment, str] = {
 }
 
 
+_MEANING_VIA_TREND = (
+    "ADF cannot reject a unit root with a constant or with a trend, and KPSS rejects "
+    "stationarity around a trend: the level drifts, as with a random walk"
+)
+
+
 class StationarityParams(TimeSeriesParams):
     alpha: float = Field(
         0.05, gt=0, lt=1, description="Significance level of both tests."
@@ -123,7 +129,7 @@ class StationarityOutput(TimeSeriesOutput):
 
 @check(
     id="stationarity",
-    version="1.1.0",
+    version="1.2.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "datetime"),
     dimensions=[Dimension.TEMPORAL],
@@ -140,6 +146,11 @@ def stationarity(ctx: CheckContext, params: StationarityParams) -> CheckOutput:
 
     The columns are resampled to the frequency first (see ``checks.timeseries``), the
     most recent ``max_periods`` periods are used, and the lags are capped.
+
+    Limits of the tests: ADF rejects a unit root that is there in about ``alpha`` of
+    random walks, so about 1 in 20 is read as stationary or as a break; and a short
+    walk gives KPSS little power, so a random walk of 150 periods is found in about
+    3 of 4 samples (19 of 20 at 730 periods), the rest being `inconclusive`.
     """
     prepared = prepare(ctx, params, min_periods=params.min_periods)
     if isinstance(prepared, CheckOutput):
@@ -184,6 +195,17 @@ def _test(
         and not kpss_trend.rejects
     ):
         assessment, confidence = "consistent_with_trend_stationary", "moderate"
+    elif (
+        assessment == "inconclusive"
+        and adf_trend is not None
+        and kpss_trend is not None
+        and not adf_trend.rejects
+        and kpss_trend.rejects
+    ):
+        # A unit root stands under both ADF regressions and a level around a trend is
+        # rejected, so the series drifts, though KPSS around a constant is too weak
+        # to say so alone: it loses power to the long-run variance of a short walk.
+        assessment, confidence = "consistent_with_non_stationary", "low"
     return ColumnStationarity(
         **info.model_dump(),
         adf=adf,
@@ -304,7 +326,9 @@ def _report(
     }
     drifting = code == "non_stationary"
     around_trend = code == "trend_stationary"
-    if around_trend and result.adf_trend and result.kpss_trend:
+    # KPSS around a constant did not reject: the trend regressions carried the reading.
+    via_trend = drifting and not result.kpss.rejects
+    if (around_trend or via_trend) and result.adf_trend and result.kpss_trend:
         metrics |= {
             "adf_trend_p_value": result.adf_trend.p_value,
             "kpss_trend_p_value": result.kpss_trend.p_value,
@@ -335,7 +359,8 @@ def _report(
         title=title,
         message=(
             f"{name!r} against {prepared.index!r}, as {result.periods:,} "
-            f"{prepared.step.alias} periods: {_MEANING[result.assessment]} "
+            f"{prepared.step.alias} periods: "
+            f"{_MEANING_VIA_TREND if via_trend else _MEANING[result.assessment]} "
             f"(ADF p={result.adf.p_value:.3g}, KPSS p={result.kpss.p_value:.3g}, "
             f"α={params.alpha:g}). "
             + advice

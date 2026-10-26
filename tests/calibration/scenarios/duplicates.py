@@ -164,6 +164,37 @@ def fuzzy_look_alikes(seed: int) -> Planted:
     return Planted(frame, checks=("fuzzy_duplicates",))
 
 
+def _drop_in_every_token(rng: np.random.Generator, value: str) -> str:
+    """``value`` with one character dropped from each word of six letters or more."""
+    words = []
+    for word in value.split(" "):
+        if len(word) >= 6:
+            at = int(rng.integers(1, len(word)))
+            word = word[:at] + word[at + 1 :]
+        words.append(word)
+    return " ".join(words)
+
+
+@scenario("fuzzy_blocked_every_token", seeds=10)
+def fuzzy_blocked_every_token(seed: int) -> Planted:
+    """2 300 records, so only pairs that share a token are scored; 40 copies have a
+    character dropped from every long word, so no whole word is shared."""
+    rng = np.random.default_rng(seed)
+    base = records(rng, 2300)
+    sources = rng.choice(len(base), 40, replace=False)
+    rows = base.iloc[sources].copy().reset_index(drop=True)
+    for column in ("name", "email", "street", "city"):
+        rows[column] = [_drop_in_every_token(rng, str(v)) for v in rows[column]]
+    frame = pd.concat([base, rows], ignore_index=True)
+    return Planted(
+        frame,
+        plants=(plant("fuzzy_duplicates"),),
+        checks=("fuzzy_duplicates",),
+        probes=FUZZY_PROBES,
+        meta={"pairs": 40},
+    )
+
+
 @scenario("fuzzy_blocked", seeds=10)
 def fuzzy_blocked(seed: int) -> Planted:
     """2 300 records, so only pairs that share a rare token are scored, 40 copied."""

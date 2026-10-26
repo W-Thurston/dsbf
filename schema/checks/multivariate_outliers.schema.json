@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "multivariate_outliers",
   "check_id": "multivariate_outliers",
-  "check_version": "1.1.0",
+  "check_version": "1.2.0",
   "params": {
     "additionalProperties": false,
     "properties": {
@@ -15,7 +15,7 @@
       },
       "alpha": {
         "default": 0.01,
-        "description": "Chance that jointly normal data has a row called far, over all its rows. A row is far when its robust Mahalanobis distance is beyond the chi-squared point that leaves `alpha / rows` above it.",
+        "description": "Chance that data whose columns are jointly normal after ranking has a row called far, over all its rows. A row is far when its robust Mahalanobis distance, taken on each column's normal scores (so a skewed or heavy-tailed column does not make rows far by itself), is beyond the chi-squared point that leaves `alpha / rows` above it.",
         "exclusiveMaximum": 1,
         "exclusiveMinimum": 0,
         "type": "number"
@@ -28,7 +28,7 @@
       },
       "min_excess": {
         "default": 0.05,
-        "description": "How far the forest's top anomaly score must be above the top score it gives a normal sample of the same shape for a row to stand out. Scores vary by 0.01 to 0.02 between samples of that shape, and a median standing in for missing values lifts them by 0.02.",
+        "description": "How far the forest's top anomaly score must be above the top score it gives a normal sample of the same shape for a row to stand out. Scores vary by 0.01 to 0.02 between samples of that shape (by up to 0.08 now and then at 1 000 rows, so about 5% of clean tables of that size get a low-confidence finding), and a median standing in for missing values lifts them by 0.02.",
         "minimum": 0,
         "type": "number"
       },
@@ -95,7 +95,7 @@
         "type": "integer"
       },
       "far_rows": {
-        "description": "Rows whose robust Mahalanobis distance is beyond the limit, so far from the rest of the cloud together; 0 too when there are too few rows per column to say.",
+        "description": "Rows whose robust Mahalanobis distance, on the rank-normalised columns, is beyond the limit, so far from the rest of the cloud together; 0 too when there are too few rows per column to say.",
         "minimum": 0,
         "type": "integer"
       },
@@ -122,7 +122,7 @@
         "type": "number"
       },
       "reference_max_score": {
-        "description": "The highest score the same forest gives a normal sample of the same rows and columns: what chance alone reaches.",
+        "description": "The highest score the same forest gives a normal sample of the same rows, columns and correlations: what chance alone reaches.",
         "type": "number"
       },
       "excess": {

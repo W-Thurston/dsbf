@@ -475,7 +475,7 @@
       "mean_low": 20.0603,
       "n_finite": 5250,
       "separation": 12.0303,
-      "valley_ratio": 0.0,
+      "valley_ratio": 0.000219154,
       "weight_high": 0.500571,
       "weight_low": 0.499429
      },
@@ -500,7 +500,7 @@
       "mean_low": -0.0304304,
       "n_finite": 5250,
       "separation": 19.8456,
-      "valley_ratio": 0.0,
+      "valley_ratio": 5.4062e-07,
       "weight_high": 0.306476,
       "weight_low": 0.693524
      },
@@ -514,7 +514,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [
@@ -2136,7 +2136,7 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [
@@ -3176,34 +3176,34 @@
      "metrics": {
       "contamination": 0.05,
       "example_rows": [
-       3064,
-       1705,
-       1349,
-       4100,
-       3574,
-       4902,
-       1590,
-       2769,
-       798,
-       1118,
-       5140,
-       2620,
-       4205,
-       4510,
-       2431,
-       579,
-       3655,
-       4729,
-       4471,
-       599
+       4013,
+       903,
+       566,
+       4354,
+       4575,
+       4475,
+       3305,
+       1462,
+       4458,
+       914,
+       4673,
+       4285,
+       2802,
+       3124,
+       5114,
+       3913,
+       3506,
+       1434,
+       3300,
+       61
       ],
-      "excess": 0.0613112,
-      "far_limit": 61.9354,
-      "far_rows": 473,
-      "max_anomaly_score": 0.609448,
+      "excess": 0.0139352,
+      "far_limit": 63.6599,
+      "far_rows": 451,
+      "max_anomaly_score": 0.607847,
       "n_features": 22,
       "n_flagged": 263,
-      "reference_max_score": 0.548137
+      "reference_max_score": 0.593912
      },
      "severity": "info",
      "subject": {
@@ -3236,7 +3236,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [
@@ -4638,7 +4638,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -4976,7 +4976,7 @@
     }
    ],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [

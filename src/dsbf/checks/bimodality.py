@@ -28,6 +28,8 @@ from dsbf.model import (
 # Ashman's D from which the two components are cleanly apart: they overlap by under
 # about 7% of their mass. Below 2 the pair is one skewed or heavy-tailed peak.
 _CLEAN_SEPARATION = 3.0
+# Points at which the density is read between and beyond the component means.
+_GRID = 200
 
 
 class BimodalityParams(CheckParams):
@@ -69,7 +71,12 @@ class BimodalityParams(CheckParams):
         description="|skewness| above which a column is not fitted: a long tail "
         "looks like a second component.",
     )
-    min_n: int = Field(10, ge=4, description="Finite values a column needs.")
+    min_n: int = Field(
+        10,
+        ge=4,
+        description="Finite values a column needs. Below about 100 the BIC rarely "
+        "separates two peaks, even 4 spreads apart.",
+    )
     max_rows: int = Field(
         10_000,
         ge=1000,
@@ -114,7 +121,7 @@ class BimodalityOutput(CheckOutputModel):
 
 @check(
     id="bimodality",
-    version="1.0.0",
+    version="1.1.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric"),
     dimensions=[Dimension.DISTRIBUTION],
@@ -127,7 +134,14 @@ class BimodalityOutput(CheckOutputModel):
     tags=["distribution", "bimodal", "mixture"],
 )
 def bimodality(ctx: CheckContext, params: BimodalityParams) -> CheckOutput:
-    """Flag numeric columns that two Gaussian peaks fit clearly better than one."""
+    """Flag numeric columns that two Gaussian peaks fit clearly better than one.
+
+    Peaks 4 spreads apart are found in over 80% of columns of 100 values and in all
+    of 200 or more; 3 spreads apart, only in about half of 1 000. Under about 100
+    values the BIC cannot tell two peaks from one, so a column that short is rarely
+    flagged, and a uniform column of that size is flagged by chance in about 7% of
+    samples (under 3% from 200 values).
+    """
     from sklearn.mixture import GaussianMixture  # the `ml` extra
 
     rng = np.random.default_rng(params.seed)
@@ -186,31 +200,37 @@ def bimodality(ctx: CheckContext, params: BimodalityParams) -> CheckOutput:
 
 
 def _valley_ratio(values: np.ndarray, low: float, high: float) -> float:
-    """How far the histogram dips between two peaks, against the lower of them.
+    """How far the density dips between two peaks, against the lower of them.
 
     A mixture of two Gaussians fits a flat column as well as a bimodal one, so the
-    data has to show the dip too. Counts are smoothed over three bins; the peaks are
-    the highest smoothed counts around each mean.
+    data has to show the dip too. The density is a Gaussian kernel estimate with
+    Silverman's bandwidth, which a histogram of a few hundred values can't match:
+    its few bins put the dip between two bins or smooth it away. The valley is the
+    lowest density between the component means, and each peak the highest density on
+    its side of it.
     """
-    # About half of Rice's count: enough bins to show a dip, and counts large enough
-    # that the lowest of several bins does not dip by chance. Checked by simulation:
-    # a uniform column of 500 to 10 000 values is flagged under 3% of the time, two
-    # peaks 3.2 spreads apart over 90% of the time from 2 000 values.
-    bins = int(np.clip(round(np.sqrt(values.size) / 2), 8, 40))
-    counts, edges = np.histogram(values, bins=bins)
-    smooth = np.convolve(counts, np.ones(3) / 3, mode="same")
-    at_low, at_high = (
-        int(np.clip(np.searchsorted(edges, mean) - 1, 0, bins - 1))
-        for mean in (low, high)
-    )
-    between = smooth[at_low + 1 : at_high]
-    peaks = min(
-        smooth[max(at_low - 1, 0) : at_low + 2].max(),
-        smooth[max(at_high - 1, 0) : at_high + 2].max(),
-    )
-    if between.size == 0 or peaks <= 0:
+    spread = float(np.std(values))
+    q1, q3 = np.percentile(values, [25, 75])
+    scale = min(spread, float(q3 - q1) / 1.349) or spread
+    bandwidth = 0.9 * scale * values.size**-0.2
+    if bandwidth <= 0:
         return 1.0
-    return float(between.min() / peaks)
+    grid = np.linspace(low - 2 * bandwidth, high + 2 * bandwidth, _GRID)
+    # The estimate in blocks, so the grid by values matrix stays small.
+    density = np.empty(grid.size)
+    for start in range(0, grid.size, 64):
+        block = grid[start : start + 64, None]
+        density[start : start + 64] = np.exp(
+            -0.5 * ((block - values[None, :]) / bandwidth) ** 2
+        ).sum(axis=1)
+    between = (grid >= low) & (grid <= high)
+    if not between.any():
+        return 1.0
+    valley_at = int(np.flatnonzero(between)[np.argmin(density[between])])
+    peaks = min(density[: valley_at + 1].max(), density[valley_at:].max())
+    if peaks <= 0:
+        return 1.0
+    return float(density[valley_at] / peaks)
 
 
 def _why(skipped: dict[str, str]) -> str:

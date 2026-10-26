@@ -13,7 +13,7 @@
   "bimodality": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [
@@ -272,7 +272,7 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [],
@@ -403,7 +403,7 @@
       ],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 9,
+      "findings": 8,
       "level": "amber"
      },
      "unusable": {
@@ -420,58 +420,9 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
-   "findings": [
-    {
-     "check": "multivariate_outliers",
-     "code": "multivariate_anomalies",
-     "id": "f3f272888d67e05b",
-     "metrics": {
-      "contamination": 0.05,
-      "example_rows": [
-       2413,
-       1472,
-       191,
-       684,
-       802,
-       479,
-       252,
-       307,
-       2070,
-       678,
-       596,
-       1782,
-       244,
-       1852,
-       859,
-       2748,
-       2384,
-       1348,
-       1369,
-       1280
-      ],
-      "excess": 0.0121307,
-      "far_limit": 33.2653,
-      "far_rows": 23,
-      "max_anomaly_score": 0.669273,
-      "n_features": 5,
-      "n_flagged": 150,
-      "reference_max_score": 0.657142
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "age",
-       "income",
-       "purchase_amount",
-       "tenure_months",
-       "satisfaction"
-      ],
-      "kind": "row_set"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [],
@@ -804,7 +755,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -854,7 +805,7 @@
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [],

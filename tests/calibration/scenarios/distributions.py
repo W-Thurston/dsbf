@@ -7,7 +7,7 @@ import pandas as pd
 
 from dsbf.model import Severity
 from tests.calibration.scenario import scenario
-from tests.calibration.scoring import Planted, plant
+from tests.calibration.scoring import Planted, Probe, plant
 
 SHAPE_CHECKS = ("outliers", "normality", "skewness", "kurtosis", "bimodality")
 
@@ -86,6 +86,38 @@ def joint_outliers(seed: int) -> Planted:
     )
 
 
+def _far_share(result, planted: Planted) -> float | None:
+    if result.output is None:
+        return None
+    return result.output["far_rows"] / max(result.output["rows_used"], 1)
+
+
+@scenario("joint_skewed_nulls", seeds=40)
+def joint_skewed_nulls(seed: int) -> Planted:
+    """Correlated lognormal and cubed-normal columns with nothing planted.
+
+    Skew alone puts a quarter of the rows beyond a chi-squared limit that assumes a
+    normal cloud, so the far-row share must stay near the stated rate.
+    """
+    rng = np.random.default_rng(seed)
+    n = 1000
+    correlation = np.full((4, 4), 0.5) + 0.5 * np.eye(4)
+    z = rng.standard_normal((n, 4)) @ np.linalg.cholesky(correlation).T
+    frame = pd.DataFrame(
+        {
+            "lognormal_a": np.exp(z[:, 0]),
+            "lognormal_b": np.exp(z[:, 1]),
+            "cubed_a": z[:, 2] ** 3,
+            "cubed_b": z[:, 3] ** 3,
+        }
+    )
+    return Planted(
+        frame,
+        checks=("multivariate_outliers",),
+        probes=(Probe("multivariate_outliers", "far_share", _far_share, False),),
+    )
+
+
 @scenario("shapes_planted")
 def shapes_planted(seed: int) -> Planted:
     """Seven columns of 3 000 values, each of a named shape, one of them normal."""
@@ -134,6 +166,25 @@ def shapes_planted(seed: int) -> Planted:
             plant("skewness", "heavy_tailed"),
         ),
         checks=SHAPE_CHECKS,
+    )
+
+
+@scenario("bimodal_few_values", seeds=40)
+def bimodal_few_values(seed: int) -> Planted:
+    """200 values: two peaks 4 spreads apart, and a uniform and a normal column."""
+    rng = np.random.default_rng(seed)
+    n = 200
+    frame = pd.DataFrame(
+        {
+            "two_peaks": np.where(
+                rng.random(n) < 0.5, rng.normal(0, 1, n), rng.normal(4, 1, n)
+            ),
+            "uniform": rng.uniform(0, 1, n),
+            "normal": rng.normal(0, 1, n),
+        }
+    )
+    return Planted(
+        frame, plants=(plant("bimodality", "two_peaks"),), checks=("bimodality",)
     )
 
 

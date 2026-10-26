@@ -264,7 +264,7 @@
   "bimodality": {
    "findings": [],
    "status": "ok",
-   "version": "1.0.0"
+   "version": "1.1.0"
   },
   "categorical_encoding": {
    "findings": [],
@@ -501,7 +501,7 @@
   "fuzzy_duplicates": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "group_differences": {
    "findings": [],
@@ -615,7 +615,7 @@
       "action_columns": [],
       "assessed": true,
       "coverage": 1.0,
-      "findings": 12,
+      "findings": 11,
       "level": "green"
      },
      "unusable": {
@@ -632,63 +632,9 @@
    "version": "1.0.0"
   },
   "multivariate_outliers": {
-   "findings": [
-    {
-     "check": "multivariate_outliers",
-     "code": "multivariate_anomalies",
-     "id": "f14adcdc20cb641c",
-     "metrics": {
-      "contamination": 0.05,
-      "example_rows": [
-       1913,
-       1381,
-       139,
-       631,
-       782,
-       1616,
-       1208,
-       949,
-       463,
-       1626,
-       888,
-       633,
-       13,
-       585,
-       390,
-       1335,
-       676,
-       1214,
-       504,
-       1915
-      ],
-      "excess": 0.0917072,
-      "far_limit": 42.9869,
-      "far_rows": 0,
-      "max_anomaly_score": 0.672967,
-      "n_features": 10,
-      "n_flagged": 100,
-      "reference_max_score": 0.58126
-     },
-     "severity": "info",
-     "subject": {
-      "columns": [
-       "base",
-       "copy_a",
-       "copy_b",
-       "combo",
-       "revenue",
-       "click_rate",
-       "factor_x",
-       "factor_y",
-       "factor_z",
-       "signal"
-      ],
-      "kind": "row_set"
-     }
-    }
-   ],
+   "findings": [],
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "mutual_information": {
    "findings": [],
@@ -1013,7 +959,7 @@
     }
    },
    "status": "ok",
-   "version": "1.1.0"
+   "version": "1.1.1"
   },
   "reference_drift": {
    "findings": [],
@@ -1043,7 +989,7 @@
   "stationarity": {
    "findings": [],
    "status": "not_applicable",
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   "string_anomalies": {
    "findings": [],
