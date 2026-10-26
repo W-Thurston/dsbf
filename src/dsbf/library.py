@@ -1,6 +1,7 @@
 # dsbf/library.py
 """The library entry point: profile a table and get the ``Run`` back."""
 
+import logging
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, cast
@@ -8,6 +9,7 @@ from typing import Any, cast
 from dsbf.checks import core_pack
 from dsbf.config import (
     DEFAULT_PACKS,
+    CacheConfig,
     ConfigError,
     ConfigIssue,
     LimitsConfig,
@@ -18,6 +20,7 @@ from dsbf.config import (
 from dsbf.data import Dataset, load
 from dsbf.data.sampling import Strategy
 from dsbf.engine import (
+    CheckOverride,
     Depth,
     DiskCache,
     Hook,
@@ -36,6 +39,8 @@ from dsbf.utils.versioning import get_dsbf_version
 
 # What a caller passes to ``sample=``: the settings, or just a row count.
 Sample = SampleConfig
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["DEFAULT_PACKS", "Sample", "profile"]
 
@@ -185,6 +190,13 @@ def profile_with(
         profile=data_profile,
         has_reference=reference_data is not None,
     )
+    _check_settings_ids(settings, registry)
+    disk = (
+        DiskCache.default()
+        if cache is True or (cache is None and settings.cache.enabled)
+        else None
+    )
+    kept: ResultCache | None = disk or (None if isinstance(cache, bool) else cache)
     run = execute(
         plan,
         dataset,
@@ -193,9 +205,15 @@ def profile_with(
         limits=Limits(**settings.limits.model_dump()),
         hooks=hooks,
         workers=settings.workers,
-        cache=DiskCache.default() if cache is True else cache or None,
+        cache=kept,
         reference=reference_data,
+        check_overrides={
+            check_id: CheckOverride(**values.model_dump())
+            for check_id, values in settings.check_settings.items()
+        },
     )
+    if disk is not None:
+        _prune(disk, settings.cache)
     if rules is None:
         return run
     outcome, notes = evaluate_policy(run, rules, earlier)
@@ -307,6 +325,36 @@ def _plain(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {str(key): _plain(item) for key, item in value.items()}
     return value
+
+
+def _check_settings_ids(settings: ProfileConfig, registry: Registry) -> None:
+    known = {check.id for check in registry}  # plugins are loaded by now
+    issues = [
+        ConfigIssue(
+            f"check_settings.{check_id}",
+            f"{check_id!r} is not a check",
+            allowed=tuple(sorted(known)),
+        )
+        for check_id in settings.check_settings
+        if check_id not in known
+    ]
+    if issues:
+        raise ConfigError(tuple(issues))
+
+
+def _prune(cache: DiskCache, config: CacheConfig) -> None:
+    """Keep the default cache within its caps; never fail the run over it."""
+    try:
+        cache.prune(
+            max_bytes=None
+            if config.max_megabytes is None
+            else config.max_megabytes * 1_000_000,
+            max_age_seconds=None
+            if config.max_age_days is None
+            else config.max_age_days * 86_400,
+        )
+    except OSError as error:
+        logger.warning("could not prune the result cache: %s", error)
 
 
 def _check_columns(settings: ProfileConfig, dataset: Dataset) -> None:

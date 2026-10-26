@@ -1,7 +1,7 @@
 # dsbf/engine/__init__.py
 """The check interface: how a check is declared and what it is given while it runs."""
 
-from dsbf.engine.cache import CacheKey, DiskCache, ResultCache
+from dsbf.engine.cache import CacheKey, CachePruned, DiskCache, ResultCache
 from dsbf.engine.check import (
     Check,
     CheckKind,
@@ -26,7 +26,7 @@ from dsbf.engine.errors import (
 from dsbf.engine.events import CheckFinished, CheckStarted, Event, Hook, NoteRecorded
 from dsbf.engine.executor import execute
 from dsbf.engine.expectation import Expectation, Expected
-from dsbf.engine.limits import Limits
+from dsbf.engine.limits import CheckOverride, Limits
 from dsbf.engine.pack import Pack
 from dsbf.engine.plan import Plan, PlanEntry, make_plan
 from dsbf.engine.reference import Reference
@@ -37,6 +37,8 @@ from dsbf.engine.selection import Depth, Selection, select
 
 __all__ = [
     "CacheKey",
+    "CachePruned",
+    "CheckOverride",
     "Check",
     "CheckCancelled",
     "CheckContext",

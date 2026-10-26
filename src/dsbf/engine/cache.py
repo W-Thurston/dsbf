@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +28,7 @@ _ENTRY_FORMAT = 1
 # extra depends on the machine, the clock and the limits; a "not applicable" result is
 # decided from the profile without calling the check, so recomputing it costs nothing.
 _STORED = (CheckStatus.OK,)
+_TEMP_GRACE = 3600.0  # seconds before a leftover ``.tmp`` file counts as an entry
 
 
 def _canonical(value: Any) -> str:
@@ -54,6 +56,16 @@ class ResultCache(Protocol):
 
     def put(self, key: CacheKey, result: CheckResult) -> None:
         """Store ``result`` under ``key``."""
+
+
+@dataclass(frozen=True)
+class CachePruned:
+    """What removing entries from a ``DiskCache`` took away and what is left."""
+
+    removed: int
+    freed_bytes: int
+    remaining: int
+    remaining_bytes: int
 
 
 class DiskCache:
@@ -84,10 +96,15 @@ class DiskCache:
             entry = json.loads(text)
             if entry["format"] != _ENTRY_FORMAT or entry["digest"] != key.digest:
                 return None
-            return CheckResult.model_validate(entry["result"])
+            result = CheckResult.model_validate(entry["result"])
         except (ValueError, KeyError, TypeError) as error:  # incl. ValidationError
             logger.debug("ignoring cache entry %s: %s", self.path(key), error)
             return None
+        try:
+            os.utime(self.path(key))  # a hit is a use: eviction removes the unused
+        except OSError:
+            pass
+        return result
 
     def put(self, key: CacheKey, result: CheckResult) -> None:
         target = self.path(key)
@@ -109,6 +126,50 @@ class DiskCache:
         except BaseException:
             Path(temporary).unlink(missing_ok=True)
             raise
+
+    def clear(self) -> CachePruned:
+        """Remove every entry, and the folders they leave empty."""
+        return self.prune(max_bytes=0)
+
+    def prune(
+        self, *, max_bytes: int | None = None, max_age_seconds: float | None = None
+    ) -> CachePruned:
+        """Remove entries older than ``max_age_seconds``, then the least recently used
+        until at most ``max_bytes`` remain; ``None`` leaves that limit off.
+
+        An entry that cannot be removed stays and counts as remaining.
+        """
+        entries = []
+        for path in self.root.glob("*/*"):
+            try:
+                info = path.stat()
+            except OSError:
+                continue
+            if path.suffix == ".tmp" and time.time() - info.st_mtime < _TEMP_GRACE:
+                continue  # another process is writing it
+            entries.append((info.st_mtime, info.st_size, path))
+        entries.sort(key=lambda item: item[0])
+        total = sum(size for _, size, _ in entries)
+        now = time.time()
+        removed = freed = 0
+        for modified, size, path in entries:
+            too_old = max_age_seconds is not None and now - modified > max_age_seconds
+            too_big = max_bytes is not None and total > max_bytes
+            if not (too_old or too_big):
+                continue
+            try:
+                path.unlink()
+            except OSError:
+                continue
+            total -= size
+            freed += size
+            removed += 1
+        for folder in self.root.glob("*"):
+            try:
+                folder.rmdir()  # only if empty
+            except OSError:
+                pass
+        return CachePruned(removed, freed, len(entries) - removed, total)
 
 
 def result_digest(result: CheckResult) -> str:

@@ -3,6 +3,9 @@
 
 import math
 from dataclasses import dataclass
+from typing import get_args
+
+from dsbf.engine.check import RunsIn
 
 
 @dataclass(frozen=True)
@@ -28,3 +31,26 @@ class Limits:
         grace = self.cancel_grace_seconds
         if not (math.isfinite(grace) and grace >= 0):
             raise ValueError(f"cancel_grace_seconds must be 0 or more, not {grace!r}")
+
+
+@dataclass(frozen=True)
+class CheckOverride:
+    """What one run changes about one check; ``None`` keeps the check's own.
+
+    ``timeout_seconds`` replaces ``Limits.check_timeout_seconds`` for this check, and
+    ``runs_in`` replaces the spec's. Neither changes a result, so neither enters the
+    cache key.
+    """
+
+    timeout_seconds: float | None = None
+    runs_in: RunsIn | None = None
+
+    def __post_init__(self) -> None:
+        value = self.timeout_seconds
+        if value is not None and not (math.isfinite(value) and value > 0):
+            raise ValueError(f"timeout_seconds must be positive, not {value!r}")
+        if self.runs_in is not None and self.runs_in not in get_args(RunsIn):
+            raise ValueError(
+                f"runs_in must be one of {', '.join(get_args(RunsIn))}, "
+                f"not {self.runs_in!r}"
+            )

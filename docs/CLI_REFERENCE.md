@@ -48,6 +48,10 @@ Exits 0 when the run completes, whatever a policy says, and 2 when it cannot sta
 | `--time-index <str>` | The datetime column the time series checks use. |
 | `--plugin <path>` | A directory of check plugins to load. |
 | `--param <str>` | Set a check parameter: check.key=value (repeatable). |
+| `--workers <int range>` | Checks to run at once (default: one per core). [x>=1] |
+| `--check-timeout <float range>` | Seconds one check may take. [x>=0] |
+| `--run-budget <float range>` | Seconds the whole run may take. [x>=0] |
+| `--cache / --no-cache` | Reuse results of unchanged checks kept under the DSBF home (default: the cache.enabled setting, off). |
 
 ### `dsbf check`
 
@@ -76,6 +80,10 @@ Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
 | `--time-index <str>` | The datetime column the time series checks use. |
 | `--plugin <path>` | A directory of check plugins to load. |
 | `--param <str>` | Set a check parameter: check.key=value (repeatable). |
+| `--workers <int range>` | Checks to run at once (default: one per core). [x>=1] |
+| `--check-timeout <float range>` | Seconds one check may take. [x>=0] |
+| `--run-budget <float range>` | Seconds the whole run may take. [x>=0] |
+| `--cache / --no-cache` | Reuse results of unchanged checks kept under the DSBF home (default: the cache.enabled setting, off). |
 
 ### `dsbf plan`
 
@@ -142,6 +150,22 @@ Fail if the schema changed in a way its version number doesn't announce.
 | `--base <str>` | Git revision holding the published schema. [default: origin/main] |
 | `--schema <path>` | Schema to check. [default: schema/run.schema.json] |
 
+### `dsbf cache`
+
+```
+dsbf cache [OPTIONS] COMMAND [ARGS]...
+```
+
+Manage the results kept between runs.
+
+### `dsbf cache clear`
+
+```
+dsbf cache clear [OPTIONS]
+```
+
+Remove every result kept under <DSBF home>/cache/results.
+
 ### `dsbf docs`
 
 ```
@@ -178,6 +202,8 @@ The settings file (`--config`), `DSBF__SECTION__KEY` environment variables, `--s
 | `sample` | SampleConfig | unset | Profile a sample of the rows rather than all of them. |
 | `limits` | LimitsConfig | see below | How long a check, and the whole run, may take; unset leaves a limit off. |
 | `workers` | int | unset | Checks to run at once; unset is one per core. |
+| `check_settings` | dict[str, CheckSettings] | `{}` | A timeout or `runs_in` for single checks, by check id. |
+| `cache` | CacheConfig | see below | Keep the results of checks between runs under the DSBF home. |
 | `plugins` | tuple[str, ...] | `()` | Directories of check plugins to load. |
 | `params` | dict[str, dict[str, Any]] | `{}` | Parameters of checks, by check id; they win over `target` and `time_index`. |
 
@@ -196,3 +222,11 @@ The settings file (`--config`), `DSBF__SECTION__KEY` environment variables, `--s
 | --- | --- | --- | --- |
 | `limits.check_timeout_seconds` | float | unset | Seconds one check may take. |
 | `limits.run_budget_seconds` | float | unset | Seconds the whole run may take. |
+
+### `cache`
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `cache.enabled` | bool | `False` | Reuse results of checks whose inputs are unchanged. |
+| `cache.max_megabytes` | int | `500` | Evict the least recently used entries past this size; unset keeps all. |
+| `cache.max_age_days` | float | `90` | Evict entries not used for this long; unset keeps all. |

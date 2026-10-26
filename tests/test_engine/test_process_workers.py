@@ -11,6 +11,7 @@ import psutil
 import pytest
 
 from dsbf.engine import (
+    CheckOverride,
     Limits,
     Registry,
     Requires,
@@ -345,3 +346,24 @@ class TestAccounting:
         timing = run.results["py_sleeper"].timing
         assert timing.cpu_seconds is None
         assert timing.wall_seconds >= 0.6
+
+
+class TestRunsInOverride:
+    def test_a_check_that_asks_for_a_process_can_be_put_on_a_thread(self):
+        run = run_with(
+            [toys.py_pid], check_overrides={"py_pid": CheckOverride(runs_in="thread")}
+        )
+
+        (where,) = run.results["py_pid"].findings
+        assert where.evidence.metrics["pid"] == os.getpid()
+
+    def test_a_thread_check_can_be_put_in_a_process(self):
+        run = run_with(
+            [toys.py_total, null_share],
+            check_overrides={"null_share": CheckOverride(runs_in="process")},
+        )
+
+        assert run.results["null_share"].status is CheckStatus.OK
+        assert "ran_in_thread" not in {
+            note.code for note in run.results["null_share"].notes
+        }
