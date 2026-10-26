@@ -180,12 +180,13 @@ Publish the command-line and settings reference.
 dsbf docs export [OPTIONS]
 ```
 
-Write the generated command-line and settings reference.
+Write the generated command-line, settings and check references.
 
 | Option | Description |
 | --- | --- |
-| `-o, --out <path>` | File to write. [default: docs/CLI_REFERENCE.md] |
-| `--check` | Write nothing; fail if the file is out of date. |
+| `-o, --out <path>` | File to write the command-line and settings reference to. [default: docs/CLI_REFERENCE.md] |
+| `--checks-out <path>` | File to write the check reference to. [default: docs/CHECK_REFERENCE.md] |
+| `--check` | Write nothing; fail if a file is out of date. |
 
 ## Settings
 

@@ -17,7 +17,9 @@ runner = CliRunner()
 # CI renders usage errors with colour; the local terminal does not.
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
-REFERENCE = Path(__file__).parents[2] / "docs" / "CLI_REFERENCE.md"
+DOCS = Path(__file__).parents[2] / "docs"
+REFERENCE = DOCS / "CLI_REFERENCE.md"
+CHECK_REFERENCE = DOCS / "CHECK_REFERENCE.md"
 
 DATA = """\
 id,amount,group,note
@@ -362,7 +364,16 @@ class TestPlanShowsWhatNeedsASetting:
 class TestReference:
     def test_the_checked_in_reference_is_current(self):
         result = runner.invoke(
-            app, ["docs", "export", "--check", "--out", str(REFERENCE)]
+            app,
+            [
+                "docs",
+                "export",
+                "--check",
+                "--out",
+                str(REFERENCE),
+                "--checks-out",
+                str(CHECK_REFERENCE),
+            ],
         )
 
         assert result.exit_code == 0, result.output
@@ -371,16 +382,48 @@ class TestReference:
         stale = tmp_path / "ref.md"
         stale.write_text("old\n", encoding="utf-8")
 
-        result = runner.invoke(app, ["docs", "export", "--check", "--out", str(stale)])
+        args = ["docs", "export", "--check", "--checks-out", str(CHECK_REFERENCE)]
+
+        result = runner.invoke(app, [*args, "--out", str(stale)])
 
         assert result.exit_code == 1
         assert "out of date" in result.output
         assert stale.read_text(encoding="utf-8") == "old\n"
 
+    def test_a_stale_check_reference_fails_the_check(self, tmp_path):
+        stale = tmp_path / "checks.md"
+        stale.write_text("old\n", encoding="utf-8")
+
+        result = runner.invoke(
+            app,
+            [
+                "docs",
+                "export",
+                "--check",
+                "--out",
+                str(REFERENCE),
+                "--checks-out",
+                str(stale),
+            ],
+        )
+
+        assert result.exit_code == 1
+        assert str(stale) in result.output
+
     def test_export_writes_every_command_and_setting(self, tmp_path):
         out = tmp_path / "ref.md"
 
-        result = runner.invoke(app, ["docs", "export", "--out", str(out)])
+        result = runner.invoke(
+            app,
+            [
+                "docs",
+                "export",
+                "--out",
+                str(out),
+                "--checks-out",
+                str(tmp_path / "c.md"),
+            ],
+        )
 
         text = out.read_text(encoding="utf-8")
         assert result.exit_code == 0, result.output

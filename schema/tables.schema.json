@@ -45,7 +45,7 @@
           "name": "severity",
           "type": "string",
           "nullable": false,
-          "description": "`info`, `warn`, `error` or `critical`."
+          "description": "`info`, `notice`, `warn` or `error`."
         },
         {
           "name": "confidence",

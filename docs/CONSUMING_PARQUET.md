@@ -19,7 +19,7 @@ is a major bump (a minor one while the major is 0), and a new nullable column is
 ## Conventions
 
 - Enumerations (`severity`, `dimension`, `status`, `semantic_type`) are plain strings. Severity runs
-  `info`, `warn`, `error`, `critical`; sort with the `CASE` below, not alphabetically.
+  `info`, `notice`, `warn`, `error`; sort with the `CASE` below, not alphabetically.
 - `columns` (the subject of a finding) is a list: empty for the dataset, one name for a column, two for
   a pair.
 - `metrics` (a finding's evidence), `params` and `output` (a result) are JSON text, because their
@@ -41,7 +41,7 @@ The worst findings of the run:
 ```sql
 SELECT severity, check_id, columns, title
 FROM 'findings.parquet'
-ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'error' THEN 1 WHEN 'warn' THEN 2 ELSE 3 END,
+ORDER BY CASE severity WHEN 'error' THEN 0 WHEN 'warn' THEN 1 WHEN 'notice' THEN 2 ELSE 3 END,
          check_id
 LIMIT 10;
 ```
