@@ -181,7 +181,8 @@ class Run(Contract):
         ``sinks`` names the formats: ``json`` (``run.json``, the whole run) and
         ``ndjson`` (``findings.ndjson``, one finding per line), and ``parquet``
         (``findings.parquet``, ``profile.parquet`` and ``results.parquet``; each of
-        ``findings_parquet``, ``profile_parquet`` and ``results_parquet`` writes one).
+        ``findings_parquet``, ``profile_parquet`` and ``results_parquet`` writes one),
+        and ``html`` (``report.html``, a self-contained page).
 
         Raises:
             ValueError: a sink name is unknown; nothing is written.

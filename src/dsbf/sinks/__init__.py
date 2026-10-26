@@ -11,9 +11,11 @@ from dsbf.sinks.registry import (
     register_alias,
     register_sink,
 )
+from dsbf.sinks.report import REPORT_FILE, render_report
 
 __all__ = [
     "PARQUET_SINKS",
+    "REPORT_FILE",
     "RUN_FILE",
     "RunReadError",
     "Sink",
@@ -22,5 +24,6 @@ __all__ = [
     "read_run",
     "register_alias",
     "register_sink",
+    "render_report",
     "write_run",
 ]
