@@ -104,18 +104,22 @@ class Requires:
     ``profile`` names the parts of the profile it reads. ``checks`` are checks whose
     results it needs: if one does not complete, this check is skipped. ``reference``
     is set for a check that compares the dataset with a reference one; without a
-    reference it is not applicable.
+    reference it is not applicable. ``params`` names parameters that must be set (not
+    ``None`` and not empty) for the check to have anything to run on; without one
+    it is not applicable.
     """
 
     profile: tuple[ProfileFeature, ...]
     checks: tuple[str, ...]
     reference: bool
+    params: tuple[str, ...]
 
     def __init__(
         self,
         profile: Iterable[ProfileFeature] = (),
         checks: Iterable[str] = (),
         reference: bool = False,
+        params: Iterable[str] = (),
     ) -> None:
         known = get_args(ProfileFeature)
         features = _unique(profile)
@@ -131,6 +135,7 @@ class Requires:
         object.__setattr__(self, "profile", features)
         object.__setattr__(self, "checks", ids)
         object.__setattr__(self, "reference", reference)
+        object.__setattr__(self, "params", _unique(params))
 
 
 @dataclass(frozen=True)
@@ -198,6 +203,12 @@ class CheckSpec:
         ):
             raise CheckDefinitionError(
                 f"{self.id}: applies_to is SemanticTypes(...) or None"
+            )
+        unknown = [n for n in self.requires.params if n not in self.params.model_fields]
+        if unknown:
+            raise CheckDefinitionError(
+                f"{self.id}: requires parameters it does not declare: "
+                f"{', '.join(unknown)}"
             )
         self._normalise()
         self._check_dependencies()

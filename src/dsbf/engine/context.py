@@ -120,7 +120,10 @@ class CheckContext:
         self._notes: list[Note] = []
 
         self.eligibility = eligibility(
-            spec, profile, has_reference=self._reference is not None
+            spec,
+            profile,
+            has_reference=self._reference is not None,
+            params={name: getattr(self.params, name) for name in spec.requires.params},
         )
         eligible = set(self.eligibility.columns or ())
         scoped = tuple(c for c in profile.columns if c.name in eligible)

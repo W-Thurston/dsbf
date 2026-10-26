@@ -129,7 +129,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `findings_parquet`, `profile_parquet` and `results_parquet` sinks (the `parquet` alias writes all three) build their tables from fixed Arrow schemas in `dsbf.sinks.tables`, each starting with `run_id` and carrying `schema_version` 0.1.0 in its metadata. Evidence metrics, check params and output are JSON text. `schema/tables.schema.json` lists the columns, `dsbf schema export` writes it and `schema check` guards it by `TABLES_SCHEMA_VERSION`. `docs/CONSUMING_PARQUET.md` has the guide, whose SQL a test runs through DuckDB (dev group only).
 
 ### U5-05 · Static HTML report
-- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
+- **Status:** done (2026-10-26, PR #138, `385a80f`) · **Size:** M · **Depends on:** U5-04 · **Resolves:** REVIEW_FINDINGS part 2 D (shareable export)
 - **Goal:** One self-contained HTML file per run (no server, no CDN) with the health summary, findings by dimension and severity, and per-column profiles drawn from the profile's equal-width bins.
 - **Decided in U5-00:** scope is the health summary, findings by dimension and severity, and per-column profiles (histogram, top values, counts) as inline SVG. Quality and ML-readiness sections, relationships and time-series views are left to the Phase 6 dashboard. The size budget is 1 MB for the titanic report (its `run.json` is 665 KB on 2026-10-25), measured on the first build and tightened if the report comes in far under.
 - **Assumptions to confirm:** the profile carries the bins each chart needs, so the report reads the `Run` only; no template dependency is needed (string building with `html.escape`); dataset, column and finding text all pass through one escaping function.
@@ -138,7 +138,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.sinks.report` renders one offline page (health, findings by dimension and severity, a card with an inline SVG chart per column) and registers the `html` sink (`report.html`). Every string goes through one escaping function. The titanic report is 78 KB, so the budget is tightened from 1 MB to 150 KB. The report omits the policy outcome.
 
 ### U5-06 · CLI v2
-- **Status:** todo · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
+- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-05 · **Resolves:** N-B1 (generated CLI help and config reference), REVIEW_FINDINGS part 2 G (pipeline hooks)
 - **Note from U3-09:** give the Typer app one callback that attaches the console handler, with a `--verbosity` option, so every command prints log records. **Note from U1-09:** CLI v2 builds the `cli` layer for `dsbf.config.load_config` and needs a `--set a.b=c` parser.
 - **Note from U4-05:** `dsbf.profile()` takes no per-check parameters beyond the `target` setting, so a core check's params (such as `schema`'s expectations) reach it only through `make_plan(params=)` and `dsbf plan --param`; add `params=` to `profile()` and a section to `ProfileConfig`. Eligibility ignores parameters, so `dsbf plan` says `class_imbalance` and `schema` "will run" where they end `not_applicable` without a target or schema: let a check declare the parameters it needs.
 - **Goal:** `dsbf profile` and `dsbf check` (with `--config`, `--set`, `--policy`, `--previous`, `--out` and `--sink`), plus `plan` and `schema export`. Every run prints the health summary. The exit code is 0, or 1 when the policy fails the run, or 2 on a setup error.
@@ -148,6 +148,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Assumptions to confirm:** `dsbf.config.load_config` takes a `cli` layer; the stopgap `profile` command and `plan` exist (audited 2026-10-25); `schema export` and `schema check` exist, so only their naming is checked against the goal.
 - **Steps:** the Typer callback with `--verbosity`; `--config`, `--set`, `--policy`, `--previous`, `--out`, `--sink`; `params=` on `dsbf.profile` and a `ProfileConfig` section; parameter-needed declarations so `plan` stops saying "will run" for a check that ends `not_applicable`; exit codes 0, 1, 2; generated help and config reference.
 - **Acceptance:** The commands are tested end to end from a temporary directory, and each exit code is tested.
+- **Outcome:** `dsbf profile` and the new `dsbf check` take `--config`, `--set`, `--policy`, `--previous`, `--out`, `--sink` and the check-selection options, building `ProfileConfig` through `load_config` (file, environment, options, `--set`) and running it with `dsbf.library.profile_with`. `check` exits 1 when a policy rule fails the run, 2 on a setup error; `profile` stays report-only. A top-level `--verbosity` attaches the console handler for every command. `Requires(params=…)` makes `plan` and the run mark `class_imbalance`, `mutual_information`, `target_leakage`, `schema` and the time-series checks `not_applicable` until their parameter is set (`schema`'s code is now `no_columns`). `dsbf docs export` writes `docs/CLI_REFERENCE.md` from the Typer app and `ProfileConfig`.
 
 ### U5-07 · Execution settings and cache management
 - **Status:** todo · **Size:** S · **Depends on:** U5-06
@@ -173,6 +174,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U5-09 · Release readiness and 1.0.0a1
 - **Status:** todo · **Size:** M · **Depends on:** U5-08 · **Resolves:** F-31 (install smoke test), REVIEW_FINDINGS part 2 E (PyPI) and F (coverage)
+- **Note from U5-06:** (1) Add `dsbf docs export --check` to CI beside `schema export --check`. (2) Typer 0.27 bundles click as `typer._click`, so `dsbf.interfaces.reference` duck-types commands instead of importing click; re-check it on a Typer bump.
 - **Note from U5-01:** `dsbf schema check` guards only `run.schema.json`; extend the breaking-change gate to `policy.schema.json` before the release, since compatibility guarantees start there.
 - **Note from U3-07:** worker processes use `spawn` where there is no `forkserver` (Windows), about 0.44 s per check as measured on Linux, and no CI leg covers that path; add one before the first release.
 - **Goal:** A CI job that builds the wheel, installs it in a clean venv and runs `dsbf check` from a temporary directory. A Windows leg. Coverage reporting. A release workflow on tags with trusted publishing, the CHANGELOG, and the `1.0.0a1` release. Publishing is the user's step.
@@ -191,7 +193,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Sequence and dependencies:** Depends on Phase 5. Store, then API, then client, then the dashboard tab by tab, then packaging.
 - **Success criteria:** `pip install "dsbf[server]" && dsbf check data.csv --sink store && dsbf dashboard` works on a clean machine. Opening a run transfers under 200 KB.
 
-- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units).
+- **U6-00 · Plan Phase 6** (`todo`, depends on the Phase 5 units). **Note from U5-06:** the HTML report omits `Run.policy` (the CLI prints the verdict); show it in the dashboard or report.
   - **Carry in from U4-00:** the dashboard does not run from U4-18 until this phase's API v2 and shell land (decided 2026-10-19). F-15 (dataset identity, the snapshot of the data as profiled) and F-25 (pagination, error mapping, migrations, garbage collection, encoded path parameters) are design inputs for the store and API, not fixes to old code.
   - **Carry in from U4-18:** `tests/validation/DASHBOARD_CHECKLIST.md` still describes the old dashboard's browser checks; rewrite it for the rebuilt one. `.github/ISSUE_TEMPLATE/dashboard_ui.yml` and the `frontend/` source were kept.
   - **Carry in from U1-11:** (1) the dashboard is JavaScript, so it can use `frontend/src/generated/run.d.ts` only through JSDoc `import()` types or after a move to TypeScript; (2) a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry; (3) revisit the `vue-router <5` and `plotly.js-dist-min <4` caps in the held-back table.

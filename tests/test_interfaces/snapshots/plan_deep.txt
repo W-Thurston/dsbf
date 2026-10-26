@@ -1,12 +1,12 @@
 Plan for data (6 × 4): 53 checks
-  will run 43 · not applicable 5 · unavailable 4 · skipped 1
+  will run 39 · not applicable 9 · unavailable 4 · skipped 1
 
 level 0
   ✓ will run        associations            reads 4 columns
   ⦸ unavailable     autocorrelation         Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`.
   ✓ will run        bimodality              reads 2 columns
   – not applicable  calendar_gaps           No column is of a type calendar_gaps applies to (datetime).
-  ✓ will run        class_imbalance         reads 2 columns
+  – not applicable  class_imbalance         The `target` parameter is not set, which class_imbalance requires. Hint: Set the `target` parameter: `--param class_imbalance.target=...` on the command line, or `params={'class_imbalance': {'target': ...}}` to dsbf.profile().
   ✓ will run        collinearity            reads 2 columns
   ✓ will run        constant_columns        reads 4 columns
   ✓ will run        contingency             reads 2 columns
@@ -27,7 +27,7 @@ level 0
   ✓ will run        missingness_mechanism   reads 4 columns
   ✓ will run        mixed_types             reads 2 columns
   ✓ will run        multivariate_outliers   reads 2 columns
-  ✓ will run        mutual_information      reads 4 columns
+  – not applicable  mutual_information      The `target` parameter is not set, which mutual_information requires. Hint: Set the `target` parameter: `--param mutual_information.target=...` on the command line, or `params={'mutual_information': {'target': ...}}` to dsbf.profile().
   ✓ will run        near_zero_variance      reads 2 columns
   ✓ will run        normality               reads 2 columns
   ✓ will run        null_rate               reads 4 columns · required by imputation
@@ -38,12 +38,12 @@ level 0
   ✓ will run        outliers                reads 2 columns
   – not applicable  reference_drift         No reference dataset was given, which reference_drift compares with.
   ✓ will run        sample_size             reads 4 columns
-  ✓ will run        schema                  reads 4 columns
+  – not applicable  schema                  The `columns` parameter is not set, which schema requires. Hint: Set the `columns` parameter: `--param schema.columns=...` on the command line, or `params={'schema': {'columns': ...}}` to dsbf.profile().
   ⦸ unavailable     seasonal_decomposition  Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`.
   ✓ will run        skewness                reads 2 columns
   ⦸ unavailable     stationarity            Needs statsmodels, which is not installed ('timeseries' extra). Hint: Install it with `pip install 'dsbf[timeseries]'`.
   ✓ will run        string_anomalies        reads 2 columns
-  ✓ will run        target_leakage          reads 4 columns
+  – not applicable  target_leakage          The `target` parameter is not set, which target_leakage requires. Hint: Set the `target` parameter: `--param target_leakage.target=...` on the command line, or `params={'target_leakage': {'target': ...}}` to dsbf.profile().
   – not applicable  temporal_gaps           No column is of a type temporal_gaps applies to (datetime).
   ✓ will run        text_encoding           reads 4 columns
   ✓ will run        transformations         reads 2 columns

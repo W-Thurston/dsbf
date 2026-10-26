@@ -113,7 +113,7 @@ READINESS_INPUTS: Mapping[str, tuple[str, ...]] = {
 # Why a check was not applicable: the caller gave it nothing to work with. Any other
 # reason is that the data held nothing of the kind it reads.
 NEEDS_SETTING_CODES: frozenset[str] = frozenset(
-    {"no_target", "no_bounds", "no_schema", "no_reference"}
+    {"no_target", "no_bounds", "no_columns", "no_reference"}
 )
 _COVERED: frozenset[InputState] = frozenset({"assessed", "nothing_to_check"})
 

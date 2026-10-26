@@ -120,7 +120,11 @@ def make_plan(
     for check_id in sorted(planned, key=lambda key: (levels[key], key)):
         planned_check = planned[check_id]
         expected[check_id] = expect(
-            planned_check, profile, expected, has_reference=has_reference
+            planned_check,
+            profile,
+            expected,
+            has_reference=has_reference,
+            params=resolved[check_id].model_dump(),
         )
         entries.append(
             PlanEntry(

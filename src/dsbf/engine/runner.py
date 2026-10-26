@@ -41,6 +41,7 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
             Note(
                 code=eligibility.code or "not_applicable",
                 message=eligibility.reason or "",
+                hint=eligibility.hint,
             ),
         )
     else:

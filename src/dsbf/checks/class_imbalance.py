@@ -67,7 +67,7 @@ class ClassImbalanceOutput(CheckOutputModel):
     dimensions=[Dimension.DISTRIBUTION],
     params=ClassImbalanceParams,
     output=ClassImbalanceOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.CHEAP,
     packs=["core"],
     tags=["target", "imbalance", "ml-readiness"],

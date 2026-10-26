@@ -1,21 +1,21 @@
 # dsbf/interfaces/cli.py
 
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, NoReturn
 
 import typer
 import yaml
 
 from dsbf.checks import core_pack
-from dsbf.config import ConfigError
+from dsbf.config import ConfigError, ProfileConfig, load_config
 from dsbf.data import SamplingError, SourceError, load
 from dsbf.engine import Depth, PlanError, Registry, Selection, format_plan, make_plan
-from dsbf.interfaces import schema_export
-from dsbf.library import profile as dsbf_profile
-from dsbf.model import Cost, Dimension
+from dsbf.interfaces import reference, schema_export
+from dsbf.library import profile_with
+from dsbf.model import Cost, Dimension, PolicyOutcome
 from dsbf.paths import default_outputs_dir
 from dsbf.profiling import profile_dataset
-from dsbf.sinks import get_sinks, known_sinks
+from dsbf.sinks import RunReadError, get_sinks, known_sinks
 from dsbf.utils.logging_utils import console_logging
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -23,71 +23,300 @@ app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
 schema_app = typer.Typer(help="Publish and guard the result schema.")
 app.add_typer(schema_app, name="schema")
 
+VERBOSITIES = ("quiet", "error", "warn", "stage", "info", "debug")
 
-@app.command()
-def profile(
-    data: Path = typer.Argument(..., help="Dataset to profile (CSV, Parquet, ...)."),
-    out: Path | None = typer.Option(
-        None,
+
+@app.callback()
+def main(
+    context: typer.Context,
+    verbosity: str = typer.Option(
+        "info",
+        "--verbosity",
+        "-v",
+        help="How much to log: " + ", ".join(VERBOSITIES) + ".",
+    ),
+) -> None:
+    """DSBF: Data Scientist's Best Friend - EDA Profiling CLI."""
+    if verbosity not in VERBOSITIES:
+        raise typer.BadParameter(
+            f"{verbosity!r} is not one of {', '.join(VERBOSITIES)}",
+            param_hint="--verbosity",
+        )
+    context.with_resource(console_logging(verbosity))
+
+
+Data = Annotated[Path, typer.Argument(help="Dataset to profile (CSV, Parquet, ...).")]
+Out = Annotated[
+    Path | None,
+    typer.Option(
         "--out",
         "-o",
         help="Directory for the output files (default: <DSBF home>/outputs/<run id>).",
     ),
-    sink: list[str] = typer.Option(
-        [],
+]
+Sinks = Annotated[
+    list[str] | None,
+    typer.Option(
         "--sink",
         "-s",
         help="Output to write (repeatable, default json): "
         + ", ".join(known_sinks())
         + ".",
     ),
-    pack: list[str] = typer.Option([], "--pack", "-p", help="Run only these packs."),
-    depth: Depth = typer.Option(
-        Depth.STANDARD, "--depth", "-d", help="The most expensive checks to allow."
+]
+ConfigFile = Annotated[
+    Path | None,
+    typer.Option("--config", "-c", help="A settings file (YAML), such as dsbf.yaml."),
+]
+Overrides = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--set",
+        help="Set any setting: a.b=c, the value read as YAML (repeatable). "
+        "Wins over the options and the settings file.",
     ),
-    target: str | None = typer.Option(
-        None, "--target", help="The column to predict, for the checks that need one."
+]
+PolicyFile = Annotated[
+    Path | None,
+    typer.Option("--policy", help="A policy.yaml whose rules judge the run."),
+]
+Previous = Annotated[
+    Path | None,
+    typer.Option(
+        "--previous",
+        help="The run.json of an earlier run, for rules that say new_since: "
+        "previous_run.",
     ),
-    time_index: str | None = typer.Option(
-        None, "--time-index", help="The datetime column the time series checks use."
+]
+Packs = Annotated[
+    list[str] | None, typer.Option("--pack", "-p", help="Run only these packs.")
+]
+Include = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--include", "-i", help="Add a check by id, whatever the filters say."
     ),
-    plugin: list[Path] = typer.Option(
-        [], "--plugin", help="A directory of check plugins to load."
+]
+Exclude = Annotated[
+    list[str] | None, typer.Option("--exclude", "-x", help="Drop a check.")
+]
+DepthOption = Annotated[
+    Depth | None,
+    typer.Option("--depth", "-d", help="The most expensive checks to allow."),
+]
+Target = Annotated[
+    str | None,
+    typer.Option(
+        "--target", help="The column to predict, for the checks that need one."
     ),
-    param: list[str] = typer.Option(
-        [], "--param", help="Set a check parameter: check.key=value (repeatable)."
+]
+TimeIndex = Annotated[
+    str | None,
+    typer.Option(
+        "--time-index", help="The datetime column the time series checks use."
     ),
+]
+Plugins = Annotated[
+    list[Path] | None,
+    typer.Option("--plugin", help="A directory of check plugins to load."),
+]
+Params = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--param", help="Set a check parameter: check.key=value (repeatable)."
+    ),
+]
+
+
+@app.command()
+def profile(
+    data: Data,
+    out: Out = None,
+    sink: Sinks = None,
+    config: ConfigFile = None,
+    set_: Overrides = None,
+    policy: PolicyFile = None,
+    previous: Previous = None,
+    pack: Packs = None,
+    include: Include = None,
+    exclude: Exclude = None,
+    depth: DepthOption = None,
+    target: Target = None,
+    time_index: TimeIndex = None,
+    plugin: Plugins = None,
+    param: Params = None,
 ) -> None:
-    """Profile a dataset, write run.json and print the health summary."""
-    params = _parse_params(param)
-    sinks = tuple(sink) or ("json",)
+    """Profile a dataset, write run.json and print the health summary.
+
+    Exits 0 when the run completes, whatever a policy says, and 2 when it cannot start.
+    """
+    _run(
+        data,
+        out=out,
+        sink=sink,
+        config=config,
+        overrides=set_,
+        policy=policy,
+        previous=previous,
+        flags=_flags(pack, include, exclude, depth, target, time_index, plugin, param),
+        fail_on_policy=False,
+    )
+
+
+@app.command()
+def check(
+    data: Data,
+    out: Out = None,
+    sink: Sinks = None,
+    config: ConfigFile = None,
+    set_: Overrides = None,
+    policy: PolicyFile = None,
+    previous: Previous = None,
+    pack: Packs = None,
+    include: Include = None,
+    exclude: Exclude = None,
+    depth: DepthOption = None,
+    target: Target = None,
+    time_index: TimeIndex = None,
+    plugin: Plugins = None,
+    param: Params = None,
+) -> None:
+    """Profile a dataset and judge it by a policy, for a pipeline step.
+
+    Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
+    `fail` action matched, and 2 when the run cannot start.
+    """
+    _run(
+        data,
+        out=out,
+        sink=sink,
+        config=config,
+        overrides=set_,
+        policy=policy,
+        previous=previous,
+        flags=_flags(pack, include, exclude, depth, target, time_index, plugin, param),
+        fail_on_policy=True,
+    )
+
+
+def _flags(  # noqa: PLR0913
+    pack: list[str] | None,
+    include: list[str] | None,
+    exclude: list[str] | None,
+    depth: Depth | None,
+    target: str | None,
+    time_index: str | None,
+    plugin: list[Path] | None,
+    param: list[str] | None,
+) -> dict[str, Any]:
+    """The options that were given, as the nested mapping of the ``cli`` layer."""
+    given: dict[str, Any] = {
+        "packs": pack,
+        "include": include,
+        "exclude": exclude,
+        "depth": depth.value if depth else None,
+        "target": target,
+        "time_index": time_index,
+        "plugins": [str(path) for path in plugin or []],
+        "params": _parse_params(param or []),
+    }
+    return {key: value for key, value in given.items() if value}
+
+
+def _run(  # noqa: PLR0913
+    data: Path,
+    *,
+    out: Path | None,
+    sink: list[str] | None,
+    config: Path | None,
+    overrides: list[str] | None,
+    policy: Path | None,
+    previous: Path | None,
+    flags: dict[str, Any],
+    fail_on_policy: bool,
+) -> None:
+    sinks = tuple(sink or ()) or ("json",)
     try:
         get_sinks(sinks)
     except ValueError as error:
-        typer.echo(f"error: {error}", err=True)
-        raise typer.Exit(2) from error
+        _fail(error)
+    layer = _merge_settings(flags, _parse_settings(overrides or []))
     try:
-        with console_logging("info"):
-            run = dsbf_profile(
-                data,
-                packs=pack or None,
-                depth=depth,
-                target=target,
-                time_index=time_index,
-                plugins=plugin,
-                params=params,
-            )
-    except (SourceError, ConfigError, SamplingError) as error:
-        typer.echo(f"error: {error}", err=True)
-        raise typer.Exit(2) from error
+        settings = load_config(ProfileConfig, project_file=config, cli=layer)
+        run = profile_with(
+            data, settings, policy=policy, previous=previous if policy else None
+        )
     except PlanError as error:
         for problem in error.problems:
             typer.echo(f"error: {problem}", err=True)
         raise typer.Exit(2) from error
+    except (SourceError, ConfigError, SamplingError, RunReadError) as error:
+        _fail(error)
     directory = (out or default_outputs_dir() / str(run.run_id)).expanduser().resolve()
     written = run.write(directory, sinks=sinks)
     pointer = written.get("json", next(iter(written.values())))
     typer.echo(run.render_health(pointer=str(pointer)))
+    if run.policy is not None:
+        typer.echo(_render_policy(run.policy))
+        if fail_on_policy and run.policy.exit_code:
+            raise typer.Exit(run.policy.exit_code)
+
+
+def _fail(error: Exception) -> NoReturn:
+    typer.echo(f"error: {error}", err=True)
+    raise typer.Exit(2) from error
+
+
+def _render_policy(outcome: PolicyOutcome) -> str:
+    """One line per rule that matched, and the verdict."""
+    lines = []
+    for result in outcome.rules:
+        if not result.triggered:
+            continue
+        matched = len(result.finding_ids) or len(result.check_ids)
+        what = "finding" if result.finding_ids else "check"
+        actions = ", ".join(action.kind.value for action in result.rule.then)
+        lines.append(
+            f"policy: {result.rule.name} matched {matched} {what}"
+            f"{'' if matched == 1 else 's'} ({actions})"
+        )
+    lines.append("policy: FAILED" if outcome.failed else "policy: passed")
+    return "\n".join(lines)
+
+
+def _parse_settings(assignments: list[str]) -> dict[str, Any]:
+    """``a.b=c`` options as a nested mapping; values are YAML."""
+    settings: dict[str, Any] = {}
+    for assignment in assignments:
+        path, equals, text = assignment.partition("=")
+        keys = path.split(".")
+        if not (equals and all(keys)):
+            raise typer.BadParameter(
+                f"{assignment!r} is not a.b=c, such as limits.run_budget_seconds=60",
+                param_hint="--set",
+            )
+        node = settings
+        for key in keys[:-1]:
+            child = node.setdefault(key, {})
+            if not isinstance(child, dict):
+                raise typer.BadParameter(
+                    f"{path!r} sets {key!r} to a value and to sub-keys",
+                    param_hint="--set",
+                )
+            node = child
+        node[keys[-1]] = yaml.safe_load(text)
+    return settings
+
+
+def _merge_settings(base: dict[str, Any], top: dict[str, Any]) -> dict[str, Any]:
+    """``top`` over ``base``, mappings key by key."""
+    merged = dict(base)
+    for key, value in top.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_settings(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
 
 
 def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:
@@ -273,6 +502,34 @@ def check_schema(
         typer.echo("bump the check's version, then run `dsbf schema export`", err=True)
     if failed:
         raise typer.Exit(1)
+
+
+docs_app = typer.Typer(help="Publish the command-line and settings reference.")
+app.add_typer(docs_app, name="docs")
+
+
+@docs_app.command("export")
+def export_reference(
+    out: Path = typer.Option(
+        Path("docs") / reference.REFERENCE_FILE, "--out", "-o", help="File to write."
+    ),
+    check: bool = typer.Option(
+        False, "--check", help="Write nothing; fail if the file is out of date."
+    ),
+) -> None:
+    """Write the generated command-line and settings reference."""
+    text = reference.render_reference(app)
+    if check:
+        current = out.read_text(encoding="utf-8") if out.is_file() else None
+        if current != text:
+            typer.echo(f"out of date: {out}", err=True)
+            typer.echo("run `dsbf docs export` and commit the result", err=True)
+            raise typer.Exit(1)
+        typer.echo("the reference is up to date")
+        return
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    typer.echo(f"wrote {out}")
 
 
 @app.command()

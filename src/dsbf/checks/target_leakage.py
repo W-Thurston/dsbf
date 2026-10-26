@@ -277,7 +277,7 @@ def _later_share(
     dimensions=[Dimension.LEAKAGE],
     params=TargetLeakageParams,
     output=TargetLeakageOutput,
-    requires=Requires(profile=["counts"]),
+    requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.MODERATE,
     packs=["core"],
     tags=["target", "leakage", "ml-readiness"],
