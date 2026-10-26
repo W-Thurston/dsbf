@@ -80,7 +80,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Goal:** Confirm the outline units below against what Phase 4 delivered, and fill in each one's assumptions and steps. Ask the user how the package will be published (the PyPI name `dsbf` and trusted publishing) and confirm the HTML report's scope.
 
 ### U5-10 · Safe column names
-- **Status:** done (2026-10-25) · **Size:** S · **Depends on:** U5-00
+- **Status:** done (2026-10-25, PR #133, `24c33cd`) · **Size:** S · **Depends on:** U5-00
 - **Note from U4-19:** a column named `^a$` (any name Polars reads as a regular expression) makes `infer_column_type` raise `IndexError`, and a column named `*` makes `profile_columns` raise a `DuplicateError` beside an all-null column, because `pl.col` and `Series` methods read the name as a pattern.
 - **Assumptions to confirm:** (1) The failure still reproduces on `main` (U5-00 reproduced `^a$` on 2026-10-25). (2) Every `pl.col(name)` over a user column name sits in `dsbf.data` and `dsbf.profiling`; checks read columns from the profile or through `Dataset` accessors. Grep before choosing between the two options. (3) Whether the nightly on `main` after U4-19 has run; if so, promote the perf baseline from it (the committed one is the 2026-10-25 nightly, `a2bda9e`).
 - **Goal:** No column name can make a run crash. `dsbf.data.load` refuses the unsafe names it cannot carry with a `SourceError` that lists them, or carries a safe internal alias; U5-00's decision is the alias if step 2 shows it is local to `dsbf.data`, otherwise the refusal.
@@ -89,7 +89,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Outcome:** `dsbf.data.load` refuses a column named `*` or one that starts with `^` and ends with `$` with a `SourceReadError` that lists them; the alias option was dropped because every Polars `Series` method selects its own name as a pattern, so an alias would have to cover every series a check receives. The adversarial suite's strategy skips those two name shapes. The perf baseline was not promoted: no Performance run on `main` exists after U4-19 merged.
 
 ### U5-01 · Policy evaluator
-- **Status:** todo · **Size:** M · **Depends on:** U5-00
+- **Status:** done (2026-10-26) · **Size:** M · **Depends on:** U5-00
 - **Note from U5-10:** promote the perf baseline from the first scheduled Performance run on `main` after 2026-10-25 14:35 -06:00 (the committed one is the 2026-10-25 nightly, `a2bda9e`); do it as the first step if that run exists.
 - **Note from U4-06:** `out_of_bounds` (plausibility range, `warn`) and `schema` (contract, with min and max per column) both take bounds for a column. Decide whether a policy rule reads one as the other.
 - **Note from U1-10:** (1) the policy loader turns `yaml.safe_load` and `Policy.model_validate` failures into a `ConfigError`-style report that names the rule; (2) decide what `new_since: previous_run` does without a previous run; (3) add a range on one setting (`>0.1` and `<0.5`) only if users ask. **Note from U1-11:** publish `schema/policy.schema.json` with the loose spellings documented, together with its loader.
@@ -98,6 +98,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Assumptions to confirm:** `dsbf.model.policy` already validates the §7.2 example and `Run.policy` already checks its outcomes against the rules (audited 2026-10-25: `Policy`, `Rule`, `Matcher`, `PolicyOutcome` and `Run._check_policy` exist); no evaluator, loader or `policy=` argument exists yet; a finding's evidence exposes the metric names a rule needs.
 - **Steps:** evaluator over findings and health; loader from YAML with errors that name the rule; `policy=` and `previous=` on `dsbf.profile`; `schema/policy.schema.json` through `dsbf schema export`, with `--check`; a unit test per matcher key and per action, and the §7.2 example as a fixture.
 - **Acceptance:** A REFACTOR_PLAN §7.2 example policy produces the documented `Run.policy`. A run with no rules matched exits 0. The policy schema export is checked in CI.
+- **Outcome:** `dsbf.policy` loads a policy (`load_policy`, errors named by rule) and evaluates it (`evaluate_policy`); `dsbf.profile(policy=, previous=)` fills `Run.policy` without revalidating the run, and `schema/policy.schema.json` is exported beside the run schema. The §7.2 example filtered on `null_rate`, a metric no check emits, so it now reads `null_share`. `previous` takes a `Run` only until U5-03; the perf baseline was promoted from the 2026-10-26 run on `main`.
 
 ### U5-02 · Findings query API and notebook display
 - **Status:** todo · **Size:** S · **Depends on:** U5-01 · **Resolves:** REVIEW_FINDINGS part 2 D (notebook experience)
@@ -108,6 +109,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U5-03 · JSON and NDJSON sinks, and reading a run back
 - **Status:** todo · **Size:** M · **Depends on:** U5-02 · **Resolves:** N-B2 (output schemas)
+- **Note from U5-01:** `dsbf.profile(previous=)` takes a `Run` only; once `Run.read` exists, accept a `run.json` path (read it in `dsbf.library` before evaluating the policy).
 - **Note from U4-00 (was on U4-02):** every core check declares a params and output model from U4-02 on, but nothing in Phase 4 reads them as JSON Schema, so their export lands here, with the published run schema.
 - **Goal:** `run.write(dir, sinks=["json", "ndjson"])` writes `run.json` and `findings.ndjson`, and `dsbf.Run.read(path)` round-trips. The stopgap CLI's writer moves onto it. `dsbf schema export` also writes each core check's params and output schema (`schema/checks/<id>.schema.json`), and `--check` covers them.
 - **Assumptions to confirm:** `Run` serialises through `model_dump_json` with no non-finite numbers (F-36); `schema export` is the one place that writes `schema/`; every core check declares a params and an output model (47 do, per the Phase 4 summary).
@@ -164,6 +166,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U5-09 · Release readiness and 1.0.0a1
 - **Status:** todo · **Size:** M · **Depends on:** U5-08 · **Resolves:** F-31 (install smoke test), REVIEW_FINDINGS part 2 E (PyPI) and F (coverage)
+- **Note from U5-01:** `dsbf schema check` guards only `run.schema.json`; extend the breaking-change gate to `policy.schema.json` before the release, since compatibility guarantees start there.
 - **Note from U3-07:** worker processes use `spawn` where there is no `forkserver` (Windows), about 0.44 s per check as measured on Linux, and no CI leg covers that path; add one before the first release.
 - **Goal:** A CI job that builds the wheel, installs it in a clean venv and runs `dsbf check` from a temporary directory. A Windows leg. Coverage reporting. A release workflow on tags with trusted publishing, the CHANGELOG, and the `1.0.0a1` release. Publishing is the user's step.
 - **Decided in U5-00:** the PyPI name is `dsbf` (unclaimed on 2026-10-25); publishing uses trusted publishing (OIDC) from a tag-triggered workflow behind a GitHub environment. The user registers the pending publisher on PyPI and pushes the tag; the unit prepares everything else, including a build that runs before the publish step.

@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic.json_schema import GenerateJsonSchema
 
+from dsbf.model.policy import Policy
 from dsbf.model.run import Run
 
 JSON_SCHEMA_DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -35,6 +36,18 @@ def run_schema() -> dict[str, Any]:
     """The JSON Schema of ``Run``, as the checked-in ``run.schema.json``."""
     schema = Run.model_json_schema(
         mode="serialization", schema_generator=_SchemaGenerator
+    )
+    return {"$schema": JSON_SCHEMA_DIALECT, **schema}
+
+
+def policy_schema() -> dict[str, Any]:
+    """The JSON Schema of ``Policy``, as the checked-in ``policy.schema.json``.
+
+    It describes the stored form of a rule. The loose spellings the loader also
+    accepts (``severity: ">=error"``, ``then: fail``) are in the field descriptions.
+    """
+    schema = Policy.model_json_schema(
+        mode="validation", schema_generator=_SchemaGenerator
     )
     return {"$schema": JSON_SCHEMA_DIALECT, **schema}
 

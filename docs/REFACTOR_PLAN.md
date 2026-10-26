@@ -479,7 +479,7 @@ rules:
     when: { dimension: leakage, severity: ">=error" }
     then: fail                    # exit code 1, recorded in Run.policy
   - name: sparse-columns
-    when: { code: high_null_rate, metric: { null_rate: ">0.3" } }
+    when: { code: high_null_rate, metric: { null_share: ">0.3" } }
     then: warn
   - name: check-errors-are-notes
     when: { health.status: error }

@@ -12,7 +12,7 @@ from typer.testing import CliRunner
 from dsbf.interfaces import schema_export
 from dsbf.interfaces.cli import app
 from dsbf.model import SCHEMA_VERSION
-from dsbf.model.schema import run_schema, schema_text
+from dsbf.model.schema import policy_schema, run_schema, schema_text
 
 runner = CliRunner()
 
@@ -66,6 +66,9 @@ def test_export_writes_the_schema_into_the_given_directory(tmp_path):
     written = (tmp_path / "out" / "run.schema.json").read_text(encoding="utf-8")
     assert written == schema_text(run_schema())
     assert json.loads(written)["title"] == "Run"
+    policy = (tmp_path / "out" / "policy.schema.json").read_text(encoding="utf-8")
+    assert policy == schema_text(policy_schema())
+    assert json.loads(policy)["title"] == "Policy"
 
 
 @pytest.mark.unit

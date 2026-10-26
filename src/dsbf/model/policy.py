@@ -117,9 +117,23 @@ class MetricComparison(Contract):
         return self
 
 
-_Severity = Annotated[SeverityComparison, BeforeValidator(_ordinal_input)]
-_Confidence = Annotated[ConfidenceComparison, BeforeValidator(_ordinal_input)]
-_Metric = Annotated[MetricComparison, BeforeValidator(_metric_input)]
+# The input types are what the published validation schema accepts: the stored
+# `{op, value}` form or the text a person writes.
+_Severity = Annotated[
+    SeverityComparison,
+    BeforeValidator(_ordinal_input, json_schema_input_type=str | SeverityComparison),
+]
+_Confidence = Annotated[
+    ConfidenceComparison,
+    BeforeValidator(_ordinal_input, json_schema_input_type=str | ConfidenceComparison),
+]
+_Metric = Annotated[
+    MetricComparison,
+    BeforeValidator(
+        _metric_input,
+        json_schema_input_type=bool | int | FiniteFloat | str | MetricComparison,
+    ),
+]
 
 _FINDING_KEYS = (
     "dimension",
@@ -257,6 +271,9 @@ def _one_action(item: Any) -> Any:
     return item
 
 
+_ActionInput = PolicyAction | str | dict[str, str]
+
+
 def _actions_input(value: Any) -> Any:
     items = value if isinstance(value, list | tuple) else [value]
     if not items:
@@ -278,7 +295,9 @@ class Rule(Contract):
                 "or a list of those; stored as `{kind, target}` entries."
             ),
         ),
-        BeforeValidator(_actions_input),
+        BeforeValidator(
+            _actions_input, json_schema_input_type=_ActionInput | list[_ActionInput]
+        ),
     ] = (PolicyAction(kind=ActionKind.ANNOTATE),)
 
 

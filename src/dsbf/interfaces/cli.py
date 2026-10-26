@@ -158,7 +158,7 @@ def plan_command(
 @schema_app.command("export")
 def export_schema(
     out: Path = typer.Option(
-        Path("schema"), "--out", "-o", help="Directory for the JSON Schema."
+        Path("schema"), "--out", "-o", help="Directory for the JSON Schemas."
     ),
     types: Path | None = typer.Option(
         None,
@@ -172,12 +172,12 @@ def export_schema(
         False, "--check", help="Write nothing; fail if the files are out of date."
     ),
 ) -> None:
-    """Write the JSON Schema of a run, and optionally its TypeScript types."""
+    """Write the JSON Schemas of a run and a policy, and optionally TypeScript types."""
     try:
-        schema_file, text = schema_export.export_schema(out, check=check)
-        expected = {schema_file: text}
+        expected = schema_export.export_schema(out, check=check)
         if types is not None:
-            expected[types] = schema_export.generate_typescript(text, frontend)
+            run_text = expected[out / schema_export.SCHEMA_FILE]
+            expected[types] = schema_export.generate_typescript(run_text, frontend)
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(2) from error

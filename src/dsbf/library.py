@@ -29,7 +29,8 @@ from dsbf.engine import (
     execute,
     make_plan,
 )
-from dsbf.model import Run
+from dsbf.model import Policy, Run
+from dsbf.policy import evaluate_policy, load_policy
 from dsbf.profiling import profile_dataset
 from dsbf.utils.versioning import get_dsbf_version
 
@@ -57,6 +58,8 @@ def profile(
     cache: bool | ResultCache | None = None,
     hooks: Iterable[Hook] = (),
     config: str | Path | None = None,
+    policy: Policy | Mapping[str, Any] | str | Path | None = None,
+    previous: Run | None = None,
 ) -> Run:
     """Profile ``source`` and return the ``Run``, which stays in memory.
 
@@ -97,7 +100,16 @@ def profile(
     ``DSBF__SECTION__KEY`` environment variables sit between the two. No file is
     read unless you name it.
 
+    ``policy`` is a ``Policy``, a mapping, or the path of a ``policy.yaml``: its rules
+    are evaluated over the findings and the health of the run, and ``Run.policy`` says
+    which fired. A policy is report-only unless a rule says ``fail``, and then it
+    only sets ``Run.policy.exit_code``; the run still completes. ``previous`` is the
+    earlier ``Run`` that ``new_since: previous_run`` compares with, and is ignored
+    without a policy.
+
     Raises:
+        PolicyError: the ``policy`` cannot be read or a rule is invalid, found before
+            the data is read; every problem is listed under its rule's name.
         ConfigError: a setting is invalid, such as a ``target`` that is not a
             column or a ``depth`` that does not exist; every problem is listed.
         SourceError: the data or the ``reference`` cannot be read (see
@@ -118,6 +130,7 @@ def profile(
         params=params,
         config=config,
     )
+    rules = None if policy is None else load_policy(policy)
     dataset = load(source, name=name)
     _check_columns(settings, dataset)
     if settings.sample is not None:
@@ -139,7 +152,7 @@ def profile(
         profile=data_profile,
         has_reference=reference_data is not None,
     )
-    return execute(
+    run = execute(
         plan,
         dataset,
         data_profile,
@@ -150,6 +163,12 @@ def profile(
         cache=DiskCache.default() if cache is True else cache or None,
         reference=reference_data,
     )
+    if rules is None:
+        return run
+    outcome, notes = evaluate_policy(run, rules, previous)
+    # Not revalidated, which would walk a megabyte-sized run again: the outcome is
+    # built from this run's own ids and statuses.
+    return run.model_copy(update={"policy": outcome, "notes": (*run.notes, *notes)})
 
 
 def _reference(source: object | None, settings: ProfileConfig) -> Reference | None:

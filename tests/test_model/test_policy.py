@@ -29,7 +29,7 @@ rules:
     when: { dimension: leakage, severity: ">=error" }
     then: fail                    # exit code 1, recorded in Run.policy
   - name: sparse-columns
-    when: { code: high_null_rate, metric: { null_rate: ">0.3" } }
+    when: { code: high_null_rate, metric: { null_share: ">0.3" } }
     then: warn
   - name: check-errors-are-notes
     when: { health.status: error }
@@ -92,8 +92,8 @@ def test_the_documented_example_parses_into_typed_rules():
     assert severity(leakage.when).value is Severity.ERROR
     assert [a.kind for a in leakage.then] == [ActionKind.FAIL]
     assert sparse.when.code == "high_null_rate"
-    assert metric(sparse.when, "null_rate").op is Operator.GT
-    assert metric(sparse.when, "null_rate").value == 0.3
+    assert metric(sparse.when, "null_share").op is Operator.GT
+    assert metric(sparse.when, "null_share").value == 0.3
     assert health.when.health_status == "error"
     assert health.when.selects_checks
     assert severity(notify.when).op is Operator.EQ

@@ -8,10 +8,11 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator, ValidationError
 
-from dsbf.model import SCHEMA_VERSION, CheckStatus, Run
+from dsbf.model import SCHEMA_VERSION, CheckStatus, Policy, Run
 from dsbf.model.schema import (
     Change,
     compare_schemas,
+    policy_schema,
     run_schema,
     schema_text,
     schema_version,
@@ -63,6 +64,29 @@ def hand_built_run():
 
 def test_the_committed_schema_is_what_the_models_export():
     assert COMMITTED.read_text(encoding="utf-8") == schema_text(run_schema())
+
+
+def test_the_committed_policy_schema_is_what_the_models_export():
+    committed = COMMITTED.with_name("policy.schema.json")
+    assert committed.read_text(encoding="utf-8") == schema_text(policy_schema())
+
+
+def test_the_policy_schema_accepts_what_a_person_writes():
+    validator = Draft202012Validator(policy_schema())
+    validator.check_schema(policy_schema())
+    written = {
+        "version": 1,
+        "rules": [
+            {"name": "a", "when": {"severity": ">=error"}, "then": "fail"},
+            {"name": "b", "when": {"metric": {"null_share": ">0.3"}}},
+            {"name": "c", "when": {"health.status": "error"}, "then": ["warn"]},
+            {"name": "d", "when": {"code": "x"}, "then": {"notify": "slack:#q"}},
+            {"name": "e", "when": {"metric": {"flag": True, "n": 3}}},
+        ],
+    }
+    validator.validate(written)
+    Policy.model_validate(written)
+    assert list(validator.iter_errors({"rules": [{"name": "a", "when": {"bad": 1}}]}))
 
 
 def test_the_export_is_deterministic():
