@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 import polars as pl
+import pyarrow as pa
 from pydantic import Field
 
 from dsbf.checks.strings import holds_strings
@@ -163,13 +164,13 @@ class FuzzyDuplicatesOutput(CheckOutputModel):
         ge=0, description="Rows holding a record that is in a flagged pair."
     )
     top_pairs: tuple[NearDuplicatePair, ...] = Field(
-        description="The most similar flagged pairs; the bulk is not stored."
+        description="The most similar flagged pairs; all are in `flagged_pairs`."
     )
 
 
 @check(
     id="fuzzy_duplicates",
-    version="1.2.1",
+    version="1.3.0",
     kind="analysis",
     applies_to=SemanticTypes("categorical", "text", "identifier"),
     dimensions=[Dimension.VALIDITY],
@@ -245,6 +246,14 @@ def fuzzy_duplicates(ctx: CheckContext, params: FuzzyDuplicatesParams) -> CheckO
         table.frame, columns, flagged_first, flagged_second, similarity, params
     )
 
+    pairs_ref = None
+    if flagged_first.size:
+        pairs_ref = ctx.attach(
+            "flagged_pairs",
+            _pairs_table(table.frame, flagged_first, flagged_second, similarity),
+            description="Every flagged pair of records, closest first.",
+        )
+
     output = FuzzyDuplicatesOutput(
         columns=tuple(columns),
         column_weights=weights,
@@ -263,7 +272,7 @@ def fuzzy_duplicates(ctx: CheckContext, params: FuzzyDuplicatesParams) -> CheckO
         rows_involved=rows_involved,
         top_pairs=top,
     )
-    _report(ctx, output, params)
+    _report(ctx, output, params, pairs_ref)
     return ctx.output(output)
 
 
@@ -620,6 +629,26 @@ def _best_without_one(
     return best
 
 
+def _pairs_table(
+    frame: pl.DataFrame,
+    first: np.ndarray,
+    second: np.ndarray,
+    similarity: np.ndarray,
+) -> pa.Table:
+    """Every flagged pair as the rows its records first appear on, closest first."""
+    rows = frame["first"].to_numpy()
+    counts = frame["rows"].to_numpy()
+    return pa.table(
+        {
+            "first_row": rows[first],
+            "second_row": rows[second],
+            "first_rows": counts[first],
+            "second_rows": counts[second],
+            "similarity": np.minimum(similarity, 1.0),
+        }
+    )
+
+
 def _top_pairs(
     frame: pl.DataFrame,
     columns: list[str],
@@ -660,7 +689,10 @@ def _cut(value: str | None) -> str | None:
 
 
 def _report(
-    ctx: CheckContext, output: FuzzyDuplicatesOutput, params: FuzzyDuplicatesParams
+    ctx: CheckContext,
+    output: FuzzyDuplicatesOutput,
+    params: FuzzyDuplicatesParams,
+    pairs_ref: str | None,
 ) -> None:
     if output.stopped_by:
         reasons = {
@@ -726,5 +758,6 @@ def _report(
             n_used=output.rows,
             n_total=ctx.profile.n_rows,
             method="indel_ratio_" + output.blocking,
+            details_ref=pairs_ref,
         ),
     )

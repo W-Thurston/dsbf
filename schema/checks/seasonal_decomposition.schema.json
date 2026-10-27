@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "seasonal_decomposition",
   "check_id": "seasonal_decomposition",
-  "check_version": "1.1.0",
+  "check_version": "1.2.0",
   "params": {
     "additionalProperties": false,
     "properties": {

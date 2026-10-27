@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Self
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, field_validator, model_validator
+from pydantic import AwareDatetime, Field, PrivateAttr, field_validator, model_validator
 
-from dsbf.model.base import Contract
+from dsbf.model.artifact import ArtifactRef, Payload
+from dsbf.model.base import Contract, fields_equal
 from dsbf.model.check import CheckResult, Note
 from dsbf.model.finding import Finding
 from dsbf.model.findings import Findings
@@ -23,7 +24,7 @@ from dsbf.model.vocabulary import Severity
 
 # Semver. Additive changes are minor and breaking changes are major. The 1.x
 # compatibility guarantee begins with the first release.
-SCHEMA_VERSION = "0.10.0"
+SCHEMA_VERSION = "0.11.0"
 
 _SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _SEVERITY_FIRST = {severity: -rank for rank, severity in enumerate(Severity)}
@@ -59,6 +60,11 @@ class Run(Contract):
         default=None,
         description="What the user's policy decided; absent when none was applied.",
     )
+
+    _artifact_dir: Path | None = PrivateAttr(default=None)
+
+    def __eq__(self, other: object) -> bool:
+        return fields_equal(self, other)
 
     @cached_property
     def findings(self) -> Findings:
@@ -105,6 +111,7 @@ class Run(Contract):
         self._check_inputs()
         self._check_results()
         self._check_policy()
+        self._check_artifacts()
         return self
 
     def _check_inputs(self) -> None:
@@ -141,6 +148,47 @@ class Run(Contract):
             raise ValueError("finding ids are unique within a run")
         if self.health != RunHealth.from_results(self.results):
             raise ValueError("health does not match the check results")
+
+    def _check_artifacts(self) -> None:
+        refs = {a.ref for r in self.results.values() for a in r.artifacts}
+        for finding in self.findings:
+            ref = finding.evidence.details_ref
+            if ref is not None and ref not in refs:
+                raise ValueError(
+                    f"finding {finding.id} points at artifact {ref!r}, "
+                    "which no result of the run has"
+                )
+
+    def artifact(self, ref: str) -> Payload:
+        """The payload of artifact ``ref`` (``<check_id>/<name>``).
+
+        A ``pyarrow.Table`` for a table, a JSON value otherwise. It is in memory for a
+        run that was just made and read from the files beside ``run.json`` for one
+        that was read back.
+
+        Raises:
+            KeyError: the run has no such artifact, or its file is missing; the
+                message lists the refs the run has.
+        """
+        for result in self.results.values():
+            payloads = result._payloads  # noqa: SLF001
+            if ref in payloads:
+                return payloads[ref]
+        known = {a.ref: a for r in self.results.values() for a in r.artifacts}
+        if ref not in known:
+            raise KeyError(f"no artifact {ref!r}; the run has {sorted(known)}")
+        from dsbf.sinks import read_artifact  # noqa: PLC0415
+
+        if self._artifact_dir is None:
+            raise KeyError(
+                f"artifact {ref!r} is not in memory and the run has no files"
+            )
+        return read_artifact(self._artifact_dir, known[ref])
+
+    @property
+    def artifacts(self) -> tuple[ArtifactRef, ...]:
+        """Every artifact of every result."""
+        return tuple(a for r in self.results.values() for a in r.artifacts)
 
     def _check_policy(self) -> None:
         if self.policy is None:

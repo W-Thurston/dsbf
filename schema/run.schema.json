@@ -100,6 +100,52 @@
       "title": "ActionKind",
       "type": "string"
     },
+    "ArtifactRef": {
+      "additionalProperties": false,
+      "description": "Where a check's bulky data is and what it is; the data is not in the run.",
+      "properties": {
+        "ref": {
+          "description": "`<check_id>/<name>`, unique within a run; `Run.artifact(ref)` returns the payload.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "media_type": {
+          "description": "`application/vnd.apache.parquet` for a table, `application/json` for a JSON value.",
+          "type": "string"
+        },
+        "rows": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Rows of a table; null for a JSON value."
+        },
+        "bytes": {
+          "description": "Size of the file the artifact is stored as.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "description": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "media_type",
+        "rows",
+        "bytes",
+        "description"
+      ],
+      "title": "ArtifactRef",
+      "type": "object"
+    },
     "AssumptionCheck": {
       "additionalProperties": false,
       "description": "Whether a statistical assumption behind a result held.",
@@ -496,6 +542,14 @@
           },
           "type": "array"
         },
+        "artifacts": {
+          "default": [],
+          "description": "Bulky data the check attached; the payloads are not in the run's JSON.",
+          "items": {
+            "$ref": "#/$defs/ArtifactRef"
+          },
+          "type": "array"
+        },
         "timing": {
           "$ref": "#/$defs/Timing"
         },
@@ -513,6 +567,7 @@
         "findings",
         "output",
         "non_finite_outputs",
+        "artifacts",
         "timing",
         "params"
       ],
@@ -3053,7 +3108,7 @@
   "description": "Everything one execution produced, in one serialisable object.",
   "properties": {
     "schema_version": {
-      "default": "0.10.0",
+      "default": "0.11.0",
       "type": "string"
     },
     "run_id": {

@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from dsbf.data import Dataset
+from dsbf.engine.artifacts import make_ref
 from dsbf.engine.cache import CacheSession, ResultCache
 from dsbf.engine.capture import capture_warnings
 from dsbf.engine.events import (
@@ -36,6 +37,7 @@ from dsbf.model import (
     Severity,
     Timing,
 )
+from dsbf.model.artifact import ArtifactRef, Payload
 
 # A hard dependent runs on these. Anything else (a failure, a timeout, a skip, a
 # missing extra) blocks it; "not applicable" only says the upstream had nothing to read.
@@ -325,7 +327,8 @@ def _error_result(entry: PlanEntry, failure: Failure, window: Window) -> CheckRe
         else:
             hint = (
                 f"Run {entry.id} on its own to reproduce it, and report the traceback "
-                "in this note to the check's author if the data is valid."
+                f"(the {entry.id}/traceback artifact) to the check's author if the "
+                "data is valid."
             )
     note = Note(
         code=code,
@@ -333,16 +336,27 @@ def _error_result(entry: PlanEntry, failure: Failure, window: Window) -> CheckRe
         severity=Severity.ERROR,
         hint=hint,
         exception_type=None if code == "worker_died" else failure.type_name,
-        detail=failure.detail or None,
+        detail=failure.summary or None,
     )
-    return CheckResult(
+    artifacts: list[tuple[ArtifactRef, Payload]] = []
+    if failure.detail:
+        artifacts.append(
+            make_ref(
+                f"{entry.id}/traceback",
+                failure.detail,
+                "The formatted traceback of the exception.",
+            )
+        )
+    result = CheckResult(
         check_id=entry.id,
         check_version=entry.check.version,
         status=CheckStatus.ERROR,
         notes=(note,),
+        artifacts=tuple(ref for ref, _ in artifacts),
         timing=window.timing,
         params=entry.params.model_dump(mode="json"),
     )
+    return result.with_payloads({ref.ref: data for ref, data in artifacts})
 
 
 def _timeout_result(

@@ -5,6 +5,7 @@ Importing this package pulls in pydantic and nothing else, so embedded users and
 the schema export don't pay for the analysis libraries.
 """
 
+from dsbf.model.artifact import ArtifactRef
 from dsbf.model.base import Contract, FiniteFloat, Scalar
 from dsbf.model.check import CheckResult, Note
 from dsbf.model.evidence import (
@@ -75,6 +76,7 @@ from dsbf.model.vocabulary import (
 __all__ = [
     "Action",
     "ActionKind",
+    "ArtifactRef",
     "AssumptionCheck",
     "BooleanProfile",
     "CategoricalProfile",

@@ -779,6 +779,10 @@ export interface CheckResult {
    * Keys of `output` holding a NaN, infinite or NaT value, now null.
    */
   non_finite_outputs: string[];
+  /**
+   * Bulky data the check attached; the payloads are not in the run's JSON.
+   */
+  artifacts: ArtifactRef[];
   timing: Timing;
   /**
    * The resolved parameters, for reproducibility.
@@ -977,6 +981,31 @@ export interface Action {
   params: {
     [k: string]: boolean | number | string | null;
   };
+}
+/**
+ * Where a check's bulky data is and what it is; the data is not in the run.
+ *
+ * This interface was referenced by `Run`'s JSON-Schema
+ * via the `definition` "ArtifactRef".
+ */
+export interface ArtifactRef {
+  /**
+   * `<check_id>/<name>`, unique within a run; `Run.artifact(ref)` returns the payload.
+   */
+  ref: string;
+  /**
+   * `application/vnd.apache.parquet` for a table, `application/json` for a JSON value.
+   */
+  media_type: string;
+  /**
+   * Rows of a table; null for a JSON value.
+   */
+  rows: number | null;
+  /**
+   * Size of the file the artifact is stored as.
+   */
+  bytes: number;
+  description: string;
 }
 /**
  * Wall and CPU time and memory for one check, as measured by the executor.

@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 
 from dsbf.data import Dataset
+from dsbf.engine.artifacts import make_ref
 from dsbf.engine.check import CheckOutputModel, CheckSpec
 from dsbf.engine.eligibility import eligibility
 from dsbf.engine.errors import CheckCancelled, CheckContractError
@@ -31,6 +32,7 @@ from dsbf.model import (
     Severity,
     Subject,
 )
+from dsbf.model.artifact import ArtifactRef, Payload, valid_artifact_name
 
 _STOP_STATUSES = (
     CheckStatus.NOT_APPLICABLE,
@@ -118,6 +120,7 @@ class CheckContext:
         self._findings: list[Finding] = []
         self._finding_ids: set[str] = set()
         self._notes: list[Note] = []
+        self._artifacts: dict[str, tuple[ArtifactRef, Payload]] = {}
 
         self.eligibility = eligibility(
             spec,
@@ -277,6 +280,38 @@ class CheckContext:
         self._finding_ids.add(finding.id)
         self._findings.append(finding)
         return finding
+
+    def attach(self, name: str, payload: Payload, *, description: str = "") -> str:
+        """Attach bulky data to the result and return its reference.
+
+        ``payload`` is a ``pyarrow.Table`` (stored as Parquet) or a JSON-safe value
+        (stored as JSON). The reference is ``<check id>/<name>``; a finding's
+        ``Evidence.details_ref`` can point at it, and ``Run.artifact`` returns the
+        payload. The check does no I/O: the run holds the payload and the sinks write
+        it. Artifacts are kept only when the check ends ``ok``.
+
+        Raises:
+            CheckContractError: ``name`` is not lower-case letters, digits, ``_``,
+                ``-`` and ``.``, was used before, or ``payload`` is of another type.
+        """
+        self.checkpoint()
+        if not valid_artifact_name(name):
+            raise CheckContractError(f"{name!r} is not a valid artifact name")
+        ref = f"{self.spec.id}/{name}"
+        if ref in self._artifacts:
+            raise CheckContractError(f"{self.spec.id} already attached {name!r}")
+        try:
+            self._artifacts[ref] = make_ref(ref, payload, description)
+        except ValueError as error:
+            raise CheckContractError(
+                f"{self.spec.id} attached {name!r}: {error}"
+            ) from error
+        return ref
+
+    @property
+    def artifacts(self) -> tuple[tuple[ArtifactRef, Payload], ...]:
+        """The references and payloads attached so far."""
+        return tuple(self._artifacts.values())
 
     def note(
         self,

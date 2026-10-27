@@ -80,6 +80,33 @@ class TestFindingPairs:
         assert finding.evidence.n_used == 81
         assert {a.action for a in actions_of(finding)} == {"investigate", "transform"}
 
+    def test_every_flagged_pair_is_an_artifact_beyond_the_listed_top(self):
+        frame = people()
+        rows = [
+            {**frame.row(i, named=True), "name": frame["name"][i].replace("e", "3", 1)}
+            for i in range(0, 30)
+            if "e" in frame["name"][i]
+        ]
+
+        result = run_core_check(with_rows(frame, *rows), CHECK, max_pairs_listed=5)
+
+        (artifact,) = result.artifacts
+        assert artifact.ref == "fuzzy_duplicates/flagged_pairs"
+        table = result.payloads[artifact.ref]
+        output = output_of(result)
+        assert len(output["top_pairs"]) == 5
+        assert table.num_rows == artifact.rows == output["pairs_flagged"] > 5
+        similarity = table["similarity"].to_pylist()
+        assert similarity == sorted(similarity, reverse=True)
+        top = output["top_pairs"][0]
+        assert table["first_row"][0].as_py() == top["first"]["row"]
+        assert result.findings[0].evidence.details_ref == artifact.ref
+
+    def test_no_pairs_attach_nothing(self):
+        result = run_core_check(people(), CHECK)
+
+        assert result.artifacts == ()
+
     def test_case_and_padding_make_a_pair_at_similarity_one(self):
         frame = people()
         source = frame.row(2, named=True)

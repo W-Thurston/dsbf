@@ -208,3 +208,35 @@ def py_reference_rows(ctx: CheckContext, params: CheckParams):
     """Report the rows of the reference, as seen from a worker."""
     _report(ctx, "reference_rows", rows=ctx.reference.profile.n_rows)
     return None
+
+
+@check(
+    id="py_attach",
+    version="1.0.0",
+    kind="rule",
+    applies_to=SemanticTypes(),
+    dimensions=[Dimension.VALIDITY],
+    runs_in="process",
+)
+def py_attach(ctx: CheckContext, params: CheckParams):
+    """Attach a table and a JSON value, and point a finding at the table."""
+    import pyarrow as pa  # noqa: PLC0415
+
+    ref = ctx.attach("squares", pa.table({"n": [1, 2, 3], "square": [1, 4, 9]}))
+    ctx.attach("meta", {"pid": os.getpid()}, description="Where it ran.")
+    ctx.finding(
+        code="attached",
+        subject=Subject.dataset(),
+        severity=Severity.INFO,
+        confidence=Confidence.HIGH,
+        title="attached",
+        message="attached",
+        evidence=Evidence(
+            metrics={},
+            n_used=ctx.profile.n_rows,
+            n_total=ctx.profile.n_rows,
+            method="attach",
+            details_ref=ref,
+        ),
+    )
+    return None

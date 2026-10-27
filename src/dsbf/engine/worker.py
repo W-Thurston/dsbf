@@ -27,6 +27,12 @@ class Failure:
     detail: str  # the formatted traceback
     contract: bool  # the check broke the context's rules: a bug in the check
 
+    @property
+    def summary(self) -> str:
+        """The traceback's last line, the exception and its message."""
+        lines = self.detail.strip().splitlines()
+        return lines[-1] if lines else ""
+
     @classmethod
     def of(cls, error: Exception) -> "Failure":
         return cls(
