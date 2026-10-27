@@ -7,9 +7,9 @@
 
 **DSBF is a statistically grounded, workflow-aware profiling engine designed to be a reliable co-pilot at every phase of the data science process.**
 
-The goal is simple: the exploratory and preparatory portions of data science work are largely reproducible. The same questions get asked of every new dataset — what's missing, what's skewed, what's redundant, what's suspicious — and they deserve a standardized, rigorous answer every time. DSBF provides that answer through a structured task engine, a five-dimension quality framework, and an interactive dashboard that turns raw data into actionable insight within minutes.
+The goal is simple: the exploratory and preparatory portions of data science work are largely reproducible. The same questions get asked of every new dataset — what's missing, what's skewed, what's redundant, what's suspicious — and they deserve a standardized, rigorous answer every time. DSBF provides that answer through a check engine, a five-dimension quality framework, and one validated result, the `Run`, that you can read in a notebook, query as tables, judge by a policy in a pipeline, or open as a report.
 
-The first phase — **Exploratory Data Analysis** — is what DSBF does today. It gives any data scientist, regardless of experience level, an immediately reproducible structure for understanding a new dataset: consistent findings, plain-English guidance grounded in statistical theory, and a dashboard designed to accelerate insight rather than replace judgment. From there, a dataset can be understood on its own terms before any modeling assumptions are introduced.
+The first phase — **Exploratory Data Analysis** — is what DSBF does today. It gives any data scientist, regardless of experience level, an immediately reproducible structure for understanding a new dataset: consistent findings, plain-English guidance grounded in statistical theory, and output designed to accelerate insight rather than replace judgment. From there, a dataset can be understood on its own terms before any modeling assumptions are introduced.
 
 The broader vision is a tool that grows with the workflow — covering data preparation, modeling, inference, and tradeoff analysis under the same statistically honest, reproducible framework. That work is ongoing.
 
@@ -29,9 +29,11 @@ DSBF takes a different set of design bets:
 
 ---
 
-## Dashboard
+## Reports and the dashboard
 
 <img src="docs/assets/Overview_Tab.png" alt="DSBF Dashboard" width="100%">
+
+`run.write(dir, sinks=["html"])` (or `dsbf profile --sink html`) writes a self-contained `report.html` with the health summary, the findings by dimension and severity, and a profile of every column; it opens offline and can be sent to a person. [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) shows how to build your own view from the Parquet tables, the NDJSON stream or `run.json`.
 
 The Vue 3 dashboard in `frontend/` read the results of the old engine through an API that has been removed. It does not run until the store, the API and the dashboard shell are rebuilt on the `Run` (Phase 6 in [`ROADMAP.md`](ROADMAP.md)); the source stays in the repository. Until then, `dsbf profile` writes the whole `Run` to `run.json` and prints a health summary, and `dsbf.profile()` returns the `Run` in memory.
 
@@ -55,7 +57,9 @@ CSV / Parquet / DataFrame
 └────────────────────────────┬────────────────────────────────┘
                              │  CheckResult objects (findings, output, notes)
                              ▼
-                        Run  ──►  run.json
+                        Run  ──►  policy verdict  (dsbf check: exit 0 / 1)
+                         │
+                         └──►  sinks: json · ndjson · parquet · html
 ```
 
 Every check is a function with a declared spec: the semantic types it applies to, what it needs from the profile or from other checks, its cost, and the model of its parameters. The planner selects and orders the checks, the executor runs them (in parallel where it can) under time limits, and a check that raises ends with a status and a note instead of stopping the run. The result is one `Run`, a validated model whose JSON Schema is committed as `schema/run.schema.json`.
@@ -141,7 +145,24 @@ worst = [f for f in run.findings if f.severity >= Severity.WARN]
 
 A `Run` can be megabytes on data with many columns, because a check's output is kept whole: the titanic `Run` is 0.56 MB (the largest outputs are `group_differences` at 52 KB and `contingency` at 44 KB). It was 8.9 MB until `fuzzy_duplicates`, which lists its 20 closest pairs and counts the rest, replaced `fuzzy_duplicate_detection`'s whole pair list.
 
-`dsbf plan data.csv` and `dsbf schema export` are the other commands; `dsbf --help` lists them.
+`dsbf plan data.csv` and `dsbf schema export` are the other commands; `dsbf --help` lists them. The generated [command-line and settings reference](docs/CLI_REFERENCE.md) lists every option, and the [check reference](docs/CHECK_REFERENCE.md) lists every check with its parameters and finding codes.
+
+### In a pipeline — `dsbf check`
+
+```bash
+uv run dsbf check data.csv --policy policy.yaml --out results --sink json --sink parquet
+```
+
+`dsbf check` takes the options of `dsbf profile` and exits 0 when the run completes and no policy rule with a `fail` action matched, 1 when one did, and 2 when the run cannot start. Without a policy it never exits 1. A policy is a YAML file of rules over the findings; `Run.policy` records what each rule matched, so `run.json` explains a failure.
+
+### Guides
+
+- [Use DSBF in your pipeline](docs/guides/pipeline.md), with an [example GitHub Actions workflow](examples/github-actions/dsbf-check.yml) that uploads Parquet findings
+- [Write a policy](docs/guides/policy.md)
+- [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) and [in your warehouse](docs/CONSUMING_PARQUET.md)
+- [Write a check](docs/guides/write-a-check.md)
+
+The code in the guides is run by the test suite.
 
 ---
 
@@ -161,11 +182,14 @@ Each depth includes the ones above it. The 47 core checks are 30 `quick`, 16 `st
 
 ## Output artifacts
 
-`dsbf profile` writes one file, `run.json`, to `--out` or to `<home>/outputs/<run id>/`, whatever the working directory. The home is `$DSBF_HOME` if set, otherwise the per-user data directory (`~/.local/share/dsbf` on Linux). `dsbf.profile()` writes nothing unless you pass `cache=True`, which keeps check results under `<home>/cache/`.
+`dsbf profile` writes `run.json`, and the other files its `--sink` options name, to `--out` or to `<home>/outputs/<run id>/`, whatever the working directory. The home is `$DSBF_HOME` if set, otherwise the per-user data directory (`~/.local/share/dsbf` on Linux). `dsbf.profile()` writes nothing unless you pass `cache=True`, which keeps check results under `<home>/cache/`.
 
 | File | Description |
 |---|---|
 | `run.json` | The whole `Run`: dataset identity and sampling, the profile, every check's status, findings and output, notes and timing. It validates against `schema/run.schema.json` |
+| `findings.ndjson` | `--sink ndjson`: one finding per line |
+| `findings.parquet`, `profile.parquet`, `results.parquet` | `--sink parquet`: flat tables that start with `run_id`, with their columns listed in `schema/tables.schema.json` ([guide](docs/CONSUMING_PARQUET.md)) |
+| `report.html` | `--sink html`: a self-contained report that opens offline |
 
 ---
 
@@ -236,7 +260,7 @@ def negative_values(ctx, params):
             )
 ```
 
-Then load the directory with `dsbf.profile(df, plugins=["my_checks"], checks=["+negative_values"])`; `dsbf profile data.csv --plugin my_checks` loads it too, and `dsbf plan` lists it. A plugin that fails to import becomes a note on the run, not an error. `tests/test_engine/test_plugins.py` holds working examples, and `docs/REFACTOR_PLAN.md` describes the check contract.
+Then load the directory with `dsbf.profile(df, plugins=["my_checks"], checks=["+negative_values"])`; `dsbf profile data.csv --plugin my_checks` loads it too, and `dsbf plan` lists it. A plugin that fails to import becomes a note on the run, not an error. The [Write a check](docs/guides/write-a-check.md) guide covers parameters, outputs and the conventions the core checks follow, `tests/test_engine/test_plugins.py` holds working examples, and `docs/REFACTOR_PLAN.md` describes the check contract.
 
 ---
 

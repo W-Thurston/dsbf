@@ -1,0 +1,44 @@
+# Profile a dataset on every push and pull request, judge it by policy.yaml, and keep the
+# findings as a Parquet table. Copy this file to .github/workflows/ and set DATA.
+name: data-quality
+
+on:
+  push:
+  pull_request:
+
+env:
+  DATA: data/customers.csv
+  POLICY: policy.yaml
+
+jobs:
+  dsbf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install DSBF
+        # Needs the first published release; until then install from a checkout.
+        run: pip install dsbf
+
+      - name: Check the data against the policy
+        id: check
+        # dsbf check exits 1 when a rule with a `fail` action matched; the upload below
+        # still runs, and the final step fails the job.
+        run: dsbf check "$DATA" --policy "$POLICY" --out dsbf-results --sink json --sink parquet
+        continue-on-error: true
+
+      - name: Keep the findings
+        uses: actions/upload-artifact@v7
+        with:
+          name: dsbf-findings
+          path: dsbf-results/
+
+      - name: Fail the job if the policy failed
+        if: steps.check.outcome == 'failure'
+        run: |
+          echo "A policy rule with a fail action matched; see the dsbf-findings artifact."
+          exit 1

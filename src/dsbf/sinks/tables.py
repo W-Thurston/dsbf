@@ -136,7 +136,7 @@ FINDINGS = Table(
             "The quality dimension: `completeness`, `validity` and so on.",
             False,
         ),
-        Column("severity", _STRING, "`info`, `warn`, `error` or `critical`.", False),
+        Column("severity", _STRING, "`info`, `notice`, `warn` or `error`.", False),
         Column("confidence", _STRING, "`low`, `medium` or `high`.", False),
         Column(
             "subject_kind",

@@ -268,6 +268,9 @@ jobs:
       - name: Schema and types are up to date
         run: uv run --no-sync dsbf schema export --types frontend/src/generated/run.d.ts --check
 
+      - name: Command-line and check references are up to date
+        run: uv run --no-sync dsbf docs export --check
+
       - name: Schema change is announced by its version
         if: github.event_name == 'pull_request'
         run: uv run --no-sync dsbf schema check --base origin/${{ github.base_ref }}

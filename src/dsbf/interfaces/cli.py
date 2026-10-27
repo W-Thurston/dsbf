@@ -18,7 +18,7 @@ from dsbf.engine import (
     format_plan,
     make_plan,
 )
-from dsbf.interfaces import reference, schema_export
+from dsbf.interfaces import check_reference, reference, schema_export
 from dsbf.library import profile_with
 from dsbf.model import Cost, Dimension, PolicyOutcome
 from dsbf.paths import default_outputs_dir
@@ -605,25 +605,42 @@ app.add_typer(docs_app, name="docs")
 @docs_app.command("export")
 def export_reference(
     out: Path = typer.Option(
-        Path("docs") / reference.REFERENCE_FILE, "--out", "-o", help="File to write."
+        Path("docs") / reference.REFERENCE_FILE,
+        "--out",
+        "-o",
+        help="File to write the command-line and settings reference to.",
+    ),
+    checks_out: Path = typer.Option(
+        Path("docs") / check_reference.CHECK_REFERENCE_FILE,
+        "--checks-out",
+        help="File to write the check reference to.",
     ),
     check: bool = typer.Option(
-        False, "--check", help="Write nothing; fail if the file is out of date."
+        False, "--check", help="Write nothing; fail if a file is out of date."
     ),
 ) -> None:
-    """Write the generated command-line and settings reference."""
-    text = reference.render_reference(app)
+    """Write the generated command-line, settings and check references."""
+    files = {
+        out: reference.render_reference(app),
+        checks_out: check_reference.render_check_reference(),
+    }
     if check:
-        current = out.read_text(encoding="utf-8") if out.is_file() else None
-        if current != text:
-            typer.echo(f"out of date: {out}", err=True)
+        stale = [
+            path
+            for path, text in files.items()
+            if not path.is_file() or path.read_text(encoding="utf-8") != text
+        ]
+        for path in stale:
+            typer.echo(f"out of date: {path}", err=True)
+        if stale:
             typer.echo("run `dsbf docs export` and commit the result", err=True)
             raise typer.Exit(1)
-        typer.echo("the reference is up to date")
+        typer.echo("the references are up to date")
         return
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(text, encoding="utf-8")
-    typer.echo(f"wrote {out}")
+    for path, text in files.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        typer.echo(f"wrote {path}")
 
 
 @app.command()
