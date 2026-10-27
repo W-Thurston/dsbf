@@ -3,6 +3,7 @@
 import datetime as dt
 import glob
 import os
+import sys
 import tempfile
 import time
 
@@ -187,15 +188,18 @@ class TestSharedData:
 class TestTimeoutKillsTheWorker:
     def test_a_sleeping_worker_is_killed_and_the_run_completes(self, tmp_path):
         pid_file = tmp_path / "pid"
+        # `py_rows` has to start inside the timeout too, and a spawned Windows worker
+        # takes longer than a forkserver one to import the engine.
+        timeout = 8.0 if sys.platform == "win32" else 0.8
 
         started = time.perf_counter()
         run = run_with(
             [toys.py_sleeper, toys.py_rows],
             params={"py_sleeper": {"path": str(pid_file)}},
-            limits=Limits(check_timeout_seconds=0.8, cancel_grace_seconds=0.05),
+            limits=Limits(check_timeout_seconds=timeout, cancel_grace_seconds=0.05),
         )
 
-        assert time.perf_counter() - started < 5
+        assert time.perf_counter() - started < timeout + 5
         result = run.results["py_sleeper"]
         assert result.status is CheckStatus.TIMEOUT
         (note,) = result.notes
