@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "fuzzy_duplicates",
   "check_id": "fuzzy_duplicates",
-  "check_version": "1.2.0",
+  "check_version": "1.2.1",
   "params": {
     "additionalProperties": false,
     "properties": {
