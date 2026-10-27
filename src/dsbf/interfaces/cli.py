@@ -1,5 +1,6 @@
 # dsbf/interfaces/cli.py
 
+import sys
 from pathlib import Path
 from typing import Annotated, Any, NoReturn
 
@@ -34,6 +35,18 @@ app.add_typer(schema_app, name="schema")
 VERBOSITIES = ("quiet", "error", "warn", "stage", "info", "debug")
 
 
+def tolerate_narrow_encodings() -> None:
+    """Print ``?`` for a character the terminal cannot encode, not a traceback.
+
+    The summary uses symbols such as ``⦸``; a Windows console in cp1252 cannot encode
+    them, and a run that has finished should not fail while printing.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
+
+
 @app.callback()
 def main(
     context: typer.Context,
@@ -50,6 +63,7 @@ def main(
             f"{verbosity!r} is not one of {', '.join(VERBOSITIES)}",
             param_hint="--verbosity",
         )
+    tolerate_narrow_encodings()
     context.with_resource(console_logging(verbosity))
 
 
@@ -533,6 +547,9 @@ def check_schema(
         tables = schema_export.compare_tables_with_base(
             base, schema_file.parent / schema_export.TABLES_SCHEMA_FILE
         )
+        policy = schema_export.compare_policy_with_base(
+            base, schema_file.parent / schema_export.POLICY_SCHEMA_FILE
+        )
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(2) from error
@@ -565,6 +582,18 @@ def check_schema(
         if tables.problems:
             typer.echo(
                 "bump TABLES_SCHEMA_VERSION in dsbf/sinks/tables.py, then run "
+                "`dsbf schema export`",
+                err=True,
+            )
+    if policy is not None:
+        for change in policy.changes:
+            typer.echo(f"policy: {change}")
+        for problem in policy.problems:
+            failed = True
+            typer.echo(f"error: policy: {problem}", err=True)
+        if policy.problems:
+            typer.echo(
+                "bump Policy.version in dsbf/model/policy.py, then run "
                 "`dsbf schema export`",
                 err=True,
             )

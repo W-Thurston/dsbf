@@ -1,6 +1,6 @@
 [project]
 name = "dsbf"
-version = "0.20.0"
+version = "1.0.0a1"
 description = "Data Scientist's Best Friend — a statistically grounded EDA and data quality engine"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,7 +9,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Will Thurston", email = "WilliamD.Thurston@gmail.com" }]
 keywords = ["data-profiling", "eda", "data-quality", "pandas", "polars"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
@@ -77,6 +77,7 @@ dev = [
     # runtime reads zones through Polars, which bundles its own.
     "tzdata>=2025.2",
     "duckdb>=2.0.0",
+    "pytest-cov>=7,<8",
 ]
 extras = ["pytest>=8.0.0,<10"]
 

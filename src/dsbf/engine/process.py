@@ -12,11 +12,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cache
 from multiprocessing.connection import Connection
-from multiprocessing.context import ForkServerContext, SpawnContext
+from multiprocessing.context import SpawnContext
 from multiprocessing.process import BaseProcess
 from pathlib import Path
 from types import TracebackType
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import polars as pl
 import pyarrow as pa
@@ -33,6 +33,10 @@ from dsbf.model import CheckParams, CheckResult, DatasetProfile, Note
 from dsbf.model.evidence import SamplingInfo
 from dsbf.model.manifest import SourceRef
 
+if TYPE_CHECKING:
+    # Windows has no ForkServerContext, so a runtime import would fail there.
+    from multiprocessing.context import ForkServerContext
+
 _TERMINATE_WAIT_SECONDS = 1.0
 
 
@@ -45,15 +49,14 @@ class NotShippable(Exception):
 
 
 @cache
-def _context() -> ForkServerContext | SpawnContext:
+def _context() -> "ForkServerContext | SpawnContext":
     """A context that starts clean workers: a fork would copy Polars' thread pool.
 
     ``forkserver`` where there is one, preloaded with the engine so a worker starts
     in milliseconds; ``spawn`` elsewhere.
     """
     if "forkserver" in multiprocessing.get_all_start_methods():
-        context = multiprocessing.get_context("forkserver")
-        assert isinstance(context, ForkServerContext)
+        context = cast("ForkServerContext", multiprocessing.get_context("forkserver"))
         context.set_forkserver_preload(["dsbf.engine"])
         return context
     context = multiprocessing.get_context("spawn")

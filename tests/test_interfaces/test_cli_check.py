@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -362,6 +363,9 @@ class TestPlanShowsWhatNeedsASetting:
 
 @pytest.mark.unit
 class TestReference:
+    # The reference is generated on Linux, where CI also runs `docs export --check`;
+    # its text carries platform-specific defaults.
+    @pytest.mark.skipif(sys.platform == "win32", reason="generated on Linux")
     def test_the_checked_in_reference_is_current(self):
         result = runner.invoke(
             app,
@@ -528,3 +532,19 @@ class TestCacheClear:
 
         assert result.exit_code == 0
         assert "removed 0 cached results" in result.output
+
+
+@pytest.mark.unit
+def test_a_terminal_that_cannot_encode_a_symbol_gets_a_placeholder(monkeypatch):
+    import io
+
+    from dsbf.interfaces.cli import tolerate_narrow_encodings
+
+    raw = io.BytesIO()
+    narrow = io.TextIOWrapper(raw, encoding="cp1252")
+    monkeypatch.setattr(sys, "stdout", narrow)
+
+    tolerate_narrow_encodings()
+    print("unavailable ⦸ checks", file=narrow, flush=True)
+
+    assert raw.getvalue().strip() == b"unavailable ? checks"

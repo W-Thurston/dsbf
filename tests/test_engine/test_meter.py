@@ -1,6 +1,5 @@
 """Each result records wall time, process CPU time and a sampled memory peak."""
 
-import resource
 import time
 
 import numpy as np
@@ -10,6 +9,9 @@ from dsbf.engine.meter import Meter
 from tests.test_engine.toys import declare, null_share, run_plan
 
 pytestmark = pytest.mark.unit
+
+# Windows has no `resource` module, which the test reads the process peak from.
+resource = pytest.importorskip("resource")
 
 MEGABYTE = 1024 * 1024
 
