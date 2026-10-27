@@ -1,13 +1,19 @@
 name: Release
 
-# Pushing a tag `v<version>` builds the wheel and sdist, installs the wheel in a clean
-# venv, and publishes to PyPI with trusted publishing (OIDC, no token). The `pypi`
-# environment holds the approval gate; register the publisher on PyPI first (project
-# `dsbf`, workflow `release.yml`, environment `pypi`).
+# Every release goes through TestPyPI first. Pushing a tag `v<version>` builds the wheel
+# and sdist, installs the wheel in a clean venv, publishes to TestPyPI, installs that
+# upload back from TestPyPI, and only then publishes the same files to PyPI. Both use
+# trusted publishing (OIDC, no token). Running the workflow by hand from a branch stops
+# after TestPyPI, which is the dry run.
+#
+# Register a pending publisher on each index (project `dsbf`, workflow `release.yml`);
+# the environment is `testpypi` on test.pypi.org and `pypi` on pypi.org. The `pypi`
+# environment holds the approval gate.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -24,6 +30,7 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.0
 
       - name: The tag matches the version in pyproject.toml
+        if: github.ref_type == 'tag'
         run: |
           version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
@@ -46,9 +53,68 @@ jobs:
           name: dist
           path: dist/
 
+  testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/dsbf/
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      # TestPyPI keeps an uploaded version for good, so a re-run of this job skips
+      # files that are already there.
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@v1.14.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  # Install what TestPyPI now serves, with the dependencies from PyPI, and run it.
+  verify:
+    name: Install from TestPyPI
+    needs: testpypi
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
+
+      - name: Install the uploaded version and run it
+        run: |
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          uv venv "$RUNNER_TEMP/venv"
+          # The index can take a moment to list a new upload.
+          for attempt in 1 2 3 4 5 6; do
+            if uv pip install --python "$RUNNER_TEMP/venv/bin/python" \
+              --index-url https://test.pypi.org/simple/ \
+              --extra-index-url https://pypi.org/simple/ \
+              --index-strategy unsafe-best-match "dsbf==${version}"; then
+              break
+            fi
+            if [ "$attempt" = 6 ]; then echo "dsbf==${version} never appeared on TestPyPI" >&2; exit 1; fi
+            sleep 20
+          done
+          cd "$RUNNER_TEMP"
+          printf 'id,score\n1,0.5\n2,0.7\n3,0.2\n' > small.csv
+          "$RUNNER_TEMP/venv/bin/dsbf" version
+          "$RUNNER_TEMP/venv/bin/dsbf" check small.csv --out out
+          test -s out/run.json
+
   publish:
     name: Publish to PyPI
-    needs: build
+    if: github.ref_type == 'tag'
+    needs: verify
     runs-on: ubuntu-latest
     environment:
       name: pypi
