@@ -19,7 +19,7 @@ reviewed commit.
 
 Phase 5 built the policy evaluator, the sinks, CLI v2 and the release machinery (U5-00 to U5-11). It
 resolves F-31 (the `package` job) and part 2 D (notebook experience, shareable export), E (release
-workflow; publishing to PyPI is the user's step) and F (coverage reporting), and N-B1 and N-B2
+workflow; `1.0.0a1` reached PyPI on 2026-10-27) and F (coverage reporting), and N-B1 and N-B2
 (generated references and output schemas). The other findings keep their Phase 4 status.
 
 ---
@@ -591,7 +591,7 @@ This is the project's core differentiator, so these items deserve priority after
 
 - [x] Use a user data dir or `DSBF_HOME` for the DB and outputs (F-16), with absolute paths stored. **Status:** resolved (U1-04).
 - [ ] Ship the built frontend inside the wheel, so `pip install dsbf && dsbf dashboard` works without Node. **Status:** Phase 6.
-- [ ] Publish to PyPI, with a release workflow triggered by tags. **Status:** prepared in U5-09 (`release.yml` with trusted publishing, `1.0.0a1`, a hand-kept changelog replacing the generated one); the box is ticked when the user registers the publisher, pushes `v1.0.0a1` and the package is on PyPI.
+- [x] Publish to PyPI, with a release workflow triggered by tags. **Status:** resolved. U5-09 added `release.yml` (trusted publishing, a hand-kept changelog replacing the generated one); #144 made every tag go through TestPyPI and an install from it before PyPI. `1.0.0a1` was published on 2026-10-27 (tag `v1.0.0a1`, `921b1a2`).
 - [ ] Provide an optional Docker image for team or server use. Document `DSBF_CORS_ORIGINS`, reverse proxying, and that the API has **no auth** and should not be exposed publicly as-is. **Status:** Phase 8.
 - [x] Get the version from package metadata (F-18). **Status:** resolved (U3-12).
 

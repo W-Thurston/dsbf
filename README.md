@@ -80,6 +80,14 @@ Every check is a function with a declared spec: the semantic types it applies to
 
 ## Installation
 
+The first release, `1.0.0a1`, is an alpha on PyPI. A pre-release needs the exact version (or `--pre`):
+
+```bash
+pip install dsbf==1.0.0a1
+```
+
+To work on DSBF, install from a checkout:
+
 ```bash
 git clone https://github.com/W-Thurston/dsbf.git
 cd dsbf

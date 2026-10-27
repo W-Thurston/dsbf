@@ -58,7 +58,7 @@ Read this section before planning or modifying the repository.
    - golden snapshots: the golden suite's update option;
    - performance baselines: the perf harness.
 10. **Close each unit completely.** Follow `.claude/commands/closeout.md` (run it as `/closeout`).
-11. **Don't preserve development-era compatibility without a current need.** DSBF has never had a published release or external users (it isn't on PyPI, and the repo has no forks, as of 2026-10-15). Development-era schemas, configs, commands, tests, generated contracts and historical behaviour can be replaced when the active design requires it, unless a current contract explicitly requires compatibility. Compatibility guarantees begin with the published 1.x result schema.
+11. **Don't preserve development-era compatibility without a current need.** DSBF's only release is the alpha `1.0.0a1` (on PyPI since 2026-10-27), and it has no known external users or forks. Alpha releases carry no compatibility promise: development-era schemas, configs, commands, tests, generated contracts and historical behaviour can be replaced when the active design requires it, unless a current contract explicitly requires compatibility. Compatibility guarantees begin with the published stable 1.x result schema.
 12. **Use explicit dates and repository history.** Trust explicit user-provided dates, commit timestamps and repository history. When dates conflict or are ambiguous, state the exact date being used (`YYYY-MM-DD`) rather than relative wording.
 
 ## Unit workflow

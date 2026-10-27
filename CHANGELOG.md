@@ -4,7 +4,7 @@ All notable changes to DSBF are recorded here, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions before `1.0.0a1`
 were development builds that were never published; their history is in git.
 
-## [1.0.0a1] - 10/27/2026
+## [1.0.0a1] - 2026-10-27
 
 The first release, for embedded use: profile a table from Python or a pipeline and
 get one validated result, the `Run`.
