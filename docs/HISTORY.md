@@ -87,6 +87,18 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
 | U4-17 | feat(cli): run dsbf profile on the new engine | #125 | `73b361a` | 2026-10-25 |
 | U4-18 | refactor!: remove the legacy engine, tasks, store and API | #126 | `d75ded1` | 2026-10-25 |
 | U4-19 | build: shrink the base install to the core dependency set | #130 | `5c4b0bd` | 2026-10-25 |
+| U5-00 | docs: plan Phase 5 against the repository | #132 | `b93ff03` | 2026-10-25 |
+| U5-10 | fix(data): refuse column names that Polars reads as patterns | #133 | `24c33cd` | 2026-10-25 |
+| U5-01 | feat(policy): load and evaluate user policies | #134 | `b68ae76` | 2026-10-26 |
+| U5-02 | feat(model): add the findings query API and notebook display | #135 | `502dbec` | 2026-10-26 |
+| U5-03 | feat(sinks): write and read a run as JSON and NDJSON | #136 | `aa0c552` | 2026-10-26 |
+| U5-04 | feat(sinks): write a run as Parquet tables | #137 | `569b60b` | 2026-10-26 |
+| U5-05 | feat(sinks): write a run as a self-contained HTML report | #138 | `385a80f` | 2026-10-26 |
+| U5-06 | feat(cli): add check, layered settings, policy exit codes and a generated reference | #139 | `92810b4` | 2026-10-26 |
+| U5-07 | feat(engine): add per-check timeouts, cache settings and cache eviction | #140 | `9c0e862` | 2026-10-26 |
+| U5-11 | fix(checks): close the calibration gaps in outlier, bimodality, stationarity and duplicate checks | #141 | `d58077c` | 2026-10-26 |
+| U5-08 | docs: add guides, a generated check reference and an example workflow for embedded use | #142 | `06c4148` | 2026-10-26 |
+| U5-09 | build: add the wheel smoke install, a Windows leg, coverage and a release workflow for 1.0.0a1 | pending | pending | 2026-10-26 |
 
 ---
 
@@ -224,3 +236,34 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
   - Schema: `SCHEMA_VERSION` went from 0.6.0 to 0.10.0 over the phase (notes with a count, profile fields for rule checks, datetime fields, and others), all additive before the 1.x guarantee.
   - U4-19 lifted the caps and moved two golden snapshots: `wide` (three `normality` p-values in the sixth significant digit, scipy 1.18) and `kitchen5k` (`multivariate_outliers` scores, scikit-learn 1.8 and later).
 - **PRs:** #100 (U4-00, `0ef2161`), #101 (U4-01, `91c064d`), #102 (U4-02, `aa2703a`), #103 (U4-03, `97c9d6d`), #104 (U4-04, `56a24d4`), #105 (U4-05, `9f5c5ea`), #108 (U4-06, `63c2bbe`), #109 (U4-07, `a6641b7`), #110 (U4-08, `5bb5a65`), #111 (U4-09, `fb07cdb`), #115 (U4-10, `05de0dd`), #116 (U4-11, `cddf99d`), #117 (U4-12, `70fe926`), #118 (U4-13, `2564726`), #119 (U4-14, `7df24ea`), #121 (U4-15, `9fe8873`), #123 (U4-16, `111bd9c`), #125 (U4-17, `73b361a`), #126 (U4-18, `d75ded1`), #130 (U4-19, `5c4b0bd`).
+
+---
+
+## Phase 5: Policy, sinks, CLI v2. First release for embedded use
+
+- **Capability:** User policies over findings (report-only by default); JSON, NDJSON, Parquet and static HTML sinks; a findings query API and notebook display; CLI v2 (`profile`, `check`, `plan`, `schema export`, the health summary on every run); docs for embedded use; release engineering; `1.0.0a1` on PyPI.
+- **Motivation:** Mode 1 (embedded) needs structured outputs, exit codes that only a user's policy sets, and a published package (REFACTOR_PLAN §1, §7, §8.1, §9).
+- **Boundaries:** No store, API or dashboard (Phase 6). No new sources (Phase 7). Schema compatibility guarantees start with this release (§4.3).
+- **Sequence and dependencies:** Depends on Phase 4. Policy, then the findings API, then sinks (JSON, Parquet, HTML), then CLI v2 and execution settings, then docs, then the release.
+- **Success criteria:**
+  - A clean-venv install from a temporary directory passes as a CI job on every PR.
+  - An example GitHub Actions workflow writes Parquet findings.
+  - Policy exit codes are documented and tested.
+  - `1.0.0a1` is on PyPI.
+
+**Done (2026-10-26), 12 units.** Detailed unit entries were condensed here at close-out; the notes later units depend on were carried into them as "Note from U5-xx" lines. U5-09's PR number and merge SHA are recorded by the next unit's start.
+
+- **Capability delivered:** `dsbf.profile(policy=, previous=)` evaluates a user policy (report-only unless a rule says `fail`) into `Run.policy`. A `Run` has a findings query view and a notebook display, and `Run.write` and `Run.read` use a name-keyed sink registry: `json`, `ndjson`, three Parquet tables with a versioned column listing, and a self-contained HTML report (78 KB for titanic, no network). `dsbf profile` and `dsbf check` take layered settings (`--config`, `--set`, environment), a policy, a previous run, per-check timeouts, workers and a result cache with eviction; `check` exits 1 when a policy rule fails the run and 2 on a setup error. `dsbf docs export` generates the CLI, settings and 47-check references. Column names Polars reads as patterns (`*`, `^…$`) are refused at load, and four checks' calibration gaps are fixed or stated as limits. Release engineering: a wheel smoke install job on every PR, a Windows leg, coverage in the full suite, a tag-triggered release workflow with trusted publishing, a hand-kept changelog, and the version `1.0.0a1`.
+- **Success criteria, measured:**
+  - Clean-venv install from a temporary directory as a CI job on every PR: the `package` job builds the wheel, installs it with no extras and no lock and runs `dsbf check` with a passing policy (exit 0) and a failing one (exit 1). Run locally on the built wheel (5 × 3 CSV, 46 checks, 6 `unavailable` without the `ml` and `timeseries` extras); the CI run is the PR's.
+  - Example GitHub Actions workflow writes Parquet findings: `examples/github-actions/dsbf-check.yml`, whose check step a test runs with a failing and a passing policy (U5-08).
+  - Policy exit codes are documented and tested (U5-06, `docs/guides/policy.md`).
+  - `1.0.0a1` on PyPI: **not met by the PR.** The version, release workflow and changelog are ready; registering the PyPI publisher, creating the `pypi` environment and pushing the tag `v1.0.0a1` are the user's steps.
+- **Key decisions:** a policy rule reads a finding's evidence metric by name and a first run with `new_since: previous_run` matches nothing and adds a note; sinks are a registry that the CLI and `Run.write` share; the HTML report draws only the health, findings and per-column profiles and leaves quality, ML readiness and relationships to the Phase 6 dashboard; the cache is off by default; the Parquet and check schemas are guarded by their own versions, and U5-09 added the policy schema (breaking changes need `Policy.version` raised; additive ones need no bump); the PyPI name `dsbf` with trusted publishing from a tag workflow behind a `pypi` environment; no alias for unsafe column names, a refusal instead; the changelog is hand-kept and the git-chglog workflow is gone.
+- **Deviations from the phase block:**
+  - `1.0.0a1` is prepared but not published (the user's step).
+  - Two units were added after U5-00: U5-10 (safe column names) and U5-11 (calibration fixes).
+  - The run, tables and check schema versions did not move to 1.0.0 with the alpha; the compatibility guarantee starts with the stable `1.0.0`.
+  - The Windows leg, `twine check`, the release workflow and the coverage step ran for the first time on the U5-09 PR; the perf baseline predates U5-11 and is promoted from the 2026-10-27 nightly (carried to U6-00).
+  - The HTML report omits the policy outcome (the CLI prints it); the dashboard or report shows it in Phase 6.
+- **PRs:** #132 (U5-00, `b93ff03`), #133 (U5-10, `24c33cd`), #134 (U5-01, `b68ae76`), #135 (U5-02, `502dbec`), #136 (U5-03, `aa0c552`), #137 (U5-04, `569b60b`), #138 (U5-05, `385a80f`), #139 (U5-06, `92810b4`), #140 (U5-07, `9c0e862`), #141 (U5-11, `d58077c`), #142 (U5-08, `06c4148`), U5-09 (pending).

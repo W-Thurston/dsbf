@@ -339,3 +339,56 @@ def test_dropping_a_column_with_a_minor_bump_passes(tables_repo):
 def test_removing_the_table_listing_fails(tables_repo):
     (tables_repo / "schema" / "tables.schema.json").unlink()
     assert check().exit_code == 2
+
+
+# --- policy schema -----------------------------------------------------------------
+
+
+def edit_policy(repo: Path, edit, *, version=None) -> None:
+    path = repo / "schema" / "policy.schema.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    edit(document)
+    if version is not None:
+        document["properties"]["version"]["default"] = version
+        document["properties"]["version"]["const"] = version
+    path.write_text(schema_text(document), encoding="utf-8")
+
+
+def drop_rules(document: dict) -> None:
+    del document["properties"]["rules"]
+
+
+def add_option(document: dict) -> None:
+    document["properties"]["note"] = {"type": "string", "default": ""}
+
+
+@pytest.mark.unit
+def test_unchanged_policy_schema_passes(tables_repo):
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_dropping_a_policy_field_without_a_version_bump_fails(tables_repo):
+    edit_policy(tables_repo, drop_rules)
+
+    result = check()
+
+    assert result.exit_code == 1
+    assert "policy: breaking" in result.output
+    assert "Policy.version" in result.output
+
+
+@pytest.mark.unit
+def test_dropping_a_policy_field_with_a_new_version_passes(tables_repo):
+    edit_policy(tables_repo, drop_rules, version=2)
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_an_additive_policy_change_needs_no_version_bump(tables_repo):
+    edit_policy(tables_repo, add_option)
+
+    result = check()
+
+    assert result.exit_code == 0
+    assert "policy: additive" in result.output

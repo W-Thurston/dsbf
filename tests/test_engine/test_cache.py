@@ -4,6 +4,7 @@ import dataclasses
 import json
 import os
 import stat
+import sys
 import time
 
 import polars as pl
@@ -472,7 +473,10 @@ class TestDiskCache:
 
         assert calls == []
 
-    @pytest.mark.skipif(os.geteuid() == 0, reason="root ignores file modes")
+    @pytest.mark.skipif(
+        sys.platform == "win32" or os.geteuid() == 0,
+        reason="root, and Windows, ignore file modes",
+    )
     def test_a_root_that_cannot_be_written_is_a_miss_and_does_not_fail_the_run(
         self, tmp_path
     ):

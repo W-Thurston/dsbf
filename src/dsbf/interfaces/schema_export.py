@@ -306,3 +306,23 @@ def compare_tables_with_base(ref: str, schema_file: Path) -> SchemaComparison | 
     old_version, new_version = old["schema_version"], new["schema_version"]
     problems = unannounced(old_version, new_version, changes)
     return SchemaComparison(old_version, new_version, changes, problems)
+
+
+def compare_policy_with_base(ref: str, schema_file: Path) -> SchemaComparison | None:
+    """Compare the policy schema with its committed version at ``ref``.
+
+    A policy file carries a whole-number ``version``, so only a breaking change is
+    announced (by a higher version); an additive change needs no bump.
+    None means the base has no policy schema yet, so there is nothing to break.
+    """
+    base_text = schema_at_ref(ref, schema_file)
+    if base_text is None:
+        return None
+    if not schema_file.is_file():
+        raise SchemaToolError(f"{schema_file} doesn't exist; run `dsbf schema export`")
+    old, new = json.loads(base_text), json.loads(schema_file.read_text("utf-8"))
+    changes = compare_schemas(old, new)
+    old_version = f"{old['properties']['version']['default']}.0.0"
+    new_version = f"{new['properties']['version']['default']}.0.0"
+    problems = unannounced(old_version, new_version, [c for c in changes if c.breaking])
+    return SchemaComparison(old_version, new_version, changes, problems)

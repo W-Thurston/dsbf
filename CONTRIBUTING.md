@@ -375,7 +375,7 @@ DSBF uses [Conventional Commits](https://www.conventionalcommits.org/). The form
 | `fix` | Bug fix — include what was wrong and what changed |
 | `refactor` | Code restructuring with no behaviour change |
 | `test` | New or updated tests / validation datasets |
-| `docs` | README, docstrings, CHANGELOG |
+| `docs` | README, docstrings, guides |
 | `chore` | Dependency updates, config changes, CI |
 | `style` | Formatting, linting — no logic change |
 
@@ -424,7 +424,7 @@ the diff shows what changed.
    - [ ] Ruff clean
    - [ ] Docstrings on new public classes and methods
    - [ ] The check is in `core_pack()` and its version bumped (if adding or changing one)
-   - [ ] CHANGELOG entry added
+   - [ ] CHANGELOG entry added (user-visible changes only, under the unreleased version)
 
 ---
 

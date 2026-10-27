@@ -15,6 +15,15 @@ reviewed commit.
 
 ---
 
+## Status after Phase 5 (reviewed 2026-10-26)
+
+Phase 5 built the policy evaluator, the sinks, CLI v2 and the release machinery (U5-00 to U5-11). It
+resolves F-31 (the `package` job) and part 2 D (notebook experience, shareable export), E (release
+workflow; publishing to PyPI is the user's step) and F (coverage reporting), and N-B1 and N-B2
+(generated references and output schemas). The other findings keep their Phase 4 status.
+
+---
+
 ## Status after Phase 4 (reviewed 2026-10-25)
 
 Phase 4 migrated every analysis to a typed check, deleted the legacy engine, tasks, store and
@@ -24,8 +33,8 @@ and where they say a legacy copy "is deleted in U4-18" it now is.
 
 | Status | Findings |
 |---|---|
-| Resolved | F-01 to F-11, F-13, F-14, F-16 to F-19, F-21 to F-28, F-32 to F-39 |
-| Partial, owned by a later phase | F-12 (Phase 6, the dashboard draws the profile's bins), F-15 (Phase 6, dataset identity), F-20 (Phase 6, the Run health panel), F-29 (Phase 6, the frontend build), F-30 (Phase 7, read-time sampling), F-31 (U5-09, the clean-install CI job) |
+| Resolved | F-01 to F-11, F-13, F-14, F-16 to F-19, F-21 to F-28, F-31 (U5-09), F-32 to F-39 |
+| Partial, owned by a later phase | F-12 (Phase 6, the dashboard draws the profile's bins), F-15 (Phase 6, dataset identity), F-20 (Phase 6, the Run health panel), F-29 (Phase 6, the frontend build), F-30 (Phase 7, read-time sampling) |
 
 ---
 
@@ -414,6 +423,7 @@ generator at 5k and 50k rows, and an adversarial frame. The stage-by-stage measu
 
 ### F-31 Tasks crash when run outside the repo root
 **Status (2026-10-19): Partial.** U0-07 (#50) loads package data with `importlib.resources` and makes a failed tip lookup return no tip. U4-04 replaced `eval` with declarative `{field, op, value}` conditions (`engine/tips.py`), validated when the library loads; core checks get tips after they return, and a failed lookup is a note. A CI job that installs the wheel and runs from a temporary directory is U5-09; U1-05 (#72) checked this by hand.
+**Status (2026-10-26): Resolved.** The `package` CI job (U5-09) builds the wheel, installs it into a clean venv with no extras and runs `dsbf check` from a temporary directory, with a passing and a failing policy, on every pull request; the Windows job runs it too.
 
 `dsbf/utils/reco_engine.py:7` opens `Path("dsbf/static_metadata/recommendation_library.yaml")`
 relative to the CWD. Twelve tasks call `get_recommendation_tip()` inside their main `try` block, so
@@ -575,13 +585,13 @@ This is the project's core differentiator, so these items deserve priority after
 - [ ] **Run health panel:** failed and skipped tasks with reasons, reliability caveats, and sampling notices (F-20). **Status:** partial: `Run.health` and `Run.render_health()` exist (U3-12); the stopgap CLI prints it (U4-17); the dashboard panel is Phase 6.
 - [ ] **Settings panel:** target column, time index and thresholds, editable from the UI and saved as a per-dataset config overlay, then re-run. **Status:** Phase 6.
 - [ ] **Shareable export:** a static HTML or PDF report of a run for people without the stack installed. **Status:** the static HTML report, U5-05.
-- [ ] **Notebook experience:** `EDA(df).run()` returning a rich object with `_repr_html_`, plus `.open_dashboard()`. **Status:** U5-02 (`Run._repr_html_`); `EDA` is replaced by `dsbf.profile()` (U3-12).
+- [x] **Notebook experience:** `EDA(df).run()` returning a rich object with `_repr_html_`, plus `.open_dashboard()`. **Status:** resolved (U5-02, `Run._repr_html_`, `Findings`); `EDA` is replaced by `dsbf.profile()` (U3-12).
 
 ## E. Packaging and distribution
 
 - [x] Use a user data dir or `DSBF_HOME` for the DB and outputs (F-16), with absolute paths stored. **Status:** resolved (U1-04).
 - [ ] Ship the built frontend inside the wheel, so `pip install dsbf && dsbf dashboard` works without Node. **Status:** Phase 6.
-- [ ] Publish to PyPI, with a release workflow triggered by tags. A changelog workflow already exists. **Status:** U5-09 (`1.0.0a1`).
+- [ ] Publish to PyPI, with a release workflow triggered by tags. **Status:** prepared in U5-09 (`release.yml` with trusted publishing, `1.0.0a1`, a hand-kept changelog replacing the generated one); the box is ticked when the user registers the publisher, pushes `v1.0.0a1` and the package is on PyPI.
 - [ ] Provide an optional Docker image for team or server use. Document `DSBF_CORS_ORIGINS`, reverse proxying, and that the API has **no auth** and should not be exposed publicly as-is. **Status:** Phase 8.
 - [x] Get the version from package metadata (F-18). **Status:** resolved (U3-12).
 
@@ -592,7 +602,7 @@ This is the project's core differentiator, so these items deserve priority after
 - [ ] **Adversarial-frame property tests** (Hypothesis): column names with `|`, brackets, unicode or empty strings; all-null columns; single rows; mixed types; tz-aware datetimes. Every task must return a valid result without crashing (F-10, F-19). **Status:** partial: the adversarial fixture runs against every task (U0-09) and the engine (U3-11); U4-02 adds property-based frames for the core checks.
 - [ ] **Frontend tests:** Vitest for chart option builders and utils, plus one Playwright smoke test that loads a fixture run. **Status:** partial: Vitest runs in CI (U1-03); the Playwright smoke test is Phase 6.
 - [x] **Type checking in CI** (pyrefly or mypy), which would also make the README badge true. **Status:** resolved (U0-12, pyrefly with a baseline).
-- [ ] **Coverage reporting**, plus a CI job that runs the validation archetypes. **Status:** the archetype tests are `integration` tests in `tests/validation/` and run with the full suite; the calibration suite runs nightly (U4-16); coverage reporting is U5-09.
+- [x] **Coverage reporting**, plus a CI job that runs the validation archetypes. **Status:** the archetype tests are `integration` tests in `tests/validation/` and run with the full suite; the calibration suite runs nightly (U4-16); coverage reporting is in the `full` job's step summary (U5-09, no floor yet).
 
 ## G. Longer horizon (from the README vision)
 

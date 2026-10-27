@@ -1,202 +1,39 @@
+# Changelog
 
-<a name="v0.20.0"></a>
-## [v0.20.0](https://github.com/W-Thurston/dsbf/compare/v0.19.0...v0.20.0) (2026-05-06)
+All notable changes to DSBF are recorded here, newest first. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions before `1.0.0a1`
+were development builds that were never published; their history is in git.
 
-This release represents the completion of the core EDA phase of DSBF — the full
-stack from task engine through interactive dashboard is functional, validated, and
-ready for real-world use.
+## [1.0.0a1] - Unreleased
+
+The first release, for embedded use: profile a table from Python or a pipeline and
+get one validated result, the `Run`.
 
 ### Added
 
-**Data health framework (Quality tab)**
-- Five independently-scored quality dimensions: Completeness, Validity, Usability,
-  Redundancy, Leakage — replacing the original single numeric DQ score
-- Four-state traffic-light system (green / blue / amber / red) where color maps to
-  both severity and proportion: `info`-only findings below 10% of columns produce
-  blue; any `warn`-or-above finding produces minimum amber regardless of proportion
-- `DataHealthBar` component showing all five dimension dots in the Overview tab
-- Trust banner with plain-English summary that updates with dataset state
-**ML Readiness tab**
-- Five preparation-action dimensions: Transformations Needed, Encoding Required,
-  Missingness Impact, Leakage Risk, Unusable Features
-- Severity-based gate banner (Ready / Needs Work / Not Ready) driven by
-  error/warn finding counts, not proportion
-- Column Status section (Needs Attention / Notes Available / Ready As-Is buckets)
-- `model_sensitivity` tag strip on expanded findings (affected vs unaffected model
-  families)
-**Task implementations (Waves 2–4)**
-- Unified outlier detection (`detect_outliers.py`) with Isolation Forest support
-  via `__dataset__` sentinel key
-- Missingness mechanism analysis with deliberate epistemic humility — confidence
-  capped at "moderate", `consistent_with` language, never claims to confirm MNAR
-- Time series suite: `compute_acf_pacf`, `detect_stationarity`,
-  `decompose_time_series`; shared `_time_series_utils.py`; defaults to disabled
-  with plain-English explanation
-- `get_shared_param()` on `BaseTask` for correct access to shared config blocks
-- `add_guidance()` gains optional `model_sensitivity` parameter
-**Validation suite**
-Eight purpose-built dataset archetypes with full assertion coverage:
-`clean`, `tiny`, `near_clean`, `all_categorical`, `high_missingness`,
-`severe_multicollinearity`, `single_column`, `wide` (100 columns)
-
-The `severe_multicollinearity` dataset specifically targets four VIF failure modes
-including the scale-mismatch regression test for the `add_constant` fix.
-
-**Dashboard components**
-- `MissingnessMechanismCard` — dedicated expandable card per column
-- `MlReadinessTab` — full tab with gate banner, dimension cards, collapsible
-  sortable findings, inline row expansion, column status section
-- `DataHealthBar`, `QualityTab` — five-dimension traffic light replacing the
-  original single-score display
-### Fixed
-
-- **VIF spurious inflation (critical):** `detect_collinear_features` was calling
-  `variance_inflation_factor` without an intercept term. Features with nonzero
-  means produced VIF of 10–35 regardless of actual collinearity. Fixed by adding
-  `add_constant(numeric_df, has_constant="add")` before computation.
-- **Data corruption bug:** `cli.py` quickstart was not nulling `dataset_path`,
-  causing Titanic dataset paths to persist into subsequent NFL dataset runs.
-  `writer.py` now determines `is_builtin` from `raw_path is None AND
-  dataset_source in (seaborn, sklearn, openml)`. `_upsert_dataset` only updates
-  `source_path` when the incoming value is non-null.
-- **Semantic type filtering:** `detect_high_cardinality` and `detect_id_columns`
-  were iterating `df.columns` instead of `matched_cols`, bypassing the semantic
-  type filter entirely. Both now operate on `matched_cols` exclusively.
-- **`_level()` severity floor:** The quality scorer's `_level()` function only
-  prevented `error` findings from producing a green result. A single `warn`-level
-  finding on a 100-column dataset would silently produce green (1% proportion,
-  below the 5% amber threshold). Floor now covers `warn`-and-above.
-### Changed
-
-- `data_quality_scorer._level()` rewritten with four-state logic (see above)
-- Associations: `kendalls_tau` absorbed into `compute_pairwise_associations` with
-  `method="auto"` routing (Kendall's τ for n<30, Pearson for n≥30)
-- Outlier detection consolidated — `outlier_detection_mad` deprecated in
-  `task_metadata.yaml`; unified task handles all methods including Isolation Forest
-
-
-<a name="v0.19.0"></a>
-## [v0.19.0](https://github.com/W-Thurston/dsbf/compare/v0.18.0...v0.19.0) (2025-07-11)
-
-
-<a name="v0.18.0"></a>
-## [v0.18.0](https://github.com/W-Thurston/dsbf/compare/v0.17.0...v0.18.0) (2025-07-09)
-
-
-<a name="v0.17.0"></a>
-## [v0.17.0](https://github.com/W-Thurston/dsbf/compare/v0.16.0...v0.17.0) (2025-07-08)
-
-
-<a name="v0.16.0"></a>
-## [v0.16.0](https://github.com/W-Thurston/dsbf/compare/v0.15.0...v0.16.0) (2025-07-06)
-
-### Feat
-
-* complete milestone — plot integration, task validation, test stability
-
-
-<a name="v0.15.0"></a>
-## [v0.15.0](https://github.com/W-Thurston/dsbf/compare/v0.14.0...v0.15.0) (2025-07-04)
-
-### Typo
-
-* changed import statement
-
-
-<a name="v0.14.0"></a>
-## [v0.14.0](https://github.com/W-Thurston/dsbf/compare/v0.13.0...v0.14.0) (2025-07-04)
-
-
-<a name="v0.13.0"></a>
-## [v0.13.0](https://github.com/W-Thurston/dsbf/compare/v0.12.0...v0.13.0) (2025-07-04)
-
-
-<a name="v0.12.0"></a>
-## [v0.12.0](https://github.com/W-Thurston/dsbf/compare/v0.11.0...v0.12.0) (2025-07-04)
-
-
-<a name="v0.11.0"></a>
-## [v0.11.0](https://github.com/W-Thurston/dsbf/compare/v0.10.0...v0.11.0) (2025-07-04)
-
-### Feat
-
-* add metadata filtering, task registry audit, and DAG config control
-
-
-<a name="v0.10.0"></a>
-## [v0.10.0](https://github.com/W-Thurston/dsbf/compare/v0.9.0...v0.10.0) (2025-07-04)
-
-### Feat
-
-* Plugin architecture, task metadata, validation
-
-
-<a name="v0.9.0"></a>
-## [v0.9.0](https://github.com/W-Thurston/dsbf/compare/v0.8.0...v0.9.0) (2025-07-04)
-
-
-<a name="v0.8.0"></a>
-## [v0.8.0](https://github.com/W-Thurston/dsbf/compare/v0.7.0...v0.8.0) (2025-07-04)
-
-
-<a name="v0.7.0"></a>
-## [v0.7.0](https://github.com/W-Thurston/dsbf/compare/v0.6.0...v0.7.0) (2025-07-04)
-
-### Feat
-
-* centralize reliability flag logic and refactor key tasks to use it (Milestone 5)
-
-
-<a name="v0.6.0"></a>
-## [v0.6.0](https://github.com/W-Thurston/dsbf/compare/v0.5.0...v0.6.0) (2025-07-04)
-
-
-<a name="v0.5.0"></a>
-## [v0.5.0](https://github.com/W-Thurston/dsbf/compare/v0.4.0...v0.5.0) (2025-07-04)
-
-### Feat
-
-* Implemented Detect Target Drift
-* audit and standardize all DSBF EDA tasks and tests; add feature drift detection
-
-
-<a name="v0.4.0"></a>
-## [v0.4.0](https://github.com/W-Thurston/dsbf/compare/v0.3.0...v0.4.0) (2025-07-04)
-
-### Chore
-
-* updated ci.yml and .pre-commit-config.yaml
-* update changelog for v0.3.0
-
-### Fix
-
-* Expanded task registry, standardized tasks, moved away from DEPTH_LEVELS hardcoded into coding them to the registry themselves. This also impacts how the execution graph is built
-* Cleaning up ExecutionGraph and ProfileEngine
-
-
-<a name="v0.3.0"></a>
-## [v0.3.0](https://github.com/W-Thurston/dsbf/compare/v0.2.0...v0.3.0) (2025-06-26)
-
-### Refactor
-
-* convert EDA tasks to class-based implementation
-
-
-<a name="v0.2.0"></a>
-## [v0.2.0](https://github.com/W-Thurston/dsbf/compare/v0.1.0...v0.2.0) (2025-06-26)
-
-### Docs
-
-* CHANGELOG.md update
-
-### Feat
-
-* Dag layout now in waterfall layout
-
-
-<a name="v0.1.0"></a>
-## v0.1.0 (2025-06-25)
-
-### Feat
-
-* MVP profiling engine with full CI setup and metadata tracking
+- `dsbf.profile()` profiles a Polars, pandas, CSV, Parquet or Excel source and returns a
+  `Run`: the data profile, 47 checks' findings, a health summary and a plan that records
+  how it was made.
+- Findings query API (`run.findings`), notebook display and a policy evaluator
+  (`policy.yaml` rules over findings and check health, with `previous_run` comparison).
+- Sinks for a run: `run.json`, NDJSON findings, Parquet tables and a self-contained HTML
+  report, all through `Run.write`; `Run.read` loads a `run.json` back.
+- The `dsbf` command: `profile`, `check` (a policy-aware exit code for pipeline steps),
+  `plan`, `schema`, `docs` and `cache`, with layered settings (defaults, user file,
+  project file, environment, flags).
+- Per-check timeouts, process isolation, a result cache with eviction, and optional
+  extras (`ml`, `timeseries`, `text`, `excel`, `pandas`) whose checks report
+  `unavailable` when the extra is missing.
+- Published JSON Schemas for the run, the policy, the Parquet tables and every check's
+  parameters and output, guarded against unannounced breaking changes by
+  `dsbf schema check`.
+- Guides (pipeline, policy, dashboard, writing a check), a generated check reference
+  and an example GitHub Actions workflow in `docs/` and `examples/`.
+
+### Notes
+
+- The `sql` and `server` extras are placeholders; nothing imports them yet.
+- Schema versions are pre-1.0 (`Run` 0.10.0); the compatibility guarantee starts with
+  the stable `1.0.0`.
+
+[1.0.0a1]: https://github.com/W-Thurston/dsbf/releases/tag/v1.0.0a1
