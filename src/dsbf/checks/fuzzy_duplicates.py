@@ -34,6 +34,12 @@ from dsbf.model import (
 # Pairs scored between two checks of the clock and of the executor's cancel flag.
 _CHUNK = 20_000
 _VALUE_WIDTH = 60
+# Most distinct tokens that may reduce to one one-character deletion for it to block.
+_MAX_SPELLINGS = 4
+# Longest token that is expanded to its one-character deletions: the variants of a token
+# cost its length squared, and a token past this is a hash, a URL or a run of text
+# whose copies share their other tokens.
+_LONGEST_EDITED = 64
 
 
 class FuzzyDuplicatesParams(CheckParams):
@@ -163,7 +169,7 @@ class FuzzyDuplicatesOutput(CheckOutputModel):
 
 @check(
     id="fuzzy_duplicates",
-    version="1.2.0",
+    version="1.2.1",
     kind="analysis",
     applies_to=SemanticTypes("categorical", "text", "identifier"),
     dimensions=[Dimension.VALIDITY],
@@ -402,22 +408,42 @@ def _with_deletions(held: pl.DataFrame, threshold: float) -> pl.DataFrame:
     if threshold >= 1:
         return held
     shortest = max(3, math.floor(1 / (2 * (1 - threshold))))
-    distinct = held["token"].unique().to_list()
-    pairs = [
-        (token, token[:i] + token[i + 1 :])
-        for token in distinct
-        if len(token) >= shortest
-        for i in range(len(token))
-    ]
-    if not pairs:
+    long_enough = (
+        held.select("token")
+        .unique()
+        .filter(pl.col("token").str.len_chars().is_between(shortest, _LONGEST_EDITED))
+        .with_columns(at=pl.int_ranges(pl.col("token").str.len_chars()))
+        .explode("at")
+    )
+    if long_enough.is_empty():
         return held
-    expanded = held.join(
-        pl.DataFrame(
-            {"token": [p[0] for p in pairs], "key": [p[1] for p in pairs]},
-            schema={"token": pl.String, "key": pl.String},
-        ),
-        on="token",
-    ).select("record", pl.col("key").alias("token"))
+    # A key blocks when another token meets it: a second token reducing to it, or a
+    # token that is the key. Only those are kept, and only when that makes at most a
+    # few spellings: a typo family is a token and a few variants, while a code space
+    # (sequential ids, hashes of one width) has many, one character apart without being
+    # one record.
+    known = (
+        held.select("token")
+        .unique()
+        .rename({"token": "key"})
+        .with_columns(exact=pl.lit(1, dtype=pl.UInt32))
+    )
+    variants = (
+        long_enough.select(
+            "token",
+            key=pl.col("token").str.slice(0, pl.col("at"))
+            + pl.col("token").str.slice(pl.col("at") + 1),
+        )
+        .unique()
+        .with_columns(spellings=pl.len().over("key"))
+        .join(known, on="key", how="left")
+        .with_columns(pl.col("spellings") + pl.col("exact").fill_null(0))
+        .filter(pl.col("spellings").is_between(2, _MAX_SPELLINGS))
+        .select("token", "key")
+    )
+    expanded = held.join(variants, on="token").select(
+        "record", pl.col("key").alias("token")
+    )
     return pl.concat([held, expanded]).unique()
 
 
@@ -535,12 +561,11 @@ def _score(
                 # Another number is another record, whatever else differs: a letter and
                 # a digit changed at once is two edits, not a typo. A digit typed as
                 # a letter, against none, is a typo.
-                differ = np.array(
-                    [
-                        bool(digits[i]) and bool(digits[j]) and digits[i] != digits[j]
-                        for i, j in zip(low, high, strict=True)
-                    ]
-                )
+                # Only a pair the cap would lower needs its digits compared.
+                differ = np.zeros(low.size, dtype=bool)
+                for k in np.flatnonzero(ratio > 100 * params.number_cap):
+                    left, right = digits[low[k]], digits[high[k]]
+                    differ[k] = bool(left) and bool(right) and left != right
                 ratio = np.where(
                     differ, np.minimum(ratio, 100 * params.number_cap), ratio
                 )

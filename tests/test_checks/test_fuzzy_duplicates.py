@@ -255,6 +255,36 @@ class TestEvidenceBeyondTheSharedKey:
         assert output_of(result)["blocking"] == "rare_tokens"
         assert (7, 2400) in pairs_of(result)
 
+    def test_a_dropped_character_in_a_long_token_is_blocked_with_its_source(self):
+        rng = np.random.default_rng(5)
+        names = words(rng, 2400, 40)
+        cities = words(rng, 2400, 30)
+        copy = pl.DataFrame(
+            {
+                "name": [names[7][:20] + names[7][21:]],
+                "city": [cities[7][:10] + cities[7][11:]],
+            }
+        )
+        frame = pl.concat([pl.DataFrame({"name": names, "city": cities}), copy])
+
+        result = run_core_check(frame, CHECK, max_pairs=500_000)
+
+        assert output_of(result)["blocking"] == "rare_tokens"
+        assert (7, 2400) in pairs_of(result)
+
+    def test_sequential_codes_one_character_apart_are_not_candidate_pairs(self):
+        rng = np.random.default_rng(1)
+        frame = pl.DataFrame(
+            {"code": [f"{i:07d}" for i in range(1500)], "name": words(rng, 1500)}
+        )
+
+        result = run_core_check(frame, CHECK, max_pairs=10_000)
+
+        output = output_of(result)
+        assert output["blocking"] == "rare_tokens"
+        assert output["pairs_compared"] < 1000
+        assert output["stopped_by"] is None
+
 
 class TestBlockingAndBudgets:
     def planted(self) -> tuple[pl.DataFrame, set[tuple[int, int]]]:

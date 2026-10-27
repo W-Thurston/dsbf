@@ -843,7 +843,7 @@
         "plants": 10,
         "trials": 10,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_blocked_every_token": {
@@ -869,7 +869,7 @@
         "plants": 10,
         "trials": 10,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_look_alikes": {
@@ -881,7 +881,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_one_edit": {
@@ -907,7 +907,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_two_edits": {
@@ -933,7 +933,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_two_sources": {
@@ -959,7 +959,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "fuzzy_two_sources_unaided": {
@@ -985,7 +985,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.2.1"
       }
     },
     "groups_shifted": {

@@ -705,7 +705,7 @@ Find pairs of rows whose text is almost, but not exactly, the same.
 
 | | |
 | --- | --- |
-| Version | 1.2.0 |
+| Version | 1.2.1 |
 | Kind | analysis |
 | Cost | heavy |
 | Applies to | categorical or text or identifier |

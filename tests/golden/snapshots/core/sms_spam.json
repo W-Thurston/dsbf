@@ -184,8 +184,8 @@
      "id": "29ff14ae47801c63",
      "metrics": {
       "columns_compared": 1,
-      "coverage": 0.0157564,
-      "pairs_compared": 210617,
+      "coverage": 0.015752,
+      "pairs_compared": 210557,
       "pairs_flagged": 90,
       "pairs_possible": 13367035,
       "rows_involved": 189,
