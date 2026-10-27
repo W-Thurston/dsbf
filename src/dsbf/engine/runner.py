@@ -58,7 +58,8 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
     if status is CheckStatus.OK:
         findings, tip_notes = attach_tips(spec.id, context.findings)
         notes = (*notes, *tip_notes)
-    return CheckResult(
+    attached = context.artifacts if status is CheckStatus.OK else ()
+    result = CheckResult(
         check_id=spec.id,
         check_version=spec.version,
         status=status,
@@ -66,5 +67,7 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
         findings=findings,
         output=output.data if output else None,
         timing=Timing(wall_seconds=time.perf_counter() - clock, started_at=started_at),
+        artifacts=tuple(ref for ref, _ in attached),
         params=context.params.model_dump(mode="json"),
     )
+    return result.with_payloads({ref.ref: data for ref, data in attached})

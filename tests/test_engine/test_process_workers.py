@@ -259,7 +259,9 @@ class TestFailuresInAWorker:
         assert note.code == "check_failed"
         assert note.message == "Raised ValueError: boom in worker"
         assert note.exception_type == "ValueError"
-        assert note.detail and "py_raises" in note.detail
+        assert note.detail and note.detail.endswith("boom in worker")
+        traceback = run.artifact("py_raises/traceback")
+        assert "py_raises" in traceback and "Traceback" in traceback
         assert run.results["py_rows"].status is CheckStatus.OK
 
     def test_a_worker_that_exits_without_a_result_is_an_error(self):

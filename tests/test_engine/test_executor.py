@@ -126,7 +126,11 @@ class TestIsolation:
         assert note.exception_type == "RuntimeError"
         assert note.message == "Raised RuntimeError: boom"
         assert note.hint
-        assert note.detail and "Traceback" in note.detail and "boom" in note.detail
+        assert note.detail == "RuntimeError: boom"
+        (artifact,) = result.artifacts
+        assert artifact.ref == f"{victim.id}/traceback"
+        traceback = run.artifact(artifact.ref)
+        assert "Traceback" in traceback and "boom" in traceback
         assert result.params == victim.resolve_params().model_dump(mode="json")
         assert result.timing.started_at is not None
         assert run.health.counts.error == 1

@@ -3,9 +3,10 @@
 
 from typing import Any, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, PrivateAttr, model_validator
 
-from dsbf.model.base import Contract
+from dsbf.model.artifact import ArtifactRef, Payload
+from dsbf.model.base import Contract, fields_equal
 from dsbf.model.finding import Finding
 from dsbf.model.scrub import json_safe
 from dsbf.model.timing import Timing
@@ -55,11 +56,21 @@ class CheckResult(Contract):
         default=(),
         description="Keys of `output` holding a NaN, infinite or NaT value, now null.",
     )
+    artifacts: tuple[ArtifactRef, ...] = Field(
+        default=(),
+        description="Bulky data the check attached; the payloads are not in the run's "
+        "JSON.",
+    )
     timing: Timing
     params: dict[str, Any] = Field(
         default_factory=dict,
         description="The resolved parameters, for reproducibility.",
     )
+
+    _payloads: dict[str, Payload] = PrivateAttr(default_factory=dict)
+
+    def __eq__(self, other: object) -> bool:
+        return fields_equal(self, other)
 
     @model_validator(mode="before")
     @classmethod
@@ -95,6 +106,12 @@ class CheckResult(Contract):
             raise ValueError(f"a {self.status.value} result carries a note saying why")
         if self.status != CheckStatus.OK and self.findings:
             raise ValueError(f"a {self.status.value} result has no findings")
+        refs = [artifact.ref for artifact in self.artifacts]
+        if len(set(refs)) != len(refs):
+            raise ValueError("artifact refs are unique within a result")
+        for ref in refs:
+            if not ref.startswith(f"{self.check_id}/"):
+                raise ValueError(f"artifact {ref} does not belong to {self.check_id}")
         for finding in self.findings:
             if (finding.check_id, finding.check_version) != (
                 self.check_id,
@@ -105,3 +122,24 @@ class CheckResult(Contract):
                     f"{finding.check_version}, not {self.check_id} {self.check_version}"
                 )
         return self
+
+    def with_payloads(self, payloads: dict[str, Payload]) -> Self:
+        """A copy that carries ``payloads`` (by ref) for the refs in ``artifacts``.
+
+        Raises:
+            ValueError: a payload has no ref in ``artifacts``, or a ref has none.
+        """
+        refs = {artifact.ref for artifact in self.artifacts}
+        if set(payloads) != refs:
+            raise ValueError(
+                f"payloads for {sorted(set(payloads) ^ refs)} do not match the "
+                "artifact refs"
+            )
+        copy = self.model_copy()
+        copy._payloads = dict(payloads)
+        return copy
+
+    @property
+    def payloads(self) -> dict[str, Payload]:
+        """The payload of each artifact this result still carries, by ref."""
+        return dict(self._payloads)

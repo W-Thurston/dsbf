@@ -24,3 +24,16 @@ class Contract(BaseModel):
     model_config = ConfigDict(
         frozen=True, extra="forbid", json_schema_serialization_defaults_required=True
     )
+
+
+def fields_equal(left: BaseModel, right: object) -> bool:
+    """Whether ``right`` is the same model with equal fields, private data aside.
+
+    For a model that carries data outside its fields (artifact payloads), which
+    ``BaseModel.__eq__`` would compare too.
+    """
+    if type(left) is not type(right):
+        return NotImplemented  # type: ignore[return-value]
+    return all(
+        getattr(left, name) == getattr(right, name) for name in type(left).model_fields
+    )

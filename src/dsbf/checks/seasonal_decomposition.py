@@ -2,6 +2,7 @@
 """Numeric columns with a trend or a seasonal cycle, by STL on a regular series."""
 
 import numpy as np
+import pyarrow as pa
 from pydantic import Field
 
 from dsbf.checks.timeseries import (
@@ -122,7 +123,7 @@ class SeasonalDecompositionOutput(TimeSeriesOutput):
 
 @check(
     id="seasonal_decomposition",
-    version="1.1.0",
+    version="1.2.0",
     kind="analysis",
     applies_to=SemanticTypes("numeric", "datetime"),
     dimensions=[Dimension.TEMPORAL],
@@ -140,8 +141,9 @@ def seasonal_decomposition(
     """Split each numeric column into trend, seasonal and remainder by STL.
 
     The columns are resampled to the frequency first (see ``checks.timeseries``) and
-    the most recent ``max_periods`` periods are used. The output keeps the strengths,
-    not the component series.
+    the most recent ``max_periods`` periods are used. The output keeps the strengths;
+    the series (observed, trend, seasonal and remainder, one row per column and
+    period) are the ``decomposition`` artifact.
     """
     prepared = prepare(ctx, params, min_periods=2 * params.min_cycles)
     if isinstance(prepared, CheckOutput):
@@ -157,7 +159,9 @@ def seasonal_decomposition(
             hint="Set `period`, the number of periods in one cycle.",
         )
     needed = params.min_cycles * period
+    pending: list[tuple[str, ColumnDecomposition]] = []
     columns: dict[str, ColumnDecomposition] = {}
+    components: list[pa.Table] = []
     skipped = dict(prepared.skipped)
     for name, series in prepared.series.items():
         ctx.checkpoint()
@@ -167,12 +171,14 @@ def seasonal_decomposition(
                 f"cycles of {period}"
             )
             continue
-        result = _decompose(series.values, period, params, prepared.info(name))
-        if result is None:
+        fitted = _decompose(series.values, period, params, prepared.info(name))
+        if fitted is None:
             skipped[name] = "the decomposition did not converge to finite values"
             continue
+        result, table = fitted
         columns[name] = result
-        _report(ctx, name, result, params, prepared)
+        components.append(_component_table(name, series.values, table))
+        pending.append((name, result))
     if not columns:
         return ctx.stop(
             CheckStatus.NOT_APPLICABLE,
@@ -181,6 +187,13 @@ def seasonal_decomposition(
             f"of {period}.",
             severity=Severity.INFO,
         )
+    ref = ctx.attach(
+        "decomposition",
+        pa.concat_tables(components),
+        description="Observed, trend, seasonal and remainder per column and period.",
+    )
+    for name, result in pending:
+        _report(ctx, name, result, params, prepared, ref)
     return ctx.output(
         prepared.build(
             SeasonalDecompositionOutput,
@@ -210,7 +223,7 @@ def _decompose(
     period: int,
     params: SeasonalDecompositionParams,
     info: SeriesInfo,
-) -> ColumnDecomposition | None:
+) -> tuple[ColumnDecomposition, np.ndarray] | None:
     from statsmodels.tsa.seasonal import STL  # the `timeseries` extra
 
     fit = STL(values, period=period, robust=params.robust).fit()
@@ -223,6 +236,7 @@ def _decompose(
         share = variance / total if total > 0 else 0.0
     if not all(np.isfinite([variance, detrended, deseasoned, share])):
         return None
+    components = np.column_stack([trend, seasonal, remainder])
     return ColumnDecomposition(
         **info.model_dump(),
         period=period,
@@ -232,6 +246,20 @@ def _decompose(
         remainder_share=share,
         seasonal_floor=_noise_floor(_SEASONAL_FLOOR, values.size / period),
         trend_floor=_noise_floor(_TREND_FLOOR, values.size),
+    ), components
+
+
+def _component_table(name: str, observed: np.ndarray, parts: np.ndarray) -> pa.Table:
+    """One column's decomposition as rows of a table, ``period`` counting from 0."""
+    return pa.table(
+        {
+            "column": pa.array([name] * observed.size),
+            "period": np.arange(observed.size),
+            "observed": observed,
+            "trend": parts[:, 0],
+            "seasonal": parts[:, 1],
+            "remainder": parts[:, 2],
+        }
     )
 
 
@@ -260,6 +288,7 @@ def _report(
     result: ColumnDecomposition,
     params: SeasonalDecompositionParams,
     prepared: Prepared,
+    details_ref: str,
 ) -> None:
     for code, kind, strength, floor in (
         ("seasonal", "seasonality", result.seasonal_strength, result.seasonal_floor),
@@ -298,5 +327,7 @@ def _report(
                     "assume a stable level, and do not split it at random."
                 )
             ),
-            evidence=prepared.evidence(ctx, name, metrics, "stl"),
+            evidence=prepared.evidence(ctx, name, metrics, "stl").model_copy(
+                update={"details_ref": details_ref}
+            ),
         )

@@ -680,6 +680,34 @@ class TestAutocorrelation:
 
 
 class TestSeasonalDecomposition:
+    def test_the_component_series_are_an_artifact_that_findings_point_at(self):
+        frame = daily({"cycle": sine(), "other": sine() * 2})
+
+        result = run_core_check(frame, "seasonal_decomposition", time_index="t")
+
+        (artifact,) = result.artifacts
+        assert artifact.ref == "seasonal_decomposition/decomposition"
+        table = result.payloads[artifact.ref]
+        assert artifact.rows == table.num_rows == 800
+        assert table.column_names == [
+            "column",
+            "period",
+            "observed",
+            "trend",
+            "seasonal",
+            "remainder",
+        ]
+        assert set(table["column"].to_pylist()) == {"cycle", "other"}
+        parts = table.slice(0, 400).to_pydict()
+        assert np.allclose(
+            np.array(parts["trend"])
+            + np.array(parts["seasonal"])
+            + np.array(parts["remainder"]),
+            parts["observed"],
+        )
+        assert result.findings
+        assert {f.evidence.details_ref for f in result.findings} == {artifact.ref}
+
     def test_a_weekly_cycle_on_a_daily_index_is_found_with_period_seven(self):
         result = run_core_check(
             daily({"cycle": sine(), "walk": walk(), "noise": noise()}),

@@ -13,10 +13,12 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from dsbf.data import Dataset
+from dsbf.engine.artifacts import decode, encode
 from dsbf.engine.plan import PlanEntry
 from dsbf.engine.reference import Reference
 from dsbf.engine.tips import library_digest
-from dsbf.model import CheckResult, CheckStatus, DatasetProfile
+from dsbf.model import ArtifactRef, CheckResult, CheckStatus, DatasetProfile
+from dsbf.model.artifact import payload_extension
 from dsbf.paths import dsbf_home
 
 logger = logging.getLogger(__name__)
@@ -69,7 +71,8 @@ class CachePruned:
 
 
 class DiskCache:
-    """One JSON file per result, ``<root>/<check id>/<digest>.json``.
+    """One JSON file per result, ``<root>/<check id>/<digest>.json``, and one file
+    beside it per artifact, ``<digest>.<name>.parquet`` or ``.json``.
 
     A file is written whole and renamed into place, so a crash or a second process
     writing the same entry never leaves a half-written one. A file that cannot be
@@ -87,6 +90,11 @@ class DiskCache:
     def path(self, key: CacheKey) -> Path:
         return self.root / key.check_id / f"{key.digest}.json"
 
+    def _artifact_path(self, key: CacheKey, artifact: ArtifactRef) -> Path:
+        name = artifact.ref.partition("/")[2]
+        extension = payload_extension(artifact.media_type)
+        return self.path(key).with_name(f"{key.digest}.{name}.{extension}")
+
     def get(self, key: CacheKey) -> CheckResult | None:
         try:
             text = self.path(key).read_text(encoding="utf-8")
@@ -100,15 +108,29 @@ class DiskCache:
         except (ValueError, KeyError, TypeError) as error:  # incl. ValidationError
             logger.debug("ignoring cache entry %s: %s", self.path(key), error)
             return None
+        payloads = {}
+        try:
+            for artifact in result.artifacts:
+                path = self._artifact_path(key, artifact)
+                payloads[artifact.ref] = decode(path.read_bytes(), artifact.media_type)
+                os.utime(path)
+        except (OSError, ValueError) as error:  # a missing payload is a miss
+            logger.debug("ignoring cache entry %s: %s", self.path(key), error)
+            return None
         try:
             os.utime(self.path(key))  # a hit is a use: eviction removes the unused
         except OSError:
             pass
-        return result
+        return result.with_payloads(payloads)
 
     def put(self, key: CacheKey, result: CheckResult) -> None:
         target = self.path(key)
         target.parent.mkdir(parents=True, exist_ok=True)
+        for artifact in result.artifacts:  # before the entry, which names them
+            self._write(
+                self._artifact_path(key, artifact),
+                encode(result.payloads[artifact.ref])[0],
+            )
         text = json.dumps(
             {
                 "format": _ENTRY_FORMAT,
@@ -118,10 +140,14 @@ class DiskCache:
             },
             ensure_ascii=False,
         )
+        self._write(target, text.encode("utf-8"))
+
+    @staticmethod
+    def _write(target: Path, data: bytes) -> None:
         handle, temporary = tempfile.mkstemp(dir=target.parent, suffix=".tmp")
         try:
-            with os.fdopen(handle, "w", encoding="utf-8") as file:
-                file.write(text)
+            with os.fdopen(handle, "wb") as file:
+                file.write(data)
             os.replace(temporary, target)
         except BaseException:
             Path(temporary).unlink(missing_ok=True)

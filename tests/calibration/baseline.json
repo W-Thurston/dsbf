@@ -220,7 +220,7 @@
       "unscored": {
         "not_applicable": 75
       },
-      "version": "1.2.0"
+      "version": "1.3.0"
     },
     "group_differences": {
       "detected": 20,
@@ -502,7 +502,7 @@
       "unscored": {
         "not_applicable": 75
       },
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "skewness": {
       "detected": 80,
@@ -843,7 +843,7 @@
         "plants": 10,
         "trials": 10,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_blocked_every_token": {
@@ -869,7 +869,7 @@
         "plants": 10,
         "trials": 10,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_look_alikes": {
@@ -881,7 +881,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_one_edit": {
@@ -907,7 +907,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_two_edits": {
@@ -933,7 +933,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_two_sources": {
@@ -959,7 +959,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "fuzzy_two_sources_unaided": {
@@ -985,7 +985,7 @@
         "plants": 20,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.1"
+        "version": "1.3.0"
       }
     },
     "groups_shifted": {
@@ -1436,7 +1436,7 @@
         "unscored": {
           "not_applicable": 5
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -1628,7 +1628,7 @@
         "unscored": {
           "not_applicable": 5
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -1850,7 +1850,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -2042,7 +2042,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -2264,7 +2264,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -2458,7 +2458,7 @@
         "unscored": {
           "not_applicable": 20
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -2856,7 +2856,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -3053,7 +3053,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -3275,7 +3275,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -3472,7 +3472,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -3694,7 +3694,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -3891,7 +3891,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -4113,7 +4113,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -4310,7 +4310,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -4532,7 +4532,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -4729,7 +4729,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -4951,7 +4951,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -5148,7 +5148,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -5370,7 +5370,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -5567,7 +5567,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -5789,7 +5789,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -5986,7 +5986,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -6208,7 +6208,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -6405,7 +6405,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -6627,7 +6627,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "group_differences": {
         "detected": 0,
@@ -6824,7 +6824,7 @@
         "unscored": {
           "not_applicable": 3
         },
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "skewness": {
         "detected": 0,
@@ -6916,7 +6916,7 @@
         "plants": 0,
         "trials": 20,
         "unscored": {},
-        "version": "1.2.0"
+        "version": "1.3.0"
       },
       "id_columns": {
         "detected": 0,
@@ -7128,7 +7128,7 @@
         "plants": 40,
         "trials": 20,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "stationarity": {
         "detected": 39,
@@ -7162,7 +7162,7 @@
         "plants": 0,
         "trials": 40,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "stationarity": {
         "detected": 0,
@@ -7218,7 +7218,7 @@
         "plants": 0,
         "trials": 40,
         "unscored": {},
-        "version": "1.1.0"
+        "version": "1.2.0"
       },
       "stationarity": {
         "detected": 0,

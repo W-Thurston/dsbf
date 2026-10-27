@@ -705,7 +705,7 @@ Find pairs of rows whose text is almost, but not exactly, the same.
 
 | | |
 | --- | --- |
-| Version | 1.2.1 |
+| Version | 1.3.0 |
 | Kind | analysis |
 | Cost | heavy |
 | Applies to | categorical or text or identifier |
@@ -1472,12 +1472,13 @@ Compare the columns with the expected types, nulls, ranges and values.
 Split each numeric column into trend, seasonal and remainder by STL.
 
 The columns are resampled to the frequency first (see ``checks.timeseries``) and
-the most recent ``max_periods`` periods are used. The output keeps the strengths,
-not the component series.
+the most recent ``max_periods`` periods are used. The output keeps the strengths;
+the series (observed, trend, seasonal and remainder, one row per column and
+period) are the ``decomposition`` artifact.
 
 | | |
 | --- | --- |
-| Version | 1.1.0 |
+| Version | 1.2.0 |
 | Kind | analysis |
 | Cost | moderate |
 | Applies to | numeric or datetime |
