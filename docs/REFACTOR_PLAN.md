@@ -529,9 +529,11 @@ written as compressed Parquet or JSON and referenced by `details_ref`. Findings 
 
 - `RunRepository` interface (save, get, list, query findings, history by dataset, compare, delete, gc). It's implemented with SQLAlchemy Core and **Alembic migrations** (no more ad-hoc `ALTER TABLE`, F-25).
   - SQLite implementation in Phase 6, Postgres in Phase 8.
-  - Tables: `datasets` (stable identity: name plus namespace plus source fingerprint lineage), `runs`, `check_results`, `findings` (indexed by dataset, run, dimension, severity, code, subject), `profiles`, `artifacts`.
+  - Tables: `datasets` (keyed by the dataset key, below), `runs`, `check_results`, `findings` (indexed by dataset, run, dimension, severity, code, subject), `profiles`, `artifacts`. Each row keeps its item's JSON beside the queried columns, so a stored `Run` reads back without loss.
+  - **Dataset key** (decided in U6-00, 2026-10-27): an explicit `dataset` (`--dataset`, `dataset=`) wins; otherwise the canonical source location (the absolute path of a file; a connection and table for the Phase 7 sources). An in-memory frame with no key is stored ungrouped, with no history. Every run records its name, location and fingerprint, so a change of source shows in the lineage. History groups runs by key; **comparison is always explicit**, between any two runs.
 - `ArtifactStore` interface backed by **fsspec**: local `DSBF_HOME` in Phase 6, S3/GCS/Azure in Phase 8.
-- Each run stores a **Parquet snapshot of the data as profiled** (sampled where applicable, size-capped and configurable), so the dashboard's sample and pair-plot views show what was actually analysed (F-15).
+- Each run stores a **Parquet snapshot of the data as profiled** (sampled where applicable, size-capped and configurable), so the dashboard's sample and pair-plot views show what was actually analysed (F-15). It is on by default, at most 10,000 rows, and the store writes it from the frame the in-memory `Run` holds; the core writes nothing (U6-00).
+- Checks attach bulky evidence in memory (`ctx.attach`), listed on `CheckResult.artifacts` and referenced by `details_ref`; the `json` sink writes the payloads beside `run.json` and the store puts them in the `ArtifactStore` (U6-00).
 - `dsbf runs list | show | diff | delete | gc` (F-25).
 
 ### 8.3 Service
@@ -539,17 +541,19 @@ written as compressed Parquet or JSON and referenced by `details_ref`. Findings 
 - **API v2** (FastAPI, OpenAPI-first, generated TS client):
   - `GET /v2/datasets`, `/v2/datasets/{id}/runs`, `/v2/datasets/{id}/history?code=…` (trend of a finding over time)
   - `GET /v2/runs/{id}` (manifest plus health), `/v2/runs/{id}/findings?dimension=&severity=&subject=&page=`, `/v2/runs/{id}/profile/{column}`, `/v2/runs/{id}/checks/{check}` (result without bulky evidence), `/v2/artifacts/{ref}` (evidence on demand, paginated)
-  - `GET /v2/runs/compare?base=&head=` (finding-level diff: new, resolved, changed)
+  - `GET /v2/runs/compare?base=&head=` (finding-level diff: new, resolved, changed; any two runs, chosen explicitly)
   - `POST /v2/jobs` (profile a source with a plan or config; Phase 6 local thread runner, Phase 8 queue), `GET /v2/jobs/{id}` with progress events
 - Responses are small and paginated. **The dashboard never downloads everything at once** (F-35: from about 8 MB to under 200 KB on open).
 - Non-finite numbers can't reach the API, because they're excluded at the schema level (F-36).
-- Auth: none and bound to localhost in Phase 6; pluggable token/OIDC in Phase 8. CORS is configurable.
+- Auth: none and bound to localhost in Phase 6; pluggable token/OIDC in Phase 8. CORS is configurable and off by default. Phase 6 also rejects a non-local `Host` header (DNS rebinding) and takes POSTs only as JSON, so another site's page cannot start a job.
+- Jobs (Phase 6): one worker thread in the server, jobs persisted in the store, progress events from the engine's hooks read by polling.
 
 ### 8.4 Dashboard
 
 - It consumes **only** API v2 through generated types, with no hand-written response shapes. Today's 94 hard-coded `tasks.<name>.data` paths across 22 components go away.
+- TypeScript, as a new app that replaces the JavaScript one written for API v1 (decided in U6-00, 2026-10-27); `DsbfChart`, `chartTheme` and the card designs are ported as each tab lands.
 - Layout: Overview (health, dimensions, top findings), **Findings explorer** (N-A5), Column view (profile charts from real bins), Relationships, Quality, ML readiness, Time series, Run compare / history, and Settings (edit config overlay → submit job).
-- ECharts only. Each tab loads its own data. Pinia store. ESLint, Prettier and Vitest, plus one Playwright smoke test (F-29).
+- ECharts only. Each tab loads its own data, in its own lazy chunk. Pinia store. ESLint, Prettier and Vitest, and a Playwright test per tab against a fixture store, added with the tab (F-29).
 - Shipped inside the `dsbf[server]` wheel and served by `dsbf dashboard` (no Node required for users).
 
 ---
@@ -799,6 +803,6 @@ Each is recorded in [`docs/adr/`](adr/README.md). The table summarises them; the
 This plan is executed as **units**, each a single branch, PR and commit that can be finished in
 one session. The backlog is [`ROADMAP.md`](../ROADMAP.md), the active unit lives in
 [`PLAN.md`](../PLAN.md), and the workflow is in [`CLAUDE.md`](../CLAUDE.md). Phases 0–3 were
-broken down in full and are finished. Phase 4 was broken down in full by U4-00, and Phase 5 into outline units.
+broken down in full and are finished. Phase 4 was broken down in full by U4-00, Phase 5 into outline units, and Phase 6 in full by U6-00.
 Each later phase starts with a planning unit that breaks it down using what the earlier phases
 taught. Finished programs are summarised in [`HISTORY.md`](HISTORY.md).
