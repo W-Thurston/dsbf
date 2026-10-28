@@ -24,6 +24,7 @@ from dsbf.model.schema import (
     typescript_schema,
     unannounced,
 )
+from dsbf.model.vocabulary import Confidence, Severity
 from dsbf.sinks.tables import tables_schema
 
 SCHEMA_FILE = "run.schema.json"
@@ -38,6 +39,21 @@ TYPESCRIPT_BANNER = (
     " * Generated from schema/run.schema.json by `dsbf schema export`.\n"
     " * Do not edit by hand: change the models in dsbf.model and regenerate.\n"
     " */"
+)
+API_TYPES_FILE = "api.d.ts"
+RANKS_FILE = "ranks.ts"
+API_TYPES_BANNER = (
+    "/* eslint-disable */\n"
+    "/**\n"
+    " * Generated from schema/openapi.json by `dsbf schema export`.\n"
+    " * Do not edit by hand: change the service in dsbf.service and regenerate.\n"
+    " */\n"
+)
+RANKS_BANNER = (
+    "/**\n"
+    " * Generated from dsbf.model.vocabulary by `dsbf schema export`.\n"
+    " * Do not edit by hand: change the enums and regenerate.\n"
+    " */\n"
 )
 
 
@@ -55,8 +71,7 @@ class SchemaComparison:
     problems: list[str]
 
 
-def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
-    """Render the TypeScript types for a schema with the frontend's generator."""
+def _pnpm(frontend_dir: Path) -> str:
     pnpm = shutil.which("pnpm")
     if pnpm is None:
         raise SchemaToolError(
@@ -65,6 +80,12 @@ def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
         )
     if not (frontend_dir / "node_modules").is_dir():
         raise SchemaToolError(f"run `pnpm install` in {frontend_dir} first")
+    return pnpm
+
+
+def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
+    """Render the TypeScript types for a schema with the frontend's generator."""
+    pnpm = _pnpm(frontend_dir)
     with tempfile.TemporaryDirectory() as scratch:
         schema_file = Path(scratch) / SCHEMA_FILE
         schema_file.write_text(
@@ -86,6 +107,41 @@ def generate_typescript(schema_json: str, frontend_dir: Path) -> str:
     if done.returncode != 0:
         raise SchemaToolError(f"json2ts failed:\n{done.stderr.strip()}")
     return done.stdout
+
+
+def generate_api_types(openapi_json: str, frontend_dir: Path) -> str:
+    """Render the TypeScript types of the OpenAPI document for the generated client."""
+    pnpm = _pnpm(frontend_dir)
+    with tempfile.TemporaryDirectory() as scratch:
+        document = Path(scratch) / "openapi.json"
+        document.write_text(openapi_json, encoding="utf-8")
+        command = [pnpm, "--dir", str(frontend_dir), "exec", "openapi-typescript"]
+        done = subprocess.run(
+            [*command, str(document)], capture_output=True, text=True, check=False
+        )
+    if done.returncode != 0:
+        raise SchemaToolError(f"openapi-typescript failed:\n{done.stderr.strip()}")
+    return API_TYPES_BANNER + done.stdout
+
+
+def ranks_module() -> str:
+    """The ``Severity`` and ``Confidence`` ranks, which a JSON Schema can't carry."""
+    lines = [RANKS_BANNER]
+    for enum in (Severity, Confidence):
+        name = enum.__name__
+        members = ", ".join(f'"{member.value}"' for member in enum)
+        lines.append(f"export const {name.upper()}_ORDER = [{members}] as const\n")
+        lines.append(
+            f"export type {name}Name = (typeof {name.upper()}_ORDER)[number]\n"
+        )
+        lines.append(
+            f"/** Position in `{name.upper()}_ORDER`, lowest first. */\n"
+            f"export function {name[0].lower()}{name[1:]}Rank("
+            f"value: {name}Name): number {{\n"
+            f"  return {name.upper()}_ORDER.indexOf(value)\n"
+            "}\n"
+        )
+    return "\n".join(lines)
 
 
 def check_schemas() -> dict[str, dict[str, Any]]:

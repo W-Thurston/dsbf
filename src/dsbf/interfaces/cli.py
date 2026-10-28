@@ -545,7 +545,10 @@ def export_schema(
     types: Path | None = typer.Option(
         None,
         "--types",
-        help="Also write TypeScript types to this file (needs pnpm and the frontend).",
+        help=(
+            "Also write TypeScript types to this file, with the API types and the rank "
+            "tables beside it (needs pnpm and the frontend)."
+        ),
     ),
     frontend: Path = typer.Option(
         Path("frontend"), "--frontend", help="Where json2ts is installed."
@@ -565,6 +568,13 @@ def export_schema(
         if types is not None:
             run_text = expected[out / schema_export.SCHEMA_FILE]
             expected[types] = schema_export.generate_typescript(run_text, frontend)
+            api_types = types.parent / schema_export.API_TYPES_FILE
+            expected[api_types] = schema_export.generate_api_types(
+                expected[out / openapi_export.OPENAPI_FILE], frontend
+            )
+            expected[types.parent / schema_export.RANKS_FILE] = (
+                schema_export.ranks_module()
+            )
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
         raise typer.Exit(2) from error
@@ -580,7 +590,8 @@ def export_schema(
         return
     if types is not None:
         types.parent.mkdir(parents=True, exist_ok=True)
-        types.write_text(expected[types], encoding="utf-8")
+        for path in (p for p in expected if p.parent == types.parent):
+            path.write_text(expected[path], encoding="utf-8")
     for path in expected:
         typer.echo(f"wrote {path}")
 

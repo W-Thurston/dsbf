@@ -149,7 +149,7 @@ Write the JSON Schemas and the Parquet column listing; optionally TypeScript.
 | Option | Description |
 | --- | --- |
 | `-o, --out <path>` | Directory for the JSON Schemas. [default: schema] |
-| `--types <path>` | Also write TypeScript types to this file (needs pnpm and the frontend). |
+| `--types <path>` | Also write TypeScript types to this file, with the API types and the rank tables beside it (needs pnpm and the frontend). |
 | `--frontend <path>` | Where json2ts is installed. [default: frontend] |
 | `--check` | Write nothing; fail if the files are out of date. |
 
