@@ -26,6 +26,13 @@ class CheckCancelled(BaseException):
     """
 
 
+class RunCancelled(Exception):
+    """The caller asked the run to stop, and it did before the next check started.
+
+    No ``Run`` exists: the checks that had finished are not kept.
+    """
+
+
 class RegistryError(ValueError):
     """A check could not be registered or looked up.
 

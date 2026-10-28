@@ -2,6 +2,7 @@
 """The library entry point: profile a table and get the ``Run`` back."""
 
 import logging
+import threading
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any, cast
@@ -165,11 +166,13 @@ def profile_with(
     hooks: Iterable[Hook] = (),
     policy: Policy | Mapping[str, Any] | str | Path | None = None,
     previous: Run | str | Path | None = None,
+    cancel: threading.Event | None = None,
 ) -> Run:
     """Profile ``source`` with settings already built, such as the command line's.
 
     ``profile`` builds its settings from its arguments and calls this; the other
-    arguments and the errors are those of ``profile``.
+    arguments and the errors are those of ``profile``. Setting ``cancel`` from another
+    thread stops the run before its next check and raises ``RunCancelled``.
     """
     rules = None if policy is None else load_policy(policy)
     earlier: Run | None = None
@@ -218,6 +221,7 @@ def profile_with(
             for check_id, values in settings.check_settings.items()
         },
         dataset_key=settings.dataset,
+        cancel=cancel,
     )
     if disk is not None:
         _prune(disk, settings.cache)

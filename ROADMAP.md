@@ -155,7 +155,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** `dsbf check data.csv --sink store` followed by `dsbf runs list` shows the run. `runs diff` of two titanic runs with a planted change reports the expected new and resolved findings. `gc` keeps exactly the runs it should and leaves no orphaned files. The HTML report shows the policy verdict.
 
 ### U6-07 · API v2 read endpoints
-- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-06 · **Resolves:** F-25 (paging, error mapping, encoded path parameters)
+- **Status:** done (2026-10-28, #154, `0b0ce1b`) · **Size:** M · **Depends on:** U6-06 · **Resolves:** F-25 (paging, error mapping, encoded path parameters)
 - **Outcome:** `dsbf.service` (twelve read operations, problem details, local-`Host` check, optional CORS, `frontend/dist` served after the API), `dsbf dashboard`, `schema/openapi.json` with `--check` and a breaking-change comparison announced by `API_VERSION`, four repository reads, FastAPI 0.162, `httpx2` in the dev group, `starlette` declared in `server`. **Deviations:** artifacts are run-scoped; the findings page defaults to 50 (100 titanic findings are 165 KB); a column also has a `?column=` route, since `..` cannot travel in a path; `dsbf schema export` needs the `server` extra.
 - **Note from U6-07:** a slim finding view (without `evidence.details`) would allow larger pages.
 - **Goal:** A FastAPI app, `dsbf.service`, with the REFACTOR_PLAN §8.3 read endpoints: datasets, a dataset's runs and the history of a finding, a run summary (manifest, health, policy and counts by dimension and severity, without results), findings filtered and paged, one column's profile, one check's result without artifact payloads, an artifact or the snapshot by row range, and compare. `dsbf dashboard` starts it; until U6-19 bundles the frontend it serves the API, plus `frontend/dist` when that exists, for development. `dsbf schema export` writes the OpenAPI document to `schema/openapi.json`, guarded by `--check` and the breaking-change gate.
@@ -166,7 +166,9 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Every endpoint is tested, including its 404 and 422. Hostile column names round-trip. Titanic's summary is under 50 KB and its first findings page under 100 KB. `dsbf schema export --check` covers `openapi.json`.
 
 ### U6-08 · Job API and local runner
-- **Status:** todo · **Size:** M · **Depends on:** U6-07
+- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-07
+- **Outcome:** `POST /v2/jobs`, `GET /v2/jobs`, `GET /v2/jobs/{id}?after=` and `POST /v2/jobs/{id}/cancel`; a `JobRunner` thread over `jobs` and `job_events` tables (Alembic `0003`), `interrupted` after a restart; `JsonWritesOnly` refuses non-JSON and foreign-`Origin` writes; `API_VERSION` 1.1.0. **Deviations:** cancelling needed an engine change (`execute(cancel=)` raising `RunCancelled`), since a hook cannot stop a run; a running job stops after the check in flight; `POST` does not take `policy` or `previous`.
+- **Note from U6-08:** `settings.plugins` lets a job import code from server directories; Phase 8 (auth) should decide who may set it.
 - **Goal:** `POST /v2/jobs` profiles a local source with settings (the `ProfileConfig` the CLI builds, plus the dataset key and name) and saves the run to the store. `GET /v2/jobs/{id}` returns the job's state and the progress events after a cursor, `GET /v2/jobs` lists jobs, and a job can be cancelled between checks.
 - **Decided in U6-00:** (1) One worker thread in the server runs jobs one at a time; checks keep their own process isolation. (2) Jobs are rows in the store (a `jobs` table and Alembic revision), so after a restart a job that was running shows as `interrupted`. (3) Progress events are the engine's hooks (`CheckStarted`, `CheckFinished`, `NoteRecorded`), numbered; the dashboard polls.
 - **Assumptions to confirm:** `profile_with` runs off the main thread (the warning-filter handling in `library.py` changes process-wide state, so check it is safe on a thread); the process pool starts from a non-main thread on Linux, macOS and Windows; cancelling between checks is possible through a hook or the run budget.
@@ -245,6 +247,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-17 · Settings and rerun
 - **Status:** todo · **Size:** M · **Depends on:** U6-16 · **Resolves:** REVIEW_FINDINGS part 2 D (settings panel)
+- **Note from U6-08:** the job request takes `source`, `name` and `settings` only; a rerun that wants a policy verdict needs `policy` and `previous` added to it.
 - **Goal:** A settings form generated from the `ProfileConfig` JSON Schema (target, time index, depth, checks and their parameters), saved as a per-dataset overlay in the store, and a rerun that submits a job, follows its progress and lands on the new run.
 - **Decided in U6-00:** the overlay is stored per dataset key; an ungrouped run reruns with its own settings and no overlay.
 - **Assumptions to confirm:** `dsbf schema export` publishes the `ProfileConfig` schema, or this unit adds it; a stored run's source location is enough to rerun it when the file still exists.

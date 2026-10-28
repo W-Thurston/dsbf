@@ -1,6 +1,7 @@
 # dsbf/engine/executor.py
 """Execute a plan: every check ends in an explicit status, and the run completes."""
 
+import threading
 import time
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime, timedelta
@@ -10,6 +11,7 @@ from dsbf.data import Dataset
 from dsbf.engine.artifacts import make_ref
 from dsbf.engine.cache import CacheSession, ResultCache
 from dsbf.engine.capture import capture_warnings
+from dsbf.engine.errors import RunCancelled
 from dsbf.engine.events import (
     CheckFinished,
     CheckStarted,
@@ -59,6 +61,7 @@ def execute(
     reference: Reference | None = None,
     check_overrides: Mapping[str, CheckOverride] | None = None,
     dataset_key: str | None = None,
+    cancel: threading.Event | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
@@ -113,9 +116,15 @@ def execute(
     checks that require one compare with; no other check can read it, and the
     cache key of one that does covers it.
 
+    ``cancel`` stops the run from another thread: once it is set, no further check
+    starts, the checks running are stopped as a timeout stops them, and
+    ``RunCancelled`` is raised. A check that is running is not interrupted before
+    then, so the run stops after the longest check in flight.
+
     Raises:
         ValueError: ``profile`` is not the profile of ``dataset``,
             ``memory_sample_seconds`` is not positive, or ``workers`` is below 1.
+        RunCancelled: ``cancel`` was set before the run finished.
     """
     if [column.name for column in profile.columns] != dataset.columns:
         raise ValueError("the profile and the dataset have different columns")
@@ -149,6 +158,14 @@ def execute(
     clock = time.monotonic()
     results: dict[str, CheckResult] = {}
 
+    def stop_if_cancelled() -> None:
+        if cancel is not None and cancel.is_set():
+            raise RunCancelled("the run was cancelled")
+
+    def prepare(entry: PlanEntry) -> CheckResult | Launch:
+        stop_if_cancelled()
+        return _prepare(entry, results, limits, budget_left(), session, overrides)
+
     def budget_left() -> float | None:
         if limits.run_budget_seconds is None:
             return None
@@ -171,9 +188,7 @@ def execute(
             for entry, result in scheduler.run_level(
                 level,
                 results,
-                prepare=lambda entry: _prepare(
-                    entry, results, limits, budget_left(), session, overrides
-                ),
+                prepare=prepare,
                 started=lambda entry: events.emit(
                     CheckStarted(entry.id, positions[entry.id], total)
                 ),
@@ -186,6 +201,7 @@ def execute(
                 for note in result.notes:
                     events.emit(NoteRecorded(entry.id, note, position, total))
                 events.emit(CheckFinished(entry.id, result, position, total))
+                stop_if_cancelled()
             for entry in level:  # plan order, whatever order they ended in
                 results[entry.id] = done[entry.id]
     run = Run.build(

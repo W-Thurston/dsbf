@@ -11,6 +11,7 @@ from pydantic import AwareDatetime, Field
 
 from dsbf.model import (
     CheckResult,
+    CheckStatus,
     ColumnProfile,
     DatasetManifest,
     Dimension,
@@ -24,10 +25,15 @@ from dsbf.model import (
 )
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
+from dsbf.store.jobs import Job, JobEvent, JobRequest, JobState
 
 
 class StoreError(Exception):
     """The store cannot do what was asked."""
+
+
+class JobNotFoundError(StoreError):
+    """No job has this id."""
 
 
 class RunExistsError(StoreError):
@@ -148,8 +154,11 @@ class GcResult(Contract):
 class RunRepository(Protocol):
     """Where runs are kept. Implementations differ in storage, not behaviour."""
 
-    def save(self, run: Run) -> None:
-        """Store ``run`` with its artifacts.
+    def save(self, run: Run, *, snapshot_rows: int | None = None) -> None:
+        """Store ``run`` with its artifacts and a snapshot of its data.
+
+        ``snapshot_rows`` caps the snapshot for this run (0 keeps none); unset, the
+        repository's own cap applies.
 
         Raises:
             RunExistsError: a run with this id is stored.
@@ -279,12 +288,67 @@ class RunRepository(Protocol):
         A ``dry_run`` changes nothing and reports what would go.
         """
 
+    def create_job(self, request: JobRequest) -> Job:
+        """Queue a job."""
+
+    def get_job(self, job_id: UUID) -> Job:
+        """The job.
+
+        Raises:
+            JobNotFoundError: no such job.
+        """
+
+    def list_jobs(
+        self, *, state: JobState | None = None, limit: int = 50, offset: int = 0
+    ) -> Page[Job]:
+        """Jobs, newest request first, optionally only those in ``state``."""
+
+    def start_job(self, job_id: UUID) -> Job:
+        """Mark a queued job running."""
+
+    def append_job_event(
+        self,
+        job_id: UUID,
+        kind: str,
+        *,
+        check_id: str | None = None,
+        position: int | None = None,
+        total: int | None = None,
+        status: CheckStatus | None = None,
+        code: str | None = None,
+        message: str | None = None,
+    ) -> JobEvent:
+        """Record a progress event, numbered after the job's last."""
+
+    def finish_job(
+        self,
+        job_id: UUID,
+        state: JobState,
+        *,
+        run_id: UUID | None = None,
+        error: str | None = None,
+    ) -> Job:
+        """End a job in a final ``state``, with its closing event."""
+
+    def job_events(
+        self, job_id: UUID, *, after: int = 0, limit: int = 500
+    ) -> tuple[JobEvent, ...]:
+        """The job's events numbered after ``after``, in order.
+
+        Raises:
+            JobNotFoundError: no such job.
+        """
+
+    def interrupt_unfinished(self) -> int:
+        """End every queued or running job as ``interrupted``; how many there were."""
+
 
 __all__ = [
     "DatasetSummary",
     "FindingCount",
     "FindingOccurrence",
     "GcResult",
+    "JobNotFoundError",
     "Page",
     "RunExistsError",
     "RunHeader",
