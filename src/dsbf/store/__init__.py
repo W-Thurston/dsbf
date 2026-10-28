@@ -13,17 +13,31 @@ except ImportError as error:
         "`pip install 'dsbf[server]'`."
     ) from error
 
+from dsbf.store.artifacts import (
+    ArtifactNotFoundError,
+    ArtifactStore,
+    FsspecArtifactStore,
+)
 from dsbf.store.repository import (
+    SNAPSHOT_REF,
     Page,
     RunExistsError,
     RunNotFoundError,
     RunRepository,
     RunSummary,
+    Snapshot,
+    StoredArtifact,
     StoreError,
 )
 from dsbf.store.sqlite import SqliteRunRepository, database_path, open_repository
 
 __all__ = [
+    "SNAPSHOT_REF",
+    "ArtifactNotFoundError",
+    "ArtifactStore",
+    "FsspecArtifactStore",
+    "Snapshot",
+    "StoredArtifact",
     "Page",
     "RunExistsError",
     "RunNotFoundError",

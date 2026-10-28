@@ -208,6 +208,7 @@ The settings file (`--config`), `DSBF__SECTION__KEY` environment variables, `--s
 | `workers` | int | unset | Checks to run at once; unset is one per core. |
 | `check_settings` | dict[str, CheckSettings] | `{}` | A timeout or `runs_in` for single checks, by check id. |
 | `cache` | CacheConfig | see below | Keep the results of checks between runs under the DSBF home. |
+| `store` | StoreConfig | see below | What the run store keeps beside a run. |
 | `plugins` | tuple[str, ...] | `()` | Directories of check plugins to load. |
 | `params` | dict[str, dict[str, Any]] | `{}` | Parameters of checks, by check id; they win over `target` and `time_index`. |
 
@@ -234,3 +235,9 @@ The settings file (`--config`), `DSBF__SECTION__KEY` environment variables, `--s
 | `cache.enabled` | bool | `False` | Reuse results of checks whose inputs are unchanged. |
 | `cache.max_megabytes` | int | `500` | Evict the least recently used entries past this size; unset keeps all. |
 | `cache.max_age_days` | float | `90` | Evict entries not used for this long; unset keeps all. |
+
+### `store`
+
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `store.snapshot_rows` | int | `10000` | Rows of the analysed data to keep as a snapshot, sampled (seed 0) above this; 0 keeps none. |

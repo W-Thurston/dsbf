@@ -16,6 +16,9 @@ from dsbf.model.artifact import (
 )
 from dsbf.model.scrub import json_safe
 
+ROW_GROUP_ROWS = 10_000
+"""Rows per Parquet row group, so a range read touches few of them."""
+
 
 def encode(payload: Payload) -> tuple[bytes, str, int | None, Payload]:
     """The file bytes, media type, row count and normalised payload of ``payload``.
@@ -28,7 +31,7 @@ def encode(payload: Payload) -> tuple[bytes, str, int | None, Payload]:
     """
     if isinstance(payload, pa.Table):
         sink = io.BytesIO()
-        pq.write_table(payload, sink, compression="zstd")
+        pq.write_table(payload, sink, compression="zstd", row_group_size=ROW_GROUP_ROWS)
         return sink.getvalue(), PARQUET_MEDIA_TYPE, payload.num_rows, payload
     safe, _ = json_safe(payload)
     data = json.dumps(safe, separators=(",", ":"), ensure_ascii=False).encode()

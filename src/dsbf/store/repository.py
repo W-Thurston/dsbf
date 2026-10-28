@@ -1,13 +1,16 @@
 # dsbf/store/repository.py
 """What a run repository does, and the views it returns."""
 
+from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
+import pyarrow as pa
 from pydantic import AwareDatetime, Field
 
 from dsbf.model import CheckResult, Dimension, Finding, Run, Severity
 from dsbf.model.base import Contract
+from dsbf.model.evidence import SamplingInfo
 
 
 class StoreError(Exception):
@@ -47,6 +50,33 @@ class RunSummary(Contract):
     max_severity: Severity | None = Field(
         description="The highest severity among the findings; null when there are none."
     )
+
+
+SNAPSHOT_REF = "snapshot"
+"""The ref of a run's data snapshot; a check's artifact ref always has a slash."""
+
+
+class StoredArtifact(Contract):
+    """One stored file of a run: an artifact, or the data snapshot."""
+
+    ref: str
+    media_type: str
+    rows: int | None = Field(description="Rows of a table; null for a JSON value.")
+    bytes: int = Field(ge=0)
+    sha256: str
+    sampling: SamplingInfo | None = Field(
+        default=None,
+        description="For the snapshot, how its rows were drawn from the analysed "
+        "data; null when it holds all of them.",
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class Snapshot:
+    """The rows a run analysed, as stored, and how they were chosen."""
+
+    table: pa.Table
+    sampling: SamplingInfo | None
 
 
 class FindingOccurrence(Contract):
@@ -110,6 +140,39 @@ class RunRepository(Protocol):
         """Where a finding id (or every finding with a code) appeared in a dataset's
         runs, newest run first."""
 
+    def artifacts(self, run_id: UUID) -> tuple[StoredArtifact, ...]:
+        """The files stored for a run, snapshot included, in ref order.
+
+        Raises:
+            RunNotFoundError: no such run.
+        """
+
+    def read_artifact(self, run_id: UUID, ref: str) -> object:
+        """The payload of artifact ``ref``: an Arrow table or a JSON value.
+
+        Raises:
+            RunNotFoundError: the run has no such artifact.
+            ArtifactNotFoundError: the artifact is listed but its file is gone.
+        """
+
+    def read_artifact_rows(
+        self, run_id: UUID, ref: str, start: int, stop: int
+    ) -> pa.Table:
+        """Rows ``start`` up to ``stop`` of a table artifact, without reading the
+        rest of the file.
+
+        Raises:
+            RunNotFoundError: the run has no such table artifact.
+            ArtifactNotFoundError: the artifact is listed but its file is gone.
+        """
+
+    def snapshot(self, run_id: UUID) -> Snapshot | None:
+        """The stored data snapshot; null when none was kept.
+
+        Raises:
+            RunNotFoundError: no such run.
+        """
+
     def delete(self, run_id: UUID) -> None:
         """Remove a run and its artifacts.
 
@@ -124,6 +187,9 @@ __all__ = [
     "RunExistsError",
     "RunNotFoundError",
     "RunRepository",
+    "SNAPSHOT_REF",
     "RunSummary",
+    "Snapshot",
     "StoreError",
+    "StoredArtifact",
 ]

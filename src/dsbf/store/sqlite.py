@@ -2,7 +2,6 @@
 """The run repository on SQLite, through SQLAlchemy Core."""
 
 import json
-import shutil
 import threading
 from collections import defaultdict
 from datetime import UTC, datetime
@@ -10,23 +9,30 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+import pyarrow as pa
 import sqlalchemy as sa
 from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 
-from dsbf.engine.artifacts import encode
+from dsbf.data.sampling import sample_frame
+from dsbf.engine.artifacts import decode, encode
 from dsbf.model import CheckResult, Dimension, Finding, Run, Severity
+from dsbf.model.evidence import SamplingInfo
 from dsbf.paths import dsbf_home
 from dsbf.sinks.files import artifact_path
 from dsbf.store import tables as t
+from dsbf.store.artifacts import FsspecArtifactStore
 from dsbf.store.repository import (
+    SNAPSHOT_REF,
     FindingOccurrence,
     Page,
     RunExistsError,
     RunNotFoundError,
     RunSummary,
+    Snapshot,
+    StoredArtifact,
     StoreError,
 )
 
@@ -35,6 +41,9 @@ ARTIFACTS_DIR = "artifacts"
 _MIGRATIONS = Path(__file__).parent / "migrations"
 _BUSY_TIMEOUT_MS = 30_000
 _SEVERITIES = list(Severity)
+DEFAULT_SNAPSHOT_ROWS = 10_000
+SNAPSHOT_FILE = "snapshot.parquet"
+SNAPSHOT_SEED = 0
 
 
 def database_path(home: Path | None = None) -> Path:
@@ -42,10 +51,14 @@ def database_path(home: Path | None = None) -> Path:
     return (home or dsbf_home()) / DATABASE_FILE
 
 
-def open_repository(home: Path | None = None) -> "SqliteRunRepository":
+def open_repository(
+    home: Path | None = None, *, snapshot_rows: int = DEFAULT_SNAPSHOT_ROWS
+) -> "SqliteRunRepository":
     """The repository under ``home`` (default ``DSBF_HOME``), created if absent."""
     home = home or dsbf_home()
-    return SqliteRunRepository(database_path(home), home / ARTIFACTS_DIR)
+    return SqliteRunRepository(
+        database_path(home), home / ARTIFACTS_DIR, snapshot_rows=snapshot_rows
+    )
 
 
 def _text(moment: datetime) -> str:
@@ -57,6 +70,28 @@ def _rank(severity: Severity) -> int:
     return _SEVERITIES.index(severity)
 
 
+def _artifact_row(run_id: str, ref: str, path: str, media_type: str) -> dict[str, Any]:
+    return {
+        "run_id": run_id,
+        "ref": ref,
+        "path": path,
+        "media_type": media_type,
+        "sampling_json": None,
+    }
+
+
+def _stored(row: Any) -> StoredArtifact:
+    sampling = row.sampling_json
+    return StoredArtifact(
+        ref=row.ref,
+        media_type=row.media_type,
+        rows=row.rows,
+        bytes=row.bytes,
+        sha256=row.sha256,
+        sampling=SamplingInfo.model_validate_json(sampling) if sampling else None,
+    )
+
+
 def _dump(model: Any, **options: Any) -> str:
     return json.dumps(model.model_dump(mode="json", **options), ensure_ascii=False)
 
@@ -65,13 +100,24 @@ class SqliteRunRepository:
     """Runs in a SQLite file in WAL mode, with one writer at a time.
 
     Opening applies the migrations. A database written by a newer DSBF is refused
-    rather than read wrongly. Artifact payloads are kept as files under
-    ``artifacts_dir/<run_id>``.
+    rather than read wrongly. Artifact payloads and the data snapshot are files
+    under ``artifacts_dir/<run_id>``; ``snapshot_rows`` caps the snapshot (0 keeps
+    none).
     """
 
-    def __init__(self, database: Path, artifacts_dir: Path) -> None:
+    def __init__(
+        self,
+        database: Path,
+        artifacts_dir: Path,
+        *,
+        snapshot_rows: int = DEFAULT_SNAPSHOT_ROWS,
+    ) -> None:
+        if snapshot_rows < 0:
+            raise ValueError("snapshot_rows cannot be negative")
         database.parent.mkdir(parents=True, exist_ok=True)
         self._artifacts_dir = artifacts_dir
+        self._files = FsspecArtifactStore(str(artifacts_dir))
+        self._snapshot_rows = snapshot_rows
         self._write_lock = threading.Lock()
         self._engine = sa.create_engine(f"sqlite:///{database}")
         sa.event.listen(self._engine, "connect", _configure_connection)
@@ -101,7 +147,6 @@ class SqliteRunRepository:
     def save(self, run: Run) -> None:
         run_id = str(run.run_id)
         key = run.dataset.key or None
-        directory = self._artifacts_dir / run_id
         with self._write_lock:
             with self._engine.connect() as connection:
                 if connection.execute(
@@ -109,19 +154,56 @@ class SqliteRunRepository:
                 ).first():
                     raise RunExistsError(f"run {run_id} is already stored")
             try:
-                self._write_artifacts(run, directory)
+                stored = self._write_files(run, run_id)
                 with self._engine.begin() as connection:
                     self._insert(connection, run, run_id, key)
+                    if stored:
+                        connection.execute(sa.insert(t.artifacts), stored)
             except BaseException:
-                shutil.rmtree(directory, ignore_errors=True)
+                self._files.delete_run(run_id)
                 raise
 
-    @staticmethod
-    def _write_artifacts(run: Run, directory: Path) -> None:
+    def _write_files(self, run: Run, run_id: str) -> list[dict[str, Any]]:
+        """Write the artifacts and the snapshot; the rows that describe them."""
+        rows = []
         for artifact in run.artifacts:
-            target = artifact_path(directory, artifact)
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(encode(run.artifact(artifact.ref))[0])
+            path = artifact_path(Path(), artifact).as_posix()
+            data = encode(run.artifact(artifact.ref))[0]
+            size, digest = self._files.put(run_id, path, data)
+            rows.append(
+                _artifact_row(run_id, artifact.ref, path, artifact.media_type)
+                | {"rows": artifact.rows, "bytes": size, "sha256": digest}
+            )
+        snapshot = self._snapshot_of(run)
+        if snapshot is not None:
+            table, sampling = snapshot
+            data, media_type, count, _ = encode(table)
+            size, digest = self._files.put(run_id, SNAPSHOT_FILE, data)
+            rows.append(
+                _artifact_row(run_id, SNAPSHOT_REF, SNAPSHOT_FILE, media_type)
+                | {
+                    "rows": count,
+                    "bytes": size,
+                    "sha256": digest,
+                    "sampling_json": _dump(sampling) if sampling else None,
+                }
+            )
+        return rows
+
+    def _snapshot_of(self, run: Run) -> tuple[pa.Table, SamplingInfo | None] | None:
+        frame = run.analysed_frame
+        if frame is None or self._snapshot_rows == 0:
+            return None
+        if frame.height <= self._snapshot_rows:
+            return frame.to_arrow(), None
+        sample, info = sample_frame(
+            frame,
+            self._snapshot_rows,
+            strategy="random",
+            seed=SNAPSHOT_SEED,
+            stratify_by=(),
+        )
+        return sample.to_arrow(), info
 
     @staticmethod
     def _insert(
@@ -203,7 +285,7 @@ class SqliteRunRepository:
             )
             if deleted.rowcount == 0:
                 raise RunNotFoundError(f"no stored run {run_id}")
-        shutil.rmtree(self._artifacts_dir / str(run_id), ignore_errors=True)
+        self._files.delete_run(str(run_id))
 
     # -- reading ---------------------------------------------------------------------
 
@@ -241,6 +323,62 @@ class SqliteRunRepository:
         if directory.is_dir():
             run._artifact_dir = directory  # noqa: SLF001 (the run's own lookup)
         return run
+
+    def artifacts(self, run_id: UUID) -> tuple[StoredArtifact, ...]:
+        key = str(run_id)
+        with self._engine.connect() as connection:
+            self._require_run(connection, run_id)
+            rows = connection.execute(
+                sa.select(t.artifacts)
+                .where(t.artifacts.c.run_id == key)
+                .order_by(t.artifacts.c.ref)
+            ).all()
+        return tuple(_stored(row) for row in rows)
+
+    def read_artifact(self, run_id: UUID, ref: str) -> object:
+        row = self._artifact_row(run_id, ref)
+        return decode(self._files.read(str(run_id), row.path), row.media_type)
+
+    def read_artifact_rows(
+        self, run_id: UUID, ref: str, start: int, stop: int
+    ) -> pa.Table:
+        row = self._artifact_row(run_id, ref)
+        if row.rows is None:
+            raise RunNotFoundError(f"artifact {ref!r} of run {run_id} is not a table")
+        return self._files.read_rows(str(run_id), row.path, start, stop)
+
+    def snapshot(self, run_id: UUID) -> Snapshot | None:
+        with self._engine.connect() as connection:
+            self._require_run(connection, run_id)
+            row = connection.execute(
+                sa.select(t.artifacts).where(
+                    t.artifacts.c.run_id == str(run_id),
+                    t.artifacts.c.ref == SNAPSHOT_REF,
+                )
+            ).first()
+        if row is None:
+            return None
+        table = decode(self._files.read(str(run_id), row.path), row.media_type)
+        return Snapshot(table=table, sampling=_stored(row).sampling)
+
+    def _artifact_row(self, run_id: UUID, ref: str) -> Any:
+        with self._engine.connect() as connection:
+            self._require_run(connection, run_id)
+            row = connection.execute(
+                sa.select(t.artifacts).where(
+                    t.artifacts.c.run_id == str(run_id), t.artifacts.c.ref == ref
+                )
+            ).first()
+        if row is None:
+            raise RunNotFoundError(f"run {run_id} has no stored artifact {ref!r}")
+        return row
+
+    @staticmethod
+    def _require_run(connection: sa.Connection, run_id: UUID) -> None:
+        if not connection.execute(
+            sa.select(t.runs.c.run_id).where(t.runs.c.run_id == str(run_id))
+        ).first():
+            raise RunNotFoundError(f"no stored run {run_id}")
 
     def get_result(self, run_id: UUID, check_id: str) -> CheckResult:
         key = str(run_id)

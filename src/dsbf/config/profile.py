@@ -104,6 +104,17 @@ class CacheConfig(_Section):
         return value
 
 
+class StoreConfig(_Section):
+    """What the run store keeps beside a run."""
+
+    snapshot_rows: int = Field(
+        default=10_000,
+        ge=0,
+        description="Rows of the analysed data to keep as a snapshot, sampled "
+        "(seed 0) above this; 0 keeps none.",
+    )
+
+
 class ProfileConfig(_Section):
     """Every setting of one profiling run, with its default."""
 
@@ -139,6 +150,7 @@ class ProfileConfig(_Section):
         description="A timeout or `runs_in` for single checks, by check id.",
     )
     cache: CacheConfig = CacheConfig()
+    store: StoreConfig = StoreConfig()
     plugins: tuple[str, ...] = Field(
         default=(), description="Directories of check plugins to load."
     )
