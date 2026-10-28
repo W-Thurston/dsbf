@@ -60,6 +60,8 @@ This describes the code as it stands after the legacy engine was removed: how th
 
 **Location:** `frontend/`. The source is the one the removed FastAPI backend served: Vue 3 + Vite + Vue Router + Axios, with Plotly (`plotly.js-dist-min`) and ECharts. It does not run until Phase 6 rebuilds the store, the API and the dashboard shell on the `Run`. `frontend/src/generated/run.d.ts` holds the TypeScript types of the `Run`, generated from the models.
 
+**Service (`src/dsbf/service/`, needs the `server` extra):** `dsbf dashboard` starts a FastAPI app over the run store in `DSBF_HOME`. API v2 is read-only: datasets, a dataset's runs and the history of a finding, a run's overview (identity, health, policy, finding counts; no results), its findings (filtered, paged), a column's profile, a check's result, an artifact or the data snapshot by row range, and the comparison of any two runs. It listens on `127.0.0.1` only, refuses a request whose `Host` is not local (421), sends no CORS headers unless asked, and reports errors as RFC 9457 problem details. `schema/openapi.json` is the exported OpenAPI document; `dsbf schema export --check` keeps it current and `dsbf schema check` rejects a breaking change that `API_VERSION` does not announce. A column name travels percent-encoded in the path (`/v2/runs/{id}/profile/{column}`), or as `?column=` for the names a client cannot put in a path (`.`, `..`).
+
 ---
 
 ## 6. CLI

@@ -16,10 +16,18 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
+from pydantic import TypeAdapter
 
 from dsbf.data.sampling import sample_frame
 from dsbf.engine.artifacts import decode, encode
-from dsbf.model import CheckResult, Dimension, Finding, Run, Severity
+from dsbf.model import (
+    CheckResult,
+    ColumnProfile,
+    Dimension,
+    Finding,
+    Run,
+    Severity,
+)
 from dsbf.model.evidence import SamplingInfo
 from dsbf.paths import dsbf_home
 from dsbf.sinks.files import artifact_path
@@ -27,10 +35,13 @@ from dsbf.store import tables as t
 from dsbf.store.artifacts import FsspecArtifactStore
 from dsbf.store.repository import (
     SNAPSHOT_REF,
+    DatasetSummary,
+    FindingCount,
     FindingOccurrence,
     GcResult,
     Page,
     RunExistsError,
+    RunHeader,
     RunNotFoundError,
     RunSummary,
     Snapshot,
@@ -43,6 +54,7 @@ ARTIFACTS_DIR = "artifacts"
 _MIGRATIONS = Path(__file__).parent / "migrations"
 _BUSY_TIMEOUT_MS = 30_000
 _SEVERITIES = list(Severity)
+_COLUMN_PROFILE: TypeAdapter[ColumnProfile] = TypeAdapter(ColumnProfile)
 DEFAULT_SNAPSHOT_ROWS = 10_000
 SNAPSHOT_FILE = "snapshot.parquet"
 SNAPSHOT_SEED = 0
@@ -434,6 +446,101 @@ class SqliteRunRepository:
             return CheckResult.model_validate(
                 {**json.loads(text), "findings": [json.loads(r) for r in rows]}
             )
+
+    def list_datasets(
+        self, *, limit: int = 50, offset: int = 0
+    ) -> Page[DatasetSummary]:
+        latest = (
+            sa.select(
+                t.runs.c.dataset_key,
+                sa.func.count().label("n_runs"),
+                sa.func.max(t.runs.c.started_at).label("last_at"),
+            )
+            .where(t.runs.c.dataset_key.is_not(None))
+            .group_by(t.runs.c.dataset_key)
+            .subquery()
+        )
+        joined = latest.join(
+            t.runs,
+            sa.and_(
+                t.runs.c.dataset_key == latest.c.dataset_key,
+                t.runs.c.started_at == latest.c.last_at,
+            ),
+        )
+        with self._engine.connect() as connection:
+            total = connection.execute(
+                sa.select(sa.func.count()).select_from(latest)
+            ).scalar_one()
+            rows = connection.execute(
+                sa.select(
+                    latest.c.dataset_key,
+                    latest.c.n_runs,
+                    t.runs.c.run_id,
+                    t.runs.c.dataset_name,
+                    t.runs.c.started_at,
+                    t.runs.c.max_severity_rank,
+                )
+                .select_from(joined)
+                .order_by(latest.c.last_at.desc(), latest.c.dataset_key)
+                .limit(limit)
+                .offset(offset)
+            ).all()
+        items = tuple(
+            DatasetSummary(
+                key=key,
+                name=name,
+                n_runs=n_runs,
+                last_run_id=UUID(run_key),
+                last_run_at=datetime.fromisoformat(started),
+                last_max_severity=None if rank is None else _SEVERITIES[rank],
+            )
+            for key, n_runs, run_key, name, started, rank in rows
+        )
+        return Page[DatasetSummary](
+            items=items, total=total, limit=limit, offset=offset
+        )
+
+    def get_header(self, run_id: UUID) -> RunHeader:
+        with self._engine.connect() as connection:
+            text = connection.execute(
+                sa.select(t.runs.c.header_json).where(t.runs.c.run_id == str(run_id))
+            ).scalar_one_or_none()
+        if text is None:
+            raise RunNotFoundError(f"no stored run {run_id}")
+        return RunHeader.model_validate_json(text)
+
+    def finding_counts(self, run_id: UUID) -> tuple[FindingCount, ...]:
+        count = sa.func.count().label("count")
+        with self._engine.connect() as connection:
+            self._require_run(connection, run_id)
+            rows = connection.execute(
+                sa.select(t.findings.c.dimension, t.findings.c.severity_rank, count)
+                .where(t.findings.c.run_id == str(run_id))
+                .group_by(t.findings.c.dimension, t.findings.c.severity_rank)
+                .order_by(t.findings.c.dimension, t.findings.c.severity_rank.desc())
+            ).all()
+        return tuple(
+            FindingCount(
+                dimension=Dimension(dimension),
+                severity=_SEVERITIES[rank],
+                count=n,
+            )
+            for dimension, rank, n in rows
+        )
+
+    def get_column_profile(self, run_id: UUID, column: str) -> ColumnProfile:
+        with self._engine.connect() as connection:
+            text = connection.execute(
+                sa.select(t.profiles.c.profile_json).where(
+                    t.profiles.c.run_id == str(run_id)
+                )
+            ).scalar_one_or_none()
+        if text is None:
+            raise RunNotFoundError(f"no stored run {run_id}")
+        for candidate in json.loads(text)["columns"]:
+            if candidate["name"] == column:
+                return _COLUMN_PROFILE.validate_python(candidate)
+        raise RunNotFoundError(f"run {run_id} has no column {column!r}")
 
     def get_finding(self, run_id: UUID, finding_id: str) -> Finding:
         with self._engine.connect() as connection:

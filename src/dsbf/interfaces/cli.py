@@ -19,7 +19,12 @@ from dsbf.engine import (
     format_plan,
     make_plan,
 )
-from dsbf.interfaces import check_reference, reference, schema_export
+from dsbf.interfaces import (
+    check_reference,
+    openapi_export,
+    reference,
+    schema_export,
+)
 from dsbf.interfaces.runs_cli import runs_app
 from dsbf.library import profile_with
 from dsbf.model import Cost, Dimension, Run
@@ -449,6 +454,26 @@ def _parse_params(assignments: list[str]) -> dict[str, dict[str, Any]]:
     return params
 
 
+@app.command()
+def dashboard(
+    host: str = typer.Option("127.0.0.1", "--host", help="Local address to listen on."),
+    port: int = typer.Option(8765, "--port", min=1, max=65535, help="Port to use."),
+    open_: bool = typer.Option(
+        True, "--open/--no-open", help="Open the browser once the server starts."
+    ),
+) -> None:
+    """Serve the stored runs over the local API (and the dashboard, when built)."""
+    try:
+        from dsbf.service.serve import NotLocalError, serve  # noqa: PLC0415
+    except ImportError as error:
+        _fail(error)
+    typer.echo(f"serving the runs in the store on http://{host}:{port}/ (Ctrl+C stops)")
+    try:
+        serve(host, port, open_browser=open_)
+    except NotLocalError as error:
+        _fail(error)
+
+
 @app.command("plan")
 def plan_command(
     data: Path = typer.Argument(..., help="Dataset to plan for (CSV, Parquet, ...)."),
@@ -532,6 +557,11 @@ def export_schema(
     """Write the JSON Schemas and the Parquet column listing; optionally TypeScript."""
     try:
         expected = schema_export.export_schema(out, check=check)
+        expected[out / openapi_export.OPENAPI_FILE] = openapi_export.openapi_text()
+        if not check:
+            (out / openapi_export.OPENAPI_FILE).write_text(
+                expected[out / openapi_export.OPENAPI_FILE], encoding="utf-8"
+            )
         if types is not None:
             run_text = expected[out / schema_export.SCHEMA_FILE]
             expected[types] = schema_export.generate_typescript(run_text, frontend)
@@ -575,6 +605,9 @@ def check_schema(
         )
         policy = schema_export.compare_policy_with_base(
             base, schema_file.parent / schema_export.POLICY_SCHEMA_FILE
+        )
+        api = openapi_export.compare_openapi_with_base(
+            base, schema_file.parent / openapi_export.OPENAPI_FILE
         )
     except schema_export.SchemaToolError as error:
         typer.echo(f"error: {error}", err=True)
@@ -620,6 +653,18 @@ def check_schema(
         if policy.problems:
             typer.echo(
                 "bump Policy.version in dsbf/model/policy.py, then run "
+                "`dsbf schema export`",
+                err=True,
+            )
+    if api is not None:
+        for change in api.changes:
+            typer.echo(f"openapi: {change}")
+        for problem in api.problems:
+            failed = True
+            typer.echo(f"error: openapi: {problem}", err=True)
+        if api.problems:
+            typer.echo(
+                "bump API_VERSION in dsbf/service/app.py, then run "
                 "`dsbf schema export`",
                 err=True,
             )

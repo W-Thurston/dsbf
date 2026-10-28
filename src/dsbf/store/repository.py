@@ -9,7 +9,19 @@ from uuid import UUID
 import pyarrow as pa
 from pydantic import AwareDatetime, Field
 
-from dsbf.model import CheckResult, Dimension, Finding, Run, Severity
+from dsbf.model import (
+    CheckResult,
+    ColumnProfile,
+    DatasetManifest,
+    Dimension,
+    Finding,
+    Note,
+    PlanManifest,
+    PolicyOutcome,
+    Run,
+    RunHealth,
+    Severity,
+)
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
 
@@ -51,6 +63,42 @@ class RunSummary(Contract):
     max_severity: Severity | None = Field(
         description="The highest severity among the findings; null when there are none."
     )
+
+
+class DatasetSummary(Contract):
+    """A dataset's history in brief: how many runs, and the latest."""
+
+    key: str
+    name: str = Field(description="The name the latest run gave the dataset.")
+    n_runs: int = Field(ge=1)
+    last_run_id: UUID
+    last_run_at: AwareDatetime
+    last_max_severity: Severity | None = Field(
+        description="The highest severity in the latest run; null when it has none."
+    )
+
+
+class RunHeader(Contract):
+    """A stored run without its results and profile: what identifies it and how it
+    went."""
+
+    schema_version: str
+    run_id: UUID
+    started_at: AwareDatetime
+    finished_at: AwareDatetime
+    dataset: DatasetManifest
+    plan: PlanManifest
+    health: RunHealth
+    notes: tuple[Note, ...] = ()
+    policy: PolicyOutcome | None = None
+
+
+class FindingCount(Contract):
+    """How many findings of one dimension and severity a run has."""
+
+    dimension: Dimension
+    severity: Severity
+    count: int = Field(ge=1)
 
 
 SNAPSHOT_REF = "snapshot"
@@ -118,6 +166,32 @@ class RunRepository(Protocol):
         self, *, dataset_key: str | None = None, limit: int = 50, offset: int = 0
     ) -> Page[RunSummary]:
         """Runs, newest first, of one dataset or all."""
+
+    def list_datasets(
+        self, *, limit: int = 50, offset: int = 0
+    ) -> Page[DatasetSummary]:
+        """Datasets with at least one run, the most recently run first."""
+
+    def get_header(self, run_id: UUID) -> RunHeader:
+        """A run's identity, health and policy, read without its results.
+
+        Raises:
+            RunNotFoundError: no such run.
+        """
+
+    def finding_counts(self, run_id: UUID) -> tuple[FindingCount, ...]:
+        """A run's finding counts by dimension and severity, in that order.
+
+        Raises:
+            RunNotFoundError: no such run.
+        """
+
+    def get_column_profile(self, run_id: UUID, column: str) -> ColumnProfile:
+        """One column's profile, read without validating the others.
+
+        Raises:
+            RunNotFoundError: no such run, or the run has no such column.
+        """
 
     def get_result(self, run_id: UUID, check_id: str) -> CheckResult:
         """One check's result, read without the rest of the run."""
@@ -207,10 +281,13 @@ class RunRepository(Protocol):
 
 
 __all__ = [
+    "DatasetSummary",
+    "FindingCount",
     "FindingOccurrence",
     "GcResult",
     "Page",
     "RunExistsError",
+    "RunHeader",
     "RunNotFoundError",
     "RunRepository",
     "SNAPSHOT_REF",

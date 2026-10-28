@@ -1,0 +1,5083 @@
+{
+  "components": {
+    "schemas": {
+      "Action": {
+        "additionalProperties": false,
+        "description": "A step a person or an agent can take, in a form a program can read.",
+        "properties": {
+          "action": {
+            "description": "The verb, for example `transform`.",
+            "minLength": 1,
+            "title": "Action",
+            "type": "string"
+          },
+          "columns": {
+            "default": [],
+            "description": "The columns the step applies to; empty for the dataset.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "condition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the step applies, in words.",
+            "title": "Condition"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the step does, in words.",
+            "title": "Detail"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For example `log1p`.",
+            "title": "Method"
+          },
+          "params": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Anything else the step needs, for example `from_dtype`.",
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action",
+          "columns",
+          "method",
+          "condition",
+          "detail",
+          "params"
+        ],
+        "title": "Action",
+        "type": "object"
+      },
+      "ActionKind": {
+        "description": "What a rule does when it matches.",
+        "enum": [
+          "annotate",
+          "warn",
+          "fail",
+          "notify"
+        ],
+        "title": "ActionKind",
+        "type": "string"
+      },
+      "ArtifactRef": {
+        "additionalProperties": false,
+        "description": "Where a check's bulky data is and what it is; the data is not in the run.",
+        "properties": {
+          "bytes": {
+            "description": "Size of the file the artifact is stored as.",
+            "minimum": 0.0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "`application/vnd.apache.parquet` for a table, `application/json` for a JSON value.",
+            "title": "Media Type",
+            "type": "string"
+          },
+          "ref": {
+            "description": "`<check_id>/<name>`, unique within a run; `Run.artifact(ref)` returns the payload.",
+            "minLength": 1,
+            "title": "Ref",
+            "type": "string"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows of a table; null for a JSON value.",
+            "title": "Rows"
+          }
+        },
+        "required": [
+          "ref",
+          "media_type",
+          "rows",
+          "bytes",
+          "description"
+        ],
+        "title": "ArtifactRef",
+        "type": "object"
+      },
+      "ArtifactRows": {
+        "additionalProperties": false,
+        "description": "A range of rows of a table artifact (or of the data snapshot).",
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "rows": {
+            "description": "Row-major values; NaN and infinity are null, as JSON has neither.",
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For the snapshot, how its rows were drawn; null otherwise."
+          },
+          "total": {
+            "description": "Rows in the whole table.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ref",
+          "columns",
+          "rows",
+          "total",
+          "offset",
+          "limit",
+          "sampling"
+        ],
+        "title": "ArtifactRows",
+        "type": "object"
+      },
+      "ArtifactValue": {
+        "additionalProperties": false,
+        "description": "A JSON artifact.",
+        "properties": {
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "ref",
+          "value"
+        ],
+        "title": "ArtifactValue",
+        "type": "object"
+      },
+      "AssumptionCheck": {
+        "additionalProperties": false,
+        "description": "Whether a statistical assumption behind a result held.",
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "satisfied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when the assumption could not be assessed.",
+            "title": "Satisfied"
+          }
+        },
+        "required": [
+          "name",
+          "satisfied",
+          "method",
+          "detail"
+        ],
+        "title": "AssumptionCheck",
+        "type": "object"
+      },
+      "BooleanProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "entropy_bits": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.",
+            "title": "Entropy Bits"
+          },
+          "false_count": {
+            "minimum": 0.0,
+            "title": "False Count",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "boolean",
+            "default": "boolean",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "true_count": {
+            "minimum": 0.0,
+            "title": "True Count",
+            "type": "integer"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type",
+          "true_count",
+          "false_count",
+          "entropy_bits"
+        ],
+        "title": "BooleanProfile",
+        "type": "object"
+      },
+      "CategoricalProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "empty_strings": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Empty Strings",
+            "type": "integer"
+          },
+          "entropy_bits": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.",
+            "title": "Entropy Bits"
+          },
+          "lengths": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LengthStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mode_count": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows holding the most frequent non-null value, whether or not it is listed in `top_values`: a string over 256 characters never is. None when the column has no value.",
+            "title": "Mode Count"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "categorical",
+            "default": "categorical",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "shape": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TextShape"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present for string columns only."
+          },
+          "top_values": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValueCount"
+            },
+            "title": "Top Values",
+            "type": "array"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type",
+          "top_values",
+          "mode_count",
+          "lengths",
+          "empty_strings",
+          "shape",
+          "entropy_bits"
+        ],
+        "title": "CategoricalProfile",
+        "type": "object"
+      },
+      "CheckResult": {
+        "additionalProperties": false,
+        "description": "What running one check produced.",
+        "properties": {
+          "artifacts": {
+            "default": [],
+            "description": "Bulky data the check attached; the payloads are not in the run's JSON.",
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRef"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "check_id": {
+            "minLength": 1,
+            "title": "Check Id",
+            "type": "string"
+          },
+          "check_version": {
+            "minLength": 1,
+            "title": "Check Version",
+            "type": "string"
+          },
+          "columns": {
+            "default": [],
+            "description": "The eligible columns the check analysed, after exclusions. Empty for a check about the dataset as a whole, and unless the status is `ok`.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "findings": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "non_finite_outputs": {
+            "default": [],
+            "description": "Keys of `output` holding a NaN, infinite or NaT value, now null.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Non Finite Outputs",
+            "type": "array"
+          },
+          "notes": {
+            "default": [],
+            "description": "Always present when the status is not `ok`.",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's own output; bulky parts live elsewhere.",
+            "title": "Output"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "The resolved parameters, for reproducibility.",
+            "title": "Params",
+            "type": "object"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/Timing"
+          }
+        },
+        "required": [
+          "check_id",
+          "check_version",
+          "status",
+          "notes",
+          "findings",
+          "output",
+          "non_finite_outputs",
+          "columns",
+          "artifacts",
+          "timing",
+          "params"
+        ],
+        "title": "CheckResult",
+        "type": "object"
+      },
+      "CheckStatus": {
+        "description": "How one check's execution ended. Every status but `ok` comes with a note.",
+        "enum": [
+          "ok",
+          "not_applicable",
+          "unavailable",
+          "skipped",
+          "error",
+          "timeout"
+        ],
+        "title": "CheckStatus",
+        "type": "string"
+      },
+      "ColumnCounts": {
+        "additionalProperties": false,
+        "description": "How many rows a column has, how many are null, and how many values differ.",
+        "properties": {
+          "distinct": {
+            "description": "Distinct non-null values.",
+            "minimum": 0.0,
+            "title": "Distinct",
+            "type": "integer"
+          },
+          "distinct_exact": {
+            "default": true,
+            "description": "False when `distinct` is an estimate.",
+            "title": "Distinct Exact",
+            "type": "boolean"
+          },
+          "nulls": {
+            "minimum": 0.0,
+            "title": "Nulls",
+            "type": "integer"
+          },
+          "rows": {
+            "description": "Rows profiled, after any sampling.",
+            "minimum": 0.0,
+            "title": "Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rows",
+          "nulls",
+          "distinct",
+          "distinct_exact"
+        ],
+        "title": "ColumnCounts",
+        "type": "object"
+      },
+      "Confidence": {
+        "description": "How firmly a check stands behind a finding; each check caps its own.",
+        "enum": [
+          "low",
+          "moderate",
+          "high"
+        ],
+        "title": "Confidence",
+        "type": "string"
+      },
+      "ConfidenceComparison": {
+        "additionalProperties": false,
+        "description": "Compare a finding's confidence, for example ``>=moderate``.",
+        "properties": {
+          "op": {
+            "$ref": "#/components/schemas/Operator",
+            "default": "=="
+          },
+          "value": {
+            "$ref": "#/components/schemas/Confidence"
+          }
+        },
+        "required": [
+          "op",
+          "value"
+        ],
+        "title": "ConfidenceComparison",
+        "type": "object"
+      },
+      "DatasetManifest": {
+        "additionalProperties": false,
+        "description": "The identity of the data a run looked at.",
+        "properties": {
+          "fingerprint": {
+            "description": "A content hash: equal data, equal fingerprint.",
+            "minLength": 1,
+            "title": "Fingerprint",
+            "type": "string"
+          },
+          "key": {
+            "default": "",
+            "description": "Groups the runs of one dataset into a history: the dataset the run was given, else the source's location. Empty for an in-memory frame with neither.",
+            "title": "Key",
+            "type": "string"
+          },
+          "modality": {
+            "const": "tabular",
+            "default": "tabular",
+            "title": "Modality",
+            "type": "string"
+          },
+          "n_columns": {
+            "minimum": 0.0,
+            "title": "N Columns",
+            "type": "integer"
+          },
+          "n_rows": {
+            "description": "Rows in the source, before any sampling.",
+            "minimum": 0.0,
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Absent when the whole dataset was used."
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceRef"
+          }
+        },
+        "required": [
+          "name",
+          "modality",
+          "source",
+          "key",
+          "fingerprint",
+          "n_rows",
+          "n_columns",
+          "sampling"
+        ],
+        "title": "DatasetManifest",
+        "type": "object"
+      },
+      "DatasetSummary": {
+        "additionalProperties": false,
+        "description": "A dataset's history in brief: how many runs, and the latest.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "last_max_severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The highest severity in the latest run; null when it has none."
+          },
+          "last_run_at": {
+            "format": "date-time",
+            "title": "Last Run At",
+            "type": "string"
+          },
+          "last_run_id": {
+            "format": "uuid",
+            "title": "Last Run Id",
+            "type": "string"
+          },
+          "n_runs": {
+            "minimum": 1.0,
+            "title": "N Runs",
+            "type": "integer"
+          },
+          "name": {
+            "description": "The name the latest run gave the dataset.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "n_runs",
+          "last_run_id",
+          "last_run_at",
+          "last_max_severity"
+        ],
+        "title": "DatasetSummary",
+        "type": "object"
+      },
+      "DatetimeProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "distinct_hours": {
+            "anyOf": [
+              {
+                "maximum": 24.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Distinct hours of the day.",
+            "title": "Distinct Hours"
+          },
+          "distinct_months": {
+            "anyOf": [
+              {
+                "maximum": 12.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Distinct months of the year.",
+            "title": "Distinct Months"
+          },
+          "distinct_weekdays": {
+            "anyOf": [
+              {
+                "maximum": 7.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Distinct days of the week.",
+            "title": "Distinct Weekdays"
+          },
+          "distinct_years": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distinct Years"
+          },
+          "epoch_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "s",
+                  "ms"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The unit of Unix timestamps; None otherwise.",
+            "title": "Epoch Unit"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The strptime format the text values were read with; None for a date or datetime column, and for Unix timestamps.",
+            "title": "Format"
+          },
+          "inferred_frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An offset alias such as `D`, when the spacing is regular.",
+            "title": "Inferred Frequency"
+          },
+          "largest_gap_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Largest Gap Seconds"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "n_gaps": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Gaps"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "datetime",
+            "default": "datetime",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "time_of_day": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Some instant is not at midnight (local time of a time zone); None when there are no instants.",
+            "title": "Time Of Day"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          },
+          "unparsed": {
+            "default": 0,
+            "description": "Non-null values that did not read as an instant: text outside `format`, or a timestamp out of range. 0 for a date or datetime column.",
+            "minimum": 0.0,
+            "title": "Unparsed",
+            "type": "integer"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type",
+          "min",
+          "max",
+          "timezone",
+          "inferred_frequency",
+          "n_gaps",
+          "largest_gap_seconds",
+          "format",
+          "epoch_unit",
+          "unparsed",
+          "time_of_day",
+          "distinct_years",
+          "distinct_months",
+          "distinct_weekdays",
+          "distinct_hours"
+        ],
+        "title": "DatetimeProfile",
+        "type": "object"
+      },
+      "Dimension": {
+        "description": "The aspect of the data a finding speaks to.\n\nThe first five are the quality dimensions; the rest describe the shape of\nthe data.",
+        "enum": [
+          "completeness",
+          "validity",
+          "usability",
+          "redundancy",
+          "leakage",
+          "distribution",
+          "relationship",
+          "temporal"
+        ],
+        "title": "Dimension",
+        "type": "string"
+      },
+      "Evidence": {
+        "additionalProperties": false,
+        "description": "The numbers behind a finding: what was measured, on how much data, and how.",
+        "properties": {
+          "assumptions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AssumptionCheck"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "details_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pointer to bulky evidence, fetched on demand.",
+            "title": "Details Ref"
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "method": {
+            "description": "For example `spearman_r` or `vif`.",
+            "minLength": 1,
+            "title": "Method",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "n_total": {
+            "minimum": 0.0,
+            "title": "N Total",
+            "type": "integer"
+          },
+          "n_used": {
+            "minimum": 0.0,
+            "title": "N Used",
+            "type": "integer"
+          },
+          "non_finite_metrics": {
+            "default": [],
+            "description": "Metrics whose value was NaN, infinite or NaT, so they are null in `metrics`.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Non Finite Metrics",
+            "type": "array"
+          },
+          "sampled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "metrics",
+          "non_finite_metrics",
+          "n_used",
+          "n_total",
+          "method",
+          "assumptions",
+          "interval",
+          "sampled",
+          "details_ref"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      },
+      "Finding": {
+        "additionalProperties": false,
+        "description": "One statement about the data: what, where, how much, and why to believe it.",
+        "properties": {
+          "check_id": {
+            "minLength": 1,
+            "title": "Check Id",
+            "type": "string"
+          },
+          "check_version": {
+            "minLength": 1,
+            "title": "Check Version",
+            "type": "string"
+          },
+          "code": {
+            "description": "Machine-readable kind, for example `high_null_rate`.",
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "dimension": {
+            "$ref": "#/components/schemas/Dimension"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/Evidence"
+          },
+          "guidance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Guidance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "description": "Stable across runs for the same check, subject and code.",
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "message": {
+            "description": "Self-contained, with the observed values.",
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/Subject"
+          },
+          "tags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "check_id",
+          "check_version",
+          "code",
+          "subject",
+          "dimension",
+          "severity",
+          "confidence",
+          "title",
+          "message",
+          "evidence",
+          "guidance",
+          "tags"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "FindingChange": {
+        "additionalProperties": false,
+        "description": "A finding present in both runs whose severity or metrics changed.",
+        "properties": {
+          "base_severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "head_severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "metrics": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MetricChange"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "check_id",
+          "title",
+          "base_severity",
+          "head_severity",
+          "metrics"
+        ],
+        "title": "FindingChange",
+        "type": "object"
+      },
+      "FindingCount": {
+        "additionalProperties": false,
+        "description": "How many findings of one dimension and severity a run has.",
+        "properties": {
+          "count": {
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "dimension": {
+            "$ref": "#/components/schemas/Dimension"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          }
+        },
+        "required": [
+          "dimension",
+          "severity",
+          "count"
+        ],
+        "title": "FindingCount",
+        "type": "object"
+      },
+      "FindingOccurrence": {
+        "additionalProperties": false,
+        "description": "A finding as one run of a dataset recorded it.",
+        "properties": {
+          "finding": {
+            "$ref": "#/components/schemas/Finding"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "started_at",
+          "finding"
+        ],
+        "title": "FindingOccurrence",
+        "type": "object"
+      },
+      "Guidance": {
+        "additionalProperties": false,
+        "description": "What to do about a finding, from one point of view.",
+        "properties": {
+          "actions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "phase": {
+            "description": "`eda` describes the data as it is; `ml` says what to do before modelling.",
+            "enum": [
+              "eda",
+              "ml"
+            ],
+            "title": "Phase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase",
+          "actions"
+        ],
+        "title": "Guidance",
+        "type": "object"
+      },
+      "HealthIssue": {
+        "additionalProperties": false,
+        "description": "One check that did not complete normally, and why.",
+        "properties": {
+          "blocked_by": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Blocked By",
+            "type": "array"
+          },
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "message",
+          "hint",
+          "blocked_by"
+        ],
+        "title": "HealthIssue",
+        "type": "object"
+      },
+      "Histogram": {
+        "additionalProperties": false,
+        "description": "Equal-width bins over a numeric column, with the rule that chose them.",
+        "properties": {
+          "counts": {
+            "description": "Values per bin; the last is closed.",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "array"
+          },
+          "edges": {
+            "description": "One more edge than bins.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "rule": {
+            "description": "The rule that proposed the number of bins; a count over the profile's bin limit is clipped to it.",
+            "enum": [
+              "fd",
+              "sturges",
+              "scott",
+              "sqrt",
+              "fixed"
+            ],
+            "title": "Rule",
+            "type": "string"
+          }
+        },
+        "required": [
+          "edges",
+          "counts",
+          "rule"
+        ],
+        "title": "Histogram",
+        "type": "object"
+      },
+      "IdentifierProfile": {
+        "additionalProperties": false,
+        "description": "A column that names rows (for example a key); only the common fields apply.",
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "identifier",
+            "default": "identifier",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type"
+        ],
+        "title": "IdentifierProfile",
+        "type": "object"
+      },
+      "Interval": {
+        "additionalProperties": false,
+        "description": "A confidence interval for a statistic.",
+        "properties": {
+          "high": {
+            "title": "High",
+            "type": "number"
+          },
+          "level": {
+            "description": "Coverage, for example 0.95.",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Level",
+            "type": "number"
+          },
+          "low": {
+            "title": "Low",
+            "type": "number"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          }
+        },
+        "required": [
+          "low",
+          "high",
+          "level",
+          "method"
+        ],
+        "title": "Interval",
+        "type": "object"
+      },
+      "InvalidField": {
+        "description": "One request field that failed validation.",
+        "properties": {
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "message"
+        ],
+        "title": "InvalidField",
+        "type": "object"
+      },
+      "LengthStats": {
+        "additionalProperties": false,
+        "description": "Lengths, in characters, of a column's non-null strings.",
+        "properties": {
+          "max": {
+            "minimum": 0.0,
+            "title": "Max",
+            "type": "integer"
+          },
+          "mean": {
+            "minimum": 0.0,
+            "title": "Mean",
+            "type": "number"
+          },
+          "min": {
+            "minimum": 0.0,
+            "title": "Min",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "max",
+          "mean"
+        ],
+        "title": "LengthStats",
+        "type": "object"
+      },
+      "Matcher": {
+        "additionalProperties": false,
+        "description": "The ``when`` of a rule: every key given must hold, and at least one is needed.\n\nFinding keys select findings; ``health.status`` selects checks that ended in that\nstatus and may be narrowed with ``check`` only. A bare value means equality;\n``severity``, ``confidence`` and ``metric`` values may carry an operator\n(``\">=error\"``, ``\">0.3\"``), which must be quoted in YAML.",
+        "properties": {
+          "check": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The id of the check concerned.",
+            "title": "Check"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A finding's machine-readable kind, for example `high_null_rate`.",
+            "title": "Code"
+          },
+          "column": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A column the finding's subject names; a pair matches on either.",
+            "title": "Column"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConfidenceComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dimension": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Dimension"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "health.status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only checks that ended in this status."
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/MetricComparison"
+                },
+                "minProperties": 1,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Evidence metric name to comparison; every entry must hold.",
+            "title": "Metric"
+          },
+          "new_since": {
+            "anyOf": [
+              {
+                "const": "previous_run",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only findings absent from the previous run; needs one to compare.",
+            "title": "New Since"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeverityComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A tag the finding carries.",
+            "title": "Tag"
+          }
+        },
+        "required": [
+          "dimension",
+          "code",
+          "check",
+          "column",
+          "tag",
+          "severity",
+          "confidence",
+          "metric",
+          "new_since",
+          "health.status"
+        ],
+        "title": "Matcher",
+        "type": "object"
+      },
+      "MetricChange": {
+        "additionalProperties": false,
+        "description": "A metric of a finding that moved beyond the tolerance.",
+        "properties": {
+          "base": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base"
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Head"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "base",
+          "head"
+        ],
+        "title": "MetricChange",
+        "type": "object"
+      },
+      "MetricComparison": {
+        "additionalProperties": false,
+        "description": "Compare one number in a finding's evidence, for example ``>0.3``.",
+        "properties": {
+          "op": {
+            "$ref": "#/components/schemas/Operator",
+            "default": "=="
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "op",
+          "value"
+        ],
+        "title": "MetricComparison",
+        "type": "object"
+      },
+      "Note": {
+        "additionalProperties": false,
+        "description": "An operational message: why a check was skipped, failed or degraded.",
+        "properties": {
+          "blocked_by": {
+            "default": [],
+            "description": "The checks whose outcome caused a skip.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Blocked By",
+            "type": "array"
+          },
+          "code": {
+            "description": "Machine-readable, for example `dependency_failed`.",
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How many times it happened, for a note that can repeat, such as a `python_warning`.",
+            "title": "Count"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Technical detail, for example a traceback summary.",
+            "title": "Detail"
+          },
+          "exception_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exception Type"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the reader can do about it.",
+            "title": "Hint"
+          },
+          "message": {
+            "description": "What happened, in a sentence.",
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "default": "info"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "severity",
+          "hint",
+          "blocked_by",
+          "exception_type",
+          "detail",
+          "count"
+        ],
+        "title": "Note",
+        "type": "object"
+      },
+      "NumericProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "histogram": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Histogram"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "non_finite": {
+            "default": 0,
+            "description": "NaN and infinite values, counted apart from nulls.",
+            "minimum": 0.0,
+            "title": "Non Finite",
+            "type": "integer"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "numeric",
+            "default": "numeric",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "stats": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NumericStats"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "None when there is no finite value to summarise."
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          },
+          "zeros": {
+            "minimum": 0.0,
+            "title": "Zeros",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type",
+          "zeros",
+          "non_finite",
+          "stats",
+          "histogram"
+        ],
+        "title": "NumericProfile",
+        "type": "object"
+      },
+      "NumericStats": {
+        "additionalProperties": false,
+        "description": "Summary statistics of a numeric column's finite, non-null values.",
+        "properties": {
+          "kurtosis": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kurtosis"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "non_finite_stats": {
+            "default": [],
+            "description": "Statistics that were NaN or infinite, so they are null here.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Non Finite Stats",
+            "type": "array"
+          },
+          "quantile_method": {
+            "anyOf": [
+              {
+                "enum": [
+                  "exact",
+                  "tdigest"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantile Method"
+          },
+          "quantiles": {
+            "default": [],
+            "description": "In increasing order of `p`.",
+            "items": {
+              "$ref": "#/components/schemas/Quantile"
+            },
+            "title": "Quantiles",
+            "type": "array"
+          },
+          "skewness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skewness"
+          },
+          "std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Std"
+          }
+        },
+        "required": [
+          "min",
+          "max",
+          "mean",
+          "std",
+          "skewness",
+          "kurtosis",
+          "non_finite_stats",
+          "quantiles",
+          "quantile_method"
+        ],
+        "title": "NumericStats",
+        "type": "object"
+      },
+      "Operator": {
+        "description": "How a comparison relates the observed value to the one in the rule.",
+        "enum": [
+          "==",
+          "!=",
+          ">=",
+          ">",
+          "<=",
+          "<"
+        ],
+        "title": "Operator",
+        "type": "string"
+      },
+      "Page_DatasetSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[DatasetSummary]",
+        "type": "object"
+      },
+      "Page_FindingOccurrence_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOccurrence"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[FindingOccurrence]",
+        "type": "object"
+      },
+      "Page_Finding_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[Finding]",
+        "type": "object"
+      },
+      "Page_RunSummary_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[RunSummary]",
+        "type": "object"
+      },
+      "PatternCount": {
+        "additionalProperties": false,
+        "description": "A pattern signature and how many values have it.",
+        "properties": {
+          "count": {
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "pattern": {
+            "description": "Each run of uppercase letters is `A`, of lowercase letters `a` and of digits `9`; other characters stand for themselves.",
+            "title": "Pattern",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern",
+          "count"
+        ],
+        "title": "PatternCount",
+        "type": "object"
+      },
+      "PlanManifest": {
+        "additionalProperties": false,
+        "description": "The checks a run was asked to perform, and what produced the plan.",
+        "properties": {
+          "checks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PlannedCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The depth preset, if any.",
+            "title": "Depth"
+          },
+          "dsbf_version": {
+            "minLength": 1,
+            "title": "Dsbf Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dsbf_version",
+          "depth",
+          "checks"
+        ],
+        "title": "PlanManifest",
+        "type": "object"
+      },
+      "PlannedCheck": {
+        "additionalProperties": false,
+        "description": "One check the plan includes, with the parameters it will run under.",
+        "properties": {
+          "check_id": {
+            "minLength": 1,
+            "title": "Check Id",
+            "type": "string"
+          },
+          "check_version": {
+            "minLength": 1,
+            "title": "Check Version",
+            "type": "string"
+          },
+          "depends_on": {
+            "default": [],
+            "description": "The planned checks whose results this one needs.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "pack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack"
+          },
+          "params": {
+            "additionalProperties": true,
+            "description": "The resolved parameters.",
+            "title": "Params",
+            "type": "object"
+          }
+        },
+        "required": [
+          "check_id",
+          "check_version",
+          "pack",
+          "params",
+          "depends_on"
+        ],
+        "title": "PlannedCheck",
+        "type": "object"
+      },
+      "PolicyAction": {
+        "additionalProperties": false,
+        "description": "One step a matched rule takes. Only `fail` affects the exit code.",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ActionKind"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where `notify` sends it, as `scheme:destination`.",
+            "title": "Target"
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "title": "PolicyAction",
+        "type": "object"
+      },
+      "PolicyOutcome": {
+        "additionalProperties": false,
+        "description": "Why a pipeline was or was not failed: every rule and what it matched.",
+        "properties": {
+          "failed": {
+            "description": "A triggered rule has a `fail` action.",
+            "title": "Failed",
+            "type": "boolean"
+          },
+          "rules": {
+            "description": "One entry per policy rule, in policy order, fired or not.",
+            "items": {
+              "$ref": "#/components/schemas/RuleOutcome"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rules",
+          "failed"
+        ],
+        "title": "PolicyOutcome",
+        "type": "object"
+      },
+      "Problem": {
+        "description": "What went wrong, in the shape of RFC 9457.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "instance": {
+            "title": "Instance",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "about:blank",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "status",
+          "detail",
+          "instance"
+        ],
+        "title": "Problem",
+        "type": "object"
+      },
+      "Quantile": {
+        "additionalProperties": false,
+        "description": "The value below which a share ``p`` of the non-null values fall.",
+        "properties": {
+          "p": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P",
+            "type": "number"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "p",
+          "value"
+        ],
+        "title": "Quantile",
+        "type": "object"
+      },
+      "Rule": {
+        "additionalProperties": false,
+        "description": "When findings or checks match, take these actions.",
+        "properties": {
+          "name": {
+            "description": "Unique within the policy.",
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "then": {
+            "default": [
+              {
+                "kind": "annotate"
+              }
+            ],
+            "description": "One action or a list. Written `fail`, `{notify: scheme:destination}` or a list of those; stored as `{kind, target}` entries.",
+            "items": {
+              "$ref": "#/components/schemas/PolicyAction"
+            },
+            "minItems": 1,
+            "title": "Then",
+            "type": "array"
+          },
+          "when": {
+            "$ref": "#/components/schemas/Matcher"
+          }
+        },
+        "required": [
+          "name",
+          "when",
+          "then"
+        ],
+        "title": "Rule",
+        "type": "object"
+      },
+      "RuleOutcome": {
+        "additionalProperties": false,
+        "description": "What one rule matched in a run.",
+        "properties": {
+          "check_ids": {
+            "default": [],
+            "description": "The checks a health rule matched.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Check Ids",
+            "type": "array"
+          },
+          "finding_ids": {
+            "default": [],
+            "description": "The findings a finding rule matched.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Finding Ids",
+            "type": "array"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/Rule"
+          }
+        },
+        "required": [
+          "rule",
+          "finding_ids",
+          "check_ids"
+        ],
+        "title": "RuleOutcome",
+        "type": "object"
+      },
+      "RunDiff": {
+        "additionalProperties": false,
+        "description": "Findings and check statuses of a head run against a base run.",
+        "properties": {
+          "base_run_id": {
+            "title": "Base Run Id",
+            "type": "string"
+          },
+          "changed": {
+            "items": {
+              "$ref": "#/components/schemas/FindingChange"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "head_run_id": {
+            "title": "Head Run Id",
+            "type": "string"
+          },
+          "new": {
+            "description": "In the head run only.",
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "New",
+            "type": "array"
+          },
+          "resolved": {
+            "description": "In the base run only.",
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Resolved",
+            "type": "array"
+          },
+          "same_dataset": {
+            "description": "False when the runs have different dataset keys, or either has none; the other fields still describe the differences.",
+            "title": "Same Dataset",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "default": "1.0.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status_changes": {
+            "items": {
+              "$ref": "#/components/schemas/StatusChange"
+            },
+            "title": "Status Changes",
+            "type": "array"
+          },
+          "tolerance": {
+            "description": "Relative change a numeric metric must exceed to count as changed.",
+            "title": "Tolerance",
+            "type": "number"
+          }
+        },
+        "required": [
+          "schema_version",
+          "base_run_id",
+          "head_run_id",
+          "same_dataset",
+          "tolerance",
+          "new",
+          "resolved",
+          "changed",
+          "status_changes"
+        ],
+        "title": "RunDiff",
+        "type": "object"
+      },
+      "RunHeader": {
+        "additionalProperties": false,
+        "description": "A stored run without its results and profile: what identifies it and how it\nwent.",
+        "properties": {
+          "dataset": {
+            "$ref": "#/components/schemas/DatasetManifest"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "health": {
+            "$ref": "#/components/schemas/RunHealth"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanManifest"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "run_id",
+          "started_at",
+          "finished_at",
+          "dataset",
+          "plan",
+          "health",
+          "notes",
+          "policy"
+        ],
+        "title": "RunHeader",
+        "type": "object"
+      },
+      "RunHealth": {
+        "additionalProperties": false,
+        "description": "Counts and reasons by status, so a failure is never found by reading logs.",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/StatusCounts"
+          },
+          "findings_at_warn_or_above": {
+            "minimum": 0.0,
+            "title": "Findings At Warn Or Above",
+            "type": "integer"
+          },
+          "issues": {
+            "default": [],
+            "description": "Checks that errored, timed out, were skipped or were unavailable.",
+            "items": {
+              "$ref": "#/components/schemas/HealthIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          }
+        },
+        "required": [
+          "counts",
+          "issues",
+          "findings_at_warn_or_above"
+        ],
+        "title": "RunHealth",
+        "type": "object"
+      },
+      "RunOverview": {
+        "additionalProperties": false,
+        "description": "A run without its results: what it is, how it went and what it found.",
+        "properties": {
+          "artifacts": {
+            "description": "The files stored for the run, the data snapshot included.",
+            "items": {
+              "$ref": "#/components/schemas/StoredArtifact"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "finding_counts": {
+            "description": "Findings by dimension, then severity (highest first).",
+            "items": {
+              "$ref": "#/components/schemas/FindingCount"
+            },
+            "title": "Finding Counts",
+            "type": "array"
+          },
+          "header": {
+            "$ref": "#/components/schemas/RunHeader"
+          },
+          "n_findings": {
+            "minimum": 0.0,
+            "title": "N Findings",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "header",
+          "finding_counts",
+          "n_findings",
+          "artifacts"
+        ],
+        "title": "RunOverview",
+        "type": "object"
+      },
+      "RunSummary": {
+        "additionalProperties": false,
+        "description": "A stored run without its results.",
+        "properties": {
+          "dataset_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The dataset the run belongs to; null for an ungrouped run.",
+            "title": "Dataset Key"
+          },
+          "dataset_name": {
+            "title": "Dataset Name",
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "max_severity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Severity"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The highest severity among the findings; null when there are none."
+          },
+          "n_columns": {
+            "title": "N Columns",
+            "type": "integer"
+          },
+          "n_findings": {
+            "title": "N Findings",
+            "type": "integer"
+          },
+          "n_rows": {
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "dataset_key",
+          "dataset_name",
+          "started_at",
+          "finished_at",
+          "n_rows",
+          "n_columns",
+          "n_findings",
+          "max_severity"
+        ],
+        "title": "RunSummary",
+        "type": "object"
+      },
+      "SamplingInfo": {
+        "additionalProperties": false,
+        "description": "How a sample was drawn from the data. No sampling is the absence of this.",
+        "properties": {
+          "original_rows": {
+            "minimum": 0.0,
+            "title": "Original Rows",
+            "type": "integer"
+          },
+          "sampled_rows": {
+            "minimum": 0.0,
+            "title": "Sampled Rows",
+            "type": "integer"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "strategy": {
+            "enum": [
+              "head",
+              "random",
+              "stratified"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          },
+          "stratify_by": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Stratify By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strategy",
+          "original_rows",
+          "sampled_rows",
+          "seed",
+          "stratify_by"
+        ],
+        "title": "SamplingInfo",
+        "type": "object"
+      },
+      "Severity": {
+        "description": "How much a finding matters, from informational to blocking.",
+        "enum": [
+          "info",
+          "notice",
+          "warn",
+          "error"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "SeverityComparison": {
+        "additionalProperties": false,
+        "description": "Compare a finding's severity, for example ``>=error``.",
+        "properties": {
+          "op": {
+            "$ref": "#/components/schemas/Operator",
+            "default": "=="
+          },
+          "value": {
+            "$ref": "#/components/schemas/Severity"
+          }
+        },
+        "required": [
+          "op",
+          "value"
+        ],
+        "title": "SeverityComparison",
+        "type": "object"
+      },
+      "SourceRef": {
+        "additionalProperties": false,
+        "description": "Where the data came from. An in-memory frame has no location or format.",
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For example `csv`.",
+            "title": "Format"
+          },
+          "kind": {
+            "enum": [
+              "dataframe",
+              "file",
+              "glob",
+              "sql",
+              "table"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A path, glob, URL or table name.",
+            "title": "Location"
+          }
+        },
+        "required": [
+          "kind",
+          "location",
+          "format"
+        ],
+        "title": "SourceRef",
+        "type": "object"
+      },
+      "StatusChange": {
+        "additionalProperties": false,
+        "description": "A check whose status differs between the runs; null when it ran in one only.",
+        "properties": {
+          "base": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "head": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "check_id",
+          "base",
+          "head"
+        ],
+        "title": "StatusChange",
+        "type": "object"
+      },
+      "StatusCounts": {
+        "additionalProperties": false,
+        "description": "How many checks ended in each status.",
+        "properties": {
+          "error": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Error",
+            "type": "integer"
+          },
+          "not_applicable": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Not Applicable",
+            "type": "integer"
+          },
+          "ok": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Ok",
+            "type": "integer"
+          },
+          "skipped": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Skipped",
+            "type": "integer"
+          },
+          "timeout": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Timeout",
+            "type": "integer"
+          },
+          "unavailable": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Unavailable",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ok",
+          "not_applicable",
+          "unavailable",
+          "skipped",
+          "error",
+          "timeout"
+        ],
+        "title": "StatusCounts",
+        "type": "object"
+      },
+      "StoredArtifact": {
+        "additionalProperties": false,
+        "description": "One stored file of a run: an artifact, or the data snapshot.",
+        "properties": {
+          "bytes": {
+            "minimum": 0.0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows of a table; null for a JSON value.",
+            "title": "Rows"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For the snapshot, how its rows were drawn from the analysed data; null when it holds all of them."
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "media_type",
+          "rows",
+          "bytes",
+          "sha256",
+          "sampling"
+        ],
+        "title": "StoredArtifact",
+        "type": "object"
+      },
+      "Subject": {
+        "additionalProperties": false,
+        "description": "The thing a finding or result refers to.\n\nColumns are kept as an ordered tuple of opaque strings, never joined into a\nsingle key, so names containing ``|``, brackets, unicode or nothing at all\nstay unambiguous.",
+        "properties": {
+          "columns": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "dataset",
+              "column",
+              "column_pair",
+              "column_group",
+              "row_set"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "columns"
+        ],
+        "title": "Subject",
+        "type": "object"
+      },
+      "TextProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "avg_word_length": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mean characters per whitespace-delimited word.",
+            "title": "Avg Word Length"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "empty_strings": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Empty Strings",
+            "type": "integer"
+          },
+          "entropy_bits": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shannon entropy, in bits, of the whole distribution of non-null values (not only the top values); None when there are none.",
+            "title": "Entropy Bits"
+          },
+          "lengths": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LengthStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "text",
+            "default": "text",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "shape": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TextShape"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "top_values": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ValueCount"
+            },
+            "title": "Top Values",
+            "type": "array"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type",
+          "top_values",
+          "lengths",
+          "avg_word_length",
+          "empty_strings",
+          "shape",
+          "entropy_bits"
+        ],
+        "title": "TextProfile",
+        "type": "object"
+      },
+      "TextShape": {
+        "additionalProperties": false,
+        "description": "What the characters of a string column's non-empty values look like.\n\nEvery count is of non-null, non-empty values, so none exceeds the number of those.",
+        "properties": {
+          "edge_whitespace": {
+            "description": "Values that start or end with whitespace.",
+            "minimum": 0.0,
+            "title": "Edge Whitespace",
+            "type": "integer"
+          },
+          "n_patterns": {
+            "description": "Distinct pattern signatures.",
+            "minimum": 0.0,
+            "title": "N Patterns",
+            "type": "integer"
+          },
+          "patterns": {
+            "default": [],
+            "description": "The most common signatures, by decreasing count.",
+            "items": {
+              "$ref": "#/components/schemas/PatternCount"
+            },
+            "title": "Patterns",
+            "type": "array"
+          },
+          "with_digits": {
+            "description": "Values with at least one digit.",
+            "minimum": 0.0,
+            "title": "With Digits",
+            "type": "integer"
+          },
+          "with_letters": {
+            "description": "Values with at least one letter.",
+            "minimum": 0.0,
+            "title": "With Letters",
+            "type": "integer"
+          },
+          "with_symbols": {
+            "description": "Values with a character that is not a word or space.",
+            "minimum": 0.0,
+            "title": "With Symbols",
+            "type": "integer"
+          },
+          "with_whitespace": {
+            "description": "Values with a space or tab.",
+            "minimum": 0.0,
+            "title": "With Whitespace",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "with_letters",
+          "with_digits",
+          "with_whitespace",
+          "with_symbols",
+          "edge_whitespace",
+          "n_patterns",
+          "patterns"
+        ],
+        "title": "TextShape",
+        "type": "object"
+      },
+      "Timing": {
+        "additionalProperties": false,
+        "description": "Wall and CPU time and memory for one check, as measured by the executor.",
+        "properties": {
+          "cached": {
+            "default": false,
+            "description": "True when the result came from the result cache: the check did not run in this run, and the timing is that of reading the entry.",
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "cpu_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CPU time while the check ran; approximate. For a check on a thread this is the whole process's, so work on other threads counts too, and `shared_with` says whether checks overlapped. For a check in a worker process it is the worker's own, and missing if the worker was killed or died.",
+            "title": "Cpu Seconds"
+          },
+          "peak_memory_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Peak resident memory while the check ran, found by sampling; approximate, and a short spike between samples is missed. For a check on a thread it is the whole process's, including the loaded data, and shared with any check that overlapped (`shared_with`). For a check in a worker process it is the worker's own, including what it mapped of the data.",
+            "title": "Peak Memory Bytes"
+          },
+          "shared_with": {
+            "default": 0,
+            "description": "How many other checks on threads ran at the same time as this one. While any did, `cpu_seconds` and `peak_memory_bytes` are the whole process's and cannot be told apart per check. Always 0 for a check in a worker process.",
+            "minimum": 0.0,
+            "title": "Shared With",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "wall_seconds": {
+            "description": "Time the executor spent on the check, from its start.",
+            "minimum": 0.0,
+            "title": "Wall Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "wall_seconds",
+          "cpu_seconds",
+          "peak_memory_bytes",
+          "shared_with",
+          "cached",
+          "started_at"
+        ],
+        "title": "Timing",
+        "type": "object"
+      },
+      "UnknownProfile": {
+        "additionalProperties": false,
+        "description": "A column whose meaning could not be inferred.",
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A 64-bit digest of the column's values in row order, as 16 hex digits; None when the values cannot be hashed. Equal hashes mark candidate duplicates only: they also need equal `physical_dtype` and a comparison of the values, because the digest is 64 bits and ignores the dtype.",
+            "title": "Content Hash"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "name_encoding_damage": {
+            "default": false,
+            "description": "The name holds U+FFFD (a character that failed to decode) or NUL.",
+            "title": "Name Encoding Damage",
+            "type": "boolean"
+          },
+          "physical_dtype": {
+            "description": "The storage type, as a string.",
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Zero-based place in the dataset.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_confidence": {
+            "$ref": "#/components/schemas/Confidence",
+            "default": "high",
+            "description": "How firmly the semantic type is held."
+          },
+          "semantic_sample_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows the semantic type was inferred from.",
+            "title": "Semantic Sample Rows"
+          },
+          "semantic_type": {
+            "const": "unknown",
+            "default": "unknown",
+            "title": "Semantic Type",
+            "type": "string"
+          },
+          "values_with_nul": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding a NUL character, as a UTF-16 file read as UTF-8 leaves; None unless the column holds strings.",
+            "title": "Values With Nul"
+          },
+          "values_with_replacement_char": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Values holding U+FFFD, the mark a lossy decode leaves; None unless the column holds strings.",
+            "title": "Values With Replacement Char"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "physical_dtype",
+          "semantic_confidence",
+          "semantic_sample_rows",
+          "counts",
+          "content_hash",
+          "name_encoding_damage",
+          "values_with_replacement_char",
+          "values_with_nul",
+          "semantic_type"
+        ],
+        "title": "UnknownProfile",
+        "type": "object"
+      },
+      "ValidationProblem": {
+        "description": "A request that did not pass validation, with each field that failed.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/InvalidField"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "instance": {
+            "title": "Instance",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "about:blank",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "errors"
+        ],
+        "title": "ValidationProblem",
+        "type": "object"
+      },
+      "ValueCount": {
+        "additionalProperties": false,
+        "description": "One value and how many rows hold it.",
+        "properties": {
+          "count": {
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "count"
+        ],
+        "title": "ValueCount",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "summary": "Read access to stored DSBF runs.",
+    "title": "DSBF API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v2/datasets": {
+      "get": {
+        "description": "Datasets with stored runs, the most recently run first.",
+        "operationId": "listDatasets",
+        "parameters": [
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DatasetSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "List Datasets",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/v2/datasets/{key}/history": {
+      "get": {
+        "description": "Where a finding (or a code) appeared over a dataset's runs, newest first.",
+        "operationId": "getFindingHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One finding's id.",
+            "in": "query",
+            "name": "finding_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "One finding's id.",
+              "title": "Finding Id"
+            }
+          },
+          {
+            "description": "Every finding with this code.",
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Every finding with this code.",
+              "title": "Code"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_FindingOccurrence_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Finding History",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/v2/datasets/{key}/runs": {
+      "get": {
+        "description": "A dataset's runs, newest first. The key is the dataset key, percent-encoded.",
+        "operationId": "listDatasetRuns",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_RunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "List Dataset Runs",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/v2/runs": {
+      "get": {
+        "description": "Every stored run, newest first.",
+        "operationId": "listRuns",
+        "parameters": [
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_RunSummary_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "List Runs",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/compare": {
+      "get": {
+        "description": "What the head run shows that the base run did not. Any two runs.",
+        "operationId": "compareRuns",
+        "parameters": [
+          {
+            "description": "The run to compare against.",
+            "in": "query",
+            "name": "base",
+            "required": true,
+            "schema": {
+              "description": "The run to compare against.",
+              "format": "uuid",
+              "title": "Base",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The run to describe.",
+            "in": "query",
+            "name": "head",
+            "required": true,
+            "schema": {
+              "description": "The run to describe.",
+              "format": "uuid",
+              "title": "Head",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Relative change that counts.",
+            "in": "query",
+            "name": "tolerance",
+            "required": false,
+            "schema": {
+              "default": 0.05,
+              "description": "Relative change that counts.",
+              "maximum": 1000000,
+              "minimum": 0,
+              "title": "Tolerance",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDiff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Compare Runs",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}": {
+      "get": {
+        "description": "A run's identity, health, policy and finding counts, without its results.",
+        "operationId": "getRun",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/artifacts/{ref}": {
+      "get": {
+        "description": "A check's evidence: a page of rows for a table, the value for JSON.",
+        "operationId": "getArtifact",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ref",
+            "required": true,
+            "schema": {
+              "title": "Ref",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ArtifactRows"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ArtifactValue"
+                    }
+                  ],
+                  "title": "Response Getartifact"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Artifact",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/checks/{check_id}": {
+      "get": {
+        "description": "One check's result; its artifacts are refs, fetched on demand.",
+        "operationId": "getCheckResult",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "check_id",
+            "required": true,
+            "schema": {
+              "title": "Check Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Check Result",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/findings": {
+      "get": {
+        "description": "A run's findings, highest severity first.",
+        "operationId": "listFindings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dimension",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Dimension"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dimension"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Severity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Code"
+            }
+          },
+          {
+            "description": "Findings about this column.",
+            "in": "query",
+            "name": "column",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Findings about this column.",
+              "title": "Column"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_Finding_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "List Findings",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/findings/{finding_id}": {
+      "get": {
+        "description": "One finding.",
+        "operationId": "getFinding",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Finding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Finding",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/profile": {
+      "get": {
+        "description": "One column's profile by query parameter, for the names a path cannot carry:\nclients resolve a path segment of ``.`` or ``..`` before sending it.",
+        "operationId": "findColumnProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The column's name.",
+            "in": "query",
+            "name": "column",
+            "required": true,
+            "schema": {
+              "description": "The column's name.",
+              "title": "Column",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "boolean": "#/components/schemas/BooleanProfile",
+                      "categorical": "#/components/schemas/CategoricalProfile",
+                      "datetime": "#/components/schemas/DatetimeProfile",
+                      "identifier": "#/components/schemas/IdentifierProfile",
+                      "numeric": "#/components/schemas/NumericProfile",
+                      "text": "#/components/schemas/TextProfile",
+                      "unknown": "#/components/schemas/UnknownProfile"
+                    },
+                    "propertyName": "semantic_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NumericProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CategoricalProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BooleanProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatetimeProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TextProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IdentifierProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnknownProfile"
+                    }
+                  ],
+                  "title": "Response Findcolumnprofile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Find Column Profile",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/profile/{column}": {
+      "get": {
+        "description": "One column's profile. The name is percent-encoded.",
+        "operationId": "getColumnProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "column",
+            "required": true,
+            "schema": {
+              "title": "Column",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "boolean": "#/components/schemas/BooleanProfile",
+                      "categorical": "#/components/schemas/CategoricalProfile",
+                      "datetime": "#/components/schemas/DatetimeProfile",
+                      "identifier": "#/components/schemas/IdentifierProfile",
+                      "numeric": "#/components/schemas/NumericProfile",
+                      "text": "#/components/schemas/TextProfile",
+                      "unknown": "#/components/schemas/UnknownProfile"
+                    },
+                    "propertyName": "semantic_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NumericProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CategoricalProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BooleanProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatetimeProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TextProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IdentifierProfile"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnknownProfile"
+                    }
+                  ],
+                  "title": "Response Getcolumnprofile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Column Profile",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/snapshot": {
+      "get": {
+        "description": "Rows of the data as profiled; 404 when the run kept no snapshot.",
+        "operationId": "getSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactRows"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Snapshot",
+        "tags": [
+          "runs"
+        ]
+      }
+    }
+  }
+}
