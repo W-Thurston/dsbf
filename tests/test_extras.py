@@ -6,6 +6,8 @@ of it in the core would fail here. The second group reads the environment as it 
 which the CI install matrix varies one extra at a time.
 """
 
+import importlib
+import subprocess
 import sys
 from datetime import datetime, timedelta
 
@@ -184,3 +186,32 @@ def test_preloading_an_extra_imports_every_module_it_lists(extra, monkeypatch):
 
     expected = [] if missing_modules(extra) else list(PRELOAD[extra])
     assert loaded == expected
+
+
+def test_without_the_server_extra_the_store_names_the_install(hidden, monkeypatch):
+    hidden("server")
+    for loaded in [m for m in sys.modules if m.startswith("dsbf.store")]:
+        monkeypatch.delitem(sys.modules, loaded)
+
+    with pytest.raises(ImportError, match=r"pip install 'dsbf\[server\]'"):
+        importlib.import_module("dsbf.store")
+
+
+def test_the_base_install_imports_nothing_from_the_store():
+    code = (
+        "import sys, dsbf, dsbf.interfaces.cli; "
+        "bad = [m for m in sys.modules if m.startswith('dsbf.store') "
+        "or m.split('.')[0] in ('sqlalchemy', 'alembic')]; "
+        "sys.exit(1 if bad else 0)"
+    )
+
+    completed = subprocess.run([sys.executable, "-c", code], capture_output=True)
+
+    assert completed.returncode == 0, completed.stderr.decode()
+
+
+@pytest.mark.skipif(
+    bool(missing_modules("server")), reason="the server extra is not installed"
+)
+def test_with_the_server_extra_the_store_imports():
+    assert importlib.import_module("dsbf.store").open_repository

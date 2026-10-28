@@ -58,10 +58,10 @@ dsbf = "dsbf.interfaces.cli:app"
 
 [dependency-groups]
 # The tests exercise every check and the pandas input, so the dev group carries the
-# extras that gate them. The `extras` group is what the CI install matrix adds to one
+# extras that gate them (and `server`, whose store the tests open). The `extras` group is what the CI install matrix adds to one
 # extra at a time.
 dev = [
-    "dsbf[ml,timeseries,text,excel,pandas]",
+    "dsbf[ml,timeseries,text,excel,pandas,server]",
     "pytest>=8.0.0,<10",
     "ruff>=0.11.10,<0.18",
     "pre-commit>=4.2.0,<5",
