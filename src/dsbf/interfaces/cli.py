@@ -20,8 +20,9 @@ from dsbf.engine import (
     make_plan,
 )
 from dsbf.interfaces import check_reference, reference, schema_export
+from dsbf.interfaces.runs_cli import runs_app
 from dsbf.library import profile_with
-from dsbf.model import Cost, Dimension, PolicyOutcome
+from dsbf.model import Cost, Dimension, Run
 from dsbf.paths import default_outputs_dir
 from dsbf.profiling import profile_dataset
 from dsbf.sinks import RunReadError, get_sinks, known_sinks
@@ -31,6 +32,7 @@ from dsbf.utils.versioning import get_dsbf_version
 app = typer.Typer(help="DSBF: Data Scientist's Best Friend - EDA Profiling CLI")
 schema_app = typer.Typer(help="Publish and guard the result schema.")
 app.add_typer(schema_app, name="schema")
+app.add_typer(runs_app, name="runs")
 
 VERBOSITIES = ("quiet", "error", "warn", "stage", "info", "debug")
 
@@ -76,14 +78,16 @@ Out = Annotated[
         help="Directory for the output files (default: <DSBF home>/outputs/<run id>).",
     ),
 ]
+STORE_SINK = "store"
 Sinks = Annotated[
     list[str] | None,
     typer.Option(
         "--sink",
         "-s",
         help="Output to write (repeatable, default json): "
-        + ", ".join(known_sinks())
-        + ".",
+        + ", ".join((*known_sinks(), STORE_SINK))
+        + ". `store` keeps the run in the run store (needs dsbf[server]) and, "
+        "alone, writes no directory.",
     ),
 ]
 ConfigFile = Annotated[
@@ -335,11 +339,15 @@ def _run(  # noqa: PLR0913
     flags: dict[str, Any],
     fail_on_policy: bool,
 ) -> None:
-    sinks = tuple(sink or ()) or ("json",)
+    requested = tuple(dict.fromkeys(sink or ())) or ("json",)
+    sinks = tuple(name for name in requested if name != STORE_SINK)
+    to_store = STORE_SINK in requested
     try:
         get_sinks(sinks)
     except ValueError as error:
         _fail(error)
+    if to_store:
+        _require_store()
     layer = _merge_settings(flags, _parse_settings(overrides or []))
     try:
         settings = load_config(ProfileConfig, project_file=config, cli=layer)
@@ -352,36 +360,44 @@ def _run(  # noqa: PLR0913
         raise typer.Exit(2) from error
     except (SourceError, ConfigError, SamplingError, RunReadError) as error:
         _fail(error)
-    directory = (out or default_outputs_dir() / str(run.run_id)).expanduser().resolve()
-    written = run.write(directory, sinks=sinks)
-    pointer = written.get("json", next(iter(written.values())))
-    typer.echo(run.render_health(pointer=str(pointer)))
+    pointer = None
+    if sinks:
+        directory = (
+            (out or default_outputs_dir() / str(run.run_id)).expanduser().resolve()
+        )
+        written = run.write(directory, sinks=sinks)
+        pointer = str(written.get("json", next(iter(written.values()))))
+    if to_store:
+        pointer = _store_run(run, settings.store.snapshot_rows, pointer)
+    typer.echo(run.render_health(pointer=pointer))
     if run.policy is not None:
-        typer.echo(_render_policy(run.policy))
+        typer.echo(run.policy.render())
         if fail_on_policy and run.policy.exit_code:
             raise typer.Exit(run.policy.exit_code)
+
+
+def _require_store() -> None:
+    """Exit 2 naming the extra when the run store is not installed."""
+    try:
+        import dsbf.store  # noqa: F401, PLC0415 (the base install has no store)
+    except ImportError as error:
+        _fail(error)
+
+
+def _store_run(run: Run, snapshot_rows: int, pointer: str | None) -> str:
+    """Keep ``run`` in the store; the pointer to show: its files, else its id."""
+    from dsbf.store import StoreError, save  # noqa: PLC0415
+
+    try:
+        save(run, snapshot_rows=snapshot_rows)
+    except StoreError as error:
+        _fail(error)
+    return pointer or f"dsbf runs show {run.run_id}"
 
 
 def _fail(error: Exception) -> NoReturn:
     typer.echo(f"error: {error}", err=True)
     raise typer.Exit(2) from error
-
-
-def _render_policy(outcome: PolicyOutcome) -> str:
-    """One line per rule that matched, and the verdict."""
-    lines = []
-    for result in outcome.rules:
-        if not result.triggered:
-            continue
-        matched = len(result.finding_ids) or len(result.check_ids)
-        what = "finding" if result.finding_ids else "check"
-        actions = ", ".join(action.kind.value for action in result.rule.then)
-        lines.append(
-            f"policy: {result.rule.name} matched {matched} {what}"
-            f"{'' if matched == 1 else 's'} ({actions})"
-        )
-    lines.append("policy: FAILED" if outcome.failed else "policy: passed")
-    return "\n".join(lines)
 
 
 def _parse_settings(assignments: list[str]) -> dict[str, Any]:

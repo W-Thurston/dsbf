@@ -15,6 +15,7 @@ from dsbf.model.schema import (
     JSON_SCHEMA_DIALECT,
     Change,
     compare_schemas,
+    diff_schema,
     model_schema,
     policy_schema,
     run_schema,
@@ -28,6 +29,7 @@ from dsbf.sinks.tables import tables_schema
 SCHEMA_FILE = "run.schema.json"
 POLICY_SCHEMA_FILE = "policy.schema.json"
 TABLES_SCHEMA_FILE = "tables.schema.json"
+DIFF_SCHEMA_FILE = "diff.schema.json"
 CHECKS_DIR = "checks"
 CHECK_SCHEMA_SUFFIX = ".schema.json"
 TYPESCRIPT_BANNER = (
@@ -122,6 +124,7 @@ def export_schema(out_dir: Path, *, check: bool) -> dict[Path, str]:
         out_dir / SCHEMA_FILE: schema_text(run_schema()),
         out_dir / POLICY_SCHEMA_FILE: schema_text(policy_schema()),
         out_dir / TABLES_SCHEMA_FILE: schema_text(tables_schema()),
+        out_dir / DIFF_SCHEMA_FILE: schema_text(diff_schema()),
     }
     for check_id, schema in check_schemas().items():
         files[check_schema_path(out_dir, check_id)] = schema_text(schema)

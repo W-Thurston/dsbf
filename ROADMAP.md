@@ -136,7 +136,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** `get(save(run)) == run` for the golden datasets. A migration test upgrades an empty database to head and refuses a newer revision. Finding queries return the documented order and pages. A base install imports nothing from `dsbf.store`.
 
 ### U6-05 · Artifact store and the data snapshot
-- **Status:** done (2026-10-27) · **Size:** M · **Depends on:** U6-04 · **Resolves:** F-15 (the snapshot of the data as profiled)
+- **Status:** done (2026-10-27, #152, `e2f978a`) · **Size:** M · **Depends on:** U6-04 · **Resolves:** F-15 (the snapshot of the data as profiled)
 - **Outcome:** `dsbf.store.artifacts` (`ArtifactStore` protocol, `FsspecArtifactStore`), Alembic revision `0002` (`artifacts` table with ref, media type, rows, bytes, SHA-256, sampling), repository reads (`artifacts`, `read_artifact`, `read_artifact_rows`, `snapshot`) and `Run.analysed_frame` (memory only, set by the executor). `store.snapshot_rows` (default 10,000, 0 off) caps a seed-0 random snapshot recorded as `SamplingInfo`. kitchen50k's snapshot is 3.5 MB. **Deviations:** `encode` writes Parquet in 10,000-row groups so range reads are cheap; `Run.artifact` still reads from a local directory only (a loader hook for non-local stores belongs with Phase 8's S3 store).
 - **Goal:** An `ArtifactStore` on fsspec (`<DSBF_HOME>/artifacts/` in this phase) keeps each stored run's artifacts and a Parquet snapshot of the data as profiled. An `artifacts` table records each one's ref, media type, rows, bytes and checksum. An artifact is read whole or by row range.
 - **Decided in U6-00:** (1) The snapshot is on by default: at most 10,000 rows of the analysed data, a seeded random sample above that, recorded as `SamplingInfo` is. The `store.snapshot_rows` setting changes the cap, and 0 turns the snapshot off. (2) The core never writes the snapshot: the `Run` holds its analysed frame in memory (not serialised, not sent to workers), and the store writes the snapshot from it. A run read from `run.json` has no snapshot, and the dashboard says so.
@@ -145,7 +145,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** A stored run's artifacts and snapshot read back equal. A range read of the fuzzy pair list returns exactly the rows asked for. Deleting a run leaves no files. The snapshot keeps the cap and says how it was sampled.
 
 ### U6-06 · Store sink and `dsbf runs`
-- **Status:** todo · **Size:** M · **Depends on:** U6-05 · **Resolves:** REVIEW_FINDINGS part 2 D (run management), F-25 (delete and garbage collection)
+- **Status:** done (2026-10-27) · **Size:** M · **Depends on:** U6-05 · **Resolves:** REVIEW_FINDINGS part 2 D (run management), F-25 (delete and garbage collection)
+- **Outcome:** `--sink store` and `dsbf.store.save`; `dsbf.compare` (module `dsbf.comparison`, since a module named `compare` would shadow the lazy function) returning `RunDiff`, exported as `schema/diff.schema.json`; `dsbf runs list | show | diff | delete | gc | import` with `--json`; `RunRepository.gc` and `ArtifactStore.run_ids`; `PolicyOutcome.render()` shared by `check`, `runs show` and the HTML report's new Policy section. **Deviations:** `store` is handled beside the sink registry, not in it (a registry sink writes one file to a path); `compare` ignores p-value metrics, which move by orders of magnitude between near-identical runs.
 - **Note from U5-06:** the HTML report omits `Run.policy`; show it. **Note from U5-09 (2):** after any Typer bump, re-check that `dsbf.interfaces.reference` still duck-types Typer commands.
 - **Goal:** `--sink store` and `dsbf.store.save(run)`; `dsbf runs list | show | diff | delete | gc | import`; `dsbf.compare(base, head)` in the core, which the CLI and the API share; the HTML report and `runs show` print the policy verdict.
 - **Decided in U6-00:** (1) A diff takes two run ids or `run.json` paths, any two runs, and matches findings by `Finding.id` into new, resolved and changed (severity, or a metric beyond a tolerance), plus check status changes; it says when the two runs are of different datasets. (2) `gc` keeps the newest N runs per dataset and the runs younger than an age, both settings, and removes orphaned artifact files. (3) `runs import <dir>` stores a run written by the `json` sink, artifacts included, so a CI run can be browsed locally (mode 3).
@@ -233,6 +234,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-16 · Run compare and history
 - **Status:** todo · **Size:** M · **Depends on:** U6-15 · **Resolves:** REVIEW_FINDINGS part 2 D (run comparison UI)
+- **Note from U6-06:** `compare` reports most count-scaled statistics (chi², `n_missing`) as changed when two runs have different row counts (107 of 117 titanic findings against a copy with 100 rows dropped); a per-metric tolerance or a list of metrics that scale with n would cut the noise.
 - **Goal:** A compare view of any two runs, chosen explicitly and pre-filled with the previous run of the same dataset, showing new, resolved and changed findings and status changes from the compare endpoint. A dataset page with its run lineage (changes of location and fingerprint) and the history of one finding across runs.
 - **Decided in U6-00:** comparison is explicit (asked the user); drift from stored profiles is Phase 7.
 - **Assumptions to confirm:** the compare and history endpoints from U6-07 return what the views draw; a fixture store can hold two runs of one dataset with a planted change.
@@ -249,6 +251,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-18 · Stable 1.0 schemas
 - **Status:** todo · **Size:** S · **Depends on:** U6-17
+- **Note from U6-06:** `RunDiff` has a schema file (`schema/diff.schema.json`) but no breaking-change gate yet.
 - **Goal:** Review every published contract (the run, the check schemas, the Parquet tables, the policy, `RunDiff`, OpenAPI) for what 1.x has to keep. Raise each to 1.0.0, and document the compatibility rules (additive within 1.x, a deprecation lasting one minor release; REFACTOR_PLAN §4.3), which the breaking-change gates enforce.
 - **Assumptions to confirm:** each schema has a version and a gate (the run, tables, check and policy schemas from Phase 5, OpenAPI from U6-07, `RunDiff` from U6-06); nothing in the contracts is still marked as development-era.
 - **Steps:** the review, recorded in the PR; version bumps; the compatibility guide in `docs/guides/`; gate tests for a breaking change without a major bump.

@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic.json_schema import GenerateJsonSchema, JsonSchemaMode
 
+from dsbf.model.diff import RunDiff
 from dsbf.model.policy import Policy
 from dsbf.model.run import Run
 
@@ -49,6 +50,14 @@ def policy_schema() -> dict[str, Any]:
     """
     schema = Policy.model_json_schema(
         mode="validation", schema_generator=_SchemaGenerator
+    )
+    return {"$schema": JSON_SCHEMA_DIALECT, **schema}
+
+
+def diff_schema() -> dict[str, Any]:
+    """The JSON Schema of ``RunDiff``, as the checked-in ``diff.schema.json``."""
+    schema = RunDiff.model_json_schema(
+        mode="serialization", schema_generator=_SchemaGenerator
     )
     return {"$schema": JSON_SCHEMA_DIALECT, **schema}
 
