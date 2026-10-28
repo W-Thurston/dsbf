@@ -116,6 +116,7 @@ class StringAnomaliesOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # Polars string operations over each column's distinct values.
     cost=Cost.CHEAP,
+    codes=["edge_whitespace", "invisible_characters", "length_outliers", "mixed_case"],
     packs=["core"],
     tags=["string", "whitespace", "case", "unicode"],
 )

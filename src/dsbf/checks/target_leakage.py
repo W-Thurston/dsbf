@@ -279,6 +279,12 @@ def _later_share(
     output=TargetLeakageOutput,
     requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.MODERATE,
+    codes=[
+        "derived_from_target",
+        "missingness_tracks_target",
+        "target_leakage",
+        "timestamp_after_event",
+    ],
     packs=["core"],
     tags=["target", "leakage", "ml-readiness"],
 )

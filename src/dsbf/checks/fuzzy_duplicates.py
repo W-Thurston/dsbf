@@ -182,6 +182,7 @@ class FuzzyDuplicatesOutput(CheckOutputModel):
     cost=Cost.HEAVY,
     runs_in="process",
     extras=["text"],
+    codes=["near_duplicate_rows"],
     packs=["core"],
     tags=["duplicates", "rows", "string", "fuzzy"],
 )

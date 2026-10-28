@@ -66,6 +66,7 @@ class NullRateOutput(CheckOutputModel):
     output=NullRateOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["high_null_rate"],
     packs=["core"],
     tags=["missingness"],
 )

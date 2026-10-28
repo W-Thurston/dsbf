@@ -124,6 +124,7 @@ _DETAIL = {
     requires=Requires(profile=["counts"]),
     after=["mutual_information", "target_leakage"],
     cost=Cost.CHEAP,
+    codes=["encoding_strategy"],
     packs=["core"],
     tags=["encoding", "ml"],
 )

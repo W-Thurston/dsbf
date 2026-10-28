@@ -295,6 +295,15 @@ class _Level:
     ),
     # One pass over each numeric and categorical column's values.
     cost=Cost.MODERATE,
+    codes=[
+        "columns_added",
+        "columns_dropped",
+        "distribution_shift",
+        "missingness_shift",
+        "target_drift",
+        "target_missing_in_reference",
+        "type_changed",
+    ],
     packs=["core"],
     tags=["drift", "reference", "schema", "comparison"],
 )

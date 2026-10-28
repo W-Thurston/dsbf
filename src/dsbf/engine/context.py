@@ -2,7 +2,7 @@
 """What a check is given while it runs, and nothing beyond its declared scope."""
 
 import threading
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any
@@ -121,6 +121,7 @@ class CheckContext:
         self._finding_ids: set[str] = set()
         self._notes: list[Note] = []
         self._artifacts: dict[str, tuple[ArtifactRef, Payload]] = {}
+        self._examined: tuple[str, ...] | None = None
 
         self.eligibility = eligibility(
             spec,
@@ -307,6 +308,31 @@ class CheckContext:
                 f"{self.spec.id} attached {name!r}: {error}"
             ) from error
         return ref
+
+    def examined(self, columns: Iterable[str]) -> None:
+        """Report the columns the check analysed, when fewer than it could read.
+
+        Without a call, the result lists every column the check could read. A check
+        that drops columns inside its body (a constant one, a sparse one) names those
+        it kept, which must be among the ones in scope.
+
+        Raises:
+            CheckContractError: a column is not one the check can read.
+        """
+        self.checkpoint()
+        names = tuple(dict.fromkeys(columns))
+        outside = [name for name in names if name not in self._scope]
+        if outside:
+            raise CheckContractError(
+                f"{self.spec.id} examined {outside[0]!r}, which is not a column it "
+                "can read"
+            )
+        self._examined = names
+
+    @property
+    def examined_columns(self) -> tuple[str, ...]:
+        """The columns the result lists: those reported, else all in scope."""
+        return self.columns if self._examined is None else self._examined
 
     @property
     def artifacts(self) -> tuple[tuple[ArtifactRef, Payload], ...]:

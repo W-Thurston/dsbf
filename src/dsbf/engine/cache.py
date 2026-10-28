@@ -24,7 +24,7 @@ from dsbf.paths import dsbf_home
 logger = logging.getLogger(__name__)
 
 # Bump when what goes into a key changes, so older entries stop matching.
-KEY_SCHEME = 2
+KEY_SCHEME = 3
 _ENTRY_FORMAT = 1
 # Only these results are a function of the inputs. An error, timeout, skip or missing
 # extra depends on the machine, the clock and the limits; a "not applicable" result is

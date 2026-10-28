@@ -138,6 +138,10 @@ TimeIndex = Annotated[
         "--time-index", help="The datetime column the time series checks use."
     ),
 ]
+DatasetKey = Annotated[
+    str | None,
+    typer.Option("--dataset", help="Groups this run with others of the same dataset."),
+]
 Plugins = Annotated[
     list[Path] | None,
     typer.Option("--plugin", help="A directory of check plugins to load."),
@@ -193,6 +197,7 @@ def profile(
     check_timeout: CheckTimeout = None,
     run_budget: RunBudget = None,
     cache: UseCache = None,
+    dataset: DatasetKey = None,
 ) -> None:
     """Profile a dataset, write run.json and print the health summary.
 
@@ -219,6 +224,7 @@ def profile(
             check_timeout,
             run_budget,
             cache,
+            dataset,
         ),
         fail_on_policy=False,
     )
@@ -245,6 +251,7 @@ def check(
     check_timeout: CheckTimeout = None,
     run_budget: RunBudget = None,
     cache: UseCache = None,
+    dataset: DatasetKey = None,
 ) -> None:
     """Profile a dataset and judge it by a policy, for a pipeline step.
 
@@ -272,6 +279,7 @@ def check(
             check_timeout,
             run_budget,
             cache,
+            dataset,
         ),
         fail_on_policy=True,
     )
@@ -290,6 +298,7 @@ def _flags(  # noqa: PLR0913
     check_timeout: float | None,
     run_budget: float | None,
     cache: bool | None,
+    dataset: str | None,
 ) -> dict[str, Any]:
     """The options that were given, as the nested mapping of the ``cli`` layer."""
     given: dict[str, Any] = {
@@ -299,6 +308,7 @@ def _flags(  # noqa: PLR0913
         "depth": depth.value if depth else None,
         "target": target,
         "time_index": time_index,
+        "dataset": dataset,
         "plugins": [str(path) for path in plugin or []],
         "params": _parse_params(param or []),
         "workers": workers,

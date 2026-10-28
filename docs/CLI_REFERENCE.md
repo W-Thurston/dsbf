@@ -52,6 +52,7 @@ Exits 0 when the run completes, whatever a policy says, and 2 when it cannot sta
 | `--check-timeout <float range>` | Seconds one check may take. [x>=0] |
 | `--run-budget <float range>` | Seconds the whole run may take. [x>=0] |
 | `--cache / --no-cache` | Reuse results of unchanged checks kept under the DSBF home (default: the cache.enabled setting, off). |
+| `--dataset <str>` | Groups this run with others of the same dataset. |
 
 ### `dsbf check`
 
@@ -84,6 +85,7 @@ Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
 | `--check-timeout <float range>` | Seconds one check may take. [x>=0] |
 | `--run-budget <float range>` | Seconds the whole run may take. [x>=0] |
 | `--cache / --no-cache` | Reuse results of unchanged checks kept under the DSBF home (default: the cache.enabled setting, off). |
+| `--dataset <str>` | Groups this run with others of the same dataset. |
 
 ### `dsbf plan`
 
@@ -194,6 +196,7 @@ The settings file (`--config`), `DSBF__SECTION__KEY` environment variables, `--s
 
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
+| `dataset` | str | unset | The key that groups this run with earlier runs of the same dataset. Unset, a file's absolute path is the key, and an in-memory table has none. |
 | `packs` | tuple[str, ...] | `('core',)` | The packs whose checks are candidates. |
 | `include` | tuple[str, ...] | `()` | Checks to add by id, whatever the filters say. |
 | `exclude` | tuple[str, ...] | `()` | Checks to remove by id. |

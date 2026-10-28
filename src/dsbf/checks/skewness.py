@@ -108,6 +108,7 @@ def _level(size: float, params: SkewnessParams) -> Level:
     output=SkewnessOutput,
     requires=Requires(profile=["counts", "numeric_stats", "quantiles"]),
     cost=Cost.CHEAP,
+    codes=["mean_median_gap", "skewed"],
     packs=["core"],
     tags=["distribution", "skew"],
 )

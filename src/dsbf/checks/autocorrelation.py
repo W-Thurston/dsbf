@@ -123,6 +123,7 @@ class AutocorrelationOutput(TimeSeriesOutput):
     requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
+    codes=["autocorrelated"],
     packs=["core"],
     tags=["time-series", "autocorrelation", "acf", "pacf"],
 )

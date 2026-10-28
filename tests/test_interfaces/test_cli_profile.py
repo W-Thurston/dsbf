@@ -152,6 +152,19 @@ class TestWritesTheRun:
         params = read_run(out / "run.json")["results"]["null_rate"]["params"]
         assert params["notice_share"] == 0.1
 
+    def test_the_dataset_key_is_the_path_unless_one_is_given(self, csv, tmp_path):
+        keyed = tmp_path / "keyed"
+        plain = tmp_path / "plain"
+
+        given = runner.invoke(
+            app, ["profile", str(csv), "--out", str(keyed), "--dataset", "orders"]
+        )
+        absent = runner.invoke(app, ["profile", str(csv), "--out", str(plain)])
+
+        assert given.exit_code == absent.exit_code == 0
+        assert read_run(keyed / "run.json")["dataset"]["key"] == "orders"
+        assert read_run(plain / "run.json")["dataset"]["key"] == str(csv.resolve())
+
     def test_a_param_wins_over_the_target_setting(self, csv, tmp_path):
         out = tmp_path / "out"
 

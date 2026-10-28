@@ -155,6 +155,7 @@ class NormalityOutput(CheckOutputModel):
     output=NormalityOutput,
     requires=Requires(profile=["counts", "numeric_stats"]),
     cost=Cost.MODERATE,
+    codes=["non_normal"],
     packs=["core"],
     tags=["distribution", "normality", "qq"],
 )

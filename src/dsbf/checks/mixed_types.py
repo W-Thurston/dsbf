@@ -88,6 +88,7 @@ class MixedTypesOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # Regular expressions, and the date formats for values that could be dates.
     cost=Cost.CHEAP,
+    codes=["mixed_value_types"],
     packs=["core"],
     tags=["type", "format"],
 )

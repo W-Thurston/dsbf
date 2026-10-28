@@ -55,6 +55,7 @@ class HighCardinalityOutput(CheckOutputModel):
     output=HighCardinalityOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["high_cardinality"],
     packs=["core"],
     tags=["cardinality", "encoding"],
 )

@@ -116,6 +116,7 @@ def _core_span(profile: NumericProfile) -> float | None:
     output=NumericBinningOutput,
     requires=Requires(profile=["counts", "numeric_stats", "quantiles"]),
     cost=Cost.CHEAP,
+    codes=["binning_strategy"],
     packs=["core"],
     tags=["binning", "ml"],
 )

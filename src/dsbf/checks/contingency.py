@@ -130,6 +130,7 @@ class ContingencyOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # One table per pair; a bootstrap only for the pairs worth reading.
     cost=Cost.MODERATE,
+    codes=["categorical_association"],
     packs=["core"],
     tags=["categorical", "association", "chi_squared"],
 )

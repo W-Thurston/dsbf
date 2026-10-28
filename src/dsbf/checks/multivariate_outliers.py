@@ -134,6 +134,7 @@ class MultivariateOutliersOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     cost=Cost.MODERATE,
     extras=["ml"],
+    codes=["multivariate_anomalies"],
     packs=["core"],
     tags=["outliers", "isolation-forest", "multivariate"],
 )

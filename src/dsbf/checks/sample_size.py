@@ -107,6 +107,11 @@ _CAUSES = {
     output=SampleSizeOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=[
+        "too_few_rows_general_ml",
+        "too_few_rows_linear_model",
+        "too_few_rows_tree_model",
+    ],
     packs=["core"],
     tags=["sample-size", "ml-readiness"],
 )

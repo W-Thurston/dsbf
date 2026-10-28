@@ -62,6 +62,7 @@ class DatetimeFeaturesOutput(CheckOutputModel):
     output=DatetimeFeaturesOutput,
     requires=Requires(profile=["counts", "datetime"]),
     cost=Cost.CHEAP,
+    codes=["extractable_features"],
     packs=["core"],
     tags=["datetime", "feature-engineering", "ml-readiness"],
 )

@@ -67,6 +67,7 @@ class ZerosOutput(CheckOutputModel):
     output=ZerosOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["high_zero_rate"],
     packs=["core"],
     tags=["zeros", "sparsity"],
 )

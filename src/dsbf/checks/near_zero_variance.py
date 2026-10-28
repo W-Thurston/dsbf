@@ -55,6 +55,7 @@ class NearZeroVarianceOutput(CheckOutputModel):
     output=NearZeroVarianceOutput,
     requires=Requires(profile=["counts", "numeric_stats"]),
     cost=Cost.CHEAP,
+    codes=["near_zero_variance"],
     packs=["core"],
     tags=["variance", "low-information"],
 )

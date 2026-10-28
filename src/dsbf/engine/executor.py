@@ -58,6 +58,7 @@ def execute(
     cache: ResultCache | None = None,
     reference: Reference | None = None,
     check_overrides: Mapping[str, CheckOverride] | None = None,
+    dataset_key: str | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
 
@@ -192,7 +193,7 @@ def execute(
         run_id=uuid4(),
         started_at=started_at,
         finished_at=started_at + timedelta(seconds=time.monotonic() - clock),
-        dataset=_dataset_manifest(dataset),
+        dataset=_dataset_manifest(dataset, dataset_key),
         plan=_plan_manifest(plan, dsbf_version),
         profile=profile,
         notes=(*plan.notes, *_cache_notes(session)),
@@ -425,10 +426,11 @@ def _cache_notes(session: CacheSession | None) -> tuple[Note, ...]:
     )
 
 
-def _dataset_manifest(dataset: Dataset) -> DatasetManifest:
+def _dataset_manifest(dataset: Dataset, key: str | None) -> DatasetManifest:
     return DatasetManifest(
         name=dataset.name,
         source=dataset.source,
+        key=key or dataset.source.location or "",
         fingerprint=dataset.fingerprint,
         n_rows=dataset.source_rows,
         n_columns=dataset.n_columns,

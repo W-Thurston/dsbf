@@ -146,6 +146,7 @@ class OutliersOutput(CheckOutputModel):
     output=OutliersOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.MODERATE,
+    codes=["outliers_detected"],
     packs=["core"],
     tags=["outliers", "robust", "mad"],
 )

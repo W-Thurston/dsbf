@@ -156,3 +156,15 @@ def test_the_extras_a_check_may_name_are_the_projects_extras():
     declared = set(pyproject["project"]["optional-dependencies"]) - {"all"}
 
     assert set(get_args(Extra)) == declared
+
+
+def test_a_check_declares_the_finding_codes_it_can_raise():
+    declared = declare(codes=["too_high", "too_low", "too_high"])
+
+    assert declared.spec.codes == ("too_high", "too_low")
+    assert declare().spec.codes == ()
+
+
+def test_a_code_is_lower_snake_case():
+    with pytest.raises(CheckDefinitionError, match="code"):
+        declare(codes=["Too High"])

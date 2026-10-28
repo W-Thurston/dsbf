@@ -38,6 +38,7 @@ class ConstantColumnsOutput(CheckOutputModel):
     output=ConstantColumnsOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["constant_column"],
     packs=["core"],
     tags=["constant", "redundancy"],
 )
