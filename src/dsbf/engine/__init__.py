@@ -22,6 +22,7 @@ from dsbf.engine.errors import (
     CheckDefinitionError,
     PlanError,
     RegistryError,
+    RunCancelled,
 )
 from dsbf.engine.events import CheckFinished, CheckStarted, Event, Hook, NoteRecorded
 from dsbf.engine.executor import execute
@@ -68,6 +69,7 @@ __all__ = [
     "ProfileView",
     "Reference",
     "Registry",
+    "RunCancelled",
     "RegistryError",
     "Requires",
     "ResultCache",

@@ -33,6 +33,7 @@ from dsbf.paths import dsbf_home
 from dsbf.sinks.files import artifact_path
 from dsbf.store import tables as t
 from dsbf.store.artifacts import FsspecArtifactStore
+from dsbf.store.job_rows import JobRows
 from dsbf.store.repository import (
     SNAPSHOT_REF,
     DatasetSummary,
@@ -110,7 +111,7 @@ def _dump(model: Any, **options: Any) -> str:
     return json.dumps(model.model_dump(mode="json", **options), ensure_ascii=False)
 
 
-class SqliteRunRepository:
+class SqliteRunRepository(JobRows):
     """Runs in a SQLite file in WAL mode, with one writer at a time.
 
     Opening applies the migrations. A database written by a newer DSBF is refused
@@ -159,7 +160,9 @@ class SqliteRunRepository:
 
     # -- writing ---------------------------------------------------------------------
 
-    def save(self, run: Run) -> None:
+    def save(self, run: Run, *, snapshot_rows: int | None = None) -> None:
+        if snapshot_rows is not None and snapshot_rows < 0:
+            raise ValueError("snapshot_rows cannot be negative")
         run_id = str(run.run_id)
         key = run.dataset.key or None
         with self._write_lock:
@@ -169,7 +172,7 @@ class SqliteRunRepository:
                 ).first():
                     raise RunExistsError(f"run {run_id} is already stored")
             try:
-                stored = self._write_files(run, run_id)
+                stored = self._write_files(run, run_id, snapshot_rows)
                 with self._engine.begin() as connection:
                     self._insert(connection, run, run_id, key)
                     if stored:
@@ -178,7 +181,9 @@ class SqliteRunRepository:
                 self._files.delete_run(run_id)
                 raise
 
-    def _write_files(self, run: Run, run_id: str) -> list[dict[str, Any]]:
+    def _write_files(
+        self, run: Run, run_id: str, snapshot_rows: int | None
+    ) -> list[dict[str, Any]]:
         """Write the artifacts and the snapshot; the rows that describe them."""
         rows = []
         for artifact in run.artifacts:
@@ -189,7 +194,7 @@ class SqliteRunRepository:
                 _artifact_row(run_id, artifact.ref, path, artifact.media_type)
                 | {"rows": artifact.rows, "bytes": size, "sha256": digest}
             )
-        snapshot = self._snapshot_of(run)
+        snapshot = self._snapshot_of(run, snapshot_rows)
         if snapshot is not None:
             table, sampling = snapshot
             data, media_type, count, _ = encode(table)
@@ -205,15 +210,18 @@ class SqliteRunRepository:
             )
         return rows
 
-    def _snapshot_of(self, run: Run) -> tuple[pa.Table, SamplingInfo | None] | None:
+    def _snapshot_of(
+        self, run: Run, cap: int | None
+    ) -> tuple[pa.Table, SamplingInfo | None] | None:
         frame = run.analysed_frame
-        if frame is None or self._snapshot_rows == 0:
+        rows = self._snapshot_rows if cap is None else cap
+        if frame is None or rows == 0:
             return None
-        if frame.height <= self._snapshot_rows:
+        if frame.height <= rows:
             return frame.to_arrow(), None
         sample, info = sample_frame(
             frame,
-            self._snapshot_rows,
+            rows,
             strategy="random",
             seed=SNAPSHOT_SEED,
             stratify_by=(),

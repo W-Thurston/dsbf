@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from dsbf.store import StoreError
-from dsbf.store.repository import RunNotFoundError
+from dsbf.store.repository import JobNotFoundError, RunNotFoundError
 
 PROBLEM_MEDIA_TYPE = "application/problem+json"
 
@@ -53,6 +53,10 @@ def problem_response(
 def install_problem_handlers(app: FastAPI) -> None:
     @app.exception_handler(RunNotFoundError)
     async def _not_found(request: Request, error: RunNotFoundError) -> JSONResponse:
+        return problem_response(request, 404, "Not Found", str(error))
+
+    @app.exception_handler(JobNotFoundError)
+    async def _no_job(request: Request, error: JobNotFoundError) -> JSONResponse:
         return problem_response(request, 404, "Not Found", str(error))
 
     @app.exception_handler(StoreError)

@@ -1,7 +1,8 @@
 # dsbf/service/app.py
 """The FastAPI application over a run repository."""
 
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, cast
 
@@ -9,12 +10,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from dsbf.service.job_routes import job_router
+from dsbf.service.jobs import JobRunner
 from dsbf.service.problems import install_problem_handlers
 from dsbf.service.routes import router
-from dsbf.service.security import LOCAL_HOSTS, LocalHostOnly
+from dsbf.service.security import LOCAL_HOSTS, JsonWritesOnly, LocalHostOnly
 from dsbf.store import RunRepository
 
-API_VERSION = "1.0.0"
+API_VERSION = "1.1.0"
 """The version of the OpenAPI document; the breaking-change gate reads it."""
 
 
@@ -28,25 +31,41 @@ def create_app(
     """The service over ``repository``.
 
     It answers only requests whose ``Host`` is in ``allowed_hosts`` and sends no CORS
-    headers unless ``cors_origins`` names origins. When ``static_dir`` exists it
-    serves the built dashboard from it, after the API routes. The caller closes the
-    repository.
+    headers unless ``cors_origins`` names origins. A write needs a JSON body and a
+    local (or named) ``Origin``. The job runner starts and stops with the app. When
+    ``static_dir`` exists it serves the built dashboard from it, after the API
+    routes. The caller closes the repository.
     """
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.runner.start()
+        try:
+            yield
+        finally:
+            app.state.runner.stop()
+
     app = FastAPI(
         title="DSBF API",
         version=API_VERSION,
-        summary="Read access to stored DSBF runs.",
+        summary="Stored DSBF runs, and jobs that profile a local file into the store.",
+        lifespan=lifespan,
         docs_url="/v2/docs",
         redoc_url=None,
         openapi_url="/v2/openapi.json",
     )
     app.state.repository = repository
+    app.state.runner = JobRunner(repository)
     install_problem_handlers(app)
     app.include_router(router)
+    app.include_router(job_router)
     if cors_origins:
         app.add_middleware(
-            CORSMiddleware, allow_origins=list(cors_origins), allow_methods=["GET"]
+            CORSMiddleware,
+            allow_origins=list(cors_origins),
+            allow_methods=["GET", "POST"],
         )
+    app.add_middleware(JsonWritesOnly, hosts=allowed_hosts, origins=tuple(cors_origins))
     app.add_middleware(LocalHostOnly, hosts=allowed_hosts)
     if static_dir is not None and static_dir.is_dir():
         app.mount("/", StaticFiles(directory=static_dir, html=True), name="dashboard")

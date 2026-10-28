@@ -18,12 +18,14 @@ from dsbf.store.artifacts import (
     ArtifactStore,
     FsspecArtifactStore,
 )
+from dsbf.store.jobs import Job, JobEvent, JobRequest, JobState
 from dsbf.store.repository import (
     SNAPSHOT_REF,
     DatasetSummary,
     FindingCount,
     FindingOccurrence,
     GcResult,
+    JobNotFoundError,
     Page,
     RunExistsError,
     RunHeader,
@@ -46,6 +48,11 @@ __all__ = [
     "FindingOccurrence",
     "FsspecArtifactStore",
     "GcResult",
+    "Job",
+    "JobEvent",
+    "JobNotFoundError",
+    "JobRequest",
+    "JobState",
     "Snapshot",
     "StoredArtifact",
     "Page",

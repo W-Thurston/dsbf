@@ -1,4 +1,4 @@
-"""A service with no authentication answers only local requests and only to GET."""
+"""A service with no authentication answers only local requests."""
 
 import pytest
 from fastapi.testclient import TestClient

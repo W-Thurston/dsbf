@@ -421,6 +421,48 @@
         "title": "BooleanProfile",
         "type": "object"
       },
+      "CacheConfig": {
+        "additionalProperties": false,
+        "description": "Keep the results of checks between runs under the DSBF home.",
+        "properties": {
+          "enabled": {
+            "default": false,
+            "description": "Reuse results of checks whose inputs are unchanged.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "max_age_days": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 90,
+            "description": "Evict entries not used for this long; unset keeps all.",
+            "title": "Max Age Days"
+          },
+          "max_megabytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 500,
+            "description": "Evict the least recently used entries past this size; unset keeps all.",
+            "title": "Max Megabytes"
+          }
+        },
+        "title": "CacheConfig",
+        "type": "object"
+      },
       "CategoricalProfile": {
         "additionalProperties": false,
         "properties": {
@@ -692,6 +734,43 @@
           "params"
         ],
         "title": "CheckResult",
+        "type": "object"
+      },
+      "CheckSettings": {
+        "additionalProperties": false,
+        "description": "What one run changes about one check; unset keeps the check's own.",
+        "properties": {
+          "runs_in": {
+            "anyOf": [
+              {
+                "enum": [
+                  "thread",
+                  "process"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`process` to run the check in a worker process, which a timeout can kill; `thread` for a thread.",
+            "title": "Runs In"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seconds this check may take.",
+            "title": "Timeout Seconds"
+          }
+        },
+        "title": "CheckSettings",
         "type": "object"
       },
       "CheckStatus": {
@@ -1182,6 +1261,16 @@
         "title": "DatetimeProfile",
         "type": "object"
       },
+      "Depth": {
+        "description": "How much work a run is willing to do, as a ceiling on check cost.",
+        "enum": [
+          "quick",
+          "standard",
+          "deep"
+        ],
+        "title": "Depth",
+        "type": "string"
+      },
       "Dimension": {
         "description": "The aspect of the data a finding speaks to.\n\nThe first five are the quality dimensions; the rest describe the shape of\nthe data.",
         "enum": [
@@ -1561,6 +1650,19 @@
         "title": "Guidance",
         "type": "object"
       },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "HealthIssue": {
         "additionalProperties": false,
         "description": "One check that did not complete normally, and why.",
@@ -1813,6 +1915,346 @@
         "title": "InvalidField",
         "type": "object"
       },
+      "Job": {
+        "additionalProperties": false,
+        "description": "One profiling job.",
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the job failed, as `dsbf check` would say it; also set when a job was cancelled or interrupted, with what happened.",
+            "title": "Error"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the job reached a final state.",
+            "title": "Finished At"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "last_seq": {
+            "description": "The number of the newest event, 0 if none.",
+            "minimum": 0.0,
+            "title": "Last Seq",
+            "type": "integer"
+          },
+          "request": {
+            "$ref": "#/components/schemas/JobRequest-Output"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The stored run, once the job succeeded.",
+            "title": "Run Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the worker took the job; null while it is queued.",
+            "title": "Started At"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          }
+        },
+        "required": [
+          "job_id",
+          "state",
+          "request",
+          "requested_at",
+          "started_at",
+          "finished_at",
+          "run_id",
+          "error",
+          "last_seq"
+        ],
+        "title": "Job",
+        "type": "object"
+      },
+      "JobEvent": {
+        "additionalProperties": false,
+        "description": "One step of a job's progress.",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "check_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check; null on `job_finished`.",
+            "title": "Check Id"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A note's code.",
+            "title": "Code"
+          },
+          "kind": {
+            "enum": [
+              "check_started",
+              "note",
+              "check_finished",
+              "job_finished"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A note's message, or on `job_finished` the job's error.",
+            "title": "Message"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's place in the plan, from 1.",
+            "title": "Position"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set on `job_finished` when the run was stored.",
+            "title": "Run Id"
+          },
+          "seq": {
+            "description": "The event's number within its job.",
+            "minimum": 1.0,
+            "title": "Seq",
+            "type": "integer"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobState"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set on `job_finished`: the final state."
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CheckStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set on `check_finished`."
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Checks in the plan.",
+            "title": "Total"
+          }
+        },
+        "required": [
+          "seq",
+          "at",
+          "kind",
+          "check_id",
+          "position",
+          "total",
+          "status",
+          "code",
+          "message",
+          "state",
+          "run_id"
+        ],
+        "title": "JobEvent",
+        "type": "object"
+      },
+      "JobProgress": {
+        "additionalProperties": false,
+        "description": "A job and the events after the cursor the caller gave.",
+        "properties": {
+          "events": {
+            "description": "Events numbered after `after`.",
+            "items": {
+              "$ref": "#/components/schemas/JobEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "job": {
+            "$ref": "#/components/schemas/Job"
+          },
+          "next_after": {
+            "description": "Pass this as `after` to get the events that follow.",
+            "minimum": 0.0,
+            "title": "Next After",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job",
+          "events",
+          "next_after"
+        ],
+        "title": "JobProgress",
+        "type": "object"
+      },
+      "JobRequest-Input": {
+        "additionalProperties": false,
+        "description": "What to profile and with which settings.",
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The name to give the dataset; unset is the file's.",
+            "title": "Name"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProfileConfig",
+            "description": "The settings `dsbf check` would build, `dataset` being the key that groups the run with earlier ones."
+          },
+          "source": {
+            "description": "The path of a local CSV, TSV, Parquet, Excel, JSON or NDJSON file.",
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "JobRequest",
+        "type": "object"
+      },
+      "JobRequest-Output": {
+        "additionalProperties": false,
+        "description": "What to profile and with which settings.",
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The name to give the dataset; unset is the file's.",
+            "title": "Name"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProfileConfig",
+            "description": "The settings `dsbf check` would build, `dataset` being the key that groups the run with earlier ones."
+          },
+          "source": {
+            "description": "The path of a local CSV, TSV, Parquet, Excel, JSON or NDJSON file.",
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "name",
+          "settings"
+        ],
+        "title": "JobRequest",
+        "type": "object"
+      },
+      "JobState": {
+        "description": "Where a job is. The last four are final.",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "interrupted"
+        ],
+        "title": "JobState",
+        "type": "string"
+      },
       "LengthStats": {
         "additionalProperties": false,
         "description": "Lengths, in characters, of a column's non-null strings.",
@@ -1839,6 +2281,40 @@
           "mean"
         ],
         "title": "LengthStats",
+        "type": "object"
+      },
+      "LimitsConfig": {
+        "additionalProperties": false,
+        "description": "How long a check, and the whole run, may take; unset leaves a limit off.",
+        "properties": {
+          "check_timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seconds one check may take.",
+            "title": "Check Timeout Seconds"
+          },
+          "run_budget_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seconds the whole run may take.",
+            "title": "Run Budget Seconds"
+          }
+        },
+        "title": "LimitsConfig",
         "type": "object"
       },
       "Matcher": {
@@ -2546,6 +3022,42 @@
         "title": "Page[Finding]",
         "type": "object"
       },
+      "Page_Job_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[Job]",
+        "type": "object"
+      },
       "Page_RunSummary_": {
         "additionalProperties": false,
         "properties": {
@@ -2777,6 +3289,151 @@
           "instance"
         ],
         "title": "Problem",
+        "type": "object"
+      },
+      "ProfileConfig": {
+        "additionalProperties": false,
+        "description": "Every setting of one profiling run, with its default.",
+        "properties": {
+          "cache": {
+            "$ref": "#/components/schemas/CacheConfig",
+            "default": {
+              "enabled": false,
+              "max_age_days": 90.0,
+              "max_megabytes": 500
+            }
+          },
+          "check_settings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CheckSettings"
+            },
+            "description": "A timeout or `runs_in` for single checks, by check id.",
+            "title": "Check Settings",
+            "type": "object"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The key that groups this run with earlier runs of the same dataset. Unset, a file's absolute path is the key, and an in-memory table has none.",
+            "title": "Dataset"
+          },
+          "depth": {
+            "$ref": "#/components/schemas/Depth",
+            "default": "standard",
+            "description": "The most expensive checks to allow."
+          },
+          "exclude": {
+            "default": [],
+            "description": "Checks to remove by id.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Exclude",
+            "type": "array"
+          },
+          "include": {
+            "default": [],
+            "description": "Checks to add by id, whatever the filters say.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Include",
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsConfig",
+            "default": {}
+          },
+          "packs": {
+            "default": [
+              "core"
+            ],
+            "description": "The packs whose checks are candidates.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Packs",
+            "type": "array"
+          },
+          "params": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "description": "Parameters of checks, by check id; they win over `target` and `time_index`.",
+            "title": "Params",
+            "type": "object"
+          },
+          "plugins": {
+            "default": [],
+            "description": "Directories of check plugins to load.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Plugins",
+            "type": "array"
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "store": {
+            "$ref": "#/components/schemas/StoreConfig",
+            "default": {
+              "snapshot_rows": 10000
+            }
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The column to predict, for the checks that need one.",
+            "title": "Target"
+          },
+          "time_index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The datetime column the time series checks use.",
+            "title": "Time Index"
+          },
+          "workers": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Checks to run at once; unset is one per core.",
+            "title": "Workers"
+          }
+        },
+        "title": "ProfileConfig",
         "type": "object"
       },
       "Quantile": {
@@ -3149,6 +3806,59 @@
         "title": "RunSummary",
         "type": "object"
       },
+      "SampleConfig": {
+        "additionalProperties": false,
+        "description": "Profile a sample of the rows rather than all of them.",
+        "properties": {
+          "rows": {
+            "description": "How many rows to keep.",
+            "minimum": 1.0,
+            "title": "Rows",
+            "type": "integer"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Seeds a random or stratified sample.",
+            "title": "Seed"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/SampleStrategy",
+            "default": "head",
+            "description": "How the rows are chosen."
+          },
+          "stratify_by": {
+            "default": [],
+            "description": "The columns whose groups a stratified sample keeps.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Stratify By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "SampleConfig",
+        "type": "object"
+      },
+      "SampleStrategy": {
+        "description": "How the rows of a sample are chosen.",
+        "enum": [
+          "head",
+          "random",
+          "stratified"
+        ],
+        "title": "SampleStrategy",
+        "type": "string"
+      },
       "SamplingInfo": {
         "additionalProperties": false,
         "description": "How a sample was drawn from the data. No sampling is the absence of this.",
@@ -3367,6 +4077,21 @@
           "timeout"
         ],
         "title": "StatusCounts",
+        "type": "object"
+      },
+      "StoreConfig": {
+        "additionalProperties": false,
+        "description": "What the run store keeps beside a run.",
+        "properties": {
+          "snapshot_rows": {
+            "default": 10000,
+            "description": "Rows of the analysed data to keep as a snapshot, sampled (seed 0) above this; 0 keeps none.",
+            "minimum": 0.0,
+            "title": "Snapshot Rows",
+            "type": "integer"
+          }
+        },
+        "title": "StoreConfig",
         "type": "object"
       },
       "StoredArtifact": {
@@ -3870,6 +4595,46 @@
         "title": "UnknownProfile",
         "type": "object"
       },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
       "ValidationProblem": {
         "description": "A request that did not pass validation, with each field that failed.",
         "properties": {
@@ -3949,9 +4714,9 @@
     }
   },
   "info": {
-    "summary": "Read access to stored DSBF runs.",
+    "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -4219,6 +4984,290 @@
         "summary": "List Dataset Runs",
         "tags": [
           "datasets"
+        ]
+      }
+    },
+    "/v2/jobs": {
+      "get": {
+        "description": "Jobs, the most recently requested first.",
+        "operationId": "listJobs",
+        "parameters": [
+          {
+            "description": "Only jobs in it.",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JobState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only jobs in it.",
+              "title": "State"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_Job_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Jobs",
+        "tags": [
+          "jobs"
+        ]
+      },
+      "post": {
+        "description": "Queue a profiling run of a local file. It runs after the jobs ahead of it,\nand its run is stored when it ends; follow it with `getJob`.",
+        "operationId": "startJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobRequest-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/v2/jobs/{job_id}": {
+      "get": {
+        "description": "A job's state and its progress events numbered after `after`. The events end\nwith a `job_finished` event that names the run, when there is one.",
+        "operationId": "getJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last event already seen.",
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "The last event already seen.",
+              "minimum": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Most events to return.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "description": "Most events to return.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobProgress"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Job",
+        "tags": [
+          "jobs"
+        ]
+      }
+    },
+    "/v2/jobs/{job_id}/cancel": {
+      "post": {
+        "description": "Cancel a job. A queued job is cancelled at once; a running one stops before\nits next check, and is `running` until it does.",
+        "operationId": "cancelJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Job",
+        "tags": [
+          "jobs"
         ]
       }
     },

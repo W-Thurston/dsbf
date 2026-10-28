@@ -11,7 +11,7 @@ from pydantic import Field
 
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
-from dsbf.store import FindingCount, RunHeader, StoredArtifact
+from dsbf.store import FindingCount, Job, JobEvent, RunHeader, StoredArtifact
 
 
 class RunOverview(Contract):
@@ -72,3 +72,13 @@ def json_safe(value: object) -> object:
 def table_rows(table: pa.Table) -> tuple[tuple[Any, ...], ...]:
     columns = [[json_safe(v) for v in column.to_pylist()] for column in table.columns]
     return tuple(zip(*columns, strict=True))
+
+
+class JobProgress(Contract):
+    """A job and the events after the cursor the caller gave."""
+
+    job: Job
+    events: tuple[JobEvent, ...] = Field(description="Events numbered after `after`.")
+    next_after: int = Field(
+        ge=0, description="Pass this as `after` to get the events that follow."
+    )

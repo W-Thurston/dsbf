@@ -110,3 +110,31 @@ artifacts = sa.Table(
     sa.Column("sha256", sa.Text, nullable=False),
     sa.Column("sampling_json", sa.Text, nullable=True),
 )
+
+jobs = sa.Table(
+    "jobs",
+    metadata,
+    sa.Column("job_id", sa.Text, primary_key=True),
+    sa.Column("state", sa.Text, nullable=False),
+    sa.Column("requested_at", sa.Text, nullable=False),
+    sa.Column("started_at", sa.Text, nullable=True),
+    sa.Column("finished_at", sa.Text, nullable=True),
+    sa.Column("run_id", sa.Text, nullable=True),
+    sa.Column("error", sa.Text, nullable=True),
+    sa.Column("last_seq", sa.Integer, nullable=False),
+    sa.Column("request_json", sa.Text, nullable=False),
+    sa.Index("ix_jobs_requested_at", "requested_at"),
+)
+
+job_events = sa.Table(
+    "job_events",
+    metadata,
+    sa.Column(
+        "job_id",
+        sa.Text,
+        sa.ForeignKey("jobs.job_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("seq", sa.Integer, primary_key=True),
+    sa.Column("event_json", sa.Text, nullable=False),
+)
