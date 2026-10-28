@@ -7,13 +7,18 @@
     <ol v-else class="findings">
       <li v-for="finding in page.items" :key="finding.id">
         <SeverityBadge :severity="finding.severity" />
-        <strong>{{ finding.title }}</strong>
+        <router-link :to="{ name: 'findings', params: { runId }, query: { finding: finding.id } }"
+          ><strong>{{ finding.title }}</strong></router-link
+        >
         <span class="muted"> · {{ finding.dimension }}</span>
         <p>{{ finding.message }}</p>
       </li>
     </ol>
     <p v-if="page && page.total > page.items.length" class="muted">
       Showing {{ page.items.length }} of {{ formatCount(page.total) }}.
+    </p>
+    <p v-if="page && page.total">
+      <router-link :to="{ name: 'findings', params: { runId } }">Explore all findings</router-link>
     </p>
   </section>
 </template>

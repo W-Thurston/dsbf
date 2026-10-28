@@ -4716,7 +4716,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5641,7 +5641,7 @@
     },
     "/v2/runs/{run_id}/findings": {
       "get": {
-        "description": "A run's findings, highest severity first.",
+        "description": "A run's findings, highest severity first unless sorted otherwise.",
         "operationId": "listFindings",
         "parameters": [
           {
@@ -5688,6 +5688,22 @@
           },
           {
             "in": "query",
+            "name": "min_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Confidence"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Confidence"
+            }
+          },
+          {
+            "in": "query",
             "name": "code",
             "required": false,
             "schema": {
@@ -5703,7 +5719,25 @@
             }
           },
           {
-            "description": "Findings about this column.",
+            "description": "Findings of this check id.",
+            "in": "query",
+            "name": "check",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Findings of this check id.",
+              "title": "Check"
+            }
+          },
+          {
+            "description": "Findings about this column (a pair matches either).",
             "in": "query",
             "name": "column",
             "required": false,
@@ -5716,8 +5750,25 @@
                   "type": "null"
                 }
               ],
-              "description": "Findings about this column.",
+              "description": "Findings about this column (a pair matches either).",
               "title": "Column"
+            }
+          },
+          {
+            "description": "Highest severity first, or by check or code.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "severity",
+              "description": "Highest severity first, or by check or code.",
+              "enum": [
+                "severity",
+                "check",
+                "code"
+              ],
+              "title": "Sort",
+              "type": "string"
             }
           },
           {

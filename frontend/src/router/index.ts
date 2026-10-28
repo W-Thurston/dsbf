@@ -18,5 +18,11 @@ export default createRouter({
       component: () => import('../views/RunView.vue'),
       props: true,
     },
+    {
+      path: '/runs/:runId/findings',
+      name: 'findings',
+      component: () => import('../views/FindingsView.vue'),
+      props: true,
+    },
   ],
 })

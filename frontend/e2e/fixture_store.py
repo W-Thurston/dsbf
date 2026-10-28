@@ -1,12 +1,15 @@
 """Build the run store the Playwright tests browse (``fixture_store.py <DSBF_HOME>``).
 
 Two runs of titanic: a full scan, and a 300-row sample that also runs a check that
-raises and a plugin that fails to import, under a policy that fails.
+raises and a plugin that fails to import, under a policy that fails. A third dataset,
+``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact.
 """
 
 import sys
 import warnings
 from pathlib import Path
+
+import polars as pl
 
 import dsbf
 from dsbf.store import open_repository
@@ -24,6 +27,26 @@ POLICY = {
     ],
 }
 
+# Forty distinct names, each repeated with one misspelt twin, so the pair list is long
+# enough to page.
+_BASE = [
+    f"{stem}{suffix}"
+    for stem in ("Spring", "Oak", "River", "Cedar")
+    for suffix in (
+        "field",
+        "ton",
+        "ville",
+        "burgh",
+        "port",
+        "wood",
+        "dale",
+        "mouth",
+        "ford",
+        "bridge",
+    )
+]
+CITIES = pl.DataFrame({"name": _BASE + [n.replace("e", "ee", 1) for n in _BASE]})
+
 
 def main(home: Path) -> None:
     warnings.simplefilter("ignore")
@@ -38,6 +61,11 @@ def main(home: Path) -> None:
             checks=["always_fails"],
             plugins=HERE / "plugins",
             policy=POLICY,
+        )
+    )
+    repository.save(
+        dsbf.profile(
+            CITIES, name="cities", dataset="cities", checks=["fuzzy_duplicates"]
         )
     )
 

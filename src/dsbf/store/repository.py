@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Protocol
+from typing import Literal, Protocol
 from uuid import UUID
 
 import pyarrow as pa
@@ -13,6 +13,7 @@ from dsbf.model import (
     CheckResult,
     CheckStatus,
     ColumnProfile,
+    Confidence,
     DatasetManifest,
     Dimension,
     Finding,
@@ -26,6 +27,9 @@ from dsbf.model import (
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
 from dsbf.store.jobs import Job, JobEvent, JobRequest, JobState
+
+FindingSort = Literal["severity", "check", "code"]
+"""How ``find_findings`` orders a run's findings."""
 
 
 class StoreError(Exception):
@@ -214,12 +218,18 @@ class RunRepository(Protocol):
         *,
         dimension: Dimension | None = None,
         min_severity: Severity | None = None,
+        min_confidence: Confidence | None = None,
         code: str | None = None,
+        check: str | None = None,
         column: str | None = None,
+        sort: FindingSort = "severity",
         limit: int = 100,
         offset: int = 0,
     ) -> Page[Finding]:
-        """A run's findings, highest severity first, then check id, then id."""
+        """A run's findings that meet every filter (a pair matches either column).
+
+        ``sort`` is ``severity`` (highest first), ``check`` or ``code``; ties break
+        by check id, then id."""
 
     def finding_history(
         self,
@@ -347,6 +357,7 @@ __all__ = [
     "DatasetSummary",
     "FindingCount",
     "FindingOccurrence",
+    "FindingSort",
     "GcResult",
     "JobNotFoundError",
     "Page",

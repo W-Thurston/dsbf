@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from dsbf.model import Severity
+from dsbf.model import Confidence, Severity
 from dsbf.store import RunNotFoundError
 
 pytestmark = pytest.mark.integration
@@ -95,6 +95,36 @@ def test_findings_filter(repo, demo_run):
     assert {f.id for f in by_severity.items} == {
         f.id for f in demo_run.findings if f.severity >= Severity.WARN
     }
+
+
+def test_findings_filter_by_check_and_confidence(repo, demo_run):
+    repo.save(demo_run)
+    sample = demo_run.findings[0]
+
+    by_check = repo.find_findings(demo_run.run_id, check=sample.check_id, limit=1000)
+    by_confidence = repo.find_findings(
+        demo_run.run_id, min_confidence=Confidence.HIGH, limit=1000
+    )
+
+    assert {f.id for f in by_check.items} == {
+        f.id for f in demo_run.findings if f.check_id == sample.check_id
+    }
+    assert {f.id for f in by_confidence.items} == {
+        f.id for f in demo_run.findings if f.confidence >= Confidence.HIGH
+    }
+
+
+@pytest.mark.parametrize("sort", ["check", "code"])
+def test_findings_sort_by_check_or_code(repo, demo_run, sort):
+    repo.save(demo_run)
+
+    page = repo.find_findings(demo_run.run_id, sort=sort, limit=1000)
+
+    keys = [
+        (f.check_id,) if sort == "check" else (f.code, f.check_id) for f in page.items
+    ]
+    assert keys == sorted(keys)
+    assert page.total == len(demo_run.findings)
 
 
 def test_a_filter_with_no_match_is_an_empty_page(repo, demo_run):

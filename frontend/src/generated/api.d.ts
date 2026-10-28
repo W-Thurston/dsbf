@@ -245,7 +245,7 @@ export interface paths {
         };
         /**
          * List Findings
-         * @description A run's findings, highest severity first.
+         * @description A run's findings, highest severity first unless sorted otherwise.
          */
         get: operations["listFindings"];
         put?: never;
@@ -3039,9 +3039,14 @@ export interface operations {
             query?: {
                 dimension?: components["schemas"]["Dimension"] | null;
                 min_severity?: components["schemas"]["Severity"] | null;
+                min_confidence?: components["schemas"]["Confidence"] | null;
                 code?: string | null;
-                /** @description Findings about this column. */
+                /** @description Findings of this check id. */
+                check?: string | null;
+                /** @description Findings about this column (a pair matches either). */
                 column?: string | null;
+                /** @description Highest severity first, or by check or code. */
+                sort?: "severity" | "check" | "code";
                 /** @description Items per page. */
                 limit?: number;
                 /** @description Items to skip. */

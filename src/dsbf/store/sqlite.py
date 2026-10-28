@@ -23,6 +23,7 @@ from dsbf.engine.artifacts import decode, encode
 from dsbf.model import (
     CheckResult,
     ColumnProfile,
+    Confidence,
     Dimension,
     Finding,
     Run,
@@ -39,6 +40,7 @@ from dsbf.store.repository import (
     DatasetSummary,
     FindingCount,
     FindingOccurrence,
+    FindingSort,
     GcResult,
     Page,
     RunExistsError,
@@ -83,6 +85,15 @@ def _text(moment: datetime) -> str:
 
 def _rank(severity: Severity) -> int:
     return _SEVERITIES.index(severity)
+
+
+def _finding_order(sort: FindingSort) -> tuple[Any, ...]:
+    tail = (t.findings.c.check_id, t.findings.c.id)
+    if sort == "check":
+        return tail
+    if sort == "code":
+        return (t.findings.c.code, *tail)
+    return (t.findings.c.severity_rank.desc(), *tail)
 
 
 def _artifact_row(run_id: str, ref: str, path: str, media_type: str) -> dict[str, Any]:
@@ -602,8 +613,11 @@ class SqliteRunRepository(JobRows):
         *,
         dimension: Dimension | None = None,
         min_severity: Severity | None = None,
+        min_confidence: Confidence | None = None,
         code: str | None = None,
+        check: str | None = None,
         column: str | None = None,
+        sort: FindingSort = "severity",
         limit: int = 100,
         offset: int = 0,
     ) -> Page[Finding]:
@@ -613,8 +627,17 @@ class SqliteRunRepository(JobRows):
             where.append(t.findings.c.dimension == dimension.value)
         if min_severity is not None:
             where.append(t.findings.c.severity_rank >= _rank(min_severity))
+        if min_confidence is not None:
+            kept = [c.value for c in Confidence if c >= min_confidence]
+            where.append(
+                sa.func.json_extract(t.findings.c.finding_json, "$.confidence").in_(
+                    kept
+                )
+            )
         if code is not None:
             where.append(t.findings.c.code == code)
+        if check is not None:
+            where.append(t.findings.c.check_id == check)
         if column is not None:
             where.append(
                 t.findings.c.id.in_(
@@ -635,11 +658,7 @@ class SqliteRunRepository(JobRows):
             texts = connection.execute(
                 sa.select(t.findings.c.finding_json)
                 .where(*where)
-                .order_by(
-                    t.findings.c.severity_rank.desc(),
-                    t.findings.c.check_id,
-                    t.findings.c.id,
-                )
+                .order_by(*_finding_order(sort))
                 .limit(limit)
                 .offset(offset)
             ).scalars()
