@@ -227,7 +227,7 @@ class RunHealth(BaseModel):  # derived from the results by RunHealth.from_result
     counts: StatusCounts  # one integer per status
     issues: tuple[
         HealthIssue, ...
-    ]  # error, timeout, skipped, unavailable; with reasons
+    ]  # error, timeout, skipped, unavailable, not_applicable; with reasons
     findings_at_warn_or_above: int
 
 

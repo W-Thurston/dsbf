@@ -8,7 +8,7 @@ or from a finding goes through ``_e``, the only way text enters the markup.
 from html import escape
 from pathlib import Path
 
-from dsbf.model import Dimension, Run, Severity
+from dsbf.model import CheckStatus, Dimension, Run, Severity
 from dsbf.model.profile import (
     BooleanProfile,
     CategoricalProfile,
@@ -198,6 +198,7 @@ def _health(run: Run) -> str:
         + (f"<div class='muted'>{_e(issue.hint)}</div>" if issue.hint else "")
         + "</td></tr>"
         for issue in run.health.issues
+        if issue.status is not CheckStatus.NOT_APPLICABLE
     )
     notes = "".join(f"<li>{_e(note.message)}</li>" for note in run.notes)
     return (

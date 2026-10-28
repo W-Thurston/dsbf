@@ -346,7 +346,7 @@ def test_my_dataset(archetype: Archetype) -> None:
 ```
 
 Add the name to `ARCHETYPES` so that "no check fails" covers it, and to
-`tests/validation/DASHBOARD_CHECKLIST.md` with what to look at once the dashboard is rebuilt.
+`tests/validation/DASHBOARD_CHECKLIST.md` with what to look at in the dashboard.
 
 **Assertion writing principles:**
 - Check both directions where relevant (skewed columns flagged AND clean columns not flagged)

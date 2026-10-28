@@ -1,0 +1,43 @@
+/* Theme tokens. Every text and background pair below is checked against WCAG AA
+   (4.5:1) by tokens.test.ts, so a change here that loses contrast fails a test. */
+body {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --link: #60a5fa;
+  --link-hover: #93c5fd;
+
+  --error-bg: #3d0f0f;
+  --error-fg: #fca5a5;
+  --warn-bg: #3d2510;
+  --warn-fg: #fdba74;
+  --notice-bg: #1e3a5f;
+  --notice-fg: #93c5fd;
+  --info-bg: #334155;
+  --info-fg: #cbd5e1;
+  --ok-bg: #14291f;
+  --ok-fg: #86efac;
+}
+
+body.theme-light {
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --border: #cbd5e1;
+  --text: #1e293b;
+  --text-muted: #475569;
+  --link: #1d4ed8;
+  --link-hover: #1e40af;
+
+  --error-bg: #fee2e2;
+  --error-fg: #991b1b;
+  --warn-bg: #ffedd5;
+  --warn-fg: #9a3412;
+  --notice-bg: #dbeafe;
+  --notice-fg: #1e40af;
+  --info-bg: #e2e8f0;
+  --info-fg: #334155;
+  --ok-bg: #dcfce7;
+  --ok-fg: #166534;
+}

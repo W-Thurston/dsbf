@@ -86,3 +86,6 @@ scratch/
 # ── Performance runs ──────────────────────────────────────────────────────────
 perf-results/
 calibration-results/
+.e2e-home/
+test-results/
+playwright-report/

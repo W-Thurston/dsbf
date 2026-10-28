@@ -26,10 +26,9 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Dark theme default - light theme overrides live in App.vue */
 body {
-  background-color: #0f172a;
-  color: #e2e8f0;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 #app {
@@ -38,11 +37,11 @@ body {
 
 /* Sensible defaults that don't fight the dashboard layout */
 a {
-  color: #60a5fa;
+  color: var(--link);
   text-decoration: none;
 }
 a:hover {
-  color: #93c5fd;
+  color: var(--link-hover);
 }
 
 button {

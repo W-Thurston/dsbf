@@ -1990,7 +1990,7 @@ export interface components {
             findings_at_warn_or_above: number;
             /**
              * Issues
-             * @description Checks that errored, timed out, were skipped or were unavailable.
+             * @description Checks that errored, timed out, were skipped, were unavailable or were not applicable, each with the reason.
              * @default []
              */
             issues: components["schemas"]["HealthIssue"][];

@@ -1053,7 +1053,7 @@ export interface Timing {
 export interface RunHealth {
   counts: StatusCounts;
   /**
-   * Checks that errored, timed out, were skipped or were unavailable.
+   * Checks that errored, timed out, were skipped, were unavailable or were not applicable, each with the reason.
    */
   issues: HealthIssue[];
   findings_at_warn_or_above: number;

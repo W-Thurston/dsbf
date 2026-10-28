@@ -9,6 +9,9 @@ from typing import Any, cast
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import Response
+from starlette.types import Scope
 
 from dsbf.service.job_routes import job_router
 from dsbf.service.jobs import JobRunner
@@ -19,6 +22,20 @@ from dsbf.store import RunRepository
 
 API_VERSION = "1.1.0"
 """The version of the OpenAPI document; the breaking-change gate reads it."""
+
+
+class DashboardFiles(StaticFiles):
+    """The built dashboard, which answers a page route (``/runs/<id>``) with its
+    ``index.html`` so the browser router can take over after a reload or a pasted link.
+    A missing file with an extension, or under ``/v2``, is still a 404."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as error:
+            if error.status_code != 404 or "." in Path(path).name:
+                raise
+            return await super().get_response("index.html", scope)
 
 
 def create_app(
@@ -68,7 +85,9 @@ def create_app(
     app.add_middleware(JsonWritesOnly, hosts=allowed_hosts, origins=tuple(cors_origins))
     app.add_middleware(LocalHostOnly, hosts=allowed_hosts)
     if static_dir is not None and static_dir.is_dir():
-        app.mount("/", StaticFiles(directory=static_dir, html=True), name="dashboard")
+        app.mount(
+            "/", DashboardFiles(directory=static_dir, html=True), name="dashboard"
+        )
     return app
 
 

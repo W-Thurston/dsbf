@@ -6,12 +6,12 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   // src/generated is written by `dsbf schema export`.
-  { ignores: ['dist/', 'node_modules/', 'src/generated/'] },
+  { ignores: ['dist/', 'node_modules/', 'src/generated/', '.e2e-home/', 'test-results/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
   {
-    files: ['src/**/*.{ts,vue}'],
+    files: ['src/**/*.{ts,vue}', 'e2e/**/*.ts'],
     languageOptions: {
       globals: globals.browser,
       parserOptions: { parser: tseslint.parser },
@@ -23,7 +23,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.{js,ts}'],
+    files: ['*.{js,ts}', 'scripts/*.mjs'],
     languageOptions: { globals: globals.node },
   },
   // Last, so it switches off every formatting rule that Prettier owns.
