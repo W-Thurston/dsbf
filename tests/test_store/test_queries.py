@@ -143,3 +143,27 @@ def test_reading_a_missing_result_or_finding_names_it(repo, demo_run):
         repo.get_finding(demo_run.run_id, "nope")
     with pytest.raises(RunNotFoundError):
         repo.get_finding(uuid4(), "nope")
+
+
+def test_datasets_header_counts_and_column_profile(repo, demo_run):
+    repo.save(demo_run)
+    page = repo.list_datasets()
+    assert page.total == 1
+    entry = page.items[0]
+    assert (entry.key, entry.n_runs, entry.last_run_id) == (
+        demo_run.dataset.key,
+        1,
+        demo_run.run_id,
+    )
+
+    header = repo.get_header(demo_run.run_id)
+    assert header.health == demo_run.health
+    assert header.dataset == demo_run.dataset
+
+    counts = repo.finding_counts(demo_run.run_id)
+    assert sum(c.count for c in counts) == len(demo_run.findings)
+
+    column = demo_run.profile.columns[0]
+    assert repo.get_column_profile(demo_run.run_id, column.name) == column
+    with pytest.raises(RunNotFoundError, match="no column"):
+        repo.get_column_profile(demo_run.run_id, "absent")

@@ -18,9 +18,9 @@ pytestmark = pytest.mark.unit
 
 EXTRAS = {"ml", "timeseries", "text", "excel", "pandas", "sql", "server"}
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "dsbf"
-# Loaded only by importing `dsbf.store`, which names the `server` extra when it is
-# missing; importing `dsbf` never loads it.
-STORE = SOURCE / "store"
+# Loaded only by importing `dsbf.store` or `dsbf.service`, which name the `server`
+# extra when it is missing; importing `dsbf` never loads them.
+SERVER_PACKAGES = (SOURCE / "store", SOURCE / "service")
 
 
 @pytest.fixture(scope="module")
@@ -76,7 +76,7 @@ def _packages_imported(*, module_level: bool) -> dict[str, set[str]]:
     distributions = packages_distributions()
     found: dict[str, set[str]] = {}
     for path in sorted(SOURCE.rglob("*.py")):
-        if module_level and STORE in path.parents:
+        if module_level and any(p in path.parents for p in SERVER_PACKAGES):
             continue
         tree = ast.parse(path.read_text())
         for top in _imports(tree.body, module_level=module_level):
@@ -160,8 +160,8 @@ def _extra_modules_imported() -> set[str]:
     packages = {module for modules in EXTRA_MODULES.values() for module in modules}
     found: set[str] = set()
     for path in sorted(SOURCE.rglob("*.py")):
-        if STORE in path.parents:
-            continue  # the store is not a check; nothing there needs preloading
+        if any(p in path.parents for p in SERVER_PACKAGES):
+            continue  # the server is not a check; nothing there needs preloading
         for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]

@@ -87,6 +87,20 @@ Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
 | `--cache / --no-cache` | Reuse results of unchanged checks kept under the DSBF home (default: the cache.enabled setting, off). |
 | `--dataset <str>` | Groups this run with others of the same dataset. |
 
+### `dsbf dashboard`
+
+```
+dsbf dashboard [OPTIONS]
+```
+
+Serve the stored runs over the local API (and the dashboard, when built).
+
+| Option | Description |
+| --- | --- |
+| `--host <str>` | Local address to listen on. [default: 127.0.0.1] |
+| `--port <int range>` | Port to use. [default: 8765; 1<=x<=65535] |
+| `--open / --no-open` | Open the browser once the server starts. [default: open] |
+
 ### `dsbf plan`
 
 ```
