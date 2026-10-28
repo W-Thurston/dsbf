@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 # Semver. Additive changes are minor and breaking changes are major. The 1.x
 # compatibility guarantee begins with the first release.
-SCHEMA_VERSION = "0.12.0"
+SCHEMA_VERSION = "0.13.0"
 
 _SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _SEVERITY_FIRST = {severity: -rank for rank, severity in enumerate(Severity)}

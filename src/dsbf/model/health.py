@@ -10,12 +10,14 @@ from dsbf.model.base import Contract
 from dsbf.model.check import CheckResult, Note
 from dsbf.model.vocabulary import CheckStatus, Severity
 
-# The statuses that put a line in the summary. "Not applicable" is expected.
+# The statuses that carry a reason, in the order a reader should see them. "Not
+# applicable" is expected, so it is listed for the dashboard but not printed.
 _ISSUE_ORDER = (
     CheckStatus.ERROR,
     CheckStatus.TIMEOUT,
     CheckStatus.SKIPPED,
     CheckStatus.UNAVAILABLE,
+    CheckStatus.NOT_APPLICABLE,
 )
 _MARKS = {
     CheckStatus.ERROR: "✖",
@@ -23,6 +25,7 @@ _MARKS = {
     CheckStatus.SKIPPED: "↷",
     CheckStatus.UNAVAILABLE: "⦸",
 }
+_PRINTED = tuple(_MARKS)
 _MIN_ID_WIDTH = 22
 _STATUS_WIDTH = len("unavailable") + 2  # the longest status, two spaces before the id
 
@@ -61,7 +64,10 @@ class RunHealth(Contract):
     counts: StatusCounts
     issues: tuple[HealthIssue, ...] = Field(
         default=(),
-        description="Checks that errored, timed out, were skipped or were unavailable.",
+        description=(
+            "Checks that errored, timed out, were skipped, were unavailable or were"
+            " not applicable, each with the reason."
+        ),
     )
     findings_at_warn_or_above: int = Field(ge=0)
 
@@ -112,8 +118,9 @@ class RunHealth(Contract):
                 if self.counts[status]
             )
         )
-        id_width = max([_MIN_ID_WIDTH, *(len(i.check_id) + 2 for i in self.issues)])
-        for issue in self.issues:
+        printed = [i for i in self.issues if i.status in _PRINTED]
+        id_width = max([_MIN_ID_WIDTH, *(len(i.check_id) + 2 for i in printed)])
+        for issue in printed:
             text = issue.message + (f" Hint: {issue.hint}" if issue.hint else "")
             lines.append(
                 f"  {_MARKS[issue.status]} {issue.status.value:<{_STATUS_WIDTH}}"

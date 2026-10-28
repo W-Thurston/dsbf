@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     // The unit tests cover pure functions and the client, so they need no DOM.
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts'], // e2e/ is Playwright's
   },
   server: {
     proxy: {

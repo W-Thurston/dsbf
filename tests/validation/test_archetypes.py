@@ -67,7 +67,7 @@ def test_no_check_fails_on_any_archetype(archetype: Archetype, name: str) -> Non
         if r.status in FAILED
     }
     assert not broken, broken
-    assert run.health.issues == ()
+    assert {i.status for i in run.health.issues} <= {CheckStatus.NOT_APPLICABLE}
     assert statuses(run, CheckStatus.UNAVAILABLE) == set()
 
 

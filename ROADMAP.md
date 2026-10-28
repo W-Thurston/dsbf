@@ -175,7 +175,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** A job profiles titanic, and its run appears in the store and under `/v2/runs`. Progress events arrive in order and end with the run id. A bad path ends the job `failed` with the message `dsbf check` would print. A cross-origin form POST is refused.
 
 ### U6-09 · TypeScript frontend on a generated client
-- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-08 · **Resolves:** the `vue-router <5` and `plotly.js-dist-min <4` caps
+- **Status:** done (2026-10-28, #157, `15a6ac1`) · **Size:** M · **Depends on:** U6-08 · **Resolves:** the `vue-router <5` and `plotly.js-dist-min <4` caps
 - **Outcome:** `frontend/` is a TypeScript Vue 3 app (Vite, `vue-tsc` in `pnpm build`, Pinia, Vue Router 5, ECharts) with a shell, a `HomeView` and a client over `openapi-fetch`; `dsbf schema export --types` also writes `api.d.ts` and `ranks.ts`, covered by `--check`. The old app, Plotly and axios are deleted; `DsbfChart` and `chartTheme` are ported; both caps and their Dependabot entries are gone. **Deviations:** `json-schema-to-typescript` stays for `run.d.ts` (`Run` is not in `openapi.json`, so one generator cannot serve both); TypeScript is held at `~6.0.3` because `typescript-eslint` does not support 7; the dev proxy targets `dsbf dashboard` on :8765; `DsbfChart`'s unused SVG export was removed.
 - **Carry in from U1-11:** a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry. **Carry in from U1-03 and U0-16:** the 20 lint warnings, and `no-unused-vars`, `vue/no-side-effects-in-computed-properties` and `vue/require-default-prop` at `error`; revisit `vue/no-v-html` if another source appears.
 - **Goal:** `frontend/` becomes a TypeScript Vue 3 app (Vite, `vue-tsc` in `pnpm build`, Pinia, vue-router 5, ECharts only). `dsbf schema export` generates its API client from `schema/openapi.json` (`openapi-typescript` types, used through `openapi-fetch`) and a module of the `Severity` and `Confidence` ranks. The old app, written for API v1, is deleted; `DsbfChart`, `chartTheme` and the card styles are kept, converted to TypeScript, for the tabs to reuse.
@@ -185,8 +185,9 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** `pnpm lint`, `pnpm build` (with type checking) and `pnpm test:run` pass with no warnings. `dsbf schema export --check` covers the client. The bundle holds no Plotly.
 
 ### U6-10 · Dashboard shell and the Run health panel
-- **Status:** todo · **Size:** M · **Depends on:** U6-09 · **Resolves:** F-20 (Run health panel), REVIEW_FINDINGS part 2 D (Run health panel)
+- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-09 · **Resolves:** F-20 (Run health panel), REVIEW_FINDINGS part 2 D (Run health panel)
 - **Carry in from U4-18:** rewrite `tests/validation/DASHBOARD_CHECKLIST.md` for the rebuilt dashboard and update `.github/ISSUE_TEMPLATE/dashboard_ui.yml`. **Note from U5-06:** show `Run.policy`. **Carry in from U0-16:** the light theme draws chart titles and card headings almost white on a light background.
+- **Outcome:** `/`, `/datasets/:datasetKey` and `/runs/:runId` (a lazy chunk each) with light and dark theme tokens checked at WCAG AA, paged dataset and run lists, and the overview: header, sampling notice, policy verdict, Run health panel (every status with its reason, hint and `blocked_by`, plus run notes), finding counts by dimension and severity, and the top 10 findings. Playwright runs over a fixture store (`frontend/e2e`, job `dashboard-e2e`): opening titanic transfers 146 KB; `pnpm check:bundle` holds the entry chunk to 110 KB and the bundle to 140 KB. **Deviations:** `not_applicable` checks joined `RunHealth.issues` (asked the user; run schema 0.13.0) because the overview had no source for their reasons; `dsbf dashboard` falls back to `index.html` for page routes so reloads work; echarts registers inside `DsbfChart` to keep it out of the entry chunk.
 - **Note from U6-04:** the store tests build their own `Run` fixtures from `tests/test_store/conftest.py`; the fixture store for the Playwright tests is built here.
 - **Goal:** The app shell (layout, light and dark themes, a lazy chunk per route), the dataset and run lists, and a run's overview: the health panel (each status with its notes and hints, `blocked_by`, unavailable checks with their extra, the sampling notice, run notes), the policy verdict, finding counts by dimension and severity, and the top findings. A Playwright test against a fixture store opens titanic and measures what opening a run transfers.
 - **Decided in U6-00:** each tab unit after this one adds its Vitest component tests and a Playwright test, and turns its part of the checklist into them; CI checks the bundle against a size budget set from this unit's first build.
@@ -196,6 +197,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-11 · Findings explorer
 - **Status:** todo · **Size:** M · **Depends on:** U6-10 · **Resolves:** N-A5
+- **Note from U6-10:** the overview's top findings carry no link; link each to its place in the explorer.
 - **Note from U6-02:** a finding's `details_ref` names an artifact (the full fuzzy pair list, the STL series); the explorer should offer it through the API's artifact route.
 - **Goal:** Every finding of a run, filtered by dimension, severity, confidence, check, code and column, sorted and paged from the API, with the filters in the URL. A finding opens to its message, evidence (metrics, `n_used` of `n_total`, method, interval, assumptions, sampling), guidance actions, and its artifact on demand.
 - **Assumptions to confirm:** the findings endpoint takes each of these filters; a pair-subject finding matches a filter on either column, as `Findings.filter` does.
@@ -221,6 +223,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-14 · Quality and ML readiness
 - **Status:** todo · **Size:** M · **Depends on:** U6-13
+- **Note from U6-10:** the overview shows counts by dimension only; the quality dimensions and the ML-readiness gate are this unit's.
 - **Carry in from U4-15:** the tab draws the outputs of `quality_dimensions` and `ml_readiness`: levels, gate, per-input states and coverage.
 - **Goal:** The five quality dimensions with their levels and findings, the ML-readiness gate with its per-input states, and coverage per input check and per column (from `CheckResult.columns`, U6-03).
 - **Decided in U6-00:** a dimension that is `not assessed` has its own state (neutral and explained), never green.
@@ -264,6 +267,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-19 · Bundle the dashboard and release 1.0.0
 - **Status:** todo · **Size:** M · **Depends on:** U6-18 · **Resolves:** REVIEW_FINDINGS part 2 D (`dsbf dashboard`) and E (the frontend in the wheel), F-29
+- **Note from U6-10:** the dashboard is served uncompressed; add gzip to the app if a tab pushes the 200 KB transfer budget. `dsbf dashboard` already serves `index.html` for page routes (`DashboardFiles`); keep that when bundling.
 - **Note from U5-09 (4):** a coverage floor is undecided; the first number is in the `full` job's step summary.
 - **Goal:** The wheel carries the built dashboard, and `dsbf dashboard` serves it and the API on one port. The `package` CI job builds the frontend, installs the wheel with `[server]` into a clean venv, runs `dsbf check data.csv --sink store`, starts `dsbf dashboard` and fetches the page and a run summary. Release `1.0.0`.
 - **Decided in U6-00:** the frontend is built in CI and the release workflow, never committed; a wheel built without it serves the API and says the dashboard is missing; the coverage floor is the measured total rounded down to a multiple of 5.

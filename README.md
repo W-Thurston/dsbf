@@ -35,9 +35,9 @@ DSBF takes a different set of design bets:
 
 `run.write(dir, sinks=["html"])` (or `dsbf profile --sink html`) writes a self-contained `report.html` with the health summary, the findings by dimension and severity, and a profile of every column; it opens offline and can be sent to a person. [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) shows how to build your own view from the Parquet tables, the NDJSON stream or `run.json`.
 
-The Vue 3 dashboard in `frontend/` read the results of the old engine through an API that has been removed. It does not run until the store, the API and the dashboard shell are rebuilt on the `Run` (Phase 6 in [`ROADMAP.md`](ROADMAP.md)); the source stays in the repository. Until then, `dsbf profile` writes the whole `Run` to `run.json` and prints a health summary, and `dsbf.profile()` returns the `Run` in memory.
+`dsbf profile data.csv -s store` keeps the run in a local store, and `dsbf dashboard` serves it over a local API. In a source checkout, `pnpm --dir frontend build` first and `dsbf dashboard` also serves the Vue 3 dashboard in `frontend/`: the datasets and runs, and each run's overview (health with the reason for every check that did not run, the policy verdict, finding counts and the top findings). The other pages (findings, columns, relationships, quality, ML readiness, time series) are rebuilt unit by unit (Phase 6 in [`ROADMAP.md`](ROADMAP.md)); the dashboard is not in the wheel until the end of that phase.
 
-The screenshot shows what the dashboard presented: five traffic-light quality indicators (Completeness, Validity, Usability, Redundancy, Leakage), per-column distributions, pairwise associations, severity-ranked findings, five ML-preparation dimensions with a gate, and time series diagnostics. `run.results["quality_dimensions"]` and `run.results["ml_readiness"]` already carry the quality and readiness levels.
+The screenshot shows what the previous dashboard presented: five traffic-light quality indicators (Completeness, Validity, Usability, Redundancy, Leakage), per-column distributions, pairwise associations, severity-ranked findings, five ML-preparation dimensions with a gate, and time series diagnostics. `run.results["quality_dimensions"]` and `run.results["ml_readiness"]` already carry the quality and readiness levels.
 
 ---
 

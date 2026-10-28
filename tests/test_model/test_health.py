@@ -86,16 +86,25 @@ def test_counts_and_issues_come_from_the_results():
         (CheckStatus.SKIPPED, "ml_readiness"),
         (CheckStatus.SKIPPED, "outlier_report"),
         (CheckStatus.UNAVAILABLE, "stationarity"),
+        (CheckStatus.NOT_APPLICABLE, "na_0"),
+        (CheckStatus.NOT_APPLICABLE, "na_1"),
+        (CheckStatus.NOT_APPLICABLE, "na_2"),
     ]
     assert health.issues[1].blocked_by == ("skewness",)
     assert round_trip(health) == health
 
 
-def test_not_applicable_is_counted_but_is_not_an_issue():
-    health = RunHealth.from_results({"c": make_result(CheckStatus.NOT_APPLICABLE)})
+def test_not_applicable_is_listed_with_its_reason_but_not_printed():
+    note = make_note(code="no_numeric_columns", message="No numeric columns.")
+    health = RunHealth.from_results(
+        {"c": make_result(CheckStatus.NOT_APPLICABLE, check_id="c", notes=(note,))}
+    )
 
     assert health.counts.not_applicable == 1
-    assert health.issues == ()
+    assert [(i.check_id, i.message) for i in health.issues] == [
+        ("c", "No numeric columns.")
+    ]
+    assert "No numeric columns." not in health.render()
 
 
 def test_renders_the_summary_in_the_design_document():

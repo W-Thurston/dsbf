@@ -168,7 +168,7 @@ const LIGHT = {
 
   title: {
     textStyle: { color: '#1e293b', fontSize: 13, fontWeight: 600 },
-    subtextStyle: { color: '#94a3b8', fontSize: 11 },
+    subtextStyle: { color: '#475569', fontSize: 11 },
   },
 
   legend: {

@@ -20,11 +20,17 @@ watchEffect(() => document.body.classList.toggle('theme-light', themeStore.theme
 
 <style>
 .app-header {
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   padding: 12px 24px;
   display: flex;
   justify-content: space-between;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 main {

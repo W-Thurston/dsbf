@@ -71,3 +71,13 @@ def test_the_built_dashboard_is_served_after_the_api(store, tmp_path):
     client = TestClient(app, base_url="http://127.0.0.1")
     assert "dashboard" in client.get("/").text
     assert client.get("/v2/datasets").status_code == 200
+
+
+def test_a_page_route_gets_the_dashboard_and_a_missing_file_does_not(store, tmp_path):
+    (tmp_path / "index.html").write_text("<title>dashboard</title>")
+    client = TestClient(
+        create_app(store[0], static_dir=tmp_path), base_url="http://127.0.0.1"
+    )
+    assert "dashboard" in client.get("/runs/0b3a5e4c").text
+    assert client.get("/assets/missing.js").status_code == 404
+    assert client.get("/v2/runs/not-a-run").status_code == 422

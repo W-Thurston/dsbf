@@ -110,6 +110,7 @@
 import { ref, computed } from 'vue'
 import VChart from 'vue-echarts'
 import type { EChartsOption } from 'echarts'
+import { registerDsbfThemes } from '../../chartTheme'
 
 // vue-echarts requires explicit component registration of the ECharts modules
 // you use. Import only what's needed to keep the bundle small.
@@ -143,6 +144,9 @@ use([
   MarkLineComponent,
   MarkAreaComponent,
 ])
+
+// Registered here, not in main.ts, so echarts loads only with the first chart.
+registerDsbfThemes()
 
 // ── Props & emits ─────────────────────────────────────────────────────────────
 export interface ChartColumn {

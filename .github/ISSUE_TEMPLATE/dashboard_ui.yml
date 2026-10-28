@@ -6,8 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template for issues with the Vue 3 SPA dashboard —
-        blank panels, misaligned components, missing data, JS errors, etc.
+        Use this template for issues with the dashboard (`dsbf dashboard`) —
+        blank panels, misaligned components, missing data, JS errors, unreadable text in
+        the light or dark theme, etc.
         For backend task failures that produce incorrect data, use the Bug Report template instead.
 
   - type: input
@@ -21,16 +22,13 @@ body:
   - type: dropdown
     id: tab
     attributes:
-      label: Which tab?
+      label: Which page?
+      description: The pages that are not built yet (findings, columns, relationships, quality, ML readiness, time series) are added as each one lands.
       options:
-        - Overview
-        - Distributions
-        - Relationships
-        - Quality
-        - ML Readiness
-        - Time Series
-        - Multiple tabs
-        - Not tab-specific
+        - Datasets and runs lists
+        - Run overview (health, policy, finding counts)
+        - Multiple pages
+        - Not page-specific
     validations:
       required: true
 
@@ -38,7 +36,7 @@ body:
     id: component
     attributes:
       label: Which component or section? (if known)
-      placeholder: "e.g. Correlation heatmap, Column browser, DataHealthBar, Missingness dimension card"
+      placeholder: "e.g. Run health panel, Policy verdict, Findings by dimension, Top findings"
 
   - type: textarea
     id: what-happened
@@ -46,7 +44,7 @@ body:
       label: What happened?
       description: Describe what you saw. Screenshots are very helpful — paste them directly into this field.
       placeholder: |
-        The Relationships tab shows a blank white panel when the dataset has only one continuous column.
+        The run overview shows a blank Run health panel when the dataset has only one column.
         No JS error in the console.
     validations:
       required: true
@@ -55,7 +53,7 @@ body:
     id: what-expected
     attributes:
       label: What did you expect to happen?
-      placeholder: "An empty-state message like 'No associations — fewer than 2 eligible columns.'"
+      placeholder: "The panel lists every check with its status and reason."
     validations:
       required: true
 
@@ -79,4 +77,4 @@ body:
     id: dsbf-version
     attributes:
       label: DSBF version
-      placeholder: "e.g. v0.20.0"
+      placeholder: "e.g. 1.0.0a1"

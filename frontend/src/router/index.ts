@@ -1,7 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// One lazy chunk per route; the dashboard's views are added unit by unit.
+// One lazy chunk per route; the dashboard's views are added unit by unit. A dataset key
+// is a path or a name, so it travels percent-encoded in a single path segment.
 export default createRouter({
   history: createWebHistory(),
-  routes: [{ path: '/', name: 'home', component: () => import('../views/HomeView.vue') }],
+  routes: [
+    { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
+    {
+      path: '/datasets/:datasetKey',
+      name: 'dataset',
+      component: () => import('../views/DatasetView.vue'),
+      props: true,
+    },
+    {
+      path: '/runs/:runId',
+      name: 'run',
+      component: () => import('../views/RunView.vue'),
+      props: true,
+    },
+  ],
 })
