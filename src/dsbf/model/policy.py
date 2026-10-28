@@ -425,6 +425,22 @@ class PolicyOutcome(Contract):
         outcomes = tuple(rules)
         return cls(rules=outcomes, failed=cls._fails(outcomes))
 
+    def render(self) -> str:
+        """One line per rule that matched, and the verdict."""
+        lines = []
+        for result in self.rules:
+            if not result.triggered:
+                continue
+            matched = len(result.finding_ids) or len(result.check_ids)
+            what = "finding" if result.finding_ids else "check"
+            actions = ", ".join(action.kind.value for action in result.rule.then)
+            lines.append(
+                f"policy: {result.rule.name} matched {matched} {what}"
+                f"{'' if matched == 1 else 's'} ({actions})"
+            )
+        lines.append("policy: FAILED" if self.failed else "policy: passed")
+        return "\n".join(lines)
+
     @property
     def exit_code(self) -> int:
         """1 when a rule failed the run, else 0."""

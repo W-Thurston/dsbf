@@ -42,6 +42,9 @@ class ArtifactStore(Protocol):
     def delete_run(self, run_id: str) -> None:
         """Remove every file of a run."""
 
+    def run_ids(self) -> tuple[str, ...]:
+        """The runs that have files, sorted."""
+
 
 class FsspecArtifactStore:
     """Files under a root URL: a local directory now, an object store later."""
@@ -90,6 +93,17 @@ class FsspecArtifactStore:
         directory = self._path(run_id)
         if self._fs.exists(directory):
             self._fs.rm(directory, recursive=True)
+
+    def run_ids(self) -> tuple[str, ...]:
+        if not self._fs.exists(self._root):
+            return ()
+        return tuple(
+            sorted(
+                entry["name"].rstrip("/").rsplit("/", 1)[-1]
+                for entry in self._fs.ls(self._root, detail=True)
+                if entry["type"] == "directory"
+            )
+        )
 
 
 def _missing(run_id: str, path: str) -> ArtifactNotFoundError:

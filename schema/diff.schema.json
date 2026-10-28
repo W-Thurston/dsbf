@@ -1,0 +1,757 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Action": {
+      "additionalProperties": false,
+      "description": "A step a person or an agent can take, in a form a program can read.",
+      "properties": {
+        "action": {
+          "description": "The verb, for example `transform`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "columns": {
+          "default": [],
+          "description": "The columns the step applies to; empty for the dataset.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For example `log1p`."
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When the step applies, in words."
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "What the step does, in words."
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Anything else the step needs, for example `from_dtype`.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "action",
+        "columns",
+        "method",
+        "condition",
+        "detail",
+        "params"
+      ],
+      "title": "Action",
+      "type": "object"
+    },
+    "AssumptionCheck": {
+      "additionalProperties": false,
+      "description": "Whether a statistical assumption behind a result held.",
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "satisfied": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None when the assumption could not be assessed."
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "satisfied",
+        "method",
+        "detail"
+      ],
+      "title": "AssumptionCheck",
+      "type": "object"
+    },
+    "CheckStatus": {
+      "description": "How one check's execution ended. Every status but `ok` comes with a note.",
+      "enum": [
+        "ok",
+        "not_applicable",
+        "unavailable",
+        "skipped",
+        "error",
+        "timeout"
+      ],
+      "title": "CheckStatus",
+      "type": "string"
+    },
+    "Confidence": {
+      "description": "How firmly a check stands behind a finding; each check caps its own.",
+      "enum": [
+        "low",
+        "moderate",
+        "high"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "Dimension": {
+      "description": "The aspect of the data a finding speaks to.\n\nThe first five are the quality dimensions; the rest describe the shape of\nthe data.",
+      "enum": [
+        "completeness",
+        "validity",
+        "usability",
+        "redundancy",
+        "leakage",
+        "distribution",
+        "relationship",
+        "temporal"
+      ],
+      "title": "Dimension",
+      "type": "string"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "The numbers behind a finding: what was measured, on how much data, and how.",
+      "properties": {
+        "metrics": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "non_finite_metrics": {
+          "default": [],
+          "description": "Metrics whose value was NaN, infinite or NaT, so they are null in `metrics`.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "n_used": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "n_total": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "method": {
+          "description": "For example `spearman_r` or `vif`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "assumptions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AssumptionCheck"
+          },
+          "type": "array"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Interval"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "sampled": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SamplingInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "details_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pointer to bulky evidence, fetched on demand."
+        }
+      },
+      "required": [
+        "metrics",
+        "non_finite_metrics",
+        "n_used",
+        "n_total",
+        "method",
+        "assumptions",
+        "interval",
+        "sampled",
+        "details_ref"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "description": "One statement about the data: what, where, how much, and why to believe it.",
+      "properties": {
+        "id": {
+          "description": "Stable across runs for the same check, subject and code.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "check_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "code": {
+          "description": "Machine-readable kind, for example `high_null_rate`.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/Subject"
+        },
+        "dimension": {
+          "$ref": "#/$defs/Dimension"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "title": {
+          "type": "string"
+        },
+        "message": {
+          "description": "Self-contained, with the observed values.",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "guidance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Guidance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "check_id",
+        "check_version",
+        "code",
+        "subject",
+        "dimension",
+        "severity",
+        "confidence",
+        "title",
+        "message",
+        "evidence",
+        "guidance",
+        "tags"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingChange": {
+      "additionalProperties": false,
+      "description": "A finding present in both runs whose severity or metrics changed.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "check_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "base_severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "head_severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "metrics": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/MetricChange"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "code",
+        "check_id",
+        "title",
+        "base_severity",
+        "head_severity",
+        "metrics"
+      ],
+      "title": "FindingChange",
+      "type": "object"
+    },
+    "Guidance": {
+      "additionalProperties": false,
+      "description": "What to do about a finding, from one point of view.",
+      "properties": {
+        "phase": {
+          "description": "`eda` describes the data as it is; `ml` says what to do before modelling.",
+          "enum": [
+            "eda",
+            "ml"
+          ],
+          "type": "string"
+        },
+        "actions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Action"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "phase",
+        "actions"
+      ],
+      "title": "Guidance",
+      "type": "object"
+    },
+    "Interval": {
+      "additionalProperties": false,
+      "description": "A confidence interval for a statistic.",
+      "properties": {
+        "low": {
+          "type": "number"
+        },
+        "high": {
+          "type": "number"
+        },
+        "level": {
+          "description": "Coverage, for example 0.95.",
+          "exclusiveMaximum": 1,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "low",
+        "high",
+        "level",
+        "method"
+      ],
+      "title": "Interval",
+      "type": "object"
+    },
+    "MetricChange": {
+      "additionalProperties": false,
+      "description": "A metric of a finding that moved beyond the tolerance.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "base": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "base",
+        "head"
+      ],
+      "title": "MetricChange",
+      "type": "object"
+    },
+    "SamplingInfo": {
+      "additionalProperties": false,
+      "description": "How a sample was drawn from the data. No sampling is the absence of this.",
+      "properties": {
+        "strategy": {
+          "enum": [
+            "head",
+            "random",
+            "stratified"
+          ],
+          "type": "string"
+        },
+        "original_rows": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sampled_rows": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stratify_by": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "strategy",
+        "original_rows",
+        "sampled_rows",
+        "seed",
+        "stratify_by"
+      ],
+      "title": "SamplingInfo",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How much a finding matters, from informational to blocking.",
+      "enum": [
+        "info",
+        "notice",
+        "warn",
+        "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "StatusChange": {
+      "additionalProperties": false,
+      "description": "A check whose status differs between the runs; null when it ran in one only.",
+      "properties": {
+        "check_id": {
+          "type": "string"
+        },
+        "base": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "head": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "check_id",
+        "base",
+        "head"
+      ],
+      "title": "StatusChange",
+      "type": "object"
+    },
+    "Subject": {
+      "additionalProperties": false,
+      "description": "The thing a finding or result refers to.\n\nColumns are kept as an ordered tuple of opaque strings, never joined into a\nsingle key, so names containing ``|``, brackets, unicode or nothing at all\nstay unambiguous.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "dataset",
+            "column",
+            "column_pair",
+            "column_group",
+            "row_set"
+          ],
+          "type": "string"
+        },
+        "columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "columns"
+      ],
+      "title": "Subject",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Findings and check statuses of a head run against a base run.",
+  "properties": {
+    "schema_version": {
+      "default": "1.0.0",
+      "type": "string"
+    },
+    "base_run_id": {
+      "type": "string"
+    },
+    "head_run_id": {
+      "type": "string"
+    },
+    "same_dataset": {
+      "description": "False when the runs have different dataset keys, or either has none; the other fields still describe the differences.",
+      "type": "boolean"
+    },
+    "tolerance": {
+      "description": "Relative change a numeric metric must exceed to count as changed.",
+      "type": "number"
+    },
+    "new": {
+      "description": "In the head run only.",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "type": "array"
+    },
+    "resolved": {
+      "description": "In the base run only.",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "type": "array"
+    },
+    "changed": {
+      "items": {
+        "$ref": "#/$defs/FindingChange"
+      },
+      "type": "array"
+    },
+    "status_changes": {
+      "items": {
+        "$ref": "#/$defs/StatusChange"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "base_run_id",
+    "head_run_id",
+    "same_dataset",
+    "tolerance",
+    "new",
+    "resolved",
+    "changed",
+    "status_changes"
+  ],
+  "title": "RunDiff",
+  "type": "object"
+}

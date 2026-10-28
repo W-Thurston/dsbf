@@ -211,6 +211,26 @@ def _health(run: Run) -> str:
     )
 
 
+def _policy(run: Run) -> str:
+    outcome = run.policy
+    if outcome is None:
+        return ""
+    verdict = "failed" if outcome.failed else "passed"
+    rows = "".join(
+        f"<tr><td>{_e(result.rule.name)}</td>"
+        f"<td class='n'>{len(result.finding_ids) or len(result.check_ids):,}</td>"
+        f"<td>{_e(', '.join(a.kind.value for a in result.rule.then))}</td></tr>"
+        for result in outcome.rules
+        if result.triggered
+    )
+    return f"<h2>Policy</h2><p><strong>Policy {verdict}.</strong></p>" + (
+        f"<table><tr><th>rule</th><th class='n'>matched</th><th>actions</th></tr>"
+        f"{rows}</table>"
+        if rows
+        else "<p class='muted'>No rule matched.</p>"
+    )
+
+
 def _severity(value: Severity) -> str:
     return f"<span class='sev sev-{_e(value.value)}'>{_e(value.value)}</span>"
 
@@ -266,6 +286,7 @@ def render_report(run: Run) -> str:
         f"{_e(scan)} · run {_e(run.run_id)} · "
         f"{_e(run.finished_at.isoformat(timespec='seconds'))}</div>"
         f"<h2>Health</h2>{_health(run)}"
+        f"{_policy(run)}"
         f"<h2>Findings</h2>{_findings(run)}"
         f"<h2>Columns</h2><div class='grid'>{cards}</div>"
         "</body></html>"

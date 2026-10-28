@@ -4,7 +4,8 @@
 import json
 import threading
 from collections import defaultdict
-from datetime import UTC, datetime
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -27,6 +28,7 @@ from dsbf.store.artifacts import FsspecArtifactStore
 from dsbf.store.repository import (
     SNAPSHOT_REF,
     FindingOccurrence,
+    GcResult,
     Page,
     RunExistsError,
     RunNotFoundError,
@@ -115,6 +117,7 @@ class SqliteRunRepository:
         if snapshot_rows < 0:
             raise ValueError("snapshot_rows cannot be negative")
         database.parent.mkdir(parents=True, exist_ok=True)
+        self.database = database
         self._artifacts_dir = artifacts_dir
         self._files = FsspecArtifactStore(str(artifacts_dir))
         self._snapshot_rows = snapshot_rows
@@ -286,6 +289,38 @@ class SqliteRunRepository:
             if deleted.rowcount == 0:
                 raise RunNotFoundError(f"no stored run {run_id}")
         self._files.delete_run(str(run_id))
+
+    def gc(
+        self,
+        *,
+        keep: int | None = None,
+        older_than: timedelta | None = None,
+        dry_run: bool = False,
+    ) -> GcResult:
+        if keep is not None and keep < 0:
+            raise ValueError("keep cannot be negative")
+        with self._write_lock:
+            with self._engine.connect() as connection:
+                rows = connection.execute(
+                    sa.select(
+                        t.runs.c.run_id, t.runs.c.dataset_key, t.runs.c.started_at
+                    ).order_by(t.runs.c.started_at.desc(), t.runs.c.run_id)
+                ).all()
+            stored = {row.run_id for row in rows}
+            doomed = (
+                _unkept(rows, keep, older_than)
+                if keep is not None or older_than is not None
+                else []
+            )
+            orphans = [r for r in self._files.run_ids() if r not in stored]
+            if not dry_run:
+                with self._engine.begin() as connection:
+                    connection.execute(
+                        sa.delete(t.runs).where(t.runs.c.run_id.in_(doomed))
+                    )
+                for run_id in (*doomed, *orphans):
+                    self._files.delete_run(run_id)
+        return GcResult(runs=tuple(UUID(r) for r in doomed), orphans=tuple(orphans))
 
     # -- reading ---------------------------------------------------------------------
 
@@ -544,6 +579,23 @@ class SqliteRunRepository:
         return Page[FindingOccurrence](
             items=items, total=total, limit=limit, offset=offset
         )
+
+
+def _unkept(
+    rows: Sequence[Any], keep: int | None, older_than: timedelta | None
+) -> list[str]:
+    """The run ids (newest first in ``rows``) that no given rule retains."""
+    cutoff = None if older_than is None else _text(datetime.now(UTC) - older_than)
+    seen: defaultdict[str | None, int] = defaultdict(int)
+    doomed = []
+    for row in rows:
+        seen[row.dataset_key] += 1
+        retained = (keep is not None and seen[row.dataset_key] <= keep) or (
+            cutoff is not None and row.started_at >= cutoff
+        )
+        if not retained:
+            doomed.append(row.run_id)
+    return doomed
 
 
 def _configure_connection(dbapi_connection: Any, _record: Any) -> None:

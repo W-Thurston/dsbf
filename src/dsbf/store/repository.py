@@ -2,6 +2,7 @@
 """What a run repository does, and the views it returns."""
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Protocol
 from uuid import UUID
 
@@ -85,6 +86,15 @@ class FindingOccurrence(Contract):
     run_id: UUID
     started_at: AwareDatetime
     finding: Finding
+
+
+class GcResult(Contract):
+    """What a garbage collection removed (or would remove, for a dry run)."""
+
+    runs: tuple[UUID, ...] = Field(description="Runs deleted, with their files.")
+    orphans: tuple[str, ...] = Field(
+        description="Run ids with artifact files but no stored run."
+    )
 
 
 class RunRepository(Protocol):
@@ -180,9 +190,25 @@ class RunRepository(Protocol):
             RunNotFoundError: no such run.
         """
 
+    def gc(
+        self,
+        *,
+        keep: int | None = None,
+        older_than: timedelta | None = None,
+        dry_run: bool = False,
+    ) -> GcResult:
+        """Delete runs no rule keeps, and artifact files no run owns.
+
+        ``keep`` retains the newest N runs of each dataset (ungrouped runs form one
+        group); ``older_than`` retains runs that started more recently than that.
+        A run any given rule retains stays. With neither, only orphaned files go.
+        A ``dry_run`` changes nothing and reports what would go.
+        """
+
 
 __all__ = [
     "FindingOccurrence",
+    "GcResult",
     "Page",
     "RunExistsError",
     "RunNotFoundError",

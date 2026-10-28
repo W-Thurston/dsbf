@@ -60,3 +60,16 @@ def test_hostile_text_is_escaped(tmp_path):
     assert "<img src=x" not in text
     assert "<b>" not in text and "<i>" not in text
     assert re.search(r"&lt;script&gt;alert\(1\)&lt;/script&gt;", text)
+
+
+@pytest.mark.integration
+def test_the_report_shows_the_policy_verdict_only_when_a_policy_ran(titanic):
+    assert "<h2>Policy</h2>" not in render_report(titanic)
+    rules = {
+        "rules": [{"name": "any-nulls", "when": {"code": "has_nulls"}, "then": "fail"}]
+    }
+    run = dsbf.profile(TITANIC, depth="quick", policy=rules)
+    text = render_report(run)
+    assert "<h2>Policy</h2>" in text
+    assert run.policy is not None
+    assert ("Policy failed." in text) is run.policy.failed

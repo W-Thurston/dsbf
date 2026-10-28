@@ -20,6 +20,7 @@ from dsbf.store.artifacts import (
 )
 from dsbf.store.repository import (
     SNAPSHOT_REF,
+    GcResult,
     Page,
     RunExistsError,
     RunNotFoundError,
@@ -29,6 +30,7 @@ from dsbf.store.repository import (
     StoredArtifact,
     StoreError,
 )
+from dsbf.store.save import save
 from dsbf.store.sqlite import SqliteRunRepository, database_path, open_repository
 
 __all__ = [
@@ -36,6 +38,7 @@ __all__ = [
     "ArtifactNotFoundError",
     "ArtifactStore",
     "FsspecArtifactStore",
+    "GcResult",
     "Snapshot",
     "StoredArtifact",
     "Page",
@@ -47,4 +50,5 @@ __all__ = [
     "StoreError",
     "database_path",
     "open_repository",
+    "save",
 ]

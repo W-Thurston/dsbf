@@ -9,12 +9,14 @@ from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from dsbf.comparison import compare
     from dsbf.library import Sample, profile
     from dsbf.model import Run
 
-__all__ = ["Run", "Sample", "__version__", "profile"]
+__all__ = ["Run", "Sample", "__version__", "compare", "profile"]
 
 _LAZY = {
+    "compare": "dsbf.comparison",
     "profile": "dsbf.library",
     "Sample": "dsbf.library",
     "Run": "dsbf.model",

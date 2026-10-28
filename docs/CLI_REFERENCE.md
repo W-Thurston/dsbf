@@ -35,7 +35,7 @@ Exits 0 when the run completes, whatever a policy says, and 2 when it cannot sta
 | Option | Description |
 | --- | --- |
 | `-o, --out <path>` | Directory for the output files (default: <DSBF home>/outputs/<run id>). |
-| `-s, --sink <str>` | Output to write (repeatable, default json): json, ndjson, findings_parquet, profile_parquet, results_parquet, html, parquet. |
+| `-s, --sink <str>` | Output to write (repeatable, default json): json, ndjson, findings_parquet, profile_parquet, results_parquet, html, parquet, store. `store` keeps the run in the run store (needs dsbf[server]) and, alone, writes no directory. |
 | `-c, --config <path>` | A settings file (YAML), such as dsbf.yaml. |
 | `--set <str>` | Set any setting: a.b=c, the value read as YAML (repeatable). Wins over the options and the settings file. |
 | `--policy <path>` | A policy.yaml whose rules judge the run. |
@@ -68,7 +68,7 @@ Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
 | Option | Description |
 | --- | --- |
 | `-o, --out <path>` | Directory for the output files (default: <DSBF home>/outputs/<run id>). |
-| `-s, --sink <str>` | Output to write (repeatable, default json): json, ndjson, findings_parquet, profile_parquet, results_parquet, html, parquet. |
+| `-s, --sink <str>` | Output to write (repeatable, default json): json, ndjson, findings_parquet, profile_parquet, results_parquet, html, parquet, store. `store` keeps the run in the run store (needs dsbf[server]) and, alone, writes no directory. |
 | `-c, --config <path>` | A settings file (YAML), such as dsbf.yaml. |
 | `--set <str>` | Set any setting: a.b=c, the value read as YAML (repeatable). Wins over the options and the settings file. |
 | `--policy <path>` | A policy.yaml whose rules judge the run. |
@@ -151,6 +151,87 @@ Fail if the schema changed in a way its version number doesn't announce.
 | --- | --- |
 | `--base <str>` | Git revision holding the published schema. [default: origin/main] |
 | `--schema <path>` | Schema to check. [default: schema/run.schema.json] |
+
+### `dsbf runs`
+
+```
+dsbf runs [OPTIONS] COMMAND [ARGS]...
+```
+
+Browse, compare and clean the stored runs.
+
+### `dsbf runs list`
+
+```
+dsbf runs list [OPTIONS]
+```
+
+The stored runs, newest first.
+
+| Option | Description |
+| --- | --- |
+| `--dataset <str>` | Only runs of this dataset key. |
+| `--limit <int range>` | Runs to show. [default: 20; 1<=x<=500] |
+| `--json` | Print JSON instead of text. |
+
+### `dsbf runs show`
+
+```
+dsbf runs show [OPTIONS] RUN
+```
+
+A run's health summary and policy verdict.
+
+| Option | Description |
+| --- | --- |
+| `--json` | Print JSON instead of text. |
+
+### `dsbf runs diff`
+
+```
+dsbf runs diff [OPTIONS] BASE HEAD
+```
+
+What the head run shows that the base run did not.
+
+| Option | Description |
+| --- | --- |
+| `--tolerance <float range>` | Relative change a metric must exceed to count as changed. [default: 0.05; x>=0] |
+| `--json` | Print JSON instead of text. |
+
+### `dsbf runs delete`
+
+```
+dsbf runs delete [OPTIONS] RUN
+```
+
+Remove a run and its stored files.
+
+### `dsbf runs gc`
+
+```
+dsbf runs gc [OPTIONS]
+```
+
+Delete runs no rule keeps, and stored files no run owns.
+
+A run is kept when any given rule keeps it. With neither rule, only orphaned
+files are removed.
+
+| Option | Description |
+| --- | --- |
+| `--keep <int range>` | Keep the newest N runs of each dataset. [x>=0] |
+| `--older-than <float range>` | Keep the runs younger than this many days. [x>=0] |
+| `--dry-run` | Report what would go; remove nothing. |
+| `--json` | Print JSON instead of text. |
+
+### `dsbf runs import`
+
+```
+dsbf runs import [OPTIONS] PATH
+```
+
+Store a run written by the json sink, artifacts included.
 
 ### `dsbf cache`
 
