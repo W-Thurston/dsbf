@@ -16,6 +16,7 @@ from dsbf.config.profile import (
     ProfileConfig,
     SampleConfig,
     SampleStrategy,
+    StoreConfig,
 )
 
 __all__ = [
@@ -28,6 +29,7 @@ __all__ = [
     "ConfigIssue",
     "LimitsConfig",
     "ProfileConfig",
+    "StoreConfig",
     "SampleConfig",
     "SampleStrategy",
     "find_project_file",

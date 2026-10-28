@@ -125,7 +125,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Every core check declares its codes, and a test fails on an undeclared one. `CheckResult.columns` is filled for every `ok` result in the titanic and kitchen5k golden runs. A file run without `--dataset` carries its absolute path as the key, and a frame without `dataset=` has none. `dsbf docs export --check` passes.
 
 ### U6-04 · Run repository on SQLite
-- **Status:** done (2026-10-27) · **Size:** M · **Depends on:** U6-03 · **Resolves:** F-15 (dataset identity), F-25 (migrations)
+- **Status:** done (2026-10-27, #151, `b424a1c`) · **Size:** M · **Depends on:** U6-03 · **Resolves:** F-15 (dataset identity), F-25 (migrations)
 - **Outcome:** `dsbf.store` (`server` extra): `RunRepository` protocol, `SqliteRunRepository` on SQLAlchemy Core with Alembic revision `0001` (tables `datasets`, `runs`, `profiles`, `check_results`, `findings`, `finding_columns`), `Page`, `RunSummary` and `FindingOccurrence` views, `open_repository()` at `<DSBF_HOME>/dsbf.db`. **Deviations:** artifact payloads are files under `<DSBF_HOME>/artifacts/<run_id>/` in the `json` sink's layout until the next unit's fsspec store replaces them; a `finding_columns` table serves the column query; a dataset row outlives its last run. Took #120 and #127; #114 (`virtualenv`) has nothing newer in the lock, so it stays with Dependabot.
 - **Note from U5-09 and U4-19:** the `server` extra gets its first importer here, so it gets its install-matrix leg and an `unavailable` test together; the `sql` extra's pair moves to U7-00.
 - **Note from U6-02:** the store keeps artifact payloads too (`Run.artifact(ref)` is the read path; `ArtifactRef.rows` and `bytes` describe the stored file), so `get` returns a run whose artifacts read back equal, and `delete` removes them.
@@ -136,7 +136,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** `get(save(run)) == run` for the golden datasets. A migration test upgrades an empty database to head and refuses a newer revision. Finding queries return the documented order and pages. A base install imports nothing from `dsbf.store`.
 
 ### U6-05 · Artifact store and the data snapshot
-- **Status:** todo · **Size:** M · **Depends on:** U6-04 · **Resolves:** F-15 (the snapshot of the data as profiled)
+- **Status:** done (2026-10-27) · **Size:** M · **Depends on:** U6-04 · **Resolves:** F-15 (the snapshot of the data as profiled)
+- **Outcome:** `dsbf.store.artifacts` (`ArtifactStore` protocol, `FsspecArtifactStore`), Alembic revision `0002` (`artifacts` table with ref, media type, rows, bytes, SHA-256, sampling), repository reads (`artifacts`, `read_artifact`, `read_artifact_rows`, `snapshot`) and `Run.analysed_frame` (memory only, set by the executor). `store.snapshot_rows` (default 10,000, 0 off) caps a seed-0 random snapshot recorded as `SamplingInfo`. kitchen50k's snapshot is 3.5 MB. **Deviations:** `encode` writes Parquet in 10,000-row groups so range reads are cheap; `Run.artifact` still reads from a local directory only (a loader hook for non-local stores belongs with Phase 8's S3 store).
 - **Goal:** An `ArtifactStore` on fsspec (`<DSBF_HOME>/artifacts/` in this phase) keeps each stored run's artifacts and a Parquet snapshot of the data as profiled. An `artifacts` table records each one's ref, media type, rows, bytes and checksum. An artifact is read whole or by row range.
 - **Decided in U6-00:** (1) The snapshot is on by default: at most 10,000 rows of the analysed data, a seeded random sample above that, recorded as `SamplingInfo` is. The `store.snapshot_rows` setting changes the cap, and 0 turns the snapshot off. (2) The core never writes the snapshot: the `Run` holds its analysed frame in memory (not serialised, not sent to workers), and the store writes the snapshot from it. A run read from `run.json` has no snapshot, and the dashboard says so.
 - **Assumptions to confirm:** a row range of a Parquet file reads without loading the whole file (row groups through `pyarrow`; measure on the fuzzy pair list); holding the frame on the `Run` adds no copy; the snapshot of kitchen50k at 10,000 rows is under a size this unit records; fsspec is small enough for the `server` extra (pure Python).
@@ -289,6 +290,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Success criteria:** A documented team deployment; each adapter has an example and a CI smoke test.
 
 - **U8-00 · Plan Phase 8**.
+- **Carry in from U6-05:** `Run.artifact` reads from a local directory only; object-storage artifacts need a loader hook on `Run` so a run read from a non-local store resolves its payloads.
 - Placeholders, in order: Postgres repository · object-storage artifacts (S3, GCS, Azure) · auth (token, then OIDC) · database-backed job queue with an adapter interface · Docker image and Helm chart (REVIEW_FINDINGS part 2 E) · GitHub Action and pre-commit hook · Airflow, Prefect and Dagster adapters · dbt recipe · notifiers (webhook, Slack, email) and OpenLineage facets · MCP server (REVIEW_FINDINGS part 2 G)
 
 ## Phase 9: Modalities and workflow phases (placeholder)

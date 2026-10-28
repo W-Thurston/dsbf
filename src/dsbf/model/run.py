@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable
 from functools import cached_property
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING, Self
 from uuid import UUID
 
 from pydantic import AwareDatetime, Field, PrivateAttr, field_validator, model_validator
@@ -21,6 +21,9 @@ from dsbf.model.notebook import render_run_html
 from dsbf.model.policy import PolicyOutcome
 from dsbf.model.profile import DatasetProfile
 from dsbf.model.vocabulary import Severity
+
+if TYPE_CHECKING:
+    import polars as pl
 
 # Semver. Additive changes are minor and breaking changes are major. The 1.x
 # compatibility guarantee begins with the first release.
@@ -62,9 +65,19 @@ class Run(Contract):
     )
 
     _artifact_dir: Path | None = PrivateAttr(default=None)
+    _frame: "pl.DataFrame | None" = PrivateAttr(default=None)
 
     def __eq__(self, other: object) -> bool:
         return fields_equal(self, other)
+
+    @property
+    def analysed_frame(self) -> "pl.DataFrame | None":
+        """The rows the checks analysed, held in memory only.
+
+        Not serialised: a run read back from ``run.json`` or a store has none. A store
+        writes its data snapshot from this.
+        """
+        return self._frame
 
     @cached_property
     def findings(self) -> Findings:

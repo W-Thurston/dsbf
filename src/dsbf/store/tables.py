@@ -92,3 +92,21 @@ finding_columns = sa.Table(
     ),
     sa.Index("ix_finding_columns_column", "column"),
 )
+
+artifacts = sa.Table(
+    "artifacts",
+    metadata,
+    sa.Column(
+        "run_id",
+        sa.Text,
+        sa.ForeignKey("runs.run_id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    sa.Column("ref", sa.Text, primary_key=True),
+    sa.Column("path", sa.Text, nullable=False),
+    sa.Column("media_type", sa.Text, nullable=False),
+    sa.Column("rows", sa.Integer, nullable=True),
+    sa.Column("bytes", sa.Integer, nullable=False),
+    sa.Column("sha256", sa.Text, nullable=False),
+    sa.Column("sampling_json", sa.Text, nullable=True),
+)

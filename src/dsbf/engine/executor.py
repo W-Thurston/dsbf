@@ -188,7 +188,7 @@ def execute(
                 events.emit(CheckFinished(entry.id, result, position, total))
             for entry in level:  # plan order, whatever order they ended in
                 results[entry.id] = done[entry.id]
-    return Run.build(
+    run = Run.build(
         results=results.values(),
         run_id=uuid4(),
         started_at=started_at,
@@ -198,6 +198,8 @@ def execute(
         profile=profile,
         notes=(*plan.notes, *_cache_notes(session)),
     )
+    run._frame = dataset.frame  # noqa: SLF001 (the run holds what it analysed)
+    return run
 
 
 def _prepare(
