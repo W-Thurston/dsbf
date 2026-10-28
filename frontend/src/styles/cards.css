@@ -1,0 +1,98 @@
+/* ── Shared component styles ───────────────────────────────────────────────── */
+.card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.badge-blue {
+  background: #1e3a5f;
+  color: #60a5fa;
+  border: 1px solid #60a5fa;
+}
+.badge-green {
+  background: #14291f;
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+.badge-orange {
+  background: #3d2510;
+  color: #fb923c;
+  border: 1px solid #fb923c;
+}
+.badge-red {
+  background: #3d0f0f;
+  color: #f87171;
+  border: 1px solid #f87171;
+}
+.badge-gray {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #64748b;
+}
+
+.loading {
+  color: #94a3b8;
+  padding: 40px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.error {
+  color: #f87171;
+  padding: 20px;
+  background: #3d0f0f;
+  border: 1px solid #f87171;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ── Light theme overrides ─────────────────────────────────────────────────── */
+body.theme-light {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+body.theme-light a {
+  color: #2563eb;
+}
+
+body.theme-light .app-header {
+  background: #ffffff;
+  border-bottom-color: #e2e8f0;
+}
+
+body.theme-light .breadcrumb {
+  color: #64748b;
+}
+body.theme-light .breadcrumb a {
+  color: #2563eb;
+}
+body.theme-light .breadcrumb .sep {
+  color: #94a3b8;
+}
+
+body.theme-light .card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}

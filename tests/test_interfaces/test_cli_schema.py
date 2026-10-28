@@ -392,3 +392,30 @@ def test_an_additive_policy_change_needs_no_version_bump(tables_repo):
 
     assert result.exit_code == 0
     assert "policy: additive" in result.output
+
+
+@pytest.mark.unit
+def test_the_rank_tables_list_each_vocabulary_lowest_first():
+    text = schema_export.ranks_module()
+
+    assert 'SEVERITY_ORDER = ["info", "notice", "warn", "error"] as const' in text
+    assert 'CONFIDENCE_ORDER = ["low", "moderate", "high"] as const' in text
+    assert "export function severityRank(" in text
+
+
+@pytest.mark.integration
+@pytest.mark.slow
+def test_the_committed_api_types_and_ranks_are_what_the_generators_write():
+    if shutil.which("pnpm") is None or not (REPO / "frontend/node_modules").is_dir():
+        pytest.skip("needs pnpm and `pnpm install` in frontend/")
+    generated = REPO / "frontend/src/generated"
+
+    types = schema_export.generate_api_types(
+        (REPO / "schema/openapi.json").read_text(encoding="utf-8"), REPO / "frontend"
+    )
+
+    assert types == (generated / schema_export.API_TYPES_FILE).read_text("utf-8")
+    assert '"/v2/jobs"' in types
+    assert schema_export.ranks_module() == (
+        generated / schema_export.RANKS_FILE
+    ).read_text("utf-8")

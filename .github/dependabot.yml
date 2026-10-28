@@ -14,13 +14,6 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
-    # Major bumps of the dashboard's router and chart library wait for the dashboard
-    # rebuild (see "Dependency upgrades" in ROADMAP.md).
-    ignore:
-      - dependency-name: vue-router
-        versions: [">=5"]
-      - dependency-name: plotly.js-dist-min
-        versions: [">=4"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

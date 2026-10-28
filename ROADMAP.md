@@ -40,8 +40,7 @@ unit takes an upgrade, it raises the cap and deletes the row.
 
 | Held back (`pyproject.toml` cap) | Why | Revisit in |
 |---|---|---|
-| `vue-router <5` (PR #69, ignored from 2026-10-17) | 5 is a major bump of the router the current dashboard is built on; checking it needs the dashboard viewed in a browser, and the dashboard is rebuilt in Phase 6 | U6-09 |
-| `plotly.js-dist-min <4` (PR #70, ignored from 2026-10-17) | 4 is a major bump of the library behind the legacy charts; checking it needs the dashboard viewed in a browser, and the charts are rebuilt in Phase 6 | U6-09 |
+| None at present | | |
 
 `.github/dependabot.yml` carries an `ignore` entry for each row, so Dependabot doesn't re-raise the held-back version. Removing a cap removes its entry.
 
@@ -166,7 +165,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Every endpoint is tested, including its 404 and 422. Hostile column names round-trip. Titanic's summary is under 50 KB and its first findings page under 100 KB. `dsbf schema export --check` covers `openapi.json`.
 
 ### U6-08 · Job API and local runner
-- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-07
+- **Status:** done (2026-10-28, #156, `a89d36a`) · **Size:** M · **Depends on:** U6-07
 - **Outcome:** `POST /v2/jobs`, `GET /v2/jobs`, `GET /v2/jobs/{id}?after=` and `POST /v2/jobs/{id}/cancel`; a `JobRunner` thread over `jobs` and `job_events` tables (Alembic `0003`), `interrupted` after a restart; `JsonWritesOnly` refuses non-JSON and foreign-`Origin` writes; `API_VERSION` 1.1.0. **Deviations:** cancelling needed an engine change (`execute(cancel=)` raising `RunCancelled`), since a hook cannot stop a run; a running job stops after the check in flight; `POST` does not take `policy` or `previous`.
 - **Note from U6-08:** `settings.plugins` lets a job import code from server directories; Phase 8 (auth) should decide who may set it.
 - **Goal:** `POST /v2/jobs` profiles a local source with settings (the `ProfileConfig` the CLI builds, plus the dataset key and name) and saves the run to the store. `GET /v2/jobs/{id}` returns the job's state and the progress events after a cursor, `GET /v2/jobs` lists jobs, and a job can be cancelled between checks.
@@ -176,7 +175,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** A job profiles titanic, and its run appears in the store and under `/v2/runs`. Progress events arrive in order and end with the run id. A bad path ends the job `failed` with the message `dsbf check` would print. A cross-origin form POST is refused.
 
 ### U6-09 · TypeScript frontend on a generated client
-- **Status:** todo · **Size:** M · **Depends on:** U6-08 · **Resolves:** the `vue-router <5` and `plotly.js-dist-min <4` caps
+- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-08 · **Resolves:** the `vue-router <5` and `plotly.js-dist-min <4` caps
+- **Outcome:** `frontend/` is a TypeScript Vue 3 app (Vite, `vue-tsc` in `pnpm build`, Pinia, Vue Router 5, ECharts) with a shell, a `HomeView` and a client over `openapi-fetch`; `dsbf schema export --types` also writes `api.d.ts` and `ranks.ts`, covered by `--check`. The old app, Plotly and axios are deleted; `DsbfChart` and `chartTheme` are ported; both caps and their Dependabot entries are gone. **Deviations:** `json-schema-to-typescript` stays for `run.d.ts` (`Run` is not in `openapi.json`, so one generator cannot serve both); TypeScript is held at `~6.0.3` because `typescript-eslint` does not support 7; the dev proxy targets `dsbf dashboard` on :8765; `DsbfChart`'s unused SVG export was removed.
 - **Carry in from U1-11:** a TypeScript consumer needs its own rank table for `Severity` and `Confidence`, which the schema cannot carry. **Carry in from U1-03 and U0-16:** the 20 lint warnings, and `no-unused-vars`, `vue/no-side-effects-in-computed-properties` and `vue/require-default-prop` at `error`; revisit `vue/no-v-html` if another source appears.
 - **Goal:** `frontend/` becomes a TypeScript Vue 3 app (Vite, `vue-tsc` in `pnpm build`, Pinia, vue-router 5, ECharts only). `dsbf schema export` generates its API client from `schema/openapi.json` (`openapi-typescript` types, used through `openapi-fetch`) and a module of the `Severity` and `Confidence` ranks. The old app, written for API v1, is deleted; `DsbfChart`, `chartTheme` and the card styles are kept, converted to TypeScript, for the tabs to reuse.
 - **Decided in U6-00:** TypeScript and a replacement, not a migration (asked the user); the lint rules are at `error` from the first commit, so there are no warnings to clear; Plotly goes with the old app (N-A1).

@@ -106,9 +106,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import VChart from 'vue-echarts'
+import type { EChartsOption } from 'echarts'
 
 // vue-echarts requires explicit component registration of the ECharts modules
 // you use. Import only what's needed to keep the bundle small.
@@ -144,25 +145,45 @@ use([
 ])
 
 // ── Props & emits ─────────────────────────────────────────────────────────────
-const props = defineProps({
-  option: { type: Object, required: true },
-  title: { type: String, default: '' },
-  subtitle: { type: String, default: '' },
-  theme: { type: String, default: 'dark' },
-  height: { type: String, default: '300px' },
-  fillParent: { type: Boolean, default: false },
-  loading: { type: Boolean, default: false },
-  empty: { type: Boolean, default: false },
-  emptyMessage: { type: String, default: '' },
-  columns: { type: Array, default: null },
-  modelValue: { type: String, default: null },
-  exportName: { type: String, default: 'dsbf-chart' },
-})
+export interface ChartColumn {
+  key: string
+  label?: string
+}
 
-defineEmits(['update:modelValue'])
+const props = withDefaults(
+  defineProps<{
+    option: EChartsOption
+    title?: string
+    subtitle?: string
+    theme?: 'dark' | 'light'
+    height?: string
+    fillParent?: boolean
+    loading?: boolean
+    empty?: boolean
+    emptyMessage?: string
+    columns?: ChartColumn[] | null
+    modelValue?: string | null
+    exportName?: string
+  }>(),
+  {
+    title: '',
+    subtitle: '',
+    theme: 'dark',
+    height: '300px',
+    fillParent: false,
+    loading: false,
+    empty: false,
+    emptyMessage: '',
+    columns: null,
+    modelValue: null,
+    exportName: 'dsbf-chart',
+  },
+)
+
+defineEmits<{ 'update:modelValue': [key: string] }>()
 
 // ── Internals ─────────────────────────────────────────────────────────────────
-const chartRef = ref(null)
+const chartRef = ref<InstanceType<typeof VChart> | null>(null)
 const echartsTheme = computed(() => (props.theme === 'light' ? 'dsbf-light' : 'dsbf-dark'))
 
 // ── Export helpers ────────────────────────────────────────────────────────────
@@ -178,21 +199,7 @@ function exportPng() {
   download(url, `${props.exportName}.png`)
 }
 
-function exportSvg() {
-  const chart = chartRef.value?.chart
-  if (!chart) return
-  // getDataURL with type 'svg' works with the Canvas renderer and produces
-  // a data URI containing a clean SVG — no renderer switch needed.
-  const url = chart.getDataURL({
-    type: 'svg',
-    pixelRatio: 2,
-    backgroundColor: props.theme === 'light' ? '#ffffff' : '#0f172a',
-    excludeComponents: ['toolbox'],
-  })
-  download(url, `${props.exportName}.svg`)
-}
-
-function download(url, filename) {
+function download(url: string, filename: string) {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
