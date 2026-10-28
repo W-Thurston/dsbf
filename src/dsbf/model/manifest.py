@@ -28,6 +28,12 @@ class DatasetManifest(Contract):
     name: str = Field(min_length=1)
     modality: Literal["tabular"] = "tabular"
     source: SourceRef
+    key: str = Field(
+        default="",
+        description="Groups the runs of one dataset into a history: the dataset the "
+        "run was given, else the source's location. Empty for an in-memory frame "
+        "with neither.",
+    )
     fingerprint: str = Field(
         min_length=1, description="A content hash: equal data, equal fingerprint."
     )

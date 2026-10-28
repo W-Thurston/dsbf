@@ -67,6 +67,7 @@ def run_check(check: Check, context: CheckContext) -> CheckResult:
         findings=findings,
         output=output.data if output else None,
         timing=Timing(wall_seconds=time.perf_counter() - clock, started_at=started_at),
+        columns=context.examined_columns if status is CheckStatus.OK else (),
         artifacts=tuple(ref for ref, _ in attached),
         params=context.params.model_dump(mode="json"),
     )

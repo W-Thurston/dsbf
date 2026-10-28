@@ -519,3 +519,26 @@ def test_the_notebook_display_survives_hostile_column_names():
 
     assert html.startswith("<div>")
     assert "<script" not in html
+
+
+class TestDatasetKey:
+    def test_a_file_is_keyed_by_its_absolute_path(self, tmp_path, frame):
+        path = tmp_path / "orders.csv"
+        frame.write_csv(path)
+
+        run = dsbf.profile(path, depth="quick")
+
+        assert run.dataset.key == str(path.resolve())
+
+    def test_an_explicit_dataset_wins_over_the_path(self, tmp_path, frame):
+        path = tmp_path / "orders.csv"
+        frame.write_csv(path)
+
+        run = dsbf.profile(path, dataset="orders", depth="quick")
+
+        assert run.dataset.key == "orders"
+        assert run.dataset.source.location == str(path.resolve())
+
+    def test_a_table_in_memory_has_no_key_unless_one_is_given(self, frame):
+        assert dsbf.profile(frame, depth="quick").dataset.key == ""
+        assert dsbf.profile(frame, dataset="x", depth="quick").dataset.key == "x"

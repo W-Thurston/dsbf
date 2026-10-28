@@ -176,6 +176,7 @@ def _correlation(first: np.ndarray, second: np.ndarray) -> float:
     requires=Requires(profile=["counts"]),
     # One pass over the rows per pair; ranks are computed once per complete column.
     cost=Cost.MODERATE,
+    codes=["redundant_columns", "strong_association"],
     packs=["core"],
     tags=["correlation", "association", "redundancy"],
 )

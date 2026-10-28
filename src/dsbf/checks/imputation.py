@@ -202,6 +202,7 @@ _DETAIL = {
     requires=Requires(checks=["null_rate"]),
     after=["missingness_mechanism"],
     cost=Cost.CHEAP,
+    codes=["imputation_strategy"],
     packs=["core"],
     tags=["missingness", "imputation", "ml"],
 )

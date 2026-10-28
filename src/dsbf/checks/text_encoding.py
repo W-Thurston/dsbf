@@ -57,6 +57,7 @@ class TextEncodingOutput(CheckOutputModel):
     output=TextEncodingOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["damaged_column_name", "nul_characters", "replacement_characters"],
     packs=["core"],
     tags=["encoding", "text"],
 )

@@ -59,6 +59,7 @@ class DatetimeConsistencyOutput(CheckOutputModel):
     output=DatetimeConsistencyOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["unparsed_values"],
     packs=["core"],
     tags=["datetime", "validation"],
 )

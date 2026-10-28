@@ -164,6 +164,7 @@ class FormatViolationsOutput(CheckOutputModel):
     # One regular expression per distinct value of a ruled column, and the date
     # formats for the values of other string columns that could be dates.
     cost=Cost.CHEAP,
+    codes=["format_violations", "mixed_date_formats"],
     packs=["core"],
     tags=["format", "regex", "date"],
 )

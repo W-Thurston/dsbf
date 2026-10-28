@@ -130,6 +130,7 @@ class CollinearityOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # One correlation matrix and its eigendecomposition.
     cost=Cost.MODERATE,
+    codes=["multicollinearity"],
     packs=["core"],
     tags=["multicollinearity", "vif", "redundancy"],
 )

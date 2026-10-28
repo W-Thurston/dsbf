@@ -46,6 +46,7 @@ class DuplicateRowsOutput(CheckOutputModel):
     output=DuplicateRowsOutput,
     requires=Requires(profile=["duplicate_rows"]),
     cost=Cost.CHEAP,
+    codes=["duplicate_rows"],
     packs=["core"],
     tags=["duplicates", "rows"],
 )

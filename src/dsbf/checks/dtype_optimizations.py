@@ -151,6 +151,7 @@ def _suggest(
     output=DtypeOptimizationsOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["smaller_dtype"],
     packs=["core"],
     tags=["memory", "dtype"],
 )

@@ -96,6 +96,7 @@ class SchemaOutput(CheckOutputModel):
     # The profile keeps ten top values and a minimum and maximum, so allowed values
     # and the count of values out of range are read from the column; one pass each.
     cost=Cost.CHEAP,
+    codes=["missing_column"],
     packs=["core"],
     tags=["schema", "contract", "validation"],
 )

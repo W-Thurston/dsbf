@@ -1433,7 +1433,7 @@ Compare the rows with what rules of thumb ask for the number of features.
 
 **Finding codes**
 
-`too_few_rows_<...>`
+`too_few_rows_general_ml`, `too_few_rows_linear_model`, `too_few_rows_tree_model`
 
 ## schema
 

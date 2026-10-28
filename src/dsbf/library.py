@@ -49,6 +49,7 @@ def profile(
     source: object,
     *,
     name: str | None = None,
+    dataset: str | None = None,
     packs: Iterable[str] | str | None = None,
     checks: Iterable[str] | str = (),
     depth: Depth | str | None = None,
@@ -81,6 +82,10 @@ def profile(
     warning each time it is raised rather than once (your ``ignore`` and ``error``
     filters still apply) and are restored afterwards, so another thread of yours
     may print a repeated warning more than once meanwhile.
+
+    ``dataset`` is the key that groups this run with earlier runs of the same data
+    (a history). Unset, a file's absolute path is the key, and a table in memory has
+    none; set it for any pipeline whose data moves between runs.
 
     ``packs`` are the packs whose checks are candidates (``core`` when unset).
     ``checks`` adjusts that by id: ``"+id"`` or ``"id"`` adds a check, ``"-id"``
@@ -125,6 +130,7 @@ def profile(
         PlanError: the selection cannot be planned, such as an unknown pack.
     """
     settings = _settings(
+        dataset=dataset,
         packs=packs,
         checks=checks,
         depth=depth,
@@ -211,6 +217,7 @@ def profile_with(
             check_id: CheckOverride(**values.model_dump())
             for check_id, values in settings.check_settings.items()
         },
+        dataset_key=settings.dataset,
     )
     if disk is not None:
         _prune(disk, settings.cache)
@@ -263,6 +270,7 @@ def _setting_params(
 
 def _settings(
     *,
+    dataset: str | None,
     packs: Iterable[str] | str | None,
     checks: Iterable[str] | str,
     depth: Depth | str | None,
@@ -277,6 +285,7 @@ def _settings(
 ) -> ProfileConfig:
     include, exclude = parse_checks(checks)
     given: dict[str, Any] = {
+        "dataset": dataset,
         "packs": _names(packs),
         "include": include,
         "exclude": exclude,

@@ -56,6 +56,12 @@ class CheckResult(Contract):
         default=(),
         description="Keys of `output` holding a NaN, infinite or NaT value, now null.",
     )
+    columns: tuple[str, ...] = Field(
+        default=(),
+        description="The eligible columns the check analysed, after exclusions. "
+        "Empty for a check about the dataset as a whole, and unless the status is "
+        "`ok`.",
+    )
     artifacts: tuple[ArtifactRef, ...] = Field(
         default=(),
         description="Bulky data the check attached; the payloads are not in the run's "

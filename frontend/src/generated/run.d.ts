@@ -89,6 +89,10 @@ export interface DatasetManifest {
   modality: "tabular";
   source: SourceRef;
   /**
+   * Groups the runs of one dataset into a history: the dataset the run was given, else the source's location. Empty for an in-memory frame with neither.
+   */
+  key: string;
+  /**
    * A content hash: equal data, equal fingerprint.
    */
   fingerprint: string;
@@ -779,6 +783,10 @@ export interface CheckResult {
    * Keys of `output` holding a NaN, infinite or NaT value, now null.
    */
   non_finite_outputs: string[];
+  /**
+   * The eligible columns the check analysed, after exclusions. Empty for a check about the dataset as a whole, and unless the status is `ok`.
+   */
+  columns: string[];
   /**
    * Bulky data the check attached; the payloads are not in the run's JSON.
    */

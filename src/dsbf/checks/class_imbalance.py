@@ -69,6 +69,7 @@ class ClassImbalanceOutput(CheckOutputModel):
     output=ClassImbalanceOutput,
     requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.CHEAP,
+    codes=["class_imbalance"],
     packs=["core"],
     tags=["target", "imbalance", "ml-readiness"],
 )

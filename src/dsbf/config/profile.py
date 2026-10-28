@@ -107,6 +107,12 @@ class CacheConfig(_Section):
 class ProfileConfig(_Section):
     """Every setting of one profiling run, with its default."""
 
+    dataset: str | None = Field(
+        default=None,
+        description="The key that groups this run with earlier runs of the same "
+        "dataset. Unset, a file's absolute path is the key, and an in-memory table "
+        "has none.",
+    )
     packs: tuple[str, ...] = Field(
         default=DEFAULT_PACKS, description="The packs whose checks are candidates."
     )

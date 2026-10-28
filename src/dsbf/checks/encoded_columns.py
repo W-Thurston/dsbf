@@ -147,6 +147,7 @@ class EncodedColumnsOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # Regular expressions over each column's distinct values; entropy for a sample.
     cost=Cost.CHEAP,
+    codes=["encoded_values"],
     packs=["core"],
     tags=["encoding", "hash", "uuid", "base64"],
 )

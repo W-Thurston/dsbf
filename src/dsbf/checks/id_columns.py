@@ -74,6 +74,7 @@ def _is_dense_integer_sequence(column: NumericProfile) -> bool:
     output=IdColumnsOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["likely_identifier"],
     packs=["core"],
     tags=["id", "index"],
 )

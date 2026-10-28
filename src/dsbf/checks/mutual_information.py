@@ -315,6 +315,7 @@ def _noise_floor(
     requires=Requires(profile=["counts"], params=["target"]),
     cost=Cost.MODERATE,
     extras=["ml"],
+    codes=["informative_feature"],
     packs=["core"],
     tags=["target", "mutual-information", "feature-selection"],
 )

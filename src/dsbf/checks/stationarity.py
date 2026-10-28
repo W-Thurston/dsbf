@@ -138,6 +138,7 @@ class StationarityOutput(TimeSeriesOutput):
     requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
+    codes=["ambiguous_stationarity", "non_stationary", "trend_stationary"],
     packs=["core"],
     tags=["time-series", "stationarity", "adf", "kpss"],
 )

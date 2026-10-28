@@ -236,6 +236,7 @@ def _choose(
     output=TransformationsOutput,
     requires=Requires(profile=["counts", "numeric_stats"]),
     cost=Cost.MODERATE,
+    codes=["no_effective_transform", "transform_suggested"],
     packs=["core"],
     tags=["transform", "skew", "ml"],
 )

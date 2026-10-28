@@ -177,6 +177,7 @@ class MissingnessMechanismOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # One rank per numeric predictor and a matrix product with the null indicators.
     cost=Cost.MODERATE,
+    codes=["missingness_depends_on_observed", "missingness_unexplained"],
     packs=["core"],
     tags=["missingness", "mcar", "mar", "mann_whitney", "chi_squared"],
 )

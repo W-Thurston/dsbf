@@ -276,3 +276,41 @@ def finding_fields():
         "message": "m",
         "evidence": Evidence(metrics={}, n_used=1, n_total=1, method="m"),
     }
+
+
+class TestExaminedColumns:
+    def test_a_result_lists_the_columns_the_check_could_read(self):
+        result = run_toys()["numeric_spread"]
+
+        assert result.columns == ("amount", "single")
+
+    def test_a_synthesis_check_lists_every_column_it_reads(self):
+        names = tuple(c.name for c in profile_dataset(make_dataset()).columns)
+
+        assert run_toys()["quality_summary"].columns == names
+
+    def test_a_check_about_the_dataset_examines_no_column(self):
+        @declare_with(id="whole", kind="rule", applies_to=None)
+        def whole(ctx, params):
+            return None
+
+        assert run(whole).columns == ()
+
+    def test_a_check_can_report_the_columns_it_kept(self):
+        @declare_with(id="kept", applies_to=SemanticTypes())
+        def kept(ctx, params):
+            ctx.examined(ctx.columns[:1])
+
+        dataset = make_dataset()
+
+        assert len(profile_dataset(dataset).columns) > 1
+        result = run(kept, dataset)
+        assert result.columns == (result.columns[0],) and len(result.columns) == 1
+
+    def test_reporting_a_column_outside_the_scope_is_a_contract_error(self):
+        @declare_with(id="stray")
+        def stray(ctx, params):
+            ctx.examined(["not_a_column"])
+
+        with pytest.raises(CheckContractError, match="not_a_column"):
+            run(stray)

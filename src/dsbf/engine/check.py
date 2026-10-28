@@ -155,6 +155,10 @@ class CheckSpec:
     after: tuple[str, ...] = field(
         default=(), metadata={"doc": "Soft ordering: run later, but never skipped."}
     )
+    codes: tuple[str, ...] = field(
+        default=(),
+        metadata={"doc": "The finding codes the check can raise; a test enforces it."},
+    )
     cost: Cost = Cost.MODERATE
     stage: Stage = field(
         default=Stage.ANY,
@@ -235,7 +239,7 @@ class CheckSpec:
             object.__setattr__(self, "stage", Stage(self.stage))
         except ValueError as error:
             raise CheckDefinitionError(f"{self.id}: {error}") from error
-        for name in ("extras", "packs", "tags", "after", "dimensions"):
+        for name in ("extras", "packs", "tags", "after", "dimensions", "codes"):
             object.__setattr__(self, name, _unique(getattr(self, name)))
         if not self.dimensions:
             raise CheckDefinitionError(f"{self.id}: declare at least one dimension")
@@ -252,6 +256,8 @@ class CheckSpec:
                 )
         for pack in self.packs:
             _require_name(f"{self.id}: pack", pack)
+        for code in self.codes:
+            _require_name(f"{self.id}: code", code)
 
     def _check_dependencies(self) -> None:
         for other in self.after:
@@ -341,6 +347,7 @@ def check(
     output: type[CheckOutputModel] | None = None,
     requires: Requires | None = None,
     after: Iterable[str] = (),
+    codes: Iterable[str] = (),
     cost: Cost = Cost.MODERATE,
     stage: Stage = Stage.ANY,
     runs_in: RunsIn = "thread",
@@ -352,7 +359,8 @@ def check(
 
     The decorated function takes ``(ctx, params)`` and returns what
     ``ctx.output(...)`` or ``ctx.stop(...)`` builds, or ``None``. Decorating
-    registers nothing; a registry collects checks explicitly.
+    registers nothing; a registry collects checks explicitly. ``codes`` lists the
+    finding codes the check can raise, which the check reference prints.
 
     ``runs_in="process"`` runs the check in a worker process of its own, so a long
     pure-Python loop neither holds up other checks nor outlives its timeout. The
@@ -377,6 +385,7 @@ def check(
             output=output,
             requires=requires or Requires(),
             after=tuple(after),
+            codes=tuple(codes),
             cost=cost,
             stage=stage,
             runs_in=runs_in,

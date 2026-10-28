@@ -75,6 +75,7 @@ class TemporalGapsOutput(CheckOutputModel):
     output=TemporalGapsOutput,
     requires=Requires(profile=["counts", "datetime"]),
     cost=Cost.CHEAP,
+    codes=["gaps", "irregular_spacing"],
     packs=["core"],
     tags=["datetime", "gaps", "time-series"],
 )

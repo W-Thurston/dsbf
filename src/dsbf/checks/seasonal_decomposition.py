@@ -132,6 +132,7 @@ class SeasonalDecompositionOutput(TimeSeriesOutput):
     requires=Requires(profile=["counts"], params=["time_index"]),
     cost=Cost.MODERATE,
     extras=["timeseries"],
+    codes=["seasonal", "trend"],
     packs=["core"],
     tags=["time-series", "seasonality", "trend", "stl"],
 )

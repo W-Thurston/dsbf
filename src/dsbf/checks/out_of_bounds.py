@@ -75,6 +75,7 @@ class OutOfBoundsOutput(CheckOutputModel):
     requires=Requires(profile=["counts"]),
     # One comparison of each bounded column's values with its bounds.
     cost=Cost.CHEAP,
+    codes=["out_of_bounds"],
     packs=["core"],
     tags=["bounds", "validation"],
 )

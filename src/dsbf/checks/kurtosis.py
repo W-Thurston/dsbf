@@ -83,6 +83,7 @@ def _tails(value: float, params: KurtosisParams) -> Tails:
     output=KurtosisOutput,
     requires=Requires(profile=["counts", "numeric_stats"]),
     cost=Cost.CHEAP,
+    codes=["heavy_tails", "thin_tails"],
     packs=["core"],
     tags=["distribution", "tails", "outlier-risk"],
 )

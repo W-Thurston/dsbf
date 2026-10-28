@@ -41,6 +41,7 @@ class DuplicateColumnsOutput(CheckOutputModel):
     output=DuplicateColumnsOutput,
     requires=Requires(profile=["counts", "content_hash"]),
     cost=Cost.CHEAP,
+    codes=["duplicate_columns"],
     packs=["core"],
     tags=["duplicates", "redundancy"],
 )

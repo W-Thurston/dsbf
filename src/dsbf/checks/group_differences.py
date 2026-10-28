@@ -230,6 +230,7 @@ class _Numeric:
     requires=Requires(profile=["counts"]),
     # Group sums per pair; bootstraps and contrasts only for the pairs worth reading.
     cost=Cost.MODERATE,
+    codes=["group_difference"],
     packs=["core"],
     tags=["anova", "kruskal_wallis", "mann_whitney", "group_difference"],
 )

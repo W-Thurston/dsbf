@@ -96,6 +96,7 @@ def most_frequent(
     output=DominantValueOutput,
     requires=Requires(profile=["counts"]),
     cost=Cost.CHEAP,
+    codes=["dominant_value"],
     packs=["core"],
     tags=["dominant-value", "imbalance"],
 )

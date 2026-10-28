@@ -130,6 +130,7 @@ class BimodalityOutput(CheckOutputModel):
     requires=Requires(profile=["counts", "numeric_stats"]),
     cost=Cost.MODERATE,
     extras=["ml"],
+    codes=["bimodal"],
     packs=["core"],
     tags=["distribution", "bimodal", "mixture"],
 )
