@@ -354,3 +354,83 @@ class TestCompare:
         assert_problem(
             client.get("/v2/runs/compare", params={"base": "x", "head": good}), 422
         )
+
+
+class TestRelationships:
+    def test_titanics_cells_equal_the_checks_pairs(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/relationships").json()
+        by_check: dict[str, list] = {}
+        for cell in body["cells"]:
+            by_check.setdefault(cell["check_id"], []).append(cell)
+        for check_id, key in (
+            ("associations", "value"),
+            ("contingency", "cramers_v_corrected"),
+            ("group_differences", "omega_squared"),
+        ):
+            pairs = run.results[check_id].output["pairs"]
+            assert [c["value"] for c in by_check[check_id]] == [p[key] for p in pairs]
+        statistics = {c["statistic"] for c in body["cells"]}
+        assert statistics == set(body["statistics"])
+        assert [c["pairs_tested"] for c in body["coverage"]] == [
+            len(run.results[c["check_id"]].output["pairs"]) for c in body["coverage"]
+        ]
+
+    def test_an_untested_pair_has_no_cell(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/relationships").json()
+        seen = {frozenset((c["first"], c["second"])) for c in body["cells"]}
+        assert frozenset(("age", "age")) not in seen
+        assert len(seen) < len(body["columns"]) ** 2
+
+    def test_columns_follow_the_datasets_order(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/relationships").json()
+        order = [c["name"] for c in client.get(f"/v2/runs/{run.run_id}/columns").json()]
+        assert body["columns"] == [n for n in order if n in body["columns"]]
+
+    def test_a_missing_run_is_a_404(self, client):
+        assert_problem(client.get(f"/v2/runs/{uuid4()}/relationships"), 404, "run")
+
+
+class TestSnapshotPair:
+    def test_returns_both_columns_for_rows_with_both(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(
+            f"/v2/runs/{run.run_id}/snapshot/pair",
+            params={"first": "age", "second": "fare"},
+        ).json()
+        assert body["snapshot_rows"] == run.dataset.n_rows
+        assert body["rows_with_both"] == 714
+        assert len(body["values"]) == 714
+        assert body["sampling"] is None
+
+    def test_thins_evenly_to_the_limit(self, client, runs):
+        run = runs["titanic"]
+        params = {"first": "age", "second": "fare", "limit": 100}
+        one = client.get(f"/v2/runs/{run.run_id}/snapshot/pair", params=params).json()
+        two = client.get(f"/v2/runs/{run.run_id}/snapshot/pair", params=params).json()
+        assert len(one["values"]) == 100
+        assert one["rows_with_both"] == 714
+        assert one["values"] == two["values"]
+
+    def test_the_limit_is_capped(self, client, runs):
+        response = client.get(
+            f"/v2/runs/{runs['titanic'].run_id}/snapshot/pair",
+            params={"first": "age", "second": "fare", "limit": 5000},
+        )
+        assert response.status_code == 422
+
+    def test_an_unknown_column_is_a_404_naming_it(self, client, runs):
+        response = client.get(
+            f"/v2/runs/{runs['titanic'].run_id}/snapshot/pair",
+            params={"first": "age", "second": "nope"},
+        )
+        assert_problem(response, 404, "nope")
+
+    def test_a_run_without_a_snapshot_is_a_404(self, bare_client, runs):
+        response = bare_client.get(
+            f"/v2/runs/{runs['no_snapshot'].run_id}/snapshot/pair",
+            params={"first": "id", "second": "amount"},
+        )
+        assert_problem(response, 404, "snapshot")

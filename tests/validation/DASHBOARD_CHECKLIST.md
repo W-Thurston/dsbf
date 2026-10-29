@@ -87,6 +87,24 @@ Covered by `frontend/e2e/column-view.spec.ts` and the Vitest tests in
   column without one says why;
 - the sample pages the snapshot, and a run without a snapshot says so there.
 
+## Relationships
+
+Covered by `frontend/e2e/relationships.spec.ts`, the Vitest tests in
+`frontend/src/components/relationships/` and `TestRelationships` and `TestSnapshotPair`
+in `tests/test_service/test_endpoints.py`, so nothing here is checked by hand:
+
+- the matrix has one cell per tested pair, each naming its statistic, and a pair no
+  check tested has none (blank, not zero);
+- the pair table groups by statistic before value, and each statistic has its own panel;
+- the pair plot draws from the snapshot, says how many points and how the snapshot was
+  sampled, and a run without a snapshot says so;
+- the table lists pairs for any column the checks tested, and a run with no tested pair
+  says so.
+
+The archetype lines below that mention the relationships tab (block structure, 60
+columns, Cramér's V only, Summary card counts, a single column) need the archetype
+stores that the quality unit builds, and stay open until then.
+
 ## Tabs not yet built
 
 Each belongs to the unit in `ROADMAP.md` that builds it (relationships, quality and ML readiness, time series). The wording is the old dashboard's
@@ -111,7 +129,6 @@ old name ("Distributions", "Quality") describe what that tab must still show.
 - [ ] Quality: all sections render (including with potentially sparse findings)
 - [ ] Distributions: percentile table renders with 25-row data (some percentiles may duplicate)
 - [ ] Distributions: selecting a column doesn't crash the detail panel
-- [ ] Relationships: association table either shows pairs or an appropriate 'no data' state
 - [ ] ML Readiness: no dimension shows an error-level finding triggered by tiny n alone
 - [ ] No tab shows a blank white panel or uncaught error in the browser console
 
@@ -167,6 +184,5 @@ old name ("Distributions", "Quality") describe what that tab must still show.
 - [ ] Distributions: selecting cont_clean_00 shows no warnings in any section
 - [ ] Distributions: selecting cont_skew_00 shows log-transform warn in guidance
 - [ ] Relationships: correlation heatmap renders for the 60 continuous columns without crash
-- [ ] Relationships: association table populates for any selected column
 - [ ] ML Readiness: Transformations section shows cont_skew_* columns; Encoding shows cat_bal_* and cat_hc
 - [ ] No tab shows a blank white panel or uncaught JS error at 100-column scale
