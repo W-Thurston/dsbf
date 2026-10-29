@@ -30,6 +30,7 @@ def test_the_guides_exist_and_hold_code():
         "dashboard",
         "pipeline",
         "policy",
+        "standalone-local",
         "write-a-check",
     }
     assert all(blocks(guide) for guide in GUIDES)

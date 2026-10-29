@@ -19,10 +19,15 @@ class NotLocalError(ValueError):
     """The service was asked to listen on an address other than this machine."""
 
 
-def development_frontend() -> Path | None:
-    """The built dashboard in a source checkout (``frontend/dist``), if there is one."""
+def dashboard_directory() -> Path | None:
+    """The built dashboard: ``frontend/dist`` in a source checkout (the build a
+    developer just made), else the one packaged in the wheel, else ``None`` (a wheel
+    built without the frontend)."""
     dist = Path(__file__).parents[3] / "frontend" / "dist"
-    return dist if dist.is_dir() else None
+    if (dist / "index.html").is_file():
+        return dist
+    packaged = Path(__file__).parent / "dashboard"
+    return packaged if (packaged / "index.html").is_file() else None
 
 
 def serve(
@@ -42,7 +47,7 @@ def serve(
         )
     repository = open_repository()
     try:
-        app = create_app(repository, static_dir=development_frontend())
+        app = create_app(repository, static_dir=dashboard_directory())
         if open_browser:
             shown = f"[{host}]" if ":" in host else host
             url = f"http://{shown}:{port}/"

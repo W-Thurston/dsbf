@@ -246,12 +246,12 @@ function download(url: string, filename: string) {
 .dc-title {
   font-size: 13px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--text);
 }
 
 .dc-subtitle {
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .dc-actions {
@@ -262,18 +262,18 @@ function download(url: string, filename: string) {
 
 .dc-action-btn {
   padding: 3px 10px;
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 11px;
   cursor: pointer;
   transition: all 0.12s;
   white-space: nowrap;
 }
 .dc-action-btn:hover {
-  border-color: #60a5fa;
-  color: #93c5fd;
+  border-color: var(--link);
+  color: var(--link-hover);
 }
 
 /* ── Column tabs ───────────────────────────────────────────────────────────── */
@@ -289,20 +289,20 @@ function download(url: string, filename: string) {
   border-radius: 4px;
   font-size: 11px;
   font-family: ui-monospace, 'Cascadia Code', monospace;
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #64748b;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.12s;
 }
 .dc-col-tab:hover {
-  border-color: #60a5fa;
-  color: #93c5fd;
+  border-color: var(--link);
+  color: var(--link-hover);
 }
 .dc-col-tab--active {
-  background: #0f2035;
-  border-color: #60a5fa;
-  color: #93c5fd;
+  background: var(--notice-bg);
+  border-color: var(--link);
+  color: var(--notice-fg);
 }
 
 /* ── Body / canvas area ────────────────────────────────────────────────────── */
@@ -334,7 +334,7 @@ function download(url: string, filename: string) {
 .dc-skeleton-bar {
   flex: 1;
   border-radius: 3px;
-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: dc-shimmer 1.4s infinite;
 }
@@ -356,7 +356,7 @@ function download(url: string, filename: string) {
   justify-content: center;
   height: 100%;
   gap: 8px;
-  color: #475569;
+  color: var(--text-muted);
   padding: 24px;
 }
 
@@ -368,40 +368,5 @@ function download(url: string, filename: string) {
   font-size: 12px;
   text-align: center;
   line-height: 1.5;
-}
-
-/* ── Light theme ───────────────────────────────────────────────────────────── */
-:global(.theme-light) .dc-title {
-  color: #1e293b;
-}
-:global(.theme-light) .dc-action-btn {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #94a3b8;
-}
-:global(.theme-light) .dc-action-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
-}
-:global(.theme-light) .dc-col-tab {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-  color: #94a3b8;
-}
-:global(.theme-light) .dc-col-tab:hover {
-  border-color: #2563eb;
-  color: #2563eb;
-}
-:global(.theme-light) .dc-col-tab--active {
-  background: #eff6ff;
-  border-color: #2563eb;
-  color: #1d4ed8;
-}
-:global(.theme-light) .dc-skeleton-bar {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-}
-:global(.theme-light) .dc-empty {
-  color: #94a3b8;
 }
 </style>

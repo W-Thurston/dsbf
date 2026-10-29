@@ -93,7 +93,7 @@ Exits 0 when the policy passes the run (or there is none), 1 when a rule with a
 dsbf dashboard [OPTIONS]
 ```
 
-Serve the stored runs over the local API (and the dashboard, when built).
+Serve the stored runs and the dashboard over the local API.
 
 | Option | Description |
 | --- | --- |

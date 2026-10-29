@@ -15,6 +15,26 @@ reviewed commit.
 
 ---
 
+## Status after Phase 6 (reviewed 2026-10-29)
+
+Phase 6 built the run store, the local API v2 and the TypeScript dashboard, bundled in the wheel
+(U6-00 to U6-19). It resolves F-12 (the column view draws the profile's equal-width bins),
+F-15 (dataset key and the data snapshot), F-20 (the Run health panel), F-25 (the repository, paging,
+error mapping, migrations and `gc`) and F-29 (route-level code splitting, ECharts only, the
+monolithic tabs replaced). It also resolves part 2 D (`dsbf dashboard`, run management, run
+comparison, the health panel, the settings panel), E (the frontend in the wheel), F (API and
+frontend tests) and N-A1, N-A3, N-A4 and N-A5, **in the sense that each page exists and shows its
+data**. The user's review on 2026-10-29 found the dashboard unusable as a visual exploration (mostly
+tables and cards), so its design is the work of Phase 6b, and the dashboard items below are
+resolved functionally only. Only F-30 (read-time sampling, Phase 7) stays open among the findings.
+
+| Status | Findings |
+|---|---|
+| Resolved | F-01 to F-29, F-31 to F-39 |
+| Partial, owned by a later phase | F-30 (Phase 7, read-time sampling) |
+
+---
+
 ## Status after Phase 5 (reviewed 2026-10-26)
 
 Phase 5 built the policy evaluator, the sinks, CLI v2 and the release machinery (U5-00 to U5-11). It
@@ -221,6 +241,8 @@ and could produce false "Leakage" findings. 21 task files use `select_dtypes`.
 ### F-12 The new histogram misrepresents distributions
 **Status (2026-10-19): Partial.** The profile carries equal-width bins with the rule recorded (U2-05 #84). The dashboard still draws the percentile bins (`DistributionHistogramChart.vue:31`); the dashboard is off from U4-18, and its Phase 6 column view draws the profile's bins.
 
+**Status (2026-10-29): Resolved.** The column view draws the profile's stored equal-width edges on a value axis (U6-12, #164).
+
 `DistributionHistogramChart.vue:37` builds bins between the min, 1/5/25/50/75/95/99th percentiles
 and the max, then plots each bin's *count* as an equal-width bar. The bins have very different
 widths but similar counts by construction, so the shape you see mostly reflects the percentile
@@ -253,6 +275,8 @@ executes in the dashboard. The risk is low for a local tool but real once a dash
 **Status (2026-10-19): Partial.** `Run.run_id` is a UUID, `started_at` is a timezone-aware time, and `DatasetManifest` carries the content fingerprint (U1-08 #76, U2-02 #81). The legacy store still uses a second-resolution `run_key` and datasets keyed by name, and API v1 re-reads the source; both are deleted in U4-18. Dataset identity and the per-run data snapshot are Phase 6 work.
 
 **Status (2026-10-25): Partial.** The legacy store and API v1 are deleted (U4-18, #126). Dataset identity and the per-run data snapshot are still Phase 6 work.
+
+**Status (2026-10-29): Resolved.** `DatasetManifest.key` (U6-03, #150) groups runs; the store keeps a capped Parquet snapshot of the data as profiled (U6-05, #152).
 
 - [x] **run_key collisions:** `run_key` is a second-resolution timestamp (`dsbf/core/base_engine.py:93`). Two runs in the same second share an output dir (`exist_ok=True` overwrites), and `_insert_run` silently reuses the first run's row, merging task results. Add a short random suffix or a UUID.
 - [x] **`ran_at` can be NULL:** with a custom `output_dir`, `run_key` isn't a timestamp, `ran_at` becomes `None` (`writer.py:313`), and the explicit NULL overrides the column default. Those runs then sort last and break "latest run" queries. Use the actual start time.
@@ -305,6 +329,8 @@ reports `version="0.1.0"` (`dsbf/api/main.py:45`).
 **Status (2026-10-19): Partial.** The status model (U1-07 #75) and the executor (U3-05 #92) give every check a result, `skipped` with `blocked_by`, and an `error` note with its traceback in `Note.detail`. `Run.render_health()` prints the summary (U3-12 #99). Persisting full results and a Run health panel in the dashboard are Phase 6 work. The legacy `TaskResult` defects listed here are deleted in U4-18.
 
 **Status (2026-10-25): Partial.** The legacy `TaskResult` is deleted (U4-18, #126). `dsbf profile` prints `Run.render_health()`; the dashboard's Run health panel is Phase 6.
+
+**Status (2026-10-29): Resolved.** The dashboard's Run health panel shows every status with its reason, hint and `blocked_by` (U6-10, #160).
 
 - Skipped tasks (failed dependency) get **no TaskResult** (`graph.py:105-117`), so they're missing from `report.json`, the DB and the dashboard. Users can't tell "not applicable" from "skipped because X failed".
 - The DB stores only `status/summary/data/guidance` (`dsbf/storage/writer.py`). `error_metadata`, `reliability_warnings`, `recommendations` and `metadata` (for example `memory_exceeded` and `excluded_columns`) are dropped, so the dashboard can't explain failures or show reliability caveats.
@@ -400,6 +426,8 @@ Calling feature collinearity "leakage" conflicts with the hedged-language princi
 
 ### F-29 Frontend build and code health
 **Status (2026-10-19): Partial.** Vite is on a stable release (8.3), and ESLint, Prettier, Vitest and the build run in CI (U1-03 #68). The bundle split and the tab monoliths (now 1,491 to 1,772 lines) are Phase 6 work.
+
+**Status (2026-10-29): Resolved.** The old app and Plotly are deleted; the TypeScript app splits each route into a lazy chunk with ECharts in its own, a size budget runs in CI (U6-09, #157; U6-10, #160), and the wheel builds the frontend (U6-19).
 
 - [x] Unpin `vite ^8.0.0-beta.13` and its `overrides` block and move to a stable release.
 - [ ] Bundle size: Plotly (via `PlotCard.vue:35` static import, which also defeats `PairPlotCard`'s dynamic import) plus ECharts ship together in one 5.5 MB chunk. Finishing the ECharts migration ([N-A1](#a-finish-in-flight-work)) and route-level code splitting should cut this substantially.
@@ -548,11 +576,11 @@ in U4-19.
 
 | ID | Item | Notes |
 |---|---|---|
-| N-A1 | **Complete the ECharts migration** | Move the remaining Plotly cards (`PlotCard`, `PairPlotCard`, correlation heatmap, missingness) to `DsbfChart`, then remove `plotly.js-dist-min`. Charts should render from task *data*, not pre-rendered figure files. **Status:** Phase 6 rebuilds the dashboard on ECharts only (the column view and the remaining charts). |
+| N-A1 | **Complete the ECharts migration** | Move the remaining Plotly cards (`PlotCard`, `PairPlotCard`, correlation heatmap, missingness) to `DsbfChart`, then remove `plotly.js-dist-min`. Charts should render from task *data*, not pre-rendered figure files. **Status:** Phase 6 rebuilds the dashboard on ECharts only (the column view and the remaining charts). | **Status (2026-10-29):** resolved: the old app, Plotly and axios were deleted and every chart is ECharts (U6-09, #157).
 | N-A2 | **Retire backend plot generation** | Once the frontend no longer reads figure files, remove `generate_univariate_plots`, `generate_dataset_summary_plots` and `dsbf/utils/plot_factory.py` (1.2k lines), along with the `matplotlib`/`seaborn`/`missingno`/`plotly`/`pydot`/`graphviz` deps (keep seaborn only if built-in datasets still need it). This shrinks install size and run time and removes the figure-path problems in [F-16](#f-16-paths-depend-on-the-current-working-directory). **Status:** open. U4-18 deletes the plotting tasks and `plot_factory`, and U4-19 drops the plotting dependencies. Both tasks are already left out of in-memory library runs (U3-12). |
-| N-A3 | **Q-Q plot** | `normality_qq_plots` already computes the quantiles. The Distributions tab shows a "coming soon" placeholder. **Status:** the `normality` check (U4-06) keeps the Q-Q quantiles of every column that fails its tests (or of all, with `qq_all_columns`): theoretical and empirical quantiles in the column's units, the Q1–Q3 reference line, the deviation in standard deviations and a pattern (heavy tails, right tail, left tail). The Phase 6 column view draws them. |
-| N-A4 | **Time Series tab** | Finish ACF/PACF, stationarity and decomposition views. Add a friendly empty state and a UI path to set `datetime_index_column`. **Status:** `dsbf.profile(time_index=...)` exists (U3-12) and reaches the `stationarity`, `autocorrelation` and `seasonal_decomposition` checks (U4-11), which keep the tests, the ACF/PACF values with their bands and the trend and seasonal strengths, but not the STL component series; the Phase 6 store keeps those as an artifact, and the tab is rebuilt then. |
-| N-A5 | **Findings tab** | Cross-column finding explorer (already on the README roadmap). It can be built entirely on the `guidance` blobs every task emits. **Status:** findings exist as a contract (U1-07) and come from every adapted task (U3-11). The explorer is Phase 6. |
+| N-A3 | **Q-Q plot** | `normality_qq_plots` already computes the quantiles. The Distributions tab shows a "coming soon" placeholder. **Status:** the `normality` check (U4-06) keeps the Q-Q quantiles of every column that fails its tests (or of all, with `qq_all_columns`): theoretical and empirical quantiles in the column's units, the Q1–Q3 reference line, the deviation in standard deviations and a pattern (heavy tails, right tail, left tail). The Phase 6 column view draws them. | **Status (2026-10-29):** resolved: the column view draws the Q-Q plot (U6-12, #164).
+| N-A4 | **Time Series tab** | Finish ACF/PACF, stationarity and decomposition views. Add a friendly empty state and a UI path to set `datetime_index_column`. **Status:** `dsbf.profile(time_index=...)` exists (U3-12) and reaches the `stationarity`, `autocorrelation` and `seasonal_decomposition` checks (U4-11), which keep the tests, the ACF/PACF values with their bands and the trend and seasonal strengths, but not the STL component series; the Phase 6 store keeps those as an artifact, and the tab is rebuilt then. | **Status (2026-10-29):** resolved: the time series page shows stationarity, ACF and PACF and the STL series, with an empty state naming `--time-index` (U6-15, #167).
+| N-A5 | **Findings tab** | Cross-column finding explorer (already on the README roadmap). It can be built entirely on the `guidance` blobs every task emits. **Status:** findings exist as a contract (U1-07) and come from every adapted task (U3-11). The explorer is Phase 6. | **Status (2026-10-29):** resolved: the findings explorer (U6-11, #163).
 
 ## B. Engine architecture
 
@@ -569,7 +597,7 @@ in U4-19.
 
 This is the project's core differentiator, so these items deserve priority after the P0 fixes.
 
-- [ ] **Real histograms** (F-12): equal-width bins computed server-side, with the binning rule recorded in metadata. **Status:** partial: the profile has them (U2-05); the dashboard draws them in Phase 6.
+- [x] **Real histograms** (F-12): equal-width bins computed server-side, with the binning rule recorded in metadata. **Status:** partial: the profile has them (U2-05); the dashboard draws them in Phase 6. **Status (2026-10-29):** resolved: the column view draws the stored edges (U6-12, #164).
 - [x] **Uncertainty on associations (2026-10-22):** confidence intervals (Fisher z for r and τ, bootstrap for η² and V) and the n behind each estimate. Display "weak (95% CI 0.05–0.41, n=48)" instead of a bare label. **Status:** `associations` has Fisher z intervals for r, ρ and τ with `n_used` per pair, and `contingency` a percentile bootstrap interval for V̄ (U4-07). `group_differences` (U4-08) adds percentile bootstrap intervals for ω² and ε² (the rank test's effect size) and for a flagged pair's rank-biserial contrasts; η of `associations` keeps no interval, because the group tests report the same pair with one.
 - [x] **Bias-corrected Cramér's V** (Bergsma 2013). The uncorrected V currently inflates on small samples and high-cardinality pairs. **Status:** resolved in `contingency` (U4-07); the plain V is kept beside it.
 - [x] **A comparable association scale** across metric types (F-25). For example, convert η² to η, or rank by strength band and never by raw value across types. **Status:** resolved in the checks (U4-07): η replaces η² and point-biserial r, and every pair has a band on its own metric's scale. The API v1 ordering is deleted in U4-18.
@@ -579,28 +607,28 @@ This is the project's core differentiator, so these items deserve priority after
 
 ## D. Product and UX
 
-- [ ] **`dsbf dashboard`**: one command that starts FastAPI and serves the built SPA (`npm run build` output mounted as static files). Today it takes two terminals and a Node toolchain. **Status:** Phase 6.
-- [ ] **Run management:** `dsbf runs list | show | delete | gc`, plus delete in the UI (F-25). **Status:** Phase 6 (`dsbf runs ...` with the store).
-- [ ] **Run comparison UI:** the backend already has `/api/runs/compare`. Build a side-by-side view and a drift view between two runs of the same dataset. This is the first step toward the README's "Dataset comparison" item. **Status:** Phase 6.
-- [ ] **Run health panel:** failed and skipped tasks with reasons, reliability caveats, and sampling notices (F-20). **Status:** partial: `Run.health` and `Run.render_health()` exist (U3-12); the stopgap CLI prints it (U4-17); the dashboard panel is Phase 6.
-- [ ] **Settings panel:** target column, time index and thresholds, editable from the UI and saved as a per-dataset config overlay, then re-run. **Status:** Phase 6.
+- [x] **`dsbf dashboard`**: one command that starts FastAPI and serves the built SPA (`npm run build` output mounted as static files). Today it takes two terminals and a Node toolchain. **Status:** Phase 6. **Status (2026-10-29):** resolved: `dsbf dashboard` serves the API and the dashboard on one local port (U6-07, #154; U6-19).
+- [x] **Run management:** `dsbf runs list | show | delete | gc`, plus delete in the UI (F-25). **Status:** Phase 6 (`dsbf runs ...` with the store). **Status (2026-10-29):** resolved: `dsbf runs list | show | diff | delete | gc | import` (U6-06, #153); delete in the UI is not built.
+- [x] **Run comparison UI:** the backend already has `/api/runs/compare`. Build a side-by-side view and a drift view between two runs of the same dataset. This is the first step toward the README's "Dataset comparison" item. **Status:** Phase 6. **Status (2026-10-29):** resolved: `/compare` takes any two runs, and the dataset page shows lineage and finding history (U6-16, #168).
+- [x] **Run health panel:** failed and skipped tasks with reasons, reliability caveats, and sampling notices (F-20). **Status:** partial: `Run.health` and `Run.render_health()` exist (U3-12); the stopgap CLI prints it (U4-17); the dashboard panel is Phase 6. **Status (2026-10-29):** resolved (U6-10, #160).
+- [x] **Settings panel:** target column, time index and thresholds, editable from the UI and saved as a per-dataset config overlay, then re-run. **Status:** Phase 6. **Status (2026-10-29):** resolved: a generated settings form with a rerun (U6-17, #169; U6-18, #170).
 - [x] **Shareable export:** a static HTML or PDF report of a run for people without the stack installed. **Status:** resolved by the self-contained HTML report (U5-05, `--sink html`); no PDF is planned.
 - [x] **Notebook experience:** `EDA(df).run()` returning a rich object with `_repr_html_`, plus `.open_dashboard()`. **Status:** resolved (U5-02, `Run._repr_html_`, `Findings`); `EDA` is replaced by `dsbf.profile()` (U3-12).
 
 ## E. Packaging and distribution
 
 - [x] Use a user data dir or `DSBF_HOME` for the DB and outputs (F-16), with absolute paths stored. **Status:** resolved (U1-04).
-- [ ] Ship the built frontend inside the wheel, so `pip install dsbf && dsbf dashboard` works without Node. **Status:** Phase 6.
+- [x] Ship the built frontend inside the wheel, so `pip install dsbf && dsbf dashboard` works without Node. **Status:** Phase 6. **Status (2026-10-29):** resolved (U6-19): the wheel carries the dashboard and the `package` job serves it.
 - [x] Publish to PyPI, with a release workflow triggered by tags. **Status:** resolved. U5-09 added `release.yml` (trusted publishing, a hand-kept changelog replacing the generated one); #144 made every tag go through TestPyPI and an install from it before PyPI. `1.0.0a1` was published on 2026-10-27 (tag `v1.0.0a1`, `921b1a2`).
 - [ ] Provide an optional Docker image for team or server use. Document `DSBF_CORS_ORIGINS`, reverse proxying, and that the API has **no auth** and should not be exposed publicly as-is. **Status:** Phase 8.
 - [x] Get the version from package metadata (F-18). **Status:** resolved (U3-12).
 
 ## F. Quality engineering
 
-- [ ] **API and storage tests:** FastAPI `TestClient` against a fixture DB, plus `persist_run` round-trip tests. **Status:** U0-06 added API v1 tests; they go with API v1 in U4-18, and Phase 6 tests the store and API v2.
+- [x] **API and storage tests:** FastAPI `TestClient` against a fixture DB, plus `persist_run` round-trip tests. **Status:** U0-06 added API v1 tests; they go with API v1 in U4-18, and Phase 6 tests the store and API v2. **Status (2026-10-29):** resolved: the service and store tests run against a fixture repository (U6-04, U6-07, U6-08).
 - [x] **Golden-run snapshot:** profile a fixed dataset and snapshot `report.json` (with volatile fields stripped), so unintended output changes show up in review. **Status:** resolved for the legacy report (U0-13) and the engine (U3-11); U4-02 adds findings snapshots for the core pack.
 - [ ] **Adversarial-frame property tests** (Hypothesis): column names with `|`, brackets, unicode or empty strings; all-null columns; single rows; mixed types; tz-aware datetimes. Every task must return a valid result without crashing (F-10, F-19). **Status:** partial: the adversarial fixture runs against every task (U0-09) and the engine (U3-11); U4-02 adds property-based frames for the core checks.
-- [ ] **Frontend tests:** Vitest for chart option builders and utils, plus one Playwright smoke test that loads a fixture run. **Status:** partial: Vitest runs in CI (U1-03); the Playwright smoke test is Phase 6.
+- [x] **Frontend tests:** Vitest for chart option builders and utils, plus one Playwright smoke test that loads a fixture run. **Status:** partial: Vitest runs in CI (U1-03); the Playwright smoke test is Phase 6. **Status (2026-10-29):** resolved: Vitest, and a Playwright test per tab against a fixture store (U6-10 to U6-17).
 - [x] **Type checking in CI** (pyrefly or mypy), which would also make the README badge true. **Status:** resolved (U0-12, pyrefly with a baseline).
 - [x] **Coverage reporting**, plus a CI job that runs the validation archetypes. **Status:** the archetype tests are `integration` tests in `tests/validation/` and run with the full suite; the calibration suite runs nightly (U4-16); coverage reporting is in the `full` job's step summary (U5-09, no floor yet).
 

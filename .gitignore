@@ -89,3 +89,6 @@ calibration-results/
 .e2e-home/
 test-results/
 playwright-report/
+
+# ── Dashboard bundled into the wheel (filled by .github/scripts/build_dashboard.sh)
+src/dsbf/service/dashboard/

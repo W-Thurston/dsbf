@@ -176,10 +176,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
+      # The floor is the measured total (96%, 2026-10-29) rounded down to a multiple of 5.
       - name: Run full suite
         run: |
           uv run --no-sync pytest --tb=short -q --junitxml=test-results/junit.xml \
-            --cov=dsbf --cov-report=xml:test-results/coverage.xml --cov-report=term
+            --cov=dsbf --cov-report=xml:test-results/coverage.xml --cov-report=term \
+            --cov-fail-under=95
 
       - name: Summarise coverage
         if: always() && matrix.python-version == '3.12'
@@ -195,7 +197,9 @@ jobs:
           path: test-results/
 
   # The wheel a user installs, not the checkout: build it, install it into a clean venv
-  # with no extras and no lock, and run `dsbf check` from a temporary directory.
+  # with no extras and no lock, and run `dsbf check` from a temporary directory. The
+  # frontend is built first, so the wheel carries the dashboard, and the smoke starts
+  # `dsbf dashboard` and fetches the page and a run summary.
   package:
     name: Wheel smoke install
     runs-on: ubuntu-latest
@@ -208,6 +212,22 @@ jobs:
         uses: astral-sh/setup-uv@v10.3.2
         with:
           enable-cache: true
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Build the dashboard into the wheel's files
+        shell: bash
+        run: .github/scripts/build_dashboard.sh
 
       - name: Build
         run: uv build
@@ -238,6 +258,22 @@ jobs:
 
       - name: Engine and extras tests
         run: uv run --no-sync pytest tests/test_engine tests/test_extras.py tests/test_interfaces -m "unit or integration" --tb=short -q
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Build the dashboard into the wheel's files
+        shell: bash
+        run: .github/scripts/build_dashboard.sh
 
       - name: Build and smoke install the wheel
         shell: bash
