@@ -2418,6 +2418,65 @@
         "title": "LimitsConfig",
         "type": "object"
       },
+      "LineageEntry": {
+        "additionalProperties": false,
+        "description": "Where one run of a dataset read its data from, and whether that moved.",
+        "properties": {
+          "fingerprint": {
+            "title": "Fingerprint",
+            "type": "string"
+          },
+          "fingerprint_changed": {
+            "description": "The content differs from the previous run's; false for the first run.",
+            "title": "Fingerprint Changed",
+            "type": "boolean"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The source's path, URL or table name.",
+            "title": "Location"
+          },
+          "location_changed": {
+            "description": "The location differs from the previous run's; false for the first run.",
+            "title": "Location Changed",
+            "type": "boolean"
+          },
+          "n_rows": {
+            "description": "Rows in the source, before any sampling.",
+            "minimum": 0.0,
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "started_at",
+          "location",
+          "fingerprint",
+          "n_rows",
+          "location_changed",
+          "fingerprint_changed"
+        ],
+        "title": "LineageEntry",
+        "type": "object"
+      },
       "Matcher": {
         "additionalProperties": false,
         "description": "The ``when`` of a rule: every key given must hold, and at least one is needed.\n\nFinding keys select findings; ``health.status`` selects checks that ended in that\nstatus and may be narrowed with ``check`` only. A bare value means equality;\n``severity``, ``confidence`` and ``metric`` values may carry an operator\n(``\">=error\"``, ``\">0.3\"``), which must be quoted in YAML.",
@@ -3157,6 +3216,42 @@
           "offset"
         ],
         "title": "Page[Job]",
+        "type": "object"
+      },
+      "Page_LineageEntry_": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LineageEntry"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Items in the whole list, across pages.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[LineageEntry]",
         "type": "object"
       },
       "Page_RunSummary_": {
@@ -5077,7 +5172,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.5.0"
+    "version": "1.6.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5263,6 +5358,86 @@
           }
         },
         "summary": "Finding History",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/v2/datasets/{key}/lineage": {
+      "get": {
+        "description": "A dataset's runs, newest first, with where each read its data from and\nwhether the location or the content changed since the run before.",
+        "operationId": "getDatasetLineage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Items per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items to skip.",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "description": "Items to skip.",
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_LineageEntry_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Dataset Lineage",
         "tags": [
           "datasets"
         ]

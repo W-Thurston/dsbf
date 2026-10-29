@@ -19,7 +19,10 @@
         <router-link :to="{ name: 'relationships', params: { runId } }">Relationships</router-link>
         · <router-link :to="{ name: 'quality', params: { runId } }">Quality</router-link> ·
         <router-link :to="{ name: 'time-series', params: { runId } }">Time series</router-link> ·
-        <router-link :to="{ name: 'findings', params: { runId } }">Findings</router-link>
+        <router-link :to="{ name: 'findings', params: { runId } }">Findings</router-link> ·
+        <router-link :to="compareTo" data-role="compare-link">{{
+          previousId ? 'Compare with previous run' : 'Compare with another run'
+        }}</router-link>
       </p>
       <SamplingNotice v-if="header.dataset.sampling" :sampling="header.dataset.sampling" />
     </section>
@@ -48,16 +51,36 @@ const overview = ref<components['schemas']['RunOverview'] | null>(null)
 const error = ref('')
 // Only read once `overview` is loaded, by the template's v-else branch.
 const header = computed(() => overview.value!.header)
+// The run before this one in its dataset, which the compare view pre-fills as base.
+const previousId = ref('')
+const compareTo = computed(() => ({
+  name: 'compare',
+  query: previousId.value ? { base: previousId.value, head: props.runId } : { head: props.runId },
+}))
 
 onMounted(async () => {
   try {
     overview.value = await unwrap(
       api.GET('/v2/runs/{run_id}', { params: { path: { run_id: props.runId } } }),
     )
+    await findPrevious(overview.value.header.dataset.key)
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : String(caught)
   }
 })
+
+async function findPrevious(key: string) {
+  if (!key) return
+  try {
+    const runs = await unwrap(
+      api.GET('/v2/datasets/{key}/runs', { params: { path: { key }, query: { limit: 500 } } }),
+    )
+    const at = runs.items.findIndex((run) => run.run_id === props.runId)
+    previousId.value = at >= 0 ? (runs.items[at + 1]?.run_id ?? '') : ''
+  } catch {
+    // The link then offers a head-only pre-fill; the compare view reports real errors.
+  }
+}
 </script>
 
 <style scoped>

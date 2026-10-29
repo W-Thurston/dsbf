@@ -29,8 +29,10 @@ from dsbf.service.relationships import (
 from dsbf.service.views import (
     ArtifactRows,
     ArtifactValue,
+    LineageEntry,
     RunOverview,
     json_safe,
+    lineage_entries,
     table_rows,
 )
 from dsbf.store import (
@@ -110,6 +112,28 @@ def finding_history(
     if page.total == 0 and not repo.list_runs(dataset_key=key, limit=1).total:
         raise HTTPException(404, f"no stored runs for dataset {key!r}")
     return page
+
+
+@router.get(
+    "/datasets/{key:path}/lineage", operation_id="getDatasetLineage", tags=["datasets"]
+)
+def dataset_lineage(
+    key: str, repo: Repo, limit: Limit = 50, offset: Offset = 0
+) -> Page[LineageEntry]:
+    """A dataset's runs, newest first, with where each read its data from and
+    whether the location or the content changed since the run before."""
+    page = repo.list_runs(dataset_key=key, limit=limit, offset=offset)
+    if page.total == 0:
+        raise HTTPException(404, f"no stored runs for dataset {key!r}")
+    headers = [repo.get_header(run.run_id) for run in page.items]
+    before = repo.list_runs(dataset_key=key, limit=1, offset=offset + limit)
+    previous = repo.get_header(before.items[0].run_id) if before.items else None
+    return Page[LineageEntry](
+        items=lineage_entries(headers, previous=previous),
+        total=page.total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/runs", operation_id="listRuns", tags=["runs"])

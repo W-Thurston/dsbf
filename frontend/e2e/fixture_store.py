@@ -5,9 +5,11 @@ raises and a plugin that fails to import, under a policy that fails. A third dat
 ``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact. A
 fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot. The
 ``clean`` and ``high_missingness`` archetypes follow, for the quality tab, and last
-``kitchen5k`` with its time index, for the time series tab.
+``kitchen5k`` with its time index, for the time series tab. A last dataset,
+``relocated``, is titanic profiled from two paths, for the lineage.
 """
 
+import shutil
 import sys
 import tempfile
 import warnings
@@ -86,6 +88,13 @@ def main(home: Path) -> None:
             dsbf.profile(GENERATORS[archetype](), name=archetype, dataset=archetype)
         )
     with tempfile.TemporaryDirectory() as directory:
+        moved = Path(shutil.copy(TITANIC, Path(directory) / "titanic_moved.csv"))
+        for source in (TITANIC, moved):
+            repository.save(
+                dsbf.profile(
+                    source, name="relocated", dataset="relocated", depth="quick"
+                )
+            )
         kitchen = KITCHEN5K.write_csv(Path(directory))
         repository.save(
             dsbf.profile(

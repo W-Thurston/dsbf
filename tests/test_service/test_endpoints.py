@@ -82,6 +82,31 @@ class TestDatasets:
         assert_problem(client.get("/v2/datasets/planted/history"), 422, "finding_id")
 
 
+class TestLineage:
+    def test_flags_a_changed_location_and_unchanged_content(self, client, runs):
+        items = client.get("/v2/datasets/relocated/lineage").json()["items"]
+        assert [i["run_id"] for i in items] == [
+            str(runs["relocated_to"].run_id),
+            str(runs["relocated_from"].run_id),
+        ]
+        newest, oldest = items
+        assert newest["location_changed"] and not newest["fingerprint_changed"]
+        assert not oldest["location_changed"] and not oldest["fingerprint_changed"]
+        assert newest["location"].endswith("titanic_moved.csv")
+
+    def test_flags_changed_content(self, client):
+        newest, _ = client.get("/v2/datasets/planted/lineage").json()["items"]
+        assert newest["fingerprint_changed"]
+
+    def test_a_page_flags_against_the_run_beyond_it(self, client, runs):
+        page = client.get("/v2/datasets/relocated/lineage", params={"limit": 1}).json()
+        assert page["total"] == 2
+        assert page["items"][0]["location_changed"]
+
+    def test_an_unknown_dataset_is_a_404(self, client):
+        assert_problem(client.get("/v2/datasets/nope/lineage"), 404, "nope")
+
+
 class TestRuns:
     def test_lists_every_run_newest_first(self, client, runs):
         page = client.get("/v2/runs").json()

@@ -12,6 +12,7 @@ export default createRouter({
       component: () => import('../views/DatasetView.vue'),
       props: true,
     },
+    { path: '/compare', name: 'compare', component: () => import('../views/CompareView.vue') },
     {
       path: '/runs/:runId',
       name: 'run',
