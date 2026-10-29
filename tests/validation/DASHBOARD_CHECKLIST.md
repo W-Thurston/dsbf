@@ -102,8 +102,28 @@ in `tests/test_service/test_endpoints.py`, so nothing here is checked by hand:
   says so.
 
 The archetype lines below that mention the relationships tab (block structure, 60
-columns, Cramér's V only, Summary card counts, a single column) need the archetype
-stores that the quality unit builds, and stay open until then.
+columns, Cramér's V only, Summary card counts, a single column) need fixture stores of
+those archetypes (the quality tab's fixture store has only `clean` and
+`high_missingness`), and stay open.
+
+## Quality and ML readiness
+
+Covered by `frontend/e2e/quality.spec.ts`, the Vitest tests in
+`frontend/src/components/quality/` and `TestCoverage` in
+`tests/test_service/test_endpoints.py`, for the `clean` and `high_missingness`
+archetypes, so nothing here is checked by hand:
+
+- `clean` is ready for modelling, its completeness, validity, usability and redundancy
+  dimensions and its four assessed readiness dimensions read 'All clear', and every
+  column is listed as clean;
+- without a target, Leakage (in both summaries) reads 'Not assessed' with the reason,
+  never green, and the gate says it holds only for the dimensions assessed;
+- `high_missingness` is not ready, completeness and missingness read 'Serious', and
+  completeness names device_type, premium_score and notes;
+- a readiness finding lists the actions it carries and links to the findings explorer;
+- coverage by column lists every column with the checks that analysed it.
+
+The quality and ML-readiness lines of the other archetypes stay open below.
 
 ## Tabs not yet built
 
@@ -113,16 +133,10 @@ old name ("Distributions", "Quality") describe what that tab must still show.
 
 ### `clean`
 
-- [ ] Quality: trust banner shows 'Looking Good'
-- [ ] Quality: all five dimension section headers show green dots
-- [ ] Quality: clicking each dimension header opens an 'All clear' body (no findings)
-- [ ] Quality: Clean Columns section contains all 9 columns
 - [ ] Distributions: selecting each column shows no warning badges in section headers
 - [ ] Distributions: Outlier Analysis shows 'Nothing flagged' for all columns
 - [ ] Distributions: Normality section badge shows 'Consistent with normal' for numeric cols
 - [ ] Relationships: Summary card shows 0 collinearity and 0 leakage warnings
-- [ ] ML Readiness: gate banner shows '✓ Ready for Modeling' (green)
-- [ ] ML Readiness: all five dimension summary cards show 'All clear'
 
 ### `tiny`
 
@@ -154,11 +168,8 @@ old name ("Distributions", "Quality") describe what that tab must still show.
 
 ### `high_missingness`
 
-- [ ] Quality: Completeness section auto-opens; findings for device_type, premium_score, notes
 - [ ] Distributions: selecting income or age shows Outlier Analysis and Normality with reliability warning (sparse data)
 - [ ] Distributions: selecting device_type or notes shows Value Counts with high null proportion visible
-- [ ] ML Readiness: Missingness dimension is red, gate is '⚠ Not Ready' (notes 75% null is an error-level blocker)
-- [ ] ML Readiness: expanding a Missingness finding shows imputation action suggestions
 - [ ] No tab shows a blank white panel or uncaught JS error
 
 ### `severe_multicollinearity`

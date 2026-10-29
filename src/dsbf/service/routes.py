@@ -16,6 +16,7 @@ from dsbf.model import (
     Severity,
 )
 from dsbf.model.diff import RunDiff
+from dsbf.service.coverage import RunCoverage, build_coverage
 from dsbf.service.problems import Problem, ValidationProblem
 from dsbf.service.relationships import (
     MAX_POINTS,
@@ -220,6 +221,13 @@ def find_column_profile(
 def get_check_result(run_id: UUID, check_id: str, repo: Repo) -> CheckResult:
     """One check's result; its artifacts are refs, fetched on demand."""
     return repo.get_result(run_id, check_id)
+
+
+@router.get("/runs/{run_id}/coverage", operation_id="getCoverage", tags=["runs"])
+def get_coverage(run_id: UUID, repo: Repo) -> RunCoverage:
+    """The columns each check analysed, and how many checks read each column."""
+    run = repo.get(run_id)
+    return build_coverage(run.results, tuple(c.name for c in run.profile.columns))
 
 
 @router.get(

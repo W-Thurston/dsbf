@@ -256,6 +256,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/runs/{run_id}/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Coverage
+         * @description The columns each check analysed, and how many checks read each column.
+         */
+        get: operations["getCoverage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/runs/{run_id}/findings": {
         parameters: {
             query?: never;
@@ -693,6 +713,20 @@ export interface components {
             values_with_replacement_char: number | null;
         };
         /**
+         * CheckCoverage
+         * @description One check and the columns it analysed.
+         */
+        CheckCoverage: {
+            /** Check Id */
+            check_id: string;
+            /**
+             * Columns
+             * @description The eligible columns the check analysed, after exclusions.
+             */
+            columns: string[];
+            status: components["schemas"]["CheckStatus"];
+        };
+        /**
          * CheckResult
          * @description What running one check produced.
          */
@@ -792,6 +826,21 @@ export interface components {
              * @description Rows profiled, after any sampling.
              */
             rows: number;
+        };
+        /**
+         * ColumnCoverage
+         * @description One column and how many completed checks examined it.
+         */
+        ColumnCoverage: {
+            /**
+             * Checks Completed
+             * @description Checks that ended `ok`, whatever columns they read.
+             */
+            checks_completed: number;
+            /** Column */
+            column: string;
+            /** Examined By */
+            examined_by: number;
         };
         /**
          * ColumnSummary
@@ -2092,6 +2141,21 @@ export interface components {
             rule: components["schemas"]["Rule"];
         };
         /**
+         * RunCoverage
+         * @description Coverage per check and per column. A check with no column to read, such as
+         *     one that works on the whole table, examines none and is not counted against a
+         *     column.
+         */
+        RunCoverage: {
+            /** Checks */
+            checks: components["schemas"]["CheckCoverage"][];
+            /**
+             * Columns
+             * @description Every profiled column, in the dataset's order.
+             */
+            columns: components["schemas"]["ColumnCoverage"][];
+        };
+        /**
          * RunDiff
          * @description Findings and check statuses of a head run against a base run.
          */
@@ -3235,6 +3299,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ColumnSummary"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
+    getCoverage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunCoverage"];
                 };
             };
             /** @description Not Found */

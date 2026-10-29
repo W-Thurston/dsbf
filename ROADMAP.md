@@ -215,7 +215,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Titanic's `Age` histogram matches the profile's edges and counts. A column that failed normality shows its Q-Q plot with the reference line. A run without a snapshot says so where the sample would be.
 
 ### U6-13 · Relationships
-- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-12
+- **Status:** done (2026-10-29, #165, `8c169d7`) · **Size:** M · **Depends on:** U6-12
 - **Outcome:** `/runs/:runId/relationships` draws one heatmap panel per statistic family (correlation, η, V, ω²) from `GET /v2/runs/{run_id}/relationships`, which builds cells from the stored pairs with their statistic; an untested pair has no cell. A table groups pairs by statistic, then by strength. Cards show collinearity and target leakage, and the contingency counts and group difference of the chosen pair. `GET /v2/runs/{run_id}/snapshot/pair` serves up to 2,000 evenly thinned points for the pair plot, with the snapshot's sampling. **Deviations:** no repository method was added (the endpoint reads the snapshot and selects two columns); heatmap squares are not clickable, since `DsbfChart` forwards no chart events, so a pair is chosen from the table or two selects (a later frontend unit if wanted); the archetype lines of the checklist stay open until the quality unit builds the archetype stores.
 - **Carry in from U4-07:** `associations` returns the tested pairs and no matrix, so the view builds one on demand.
 - **Goal:** The association matrix, collinearity, target leakage, contingency and group differences, and a pair plot of two columns from the snapshot.
@@ -225,7 +225,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Titanic's matrix cells equal the `associations` output, with untested pairs blank. Sorting groups by statistic. The pair plot draws from the snapshot and says how it was sampled.
 
 ### U6-14 · Quality and ML readiness
-- **Status:** todo · **Size:** M · **Depends on:** U6-13
+- **Status:** done (2026-10-29) · **Size:** M
+- **Outcome:** `/runs/:runId/quality` shows the ML-readiness gate, five readiness and five quality dimension cards (level, coverage, input states, findings with `ml` actions), clean columns and per-column coverage, from `GET /v2/runs/{run_id}/coverage` and the two checks' outputs. A dimension without a level reads "Not assessed" with its reason, never green; without a target Leakage is unassessed on every archetype, so `clean` is `ready` with a caveat. The `clean` and `high_missingness` checklist lines are Playwright tests. **Deviations:** the relationships archetype lines and the other archetypes' quality lines stay open (no fixture stores for them); the coverage endpoint loads the whole run. · **Depends on:** U6-13
 - **Note from U6-13:** the checklist's archetype lines for the relationships tab (block structure on `severe_multicollinearity`, 60 columns on `wide`, Cramér's V only, a single column, the Summary card counts) need the archetype fixture stores this unit builds; convert them to Playwright tests then.
 - **Note from U6-10:** the overview shows counts by dimension only; the quality dimensions and the ML-readiness gate are this unit's.
 - **Carry in from U4-15:** the tab draws the outputs of `quality_dimensions` and `ml_readiness`: levels, gate, per-input states and coverage.
@@ -237,6 +238,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-15 · Time series
 - **Status:** todo · **Size:** M · **Depends on:** U6-14 · **Resolves:** N-A4
+- **Note from U6-14:** the checklist's remaining archetype lines (relationships on `severe_multicollinearity`, `wide`, `all_categorical` and `single_column`; quality and ML readiness for the other archetypes) need fixture stores for those archetypes in `frontend/e2e/fixture_store.py`; add them here if this unit needs more archetypes, else in the last dashboard unit.
 - **Carry in from U4-11:** the ACF and PACF values and bands are in the `autocorrelation` output; the STL series are artifacts from U6-02.
 - **Goal:** Stationarity results, ACF and PACF with their bands, the four STL series, and an empty state that says how to set the time index (the CLI flag or the setting; U6-17 adds a rerun from the dashboard).
 - **Assumptions to confirm:** the outputs and artifacts hold everything the views draw; kitchen5k with its time index builds a fixture store.

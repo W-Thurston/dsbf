@@ -393,6 +393,33 @@ class TestRelationships:
         assert_problem(client.get(f"/v2/runs/{uuid4()}/relationships"), 404, "run")
 
 
+class TestCoverage:
+    def test_checks_carry_their_examined_columns(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/coverage").json()
+        assert [c["check_id"] for c in body["checks"]] == list(run.results)
+        for check in body["checks"]:
+            assert check["columns"] == list(run.results[check["check_id"]].columns)
+
+    def test_columns_follow_the_datasets_order_and_count_checks(self, client, runs):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/coverage").json()
+        assert [c["column"] for c in body["columns"]] == [
+            c.name for c in run.profile.columns
+        ]
+        completed = sum(1 for r in run.results.values() if r.status.value == "ok")
+        age = next(c for c in body["columns"] if c["column"] == "age")
+        assert age["checks_completed"] == completed
+        assert age["examined_by"] == sum(
+            1
+            for r in run.results.values()
+            if r.status.value == "ok" and "age" in r.columns
+        )
+
+    def test_a_missing_run_is_a_404(self, client):
+        assert_problem(client.get(f"/v2/runs/{uuid4()}/coverage"), 404, "run")
+
+
 class TestSnapshotPair:
     def test_returns_both_columns_for_rows_with_both(self, client, runs):
         run = runs["titanic"]
