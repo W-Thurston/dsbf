@@ -636,6 +636,34 @@
         "title": "CategoricalProfile",
         "type": "object"
       },
+      "CheckCoverage": {
+        "additionalProperties": false,
+        "description": "One check and the columns it analysed.",
+        "properties": {
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "columns": {
+            "description": "The eligible columns the check analysed, after exclusions.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "columns"
+        ],
+        "title": "CheckCoverage",
+        "type": "object"
+      },
       "CheckResult": {
         "additionalProperties": false,
         "description": "What running one check produced.",
@@ -821,6 +849,34 @@
           "distinct_exact"
         ],
         "title": "ColumnCounts",
+        "type": "object"
+      },
+      "ColumnCoverage": {
+        "additionalProperties": false,
+        "description": "One column and how many completed checks examined it.",
+        "properties": {
+          "checks_completed": {
+            "description": "Checks that ended `ok`, whatever columns they read.",
+            "minimum": 0.0,
+            "title": "Checks Completed",
+            "type": "integer"
+          },
+          "column": {
+            "title": "Column",
+            "type": "string"
+          },
+          "examined_by": {
+            "minimum": 0.0,
+            "title": "Examined By",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "column",
+          "examined_by",
+          "checks_completed"
+        ],
+        "title": "ColumnCoverage",
         "type": "object"
       },
       "ColumnSummary": {
@@ -3806,6 +3862,33 @@
         "title": "RuleOutcome",
         "type": "object"
       },
+      "RunCoverage": {
+        "additionalProperties": false,
+        "description": "Coverage per check and per column. A check with no column to read, such as\none that works on the whole table, examines none and is not counted against a\ncolumn.",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckCoverage"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "columns": {
+            "description": "Every profiled column, in the dataset's order.",
+            "items": {
+              "$ref": "#/components/schemas/ColumnCoverage"
+            },
+            "title": "Columns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "checks",
+          "columns"
+        ],
+        "title": "RunCoverage",
+        "type": "object"
+      },
       "RunDiff": {
         "additionalProperties": false,
         "description": "Findings and check statuses of a head run against a base run.",
@@ -4994,7 +5077,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.4.0"
+    "version": "1.5.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5970,6 +6053,60 @@
           }
         },
         "summary": "List Columns",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/coverage": {
+      "get": {
+        "description": "The columns each check analysed, and how many checks read each column.",
+        "operationId": "getCoverage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunCoverage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Coverage",
         "tags": [
           "runs"
         ]

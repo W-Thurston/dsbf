@@ -3,7 +3,8 @@
 Two runs of titanic: a full scan, and a 300-row sample that also runs a check that
 raises and a plugin that fails to import, under a policy that fails. A third dataset,
 ``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact. A
-fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot.
+fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot. The
+``clean`` and ``high_missingness`` archetypes follow, for the quality tab.
 """
 
 import sys
@@ -16,6 +17,10 @@ import dsbf
 from dsbf.store import open_repository
 
 HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE.parents[1]))  # the archetype generators live in tests/
+
+from tests.generators.dsbf_test_dataset_generator import GENERATORS  # noqa: E402
+
 TITANIC = HERE.parents[1] / "tests" / "golden" / "data" / "titanic.csv"
 POLICY = {
     "version": 1,
@@ -73,6 +78,10 @@ def main(home: Path) -> None:
         dsbf.profile(TITANIC, name="bare", dataset="bare", depth="quick"),
         snapshot_rows=0,
     )
+    for archetype in ("clean", "high_missingness"):
+        repository.save(
+            dsbf.profile(GENERATORS[archetype](), name=archetype, dataset=archetype)
+        )
 
 
 if __name__ == "__main__":

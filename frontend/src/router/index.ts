@@ -37,6 +37,12 @@ export default createRouter({
       props: true,
     },
     {
+      path: '/runs/:runId/quality',
+      name: 'quality',
+      component: () => import('../views/QualityView.vue'),
+      props: true,
+    },
+    {
       path: '/runs/:runId/columns/:column',
       name: 'column',
       component: () => import('../views/ColumnView.vue'),
