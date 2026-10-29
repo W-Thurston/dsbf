@@ -125,9 +125,22 @@ archetypes, so nothing here is checked by hand:
 
 The quality and ML-readiness lines of the other archetypes stay open below.
 
+## Time series
+
+Browser tests (`frontend/e2e/time-series.spec.ts`) cover:
+
+- kitchen5k with `time_index=normal_date` shows the stationarity table, the ACF and PACF
+  with their bands, and the four STL series of the selected column;
+- selecting another column fetches that column's rows of the decomposition artifact;
+- a run with no time index (titanic) shows the empty state with the `--time-index` flag and
+  the `time_index` setting;
+- the run overview links to the tab.
+
+Archetype lines for the tab stay open: a series with a gap-filled index, a truncated series.
+
 ## Tabs not yet built
 
-Each belongs to the unit in `ROADMAP.md` that builds it (relationships, quality and ML readiness, time series). The wording is the old dashboard's
+Each belongs to the unit in `ROADMAP.md` that builds it (relationships, quality and ML readiness). The wording is the old dashboard's
 and is rewritten when its unit converts it into tests. Lines that mention a tab by its
 old name ("Distributions", "Quality") describe what that tab must still show.
 

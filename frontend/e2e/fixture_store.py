@@ -4,10 +4,12 @@ Two runs of titanic: a full scan, and a 300-row sample that also runs a check th
 raises and a plugin that fails to import, under a policy that fails. A third dataset,
 ``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact. A
 fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot. The
-``clean`` and ``high_missingness`` archetypes follow, for the quality tab.
+``clean`` and ``high_missingness`` archetypes follow, for the quality tab, and last
+``kitchen5k`` with its time index, for the time series tab.
 """
 
 import sys
+import tempfile
 import warnings
 from pathlib import Path
 
@@ -20,6 +22,7 @@ HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parents[1]))  # the archetype generators live in tests/
 
 from tests.generators.dsbf_test_dataset_generator import GENERATORS  # noqa: E402
+from tests.golden.datasets import KITCHEN5K  # noqa: E402
 
 TITANIC = HERE.parents[1] / "tests" / "golden" / "data" / "titanic.csv"
 POLICY = {
@@ -81,6 +84,16 @@ def main(home: Path) -> None:
     for archetype in ("clean", "high_missingness"):
         repository.save(
             dsbf.profile(GENERATORS[archetype](), name=archetype, dataset=archetype)
+        )
+    with tempfile.TemporaryDirectory() as directory:
+        kitchen = KITCHEN5K.write_csv(Path(directory))
+        repository.save(
+            dsbf.profile(
+                kitchen,
+                name="kitchen5k",
+                dataset="kitchen5k",
+                time_index=KITCHEN5K.time_series_column,
+            )
         )
 
 

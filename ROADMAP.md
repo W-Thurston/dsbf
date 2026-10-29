@@ -225,7 +225,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Titanic's matrix cells equal the `associations` output, with untested pairs blank. Sorting groups by statistic. The pair plot draws from the snapshot and says how it was sampled.
 
 ### U6-14 · Quality and ML readiness
-- **Status:** done (2026-10-29) · **Size:** M
+- **Status:** done (2026-10-29, #166, `fa0c5cd`) · **Size:** M
 - **Outcome:** `/runs/:runId/quality` shows the ML-readiness gate, five readiness and five quality dimension cards (level, coverage, input states, findings with `ml` actions), clean columns and per-column coverage, from `GET /v2/runs/{run_id}/coverage` and the two checks' outputs. A dimension without a level reads "Not assessed" with its reason, never green; without a target Leakage is unassessed on every archetype, so `clean` is `ready` with a caveat. The `clean` and `high_missingness` checklist lines are Playwright tests. **Deviations:** the relationships archetype lines and the other archetypes' quality lines stay open (no fixture stores for them); the coverage endpoint loads the whole run. · **Depends on:** U6-13
 - **Note from U6-13:** the checklist's archetype lines for the relationships tab (block structure on `severe_multicollinearity`, 60 columns on `wide`, Cramér's V only, a single column, the Summary card counts) need the archetype fixture stores this unit builds; convert them to Playwright tests then.
 - **Note from U6-10:** the overview shows counts by dimension only; the quality dimensions and the ML-readiness gate are this unit's.
@@ -237,7 +237,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The checklist's quality and ML-readiness items pass as Playwright tests. A dimension that was not assessed shows as such, not green.
 
 ### U6-15 · Time series
-- **Status:** todo · **Size:** M · **Depends on:** U6-14 · **Resolves:** N-A4
+- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-14 · **Resolves:** N-A4
+- **Outcome:** `/runs/:runId/time-series` shows a per-column stationarity table (ADF and KPSS, with and without a trend), ACF and PACF with their bands, and the four STL series from the decomposition artifact, fetched per column by row range; one column selector serves all three. A run with no time index shows an empty state naming `--time-index` and the `time_index` setting. Playwright tests cover kitchen5k with its time index and titanic without. **Deviations:** the STL axis counts periods (the artifact holds no timestamps); the archetype fixture stores for the remaining checklist lines are not built, so the last dashboard unit (U6-19) takes them.
 - **Note from U6-14:** the checklist's remaining archetype lines (relationships on `severe_multicollinearity`, `wide`, `all_categorical` and `single_column`; quality and ML readiness for the other archetypes) need fixture stores for those archetypes in `frontend/e2e/fixture_store.py`; add them here if this unit needs more archetypes, else in the last dashboard unit.
 - **Carry in from U4-11:** the ACF and PACF values and bands are in the `autocorrelation` output; the STL series are artifacts from U6-02.
 - **Goal:** Stationarity results, ACF and PACF with their bands, the four STL series, and an empty state that says how to set the time index (the CLI flag or the setting; U6-17 adds a rerun from the dashboard).
@@ -273,6 +274,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-19 · Bundle the dashboard and release 1.0.0
 - **Status:** todo · **Size:** M · **Depends on:** U6-18 · **Resolves:** REVIEW_FINDINGS part 2 D (`dsbf dashboard`) and E (the frontend in the wheel), F-29
+- **Note from U6-15:** the checklist's remaining archetype lines (relationships on `severe_multicollinearity`, `wide`, `all_categorical` and `single_column`; quality and ML readiness for the other archetypes) still need fixture stores in `frontend/e2e/fixture_store.py`; build them here or drop the lines.
 - **Note from U6-12:** the column page's chunk holds ECharts (about 700 KB, 236 KB gzipped); split ECharts into its own chunk and register only the chart types in use before the release gate. `DsbfChart.vue` also hard-codes dark colours for its card, title and tab strip, so the light theme draws them wrongly (the U0-16 carry-in is still open); move them to the theme tokens.
 - **Note from U6-10:** `test_the_budget_kills_a_worker_too` (`tests/test_engine/test_process_workers.py`) failed once on the Windows CI job of #160 (`FileNotFoundError` reading the pid file) and passed on a rerun; the PR touched no engine code. Probable cause, not reproduced: `run_budget_seconds=0.8` lets a slow runner kill the worker before it writes its pid file; the interrupt test beside it waits for the file with a deadline. Fix with a deadline wait or a larger budget on Windows before the release gate relies on the Windows job; treat a second failure as a real race.
 - **Note from U6-10:** the dashboard is served uncompressed; add gzip to the app if a tab pushes the 200 KB transfer budget. `dsbf dashboard` already serves `index.html` for page routes (`DashboardFiles`); keep that when bundling.
