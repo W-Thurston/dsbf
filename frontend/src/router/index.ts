@@ -43,6 +43,12 @@ export default createRouter({
       props: true,
     },
     {
+      path: '/runs/:runId/time-series',
+      name: 'time-series',
+      component: () => import('../views/TimeSeriesView.vue'),
+      props: true,
+    },
+    {
       path: '/runs/:runId/columns/:column',
       name: 'column',
       component: () => import('../views/ColumnView.vue'),
