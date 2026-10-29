@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 from uuid import UUID
 
 import pyarrow as pa
@@ -370,6 +370,16 @@ class RunRepository(Protocol):
 
     def interrupt_unfinished(self) -> int:
         """End every queued or running job as ``interrupted``; how many there were."""
+
+    def get_settings_overlay(self, dataset_key: str) -> dict[str, Any] | None:
+        """The settings saved for a dataset, as the fields the user set; ``None``
+        when nothing is saved."""
+
+    def set_settings_overlay(self, dataset_key: str, overlay: dict[str, Any]) -> None:
+        """Save a dataset's settings, replacing any earlier ones."""
+
+    def delete_settings_overlay(self, dataset_key: str) -> bool:
+        """Remove a dataset's saved settings; whether there were any."""
 
 
 __all__ = [

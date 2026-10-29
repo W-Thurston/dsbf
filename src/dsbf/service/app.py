@@ -18,9 +18,10 @@ from dsbf.service.jobs import JobRunner
 from dsbf.service.problems import install_problem_handlers
 from dsbf.service.routes import router
 from dsbf.service.security import LOCAL_HOSTS, JsonWritesOnly, LocalHostOnly
+from dsbf.service.settings_routes import settings_router
 from dsbf.store import RunRepository
 
-API_VERSION = "1.6.0"
+API_VERSION = "1.7.0"
 """The version of the OpenAPI document; the breaking-change gate reads it."""
 
 
@@ -76,6 +77,7 @@ def create_app(
     install_problem_handlers(app)
     app.include_router(router)
     app.include_router(job_router)
+    app.include_router(settings_router)
     if cors_origins:
         app.add_middleware(
             CORSMiddleware,
