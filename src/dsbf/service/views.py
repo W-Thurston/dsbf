@@ -2,12 +2,14 @@
 """Responses that are views of the contracts rather than contracts themselves."""
 
 import math
+from collections.abc import Sequence
 from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any
+from uuid import UUID
 
 import pyarrow as pa
-from pydantic import Field
+from pydantic import AwareDatetime, Field
 
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
@@ -24,6 +26,46 @@ class RunOverview(Contract):
     n_findings: int = Field(ge=0)
     artifacts: tuple[StoredArtifact, ...] = Field(
         description="The files stored for the run, the data snapshot included."
+    )
+
+
+class LineageEntry(Contract):
+    """Where one run of a dataset read its data from, and whether that moved."""
+
+    run_id: UUID
+    started_at: AwareDatetime
+    location: str | None = Field(description="The source's path, URL or table name.")
+    fingerprint: str
+    n_rows: int = Field(ge=0, description="Rows in the source, before any sampling.")
+    location_changed: bool = Field(
+        description="The location differs from the previous run's; false for the "
+        "first run."
+    )
+    fingerprint_changed: bool = Field(
+        description="The content differs from the previous run's; false for the "
+        "first run."
+    )
+
+
+def lineage_entries(
+    headers: Sequence[RunHeader], *, previous: RunHeader | None
+) -> tuple[LineageEntry, ...]:
+    """Lineage entries for ``headers`` (newest first), each flagged against the run
+    before it; ``previous`` is the run before the oldest header, if any."""
+    older = [*headers[1:], previous]
+    return tuple(
+        LineageEntry(
+            run_id=header.run_id,
+            started_at=header.started_at,
+            location=header.dataset.source.location,
+            fingerprint=header.dataset.fingerprint,
+            n_rows=header.dataset.n_rows,
+            location_changed=before is not None
+            and before.dataset.source.location != header.dataset.source.location,
+            fingerprint_changed=before is not None
+            and before.dataset.fingerprint != header.dataset.fingerprint,
+        )
+        for header, before in zip(headers, older, strict=True)
     )
 
 

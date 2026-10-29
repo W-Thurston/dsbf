@@ -237,7 +237,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The checklist's quality and ML-readiness items pass as Playwright tests. A dimension that was not assessed shows as such, not green.
 
 ### U6-15 · Time series
-- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-14 · **Resolves:** N-A4
+- **Status:** done (2026-10-29, #167, `f0b441a`) · **Size:** M · **Depends on:** U6-14 · **Resolves:** N-A4
 - **Outcome:** `/runs/:runId/time-series` shows a per-column stationarity table (ADF and KPSS, with and without a trend), ACF and PACF with their bands, and the four STL series from the decomposition artifact, fetched per column by row range; one column selector serves all three. A run with no time index shows an empty state naming `--time-index` and the `time_index` setting. Playwright tests cover kitchen5k with its time index and titanic without. **Deviations:** the STL axis counts periods (the artifact holds no timestamps); the archetype fixture stores for the remaining checklist lines are not built, so the last dashboard unit (U6-19) takes them.
 - **Note from U6-14:** the checklist's remaining archetype lines (relationships on `severe_multicollinearity`, `wide`, `all_categorical` and `single_column`; quality and ML readiness for the other archetypes) need fixture stores for those archetypes in `frontend/e2e/fixture_store.py`; add them here if this unit needs more archetypes, else in the last dashboard unit.
 - **Carry in from U4-11:** the ACF and PACF values and bands are in the `autocorrelation` output; the STL series are artifacts from U6-02.
@@ -247,7 +247,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Kitchen5k with its time index shows the four STL series and the ACF bands. A run with no time index shows the empty state.
 
 ### U6-16 · Run compare and history
-- **Status:** todo · **Size:** M · **Depends on:** U6-15 · **Resolves:** REVIEW_FINDINGS part 2 D (run comparison UI)
+- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-15 · **Resolves:** REVIEW_FINDINGS part 2 D (run comparison UI)
+- **Outcome:** `/compare?base=&head=` picks any two stored runs (the run page pre-fills the previous run of the same dataset as base) and shows new, resolved and changed findings and check status changes, with a notice when the runs are of different datasets. The dataset page gained a lineage table, fed by the new `GET /v2/datasets/{key}/lineage` (location and content changes against the previous run), and a finding-history panel. **Deviations:** the lineage endpoint was not in U6-07, whose endpoints carried no location or fingerprint; the count-scaled-metric note below is not addressed (carried to U6-18).
 - **Note from U6-06:** `compare` reports most count-scaled statistics (chi², `n_missing`) as changed when two runs have different row counts (107 of 117 titanic findings against a copy with 100 rows dropped); a per-metric tolerance or a list of metrics that scale with n would cut the noise.
 - **Goal:** A compare view of any two runs, chosen explicitly and pre-filled with the previous run of the same dataset, showing new, resolved and changed findings and status changes from the compare endpoint. A dataset page with its run lineage (changes of location and fingerprint) and the history of one finding across runs.
 - **Decided in U6-00:** comparison is explicit (asked the user); drift from stored profiles is Phase 7.
@@ -266,6 +267,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-18 · Stable 1.0 schemas
 - **Status:** todo · **Size:** S · **Depends on:** U6-17
+- **Note from U6-16:** comparing titanic's full run with its 300-row sample reports 101 changed findings, mostly count-scaled statistics (the U6-06 note below). A per-metric tolerance, or a list of metrics that scale with n, changes what `RunDiff` reports, so decide it before `RunDiff` is frozen at 1.0.0.
 - **Note from U6-06:** `RunDiff` has a schema file (`schema/diff.schema.json`) but no breaking-change gate yet.
 - **Goal:** Review every published contract (the run, the check schemas, the Parquet tables, the policy, `RunDiff`, OpenAPI) for what 1.x has to keep. Raise each to 1.0.0, and document the compatibility rules (additive within 1.x, a deprecation lasting one minor release; REFACTOR_PLAN §4.3), which the breaking-change gates enforce.
 - **Assumptions to confirm:** each schema has a version and a gate (the run, tables, check and policy schemas from Phase 5, OpenAPI from U6-07, `RunDiff` from U6-06); nothing in the contracts is still marked as development-era.

@@ -1,3 +1,4 @@
+import shutil
 import warnings
 from pathlib import Path
 
@@ -60,6 +61,10 @@ def store(tmp_path_factory):
     )
     runs["before"] = dsbf.profile(base, dataset="planted", depth="quick")
     runs["after"] = dsbf.profile(head, dataset="planted", depth="quick")
+    # The same data profiled from two locations.
+    moved = shutil.copy(TITANIC, root / "titanic_moved.csv")
+    runs["relocated_from"] = dsbf.profile(TITANIC, dataset="relocated", depth="quick")
+    runs["relocated_to"] = dsbf.profile(moved, dataset="relocated", depth="quick")
     # A check that raised keeps its traceback as a JSON artifact.
     runs["failed"] = run_plan([broken(TOYS[0]), *TOYS[1:]])
     for run in runs.values():

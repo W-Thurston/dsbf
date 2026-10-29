@@ -49,6 +49,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/datasets/{key}/lineage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dataset Lineage
+         * @description A dataset's runs, newest first, with where each read its data from and
+         *     whether the location or the content changed since the run before.
+         */
+        get: operations["getDatasetLineage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/datasets/{key}/runs": {
         parameters: {
             query?: never;
@@ -1515,6 +1536,44 @@ export interface components {
             run_budget_seconds?: number | null;
         };
         /**
+         * LineageEntry
+         * @description Where one run of a dataset read its data from, and whether that moved.
+         */
+        LineageEntry: {
+            /** Fingerprint */
+            fingerprint: string;
+            /**
+             * Fingerprint Changed
+             * @description The content differs from the previous run's; false for the first run.
+             */
+            fingerprint_changed: boolean;
+            /**
+             * Location
+             * @description The source's path, URL or table name.
+             */
+            location: string | null;
+            /**
+             * Location Changed
+             * @description The location differs from the previous run's; false for the first run.
+             */
+            location_changed: boolean;
+            /**
+             * N Rows
+             * @description Rows in the source, before any sampling.
+             */
+            n_rows: number;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+        };
+        /**
          * Matcher
          * @description The ``when`` of a rule: every key given must hold, and at least one is needed.
          *
@@ -1772,6 +1831,20 @@ export interface components {
         Page_Job_: {
             /** Items */
             items: components["schemas"]["Job"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /**
+             * Total
+             * @description Items in the whole list, across pages.
+             */
+            total: number;
+        };
+        /** Page[LineageEntry] */
+        Page_LineageEntry_: {
+            /** Items */
+            items: components["schemas"]["LineageEntry"][];
             /** Limit */
             limit: number;
             /** Offset */
@@ -2818,6 +2891,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_FindingOccurrence_"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
+    getDatasetLineage: {
+        parameters: {
+            query?: {
+                /** @description Items per page. */
+                limit?: number;
+                /** @description Items to skip. */
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_LineageEntry_"];
                 };
             };
             /** @description Not Found */

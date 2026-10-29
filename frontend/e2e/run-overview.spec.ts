@@ -33,7 +33,9 @@ test('the home page lists the dataset and links to its runs', async ({ page }) =
     .getByRole('link', { name: 'titanic' })
     .click()
   await expect(page.getByRole('heading', { name: 'Runs of titanic' })).toBeVisible()
-  await expect(page.getByRole('row')).toHaveCount(3) // header and two runs
+  await expect(page.getByRole('region', { name: 'Runs of titanic' }).getByRole('row')).toHaveCount(
+    3,
+  ) // header and two runs
 })
 
 test('opening titanic transfers under 200 KB', async ({ page, request }) => {
