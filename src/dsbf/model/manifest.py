@@ -83,6 +83,20 @@ class PlanManifest(Contract):
     dsbf_version: str = Field(min_length=1)
     depth: str | None = Field(default=None, description="The depth preset, if any.")
     checks: tuple[PlannedCheck, ...] = ()
+    settings: dict[str, Any] = Field(
+        default={},
+        description="The profile settings the user gave, as `ProfileConfig` fields; "
+        "fields left at their defaults are absent.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _make_settings_json_safe(cls, data: Any) -> Any:
+        """Make `settings` JSON-safe; NaN or infinity there is an error."""
+        if isinstance(data, dict) and isinstance(data.get("settings"), dict):
+            settings, _ = json_safe(data["settings"], null_non_finite=False)
+            data = {**data, "settings": settings}
+        return data
 
     @model_validator(mode="after")
     def _check_references(self) -> Self:

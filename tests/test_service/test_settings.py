@@ -102,6 +102,31 @@ class TestRerun:
         listed = client.get(f"/v2/datasets/{KEY}/runs").json()
         assert listed["total"] == 2
 
+    def test_a_run_records_its_settings_and_a_rerun_reuses_them(self, client, source):
+        before = first_run(client, source)
+        plan = client.get(f"/v2/runs/{before['run_id']}").json()["header"]["plan"]
+        assert plan["settings"]["dataset"] == KEY
+        recorded = {k: v for k, v in plan["settings"].items() if k != "dataset"}
+        assert recorded == {"depth": "quick"}
+
+        job = client.post(f"/v2/datasets/{KEY}/rerun").json()
+        after = wait(client, job["job_id"])
+
+        assert after["state"] == "succeeded", after["error"]
+        again = client.get(f"/v2/runs/{after['run_id']}").json()["header"]["plan"]
+        assert again["settings"] == plan["settings"]
+
+    def test_the_overlay_wins_over_the_settings_of_the_run(self, client, source):
+        first_run(client, source)
+        client.put(f"/v2/datasets/{KEY}/settings", json={"depth": "deep"})
+
+        job = client.post(f"/v2/datasets/{KEY}/rerun").json()
+        after = wait(client, job["job_id"])
+
+        plan = client.get(f"/v2/runs/{after['run_id']}").json()["header"]["plan"]
+        assert plan["settings"]["depth"] == "deep"
+        assert plan["depth"] == "deep"
+
     def test_a_source_that_no_longer_exists_fails_the_job_with_the_reason(
         self, client, source, tmp_path
     ):

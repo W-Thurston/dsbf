@@ -169,6 +169,7 @@ uv run dsbf check data.csv --policy policy.yaml --out results --sink json --sink
 - [Write a policy](docs/guides/policy.md)
 - [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) and [in your warehouse](docs/CONSUMING_PARQUET.md)
 - [Write a check](docs/guides/write-a-check.md)
+- [What stays compatible in 1.x](docs/guides/compatibility.md)
 
 The code in the guides is run by the test suite.
 

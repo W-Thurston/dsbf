@@ -614,6 +614,9 @@ def check_schema(
         tables = schema_export.compare_tables_with_base(
             base, schema_file.parent / schema_export.TABLES_SCHEMA_FILE
         )
+        diff = schema_export.compare_diff_with_base(
+            base, schema_file.parent / schema_export.DIFF_SCHEMA_FILE
+        )
         policy = schema_export.compare_policy_with_base(
             base, schema_file.parent / schema_export.POLICY_SCHEMA_FILE
         )
@@ -652,6 +655,18 @@ def check_schema(
         if tables.problems:
             typer.echo(
                 "bump TABLES_SCHEMA_VERSION in dsbf/sinks/tables.py, then run "
+                "`dsbf schema export`",
+                err=True,
+            )
+    if diff is not None:
+        for change in diff.changes:
+            typer.echo(f"diff: {change}")
+        for problem in diff.problems:
+            failed = True
+            typer.echo(f"error: diff: {problem}", err=True)
+        if diff.problems:
+            typer.echo(
+                "bump DIFF_SCHEMA_VERSION in dsbf/model/diff.py, then run "
                 "`dsbf schema export`",
                 err=True,
             )

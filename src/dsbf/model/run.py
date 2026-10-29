@@ -25,9 +25,9 @@ from dsbf.model.vocabulary import Severity
 if TYPE_CHECKING:
     import polars as pl
 
-# Semver. Additive changes are minor and breaking changes are major. The 1.x
-# compatibility guarantee begins with the first release.
-SCHEMA_VERSION = "0.13.0"
+# Semver. Additive changes are minor and breaking changes are major; within 1.x a
+# breaking change needs 2.0.0 (docs/guides/compatibility.md).
+SCHEMA_VERSION = "1.0.0"
 
 _SEMVER = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 _SEVERITY_FIRST = {severity: -rank for rank, severity in enumerate(Severity)}

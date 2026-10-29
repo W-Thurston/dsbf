@@ -81,8 +81,9 @@ export interface paths {
         put?: never;
         /**
          * Rerun
-         * @description Queue a profiling run of the dataset's latest source with its saved
-         *     settings. The source is read again, so a file that has gone fails the job.
+         * @description Queue a profiling run of the dataset's latest source. It runs with the
+         *     settings of that run, then the dataset's saved settings on top. The source is read
+         *     again, so a file that has gone fails the job.
          */
         post: operations["rerunDataset"];
         delete?: never;
@@ -1995,6 +1996,14 @@ export interface components {
             depth: string | null;
             /** Dsbf Version */
             dsbf_version: string;
+            /**
+             * Settings
+             * @description The profile settings the user gave, as `ProfileConfig` fields; fields left at their defaults are absent.
+             * @default {}
+             */
+            settings: {
+                [key: string]: unknown;
+            };
         };
         /**
          * PlannedCheck
