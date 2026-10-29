@@ -205,7 +205,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** On titanic, the explorer's counts under each filter equal `run.findings.filter` (a test compares them). A pair-subject finding appears under both of its columns. The fuzzy pair list pages without loading whole.
 
 ### U6-12 · Column view
-- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-11 · **Resolves:** F-12, N-A3
+- **Status:** done (2026-10-28, #164, `95dc699`) · **Size:** M · **Depends on:** U6-11 · **Resolves:** F-12, N-A3
 - **Outcome:** `/runs/:runId/columns` lists the columns with name and type filters in the URL, and `/runs/:runId/columns/:column` shows the profile, the histogram on a value axis from the stored edges, top values, the Q-Q plot from the `normality` output, the column's findings and a paged snapshot sample. **Deviations:** the unit added `GET /v2/runs/{run_id}/columns` (`listColumns`), because no endpoint listed a run's columns; a column that passed normality has no stored Q-Q data, so the page says why instead of drawing one; the fixture store gained a `bare` run without a snapshot; the bundle budget's total rose from 140 KB to 880 KB for the lazy ECharts chunk.
 - **Note from U6-11:** the explorer's `check` and `code` filters are free text; if the column view adds an endpoint of distinct values, reuse it to make them selects.
 - **Goal:** A column browser and a page per column: the profile's statistics, its equal-width histogram on a value axis with the real edges, top values, the Q-Q plot from the `normality` output when there is one, the column's findings, and a sample of its values from the snapshot.
@@ -215,7 +215,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Titanic's `Age` histogram matches the profile's edges and counts. A column that failed normality shows its Q-Q plot with the reference line. A run without a snapshot says so where the sample would be.
 
 ### U6-13 · Relationships
-- **Status:** todo · **Size:** M · **Depends on:** U6-12
+- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-12
+- **Outcome:** `/runs/:runId/relationships` draws one heatmap panel per statistic family (correlation, η, V, ω²) from `GET /v2/runs/{run_id}/relationships`, which builds cells from the stored pairs with their statistic; an untested pair has no cell. A table groups pairs by statistic, then by strength. Cards show collinearity and target leakage, and the contingency counts and group difference of the chosen pair. `GET /v2/runs/{run_id}/snapshot/pair` serves up to 2,000 evenly thinned points for the pair plot, with the snapshot's sampling. **Deviations:** no repository method was added (the endpoint reads the snapshot and selects two columns); heatmap squares are not clickable, since `DsbfChart` forwards no chart events, so a pair is chosen from the table or two selects (a later frontend unit if wanted); the archetype lines of the checklist stay open until the quality unit builds the archetype stores.
 - **Carry in from U4-07:** `associations` returns the tested pairs and no matrix, so the view builds one on demand.
 - **Goal:** The association matrix, collinearity, target leakage, contingency and group differences, and a pair plot of two columns from the snapshot.
 - **Decided in U6-00:** an API endpoint builds the matrix from the stored pairs, not the core and not the browser; an untested pair is blank, not zero; each cell names its statistic, and sorting groups by statistic before value, since η² and r are not on one scale (F-25).
@@ -225,6 +226,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-14 · Quality and ML readiness
 - **Status:** todo · **Size:** M · **Depends on:** U6-13
+- **Note from U6-13:** the checklist's archetype lines for the relationships tab (block structure on `severe_multicollinearity`, 60 columns on `wide`, Cramér's V only, a single column, the Summary card counts) need the archetype fixture stores this unit builds; convert them to Playwright tests then.
 - **Note from U6-10:** the overview shows counts by dimension only; the quality dimensions and the ML-readiness gate are this unit's.
 - **Carry in from U4-15:** the tab draws the outputs of `quality_dimensions` and `ml_readiness`: levels, gate, per-input states and coverage.
 - **Goal:** The five quality dimensions with their levels and findings, the ML-readiness gate with its per-input states, and coverage per input check and per column (from `CheckResult.columns`, U6-03).

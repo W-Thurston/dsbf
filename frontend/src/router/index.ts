@@ -31,6 +31,12 @@ export default createRouter({
       props: true,
     },
     {
+      path: '/runs/:runId/relationships',
+      name: 'relationships',
+      component: () => import('../views/RelationshipsView.vue'),
+      props: true,
+    },
+    {
       path: '/runs/:runId/columns/:column',
       name: 'column',
       component: () => import('../views/ColumnView.vue'),

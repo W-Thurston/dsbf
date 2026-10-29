@@ -17,6 +17,14 @@ from dsbf.model import (
 )
 from dsbf.model.diff import RunDiff
 from dsbf.service.problems import Problem, ValidationProblem
+from dsbf.service.relationships import (
+    MAX_POINTS,
+    PAIR_CHECKS,
+    PairPoints,
+    RelationshipMatrix,
+    build_matrix,
+    pair_points,
+)
 from dsbf.service.views import (
     ArtifactRows,
     ArtifactValue,
@@ -31,6 +39,7 @@ from dsbf.store import (
     FindingOccurrence,
     FindingSort,
     Page,
+    RunNotFoundError,
     RunRepository,
     RunSummary,
 )
@@ -213,6 +222,22 @@ def get_check_result(run_id: UUID, check_id: str, repo: Repo) -> CheckResult:
     return repo.get_result(run_id, check_id)
 
 
+@router.get(
+    "/runs/{run_id}/relationships", operation_id="getRelationships", tags=["runs"]
+)
+def get_relationships(run_id: UUID, repo: Repo) -> RelationshipMatrix:
+    """The pairs the association, contingency and group-difference checks tested,
+    each with the statistic that measured it; an untested pair has no cell."""
+    order = tuple(c.name for c in repo.list_columns(run_id))
+    results: dict[str, CheckResult | None] = {}
+    for check_id in PAIR_CHECKS:
+        try:
+            results[check_id] = repo.get_result(run_id, check_id)
+        except RunNotFoundError:
+            results[check_id] = None
+    return build_matrix(results, order)
+
+
 @router.get("/runs/{run_id}/snapshot", operation_id="getSnapshot", tags=["runs"])
 def get_snapshot(
     run_id: UUID, repo: Repo, limit: Limit = 100, offset: Offset = 0
@@ -224,6 +249,31 @@ def get_snapshot(
     result = _artifact(run_id, SNAPSHOT_REF, repo, limit, offset)
     assert isinstance(result, ArtifactRows)  # the snapshot is a table
     return result
+
+
+@router.get(
+    "/runs/{run_id}/snapshot/pair", operation_id="getSnapshotPair", tags=["runs"]
+)
+def get_snapshot_pair(
+    run_id: UUID,
+    repo: Repo,
+    first: Annotated[str, Query(description="One column.")],
+    second: Annotated[str, Query(description="The other column.")],
+    limit: Annotated[
+        int, Query(ge=1, le=MAX_POINTS, description="Most points returned.")
+    ] = MAX_POINTS,
+) -> PairPoints:
+    """Two snapshot columns for the rows where both have a value; 404 without a
+    snapshot or when a column is not in it."""
+    snapshot = repo.snapshot(run_id)
+    if snapshot is None:
+        raise HTTPException(404, f"run {run_id} kept no data snapshot")
+    for name in (first, second):
+        if name not in snapshot.table.column_names:
+            raise HTTPException(
+                404, f"the snapshot of run {run_id} has no column {name!r}"
+            )
+    return pair_points(snapshot.table, snapshot.sampling, first, second, limit)
 
 
 @router.get(

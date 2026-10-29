@@ -337,6 +337,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/runs/{run_id}/relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Relationships
+         * @description The pairs the association, contingency and group-difference checks tested,
+         *     each with the statistic that measured it; an untested pair has no cell.
+         */
+        get: operations["getRelationships"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/runs/{run_id}/snapshot": {
         parameters: {
             query?: never;
@@ -349,6 +370,27 @@ export interface paths {
          * @description Rows of the data as profiled; 404 when the run kept no snapshot.
          */
         get: operations["getSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/runs/{run_id}/snapshot/pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Snapshot Pair
+         * @description Two snapshot columns for the rows where both have a value; 404 without a
+         *     snapshot or when a column is not in it.
+         */
+        get: operations["getSnapshotPair"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1706,6 +1748,51 @@ export interface components {
             total: number;
         };
         /**
+         * PairCoverage
+         * @description How far one pairwise check got.
+         */
+        PairCoverage: {
+            /** Check Id */
+            check_id: string;
+            /** Pairs Tested */
+            pairs_tested: number;
+            status: components["schemas"]["CheckStatus"];
+            /**
+             * Untested
+             * @description Pairs not tested, by reason.
+             */
+            untested: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * PairPoints
+         * @description Two columns of the snapshot, for the rows where both have a value.
+         */
+        PairPoints: {
+            /** First */
+            first: string;
+            /**
+             * Rows With Both
+             * @description Snapshot rows where both columns have a value.
+             */
+            rows_with_both: number;
+            /** @description How the snapshot's rows were drawn from the data. */
+            sampling: components["schemas"]["SamplingInfo"] | null;
+            /** Second */
+            second: string;
+            /** Snapshot Rows */
+            snapshot_rows: number;
+            /**
+             * Values
+             * @description (first, second) per row, thinned evenly to at most `limit`.
+             */
+            values: [
+                unknown,
+                unknown
+            ][];
+        };
+        /**
          * PatternCount
          * @description A pattern signature and how many values have it.
          */
@@ -1907,6 +1994,61 @@ export interface components {
             p: number;
             /** Value */
             value: number;
+        };
+        /**
+         * RelationshipCell
+         * @description One tested pair and the statistic that measured it.
+         */
+        RelationshipCell: {
+            /** Check Id */
+            check_id: string;
+            /** First */
+            first: string;
+            /**
+             * Flagged
+             * @description Whether the check flagged the pair, when it says.
+             */
+            flagged: boolean | null;
+            interval: components["schemas"]["Interval"] | null;
+            /** N Used */
+            n_used: number;
+            /** Second */
+            second: string;
+            /**
+             * Statistic
+             * @enum {string}
+             */
+            statistic: "pearson_r" | "spearman_r" | "kendalls_tau" | "eta" | "cramers_v_corrected" | "omega_squared";
+            /**
+             * Strength
+             * @description The check's band for the value; null when it names none.
+             */
+            strength: string | null;
+            /**
+             * Value
+             * @description Signed for r, ρ and τ; otherwise 0 to 1.
+             */
+            value: number;
+        };
+        /**
+         * RelationshipMatrix
+         * @description The tested pairs of a run; a pair absent from `cells` was not tested.
+         */
+        RelationshipMatrix: {
+            /** Cells */
+            cells: components["schemas"]["RelationshipCell"][];
+            /**
+             * Columns
+             * @description Columns that appear in a cell, in the dataset's order.
+             */
+            columns: string[];
+            /** Coverage */
+            coverage: components["schemas"]["PairCoverage"][];
+            /**
+             * Statistics
+             * @description Statistics present, in the order the view groups them.
+             */
+            statistics: ("pearson_r" | "spearman_r" | "kendalls_tau" | "eta" | "cramers_v_corrected" | "omega_squared")[];
         };
         /**
          * Rule
@@ -3295,6 +3437,46 @@ export interface operations {
             };
         };
     };
+    getRelationships: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipMatrix"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
     getSnapshot: {
         parameters: {
             query?: {
@@ -3318,6 +3500,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArtifactRows"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
+    getSnapshotPair: {
+        parameters: {
+            query: {
+                /** @description One column. */
+                first: string;
+                /** @description The other column. */
+                second: string;
+                /** @description Most points returned. */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PairPoints"];
                 };
             };
             /** @description Not Found */

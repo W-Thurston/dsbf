@@ -3139,6 +3139,100 @@
         "title": "Page[RunSummary]",
         "type": "object"
       },
+      "PairCoverage": {
+        "additionalProperties": false,
+        "description": "How far one pairwise check got.",
+        "properties": {
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "pairs_tested": {
+            "minimum": 0.0,
+            "title": "Pairs Tested",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CheckStatus"
+          },
+          "untested": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Pairs not tested, by reason.",
+            "title": "Untested",
+            "type": "object"
+          }
+        },
+        "required": [
+          "check_id",
+          "status",
+          "pairs_tested",
+          "untested"
+        ],
+        "title": "PairCoverage",
+        "type": "object"
+      },
+      "PairPoints": {
+        "additionalProperties": false,
+        "description": "Two columns of the snapshot, for the rows where both have a value.",
+        "properties": {
+          "first": {
+            "title": "First",
+            "type": "string"
+          },
+          "rows_with_both": {
+            "description": "Snapshot rows where both columns have a value.",
+            "minimum": 0.0,
+            "title": "Rows With Both",
+            "type": "integer"
+          },
+          "sampling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SamplingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the snapshot's rows were drawn from the data."
+          },
+          "second": {
+            "title": "Second",
+            "type": "string"
+          },
+          "snapshot_rows": {
+            "minimum": 0.0,
+            "title": "Snapshot Rows",
+            "type": "integer"
+          },
+          "values": {
+            "description": "(first, second) per row, thinned evenly to at most `limit`.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {},
+                {}
+              ],
+              "type": "array"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "first",
+          "second",
+          "values",
+          "rows_with_both",
+          "snapshot_rows",
+          "sampling"
+        ],
+        "title": "PairPoints",
+        "type": "object"
+      },
       "PatternCount": {
         "additionalProperties": false,
         "description": "A pattern signature and how many values have it.",
@@ -3501,6 +3595,145 @@
           "value"
         ],
         "title": "Quantile",
+        "type": "object"
+      },
+      "RelationshipCell": {
+        "additionalProperties": false,
+        "description": "One tested pair and the statistic that measured it.",
+        "properties": {
+          "check_id": {
+            "title": "Check Id",
+            "type": "string"
+          },
+          "first": {
+            "title": "First",
+            "type": "string"
+          },
+          "flagged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the check flagged the pair, when it says.",
+            "title": "Flagged"
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Interval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "n_used": {
+            "minimum": 0.0,
+            "title": "N Used",
+            "type": "integer"
+          },
+          "second": {
+            "title": "Second",
+            "type": "string"
+          },
+          "statistic": {
+            "enum": [
+              "pearson_r",
+              "spearman_r",
+              "kendalls_tau",
+              "eta",
+              "cramers_v_corrected",
+              "omega_squared"
+            ],
+            "title": "Statistic",
+            "type": "string"
+          },
+          "strength": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's band for the value; null when it names none.",
+            "title": "Strength"
+          },
+          "value": {
+            "description": "Signed for r, \u03c1 and \u03c4; otherwise 0 to 1.",
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "first",
+          "second",
+          "check_id",
+          "statistic",
+          "value",
+          "strength",
+          "n_used",
+          "interval",
+          "flagged"
+        ],
+        "title": "RelationshipCell",
+        "type": "object"
+      },
+      "RelationshipMatrix": {
+        "additionalProperties": false,
+        "description": "The tested pairs of a run; a pair absent from `cells` was not tested.",
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "columns": {
+            "description": "Columns that appear in a cell, in the dataset's order.",
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "coverage": {
+            "items": {
+              "$ref": "#/components/schemas/PairCoverage"
+            },
+            "title": "Coverage",
+            "type": "array"
+          },
+          "statistics": {
+            "description": "Statistics present, in the order the view groups them.",
+            "items": {
+              "enum": [
+                "pearson_r",
+                "spearman_r",
+                "kendalls_tau",
+                "eta",
+                "cramers_v_corrected",
+                "omega_squared"
+              ],
+              "type": "string"
+            },
+            "title": "Statistics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns",
+          "statistics",
+          "cells",
+          "coverage"
+        ],
+        "title": "RelationshipMatrix",
         "type": "object"
       },
       "Rule": {
@@ -4761,7 +4994,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -6201,6 +6434,60 @@
         ]
       }
     },
+    "/v2/runs/{run_id}/relationships": {
+      "get": {
+        "description": "The pairs the association, contingency and group-difference checks tested,\neach with the statistic that measured it; an untested pair has no cell.",
+        "operationId": "getRelationships",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipMatrix"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Relationships",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
     "/v2/runs/{run_id}/snapshot": {
       "get": {
         "description": "Rows of the data as profiled; 404 when the run kept no snapshot.",
@@ -6277,6 +6564,96 @@
           }
         },
         "summary": "Get Snapshot",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/snapshot/pair": {
+      "get": {
+        "description": "Two snapshot columns for the rows where both have a value; 404 without a\nsnapshot or when a column is not in it.",
+        "operationId": "getSnapshotPair",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One column.",
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "description": "One column.",
+              "title": "First",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The other column.",
+            "in": "query",
+            "name": "second",
+            "required": true,
+            "schema": {
+              "description": "The other column.",
+              "title": "Second",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Most points returned.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 2000,
+              "description": "Most points returned.",
+              "maximum": 2000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairPoints"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Snapshot Pair",
         "tags": [
           "runs"
         ]
