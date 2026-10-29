@@ -149,6 +149,12 @@ export interface PlanManifest {
    */
   depth: string | null;
   checks: PlannedCheck[];
+  /**
+   * The profile settings the user gave, as `ProfileConfig` fields; fields left at their defaults are absent.
+   */
+  settings: {
+    [k: string]: unknown;
+  };
 }
 /**
  * One check the plan includes, with the parameters it will run under.

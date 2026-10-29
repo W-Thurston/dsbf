@@ -26,6 +26,7 @@ def blocks(guide: Path) -> list[tuple[str, str]]:
 
 def test_the_guides_exist_and_hold_code():
     assert {g.stem for g in GUIDES} == {
+        "compatibility",
         "dashboard",
         "pipeline",
         "policy",

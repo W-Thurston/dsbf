@@ -19,6 +19,7 @@ runner = CliRunner()
 # The version a schema change is announced with, whatever the current one is.
 _MAJOR, _MINOR, _ = SCHEMA_VERSION.split(".")
 NEXT_MINOR = f"{_MAJOR}.{int(_MINOR) + 1}.0"
+NEXT_MAJOR = f"{int(_MAJOR) + 1}.0.0"
 
 REPO = Path(__file__).parents[2]
 GIT = ["git", "-c", "user.name=test", "-c", "user.email=test@example.com"]
@@ -152,7 +153,7 @@ def test_deleting_a_field_without_a_version_bump_fails(repo):
 
     assert result.exit_code == 1
     assert "breaking: #/$defs/Finding/code: property removed" in result.output
-    assert "need a minor version bump" in result.output
+    assert "need a major version bump" in result.output
 
 
 @pytest.mark.unit
@@ -160,7 +161,7 @@ def test_deleting_a_field_with_a_version_bump_passes(repo):
     def delete_code(schema):
         del schema["$defs"]["Finding"]["properties"]["code"]
 
-    write_schema(repo, edited(delete_code, version=NEXT_MINOR))
+    write_schema(repo, edited(delete_code, version=NEXT_MAJOR))
 
     result = check()
 
@@ -330,8 +331,8 @@ def test_dropping_a_column_without_a_version_bump_fails(tables_repo):
 
 
 @pytest.mark.unit
-def test_dropping_a_column_with_a_minor_bump_passes(tables_repo):
-    edit_tables(tables_repo, drop_column, version="0.2.0")
+def test_dropping_a_column_with_a_major_bump_passes(tables_repo):
+    edit_tables(tables_repo, drop_column, version="2.0.0")
     assert check().exit_code == 0
 
 
@@ -419,3 +420,41 @@ def test_the_committed_api_types_and_ranks_are_what_the_generators_write():
     assert schema_export.ranks_module() == (
         generated / schema_export.RANKS_FILE
     ).read_text("utf-8")
+
+
+# --- run comparison schema ---------------------------------------------------------
+
+
+def edit_diff(repo: Path, edit, *, version=None) -> None:
+    path = repo / "schema" / "diff.schema.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    edit(document)
+    if version is not None:
+        document["properties"]["schema_version"]["default"] = version
+    path.write_text(schema_text(document), encoding="utf-8")
+
+
+def drop_tolerance(document: dict) -> None:
+    del document["properties"]["tolerance"]
+
+
+@pytest.mark.unit
+def test_unchanged_diff_schema_passes(checks_repo):
+    assert check().exit_code == 0
+
+
+@pytest.mark.unit
+def test_dropping_a_diff_field_without_a_major_bump_fails(checks_repo):
+    edit_diff(checks_repo, drop_tolerance)
+    result = check()
+    assert result.exit_code == 1
+    assert "diff: breaking" in result.output
+    assert "DIFF_SCHEMA_VERSION" in result.output
+    edit_diff(checks_repo, lambda document: None, version="1.1.0")
+    assert check().exit_code == 1
+
+
+@pytest.mark.unit
+def test_dropping_a_diff_field_with_a_major_bump_passes(checks_repo):
+    edit_diff(checks_repo, drop_tolerance, version="2.0.0")
+    assert check().exit_code == 0

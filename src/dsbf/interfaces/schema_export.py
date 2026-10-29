@@ -250,6 +250,16 @@ def compare_with_base(ref: str, schema_file: Path) -> SchemaComparison | None:
     return SchemaComparison(old_version, new_version, changes, problems)
 
 
+def compare_diff_with_base(ref: str, schema_file: Path) -> SchemaComparison | None:
+    """Compare the run comparison schema with its committed version at ``ref``.
+
+    None means the base has no such schema yet, so there is nothing to break.
+    """
+    if schema_at_ref(ref, schema_file) is None:
+        return None
+    return compare_with_base(ref, schema_file)
+
+
 def compare_check_schemas(
     ref: str, out_dir: Path
 ) -> list[tuple[str, SchemaComparison]]:

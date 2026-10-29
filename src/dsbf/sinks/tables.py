@@ -24,7 +24,7 @@ from dsbf.model.profile import (
     TextProfile,
 )
 
-TABLES_SCHEMA_VERSION = "0.1.0"
+TABLES_SCHEMA_VERSION = "1.0.0"
 SCHEMA_VERSION_KEY = b"schema_version"
 
 _STRING = pa.string()

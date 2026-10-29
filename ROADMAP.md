@@ -257,7 +257,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Comparing two titanic runs with a planted change shows the expected diff. Comparing runs of two datasets works and says they differ. A changed source location is flagged in the lineage.
 
 ### U6-17 · Settings and rerun
-- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-16 · **Resolves:** REVIEW_FINDINGS part 2 D (settings panel)
+- **Status:** done (2026-10-29, #169, `02a0ad6`) · **Size:** M · **Depends on:** U6-16 · **Resolves:** REVIEW_FINDINGS part 2 D (settings panel)
 - **Outcome:** The dataset page has a settings form generated from the `ProfileConfig` schema in `/v2/openapi.json`, with Save, Reset and "Save and rerun". The overlay is stored per dataset key (Alembic revision 0004) behind `GET|PUT|DELETE /v2/datasets/{key}/settings`; `POST /v2/datasets/{key}/rerun` queues a job from the latest run's source and the overlay, and the page follows its progress to the new run or shows its error. **Deviations:** a run does not store its settings, so a rerun uses the overlay over defaults rather than the earlier run's own settings; the rerun carries no `policy` or `previous` (the U6-08 note stands).
 - **Note from U6-08:** the job request takes `source`, `name` and `settings` only; a rerun that wants a policy verdict needs `policy` and `previous` added to it.
 - **Goal:** A settings form generated from the `ProfileConfig` JSON Schema (target, time index, depth, checks and their parameters), saved as a per-dataset overlay in the store, and a rerun that submits a job, follows its progress and lands on the new run.
@@ -267,10 +267,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Setting a target on titanic and rerunning gives a run in which `class_imbalance` runs. A source that no longer exists fails the job, and the UI shows the message.
 
 ### U6-18 · Stable 1.0 schemas
-- **Status:** todo · **Size:** S · **Depends on:** U6-17
-- **Note from U6-17:** a stored run does not record the settings it ran with, so a rerun cannot reuse them (it uses the dataset's overlay over defaults). Decide whether 1.0 records the effective `ProfileConfig` in the run before the run schema is frozen.
-- **Note from U6-16:** comparing titanic's full run with its 300-row sample reports 101 changed findings, mostly count-scaled statistics (the U6-06 note below). A per-metric tolerance, or a list of metrics that scale with n, changes what `RunDiff` reports, so decide it before `RunDiff` is frozen at 1.0.0.
-- **Note from U6-06:** `RunDiff` has a schema file (`schema/diff.schema.json`) but no breaking-change gate yet.
+- **Status:** done (2026-10-29) · **Size:** S · **Depends on:** U6-17
+- **Outcome:** A run records the settings it ran with (`plan.settings`, the `ProfileConfig` fields that differ from defaults), and a rerun starts from them with the dataset's overlay on top. The run and Parquet table schemas are at 1.0.0 (`RunDiff` was already, the policy is version 1, each check keeps its own 1.x), and `dsbf schema check` now gates `RunDiff` as well. `docs/guides/compatibility.md` states the 1.x rules, the constant to bump per contract, and the `RunDiff` limitation below. **Deviations:** OpenAPI stays on its 1.x line (1.8.0), since the gate refuses a version that goes backwards; the count-scaled-metric question was deferred by the user.
 - **Goal:** Review every published contract (the run, the check schemas, the Parquet tables, the policy, `RunDiff`, OpenAPI) for what 1.x has to keep. Raise each to 1.0.0, and document the compatibility rules (additive within 1.x, a deprecation lasting one minor release; REFACTOR_PLAN §4.3), which the breaking-change gates enforce.
 - **Assumptions to confirm:** each schema has a version and a gate (the run, tables, check and policy schemas from Phase 5, OpenAPI from U6-07, `RunDiff` from U6-06); nothing in the contracts is still marked as development-era.
 - **Steps:** the review, recorded in the PR; version bumps; the compatibility guide in `docs/guides/`; gate tests for a breaking change without a major bump.
@@ -306,6 +304,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
   - **Carry in from U2-01:** `dsbf.data.load` reads one local file, the first Excel sheet only, and rejects directories, globs and URLs (`UnsupportedSourceError`). Sheet choice, globs and `s3://`-style paths belong to T2.
   - **Carry in from U2-08:** on 1M × 50 floats the profile pass takes 9.5 s on the 4-CPU runner (type inference 1.5 s, `profile_dataset` 8.0 s). If the standard plan at that size shows the profile as a cost, the options are arithmetic histogram binning with an edge fix-up, a sketched distinct count above a row threshold, and sharing `n_unique` and null counts between type inference and the count pass. `Dataset.frame.estimated_size()` undercounts a CSV-loaded frame, so a memory figure should say what it measures.
   - **Carry in from U4-12:** drift approximated from stored profiles is the basis of history-based drift.
+  - **Carry in from U6-18:** `RunDiff` reports count-scaled statistics as changed when two runs differ in sample size (titanic's full run against its 300-row sample: 101 changed findings). Investigate a per-metric tolerance or a list of metrics that scale with n; either changes what `RunDiff` reports, not its shape, so it fits within 1.x (`docs/guides/compatibility.md`, known limitations).
 - Placeholders, in order: lazy and streaming scans with read-time sampling, globs and object storage (T2, N-B6) · Ibis sources on DuckDB and Postgres with profile pushdown (T3) · Snowflake and BigQuery · recurring datasets, history views and drift from stored profiles (T4) · `dsbf watch` and scheduling recipes (cron, orchestrators)
 
 ## Phase 8: Team and cloud (placeholder)

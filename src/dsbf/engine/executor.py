@@ -5,6 +5,7 @@ import threading
 import time
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import uuid4
 
 from dsbf.data import Dataset
@@ -61,6 +62,7 @@ def execute(
     reference: Reference | None = None,
     check_overrides: Mapping[str, CheckOverride] | None = None,
     dataset_key: str | None = None,
+    settings: Mapping[str, Any] | None = None,
     cancel: threading.Event | None = None,
 ) -> Run:
     """Run every check in ``plan`` against ``dataset`` and return the ``Run``.
@@ -210,7 +212,7 @@ def execute(
         started_at=started_at,
         finished_at=started_at + timedelta(seconds=time.monotonic() - clock),
         dataset=_dataset_manifest(dataset, dataset_key),
-        plan=_plan_manifest(plan, dsbf_version),
+        plan=_plan_manifest(plan, dsbf_version, settings),
         profile=profile,
         notes=(*plan.notes, *_cache_notes(session)),
     )
@@ -456,9 +458,12 @@ def _dataset_manifest(dataset: Dataset, key: str | None) -> DatasetManifest:
     )
 
 
-def _plan_manifest(plan: Plan, dsbf_version: str) -> PlanManifest:
+def _plan_manifest(
+    plan: Plan, dsbf_version: str, settings: Mapping[str, Any] | None
+) -> PlanManifest:
     return PlanManifest(
         dsbf_version=dsbf_version,
+        settings=dict(settings or {}),
         depth=plan.selection.depth.value,
         checks=tuple(
             PlannedCheck(

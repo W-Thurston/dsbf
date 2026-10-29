@@ -69,8 +69,9 @@ def delete_settings(key: str, repo: Repo) -> None:
 
 @settings_router.post("/{key:path}/rerun", operation_id="rerunDataset", status_code=202)
 def rerun(key: str, repo: Repo, request: Request) -> Job:
-    """Queue a profiling run of the dataset's latest source with its saved
-    settings. The source is read again, so a file that has gone fails the job."""
+    """Queue a profiling run of the dataset's latest source. It runs with the
+    settings of that run, then the dataset's saved settings on top. The source is read
+    again, so a file that has gone fails the job."""
     _require_runs(repo, key)
     latest = repo.get_header(repo.list_runs(dataset_key=key, limit=1).items[0].run_id)
     source = latest.dataset.source.location
@@ -79,7 +80,11 @@ def rerun(key: str, repo: Repo, request: Request) -> Job:
             422, "the latest run has no source location, so there is nothing to reread"
         )
     settings = ProfileConfig.model_validate(
-        {**(repo.get_settings_overlay(key) or {}), "dataset": key}
+        {
+            **latest.plan.settings,
+            **(repo.get_settings_overlay(key) or {}),
+            "dataset": key,
+        }
     )
     runner: JobRunner = request.app.state.runner
     return runner.submit(

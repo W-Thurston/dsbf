@@ -221,6 +221,7 @@ def profile_with(
             for check_id, values in settings.check_settings.items()
         },
         dataset_key=settings.dataset,
+        settings=settings.model_dump(mode="json", exclude_defaults=True),
         cancel=cancel,
     )
     if disk is not None:

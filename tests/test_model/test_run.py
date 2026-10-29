@@ -185,7 +185,7 @@ def test_the_parts_of_a_run_must_agree(field, value, message):
 
 
 def test_a_minor_schema_version_is_readable():
-    assert make_run(schema_version="0.9.3").schema_version == "0.9.3"
+    assert make_run(schema_version="1.9.3").schema_version == "1.9.3"
 
 
 def test_health_cannot_be_edited_out_of_step_with_the_results():
