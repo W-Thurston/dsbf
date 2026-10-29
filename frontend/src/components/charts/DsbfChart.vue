@@ -116,7 +116,14 @@ import { registerDsbfThemes } from '../../chartTheme'
 // you use. Import only what's needed to keep the bundle small.
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { BarChart, LineChart, HeatmapChart, ScatterChart, BoxplotChart } from 'echarts/charts'
+import {
+  BarChart,
+  LineChart,
+  HeatmapChart,
+  ScatterChart,
+  BoxplotChart,
+  CustomChart,
+} from 'echarts/charts'
 import {
   GridComponent,
   TooltipComponent,
@@ -135,6 +142,7 @@ use([
   HeatmapChart,
   ScatterChart,
   BoxplotChart,
+  CustomChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,

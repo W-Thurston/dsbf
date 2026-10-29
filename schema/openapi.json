@@ -823,6 +823,51 @@
         "title": "ColumnCounts",
         "type": "object"
       },
+      "ColumnSummary": {
+        "additionalProperties": false,
+        "description": "A column in brief: enough to list and filter a run's columns.",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/ColumnCounts"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "physical_dtype": {
+            "title": "Physical Dtype",
+            "type": "string"
+          },
+          "position": {
+            "description": "Place in the dataset's column order.",
+            "minimum": 0.0,
+            "title": "Position",
+            "type": "integer"
+          },
+          "semantic_type": {
+            "enum": [
+              "numeric",
+              "categorical",
+              "boolean",
+              "datetime",
+              "text",
+              "identifier",
+              "unknown"
+            ],
+            "title": "Semantic Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "semantic_type",
+          "physical_dtype",
+          "counts"
+        ],
+        "title": "ColumnSummary",
+        "type": "object"
+      },
       "Confidence": {
         "description": "How firmly a check stands behind a finding; each check caps its own.",
         "enum": [
@@ -4716,7 +4761,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5634,6 +5679,64 @@
           }
         },
         "summary": "Get Check Result",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/columns": {
+      "get": {
+        "description": "Every profiled column in the dataset's order, without its statistics.",
+        "operationId": "listColumns",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ColumnSummary"
+                  },
+                  "title": "Response Listcolumns",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "List Columns",
         "tags": [
           "runs"
         ]

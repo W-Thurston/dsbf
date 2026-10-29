@@ -196,7 +196,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Opening titanic transfers under 200 KB, measured by Playwright. Every status other than `ok` shows its reason. The policy verdict shows when there is one. The CI frontend job runs Playwright and the bundle budget.
 
 ### U6-11 · Findings explorer
-- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-10 · **Resolves:** N-A5
+- **Status:** done (2026-10-28, #163, `f75b769`) · **Size:** M · **Depends on:** U6-10 · **Resolves:** N-A5
 - **Outcome:** `/runs/:runId/findings` keeps filters, sort, page and the open finding in the URL; a finding opens to its evidence, assumptions and guidance, and its `details_ref` artifact pages by row range on request. The overview's top findings link to it. `listFindings` gained `check`, `min_confidence` and `sort` (confidence read from the stored JSON, so no migration). **Deviations:** the Playwright fixture store gained a `cities` run, because titanic has no finding with an artifact; the severity and confidence filters are "at least", as `Findings.filter` is.
 - **Note from U6-02:** a finding's `details_ref` names an artifact (the full fuzzy pair list, the STL series); the explorer should offer it through the API's artifact route.
 - **Goal:** Every finding of a run, filtered by dimension, severity, confidence, check, code and column, sorted and paged from the API, with the filters in the URL. A finding opens to its message, evidence (metrics, `n_used` of `n_total`, method, interval, assumptions, sampling), guidance actions, and its artifact on demand.
@@ -205,7 +205,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** On titanic, the explorer's counts under each filter equal `run.findings.filter` (a test compares them). A pair-subject finding appears under both of its columns. The fuzzy pair list pages without loading whole.
 
 ### U6-12 · Column view
-- **Status:** todo · **Size:** M · **Depends on:** U6-11 · **Resolves:** F-12, N-A3
+- **Status:** done (2026-10-28) · **Size:** M · **Depends on:** U6-11 · **Resolves:** F-12, N-A3
+- **Outcome:** `/runs/:runId/columns` lists the columns with name and type filters in the URL, and `/runs/:runId/columns/:column` shows the profile, the histogram on a value axis from the stored edges, top values, the Q-Q plot from the `normality` output, the column's findings and a paged snapshot sample. **Deviations:** the unit added `GET /v2/runs/{run_id}/columns` (`listColumns`), because no endpoint listed a run's columns; a column that passed normality has no stored Q-Q data, so the page says why instead of drawing one; the fixture store gained a `bare` run without a snapshot; the bundle budget's total rose from 140 KB to 880 KB for the lazy ECharts chunk.
 - **Note from U6-11:** the explorer's `check` and `code` filters are free text; if the column view adds an endpoint of distinct values, reuse it to make them selects.
 - **Goal:** A column browser and a page per column: the profile's statistics, its equal-width histogram on a value axis with the real edges, top values, the Q-Q plot from the `normality` output when there is one, the column's findings, and a sample of its values from the snapshot.
 - **Decided in U6-00:** the charts draw stored bins and quantiles only; nothing is recomputed in the browser.
@@ -268,6 +269,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-19 · Bundle the dashboard and release 1.0.0
 - **Status:** todo · **Size:** M · **Depends on:** U6-18 · **Resolves:** REVIEW_FINDINGS part 2 D (`dsbf dashboard`) and E (the frontend in the wheel), F-29
+- **Note from U6-12:** the column page's chunk holds ECharts (about 700 KB, 236 KB gzipped); split ECharts into its own chunk and register only the chart types in use before the release gate. `DsbfChart.vue` also hard-codes dark colours for its card, title and tab strip, so the light theme draws them wrongly (the U0-16 carry-in is still open); move them to the theme tokens.
 - **Note from U6-10:** `test_the_budget_kills_a_worker_too` (`tests/test_engine/test_process_workers.py`) failed once on the Windows CI job of #160 (`FileNotFoundError` reading the pid file) and passed on a rerun; the PR touched no engine code. Probable cause, not reproduced: `run_budget_seconds=0.8` lets a slow runner kill the worker before it writes its pid file; the interrupt test beside it waits for the file with a deadline. Fix with a deadline wait or a larger budget on Windows before the release gate relies on the Windows job; treat a second failure as a real race.
 - **Note from U6-10:** the dashboard is served uncompressed; add gzip to the app if a tab pushes the 200 KB transfer budget. `dsbf dashboard` already serves `index.html` for page routes (`DashboardFiles`); keep that when bundling.
 - **Note from U5-09 (4):** a coverage floor is undecided; the first number is in the `full` job's step summary.

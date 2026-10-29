@@ -26,6 +26,7 @@ from dsbf.service.views import (
 )
 from dsbf.store import (
     SNAPSHOT_REF,
+    ColumnSummary,
     DatasetSummary,
     FindingOccurrence,
     FindingSort,
@@ -175,6 +176,12 @@ def list_findings(
 def get_finding(run_id: UUID, finding_id: str, repo: Repo) -> Finding:
     """One finding."""
     return repo.get_finding(run_id, finding_id)
+
+
+@router.get("/runs/{run_id}/columns", operation_id="listColumns", tags=["runs"])
+def list_columns(run_id: UUID, repo: Repo) -> tuple[ColumnSummary, ...]:
+    """Every profiled column in the dataset's order, without its statistics."""
+    return repo.list_columns(run_id)
 
 
 @router.get(

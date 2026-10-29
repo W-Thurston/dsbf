@@ -37,6 +37,7 @@ from dsbf.store.artifacts import FsspecArtifactStore
 from dsbf.store.job_rows import JobRows
 from dsbf.store.repository import (
     SNAPSHOT_REF,
+    ColumnSummary,
     DatasetSummary,
     FindingCount,
     FindingOccurrence,
@@ -560,6 +561,22 @@ class SqliteRunRepository(JobRows):
             if candidate["name"] == column:
                 return _COLUMN_PROFILE.validate_python(candidate)
         raise RunNotFoundError(f"run {run_id} has no column {column!r}")
+
+    def list_columns(self, run_id: UUID) -> tuple[ColumnSummary, ...]:
+        with self._engine.connect() as connection:
+            text = connection.execute(
+                sa.select(t.profiles.c.profile_json).where(
+                    t.profiles.c.run_id == str(run_id)
+                )
+            ).scalar_one_or_none()
+        if text is None:
+            raise RunNotFoundError(f"no stored run {run_id}")
+        return tuple(
+            ColumnSummary.model_validate(
+                {key: column[key] for key in ColumnSummary.model_fields}
+            )
+            for column in json.loads(text)["columns"]
+        )
 
     def get_finding(self, run_id: UUID, finding_id: str) -> Finding:
         with self._engine.connect() as connection:

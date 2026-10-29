@@ -14,6 +14,10 @@
       <p v-if="header.dataset.source.location" class="muted">
         Source <code>{{ header.dataset.source.location }}</code>
       </p>
+      <p>
+        <router-link :to="{ name: 'columns', params: { runId } }">Columns</router-link> ·
+        <router-link :to="{ name: 'findings', params: { runId } }">Findings</router-link>
+      </p>
       <SamplingNotice v-if="header.dataset.sampling" :sampling="header.dataset.sampling" />
     </section>
 

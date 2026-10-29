@@ -236,6 +236,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/runs/{run_id}/columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Columns
+         * @description Every profiled column in the dataset's order, without its statistics.
+         */
+        get: operations["listColumns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/runs/{run_id}/findings": {
         parameters: {
             query?: never;
@@ -730,6 +750,27 @@ export interface components {
              * @description Rows profiled, after any sampling.
              */
             rows: number;
+        };
+        /**
+         * ColumnSummary
+         * @description A column in brief: enough to list and filter a run's columns.
+         */
+        ColumnSummary: {
+            counts: components["schemas"]["ColumnCounts"];
+            /** Name */
+            name: string;
+            /** Physical Dtype */
+            physical_dtype: string;
+            /**
+             * Position
+             * @description Place in the dataset's column order.
+             */
+            position: number;
+            /**
+             * Semantic Type
+             * @enum {string}
+             */
+            semantic_type: "numeric" | "categorical" | "boolean" | "datetime" | "text" | "identifier" | "unknown";
         };
         /**
          * Confidence
@@ -3012,6 +3053,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckResult"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
+    listColumns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColumnSummary"][];
                 };
             };
             /** @description Not Found */

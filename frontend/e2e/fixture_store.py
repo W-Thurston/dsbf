@@ -2,7 +2,8 @@
 
 Two runs of titanic: a full scan, and a 300-row sample that also runs a check that
 raises and a plugin that fails to import, under a policy that fails. A third dataset,
-``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact.
+``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact. A
+fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot.
 """
 
 import sys
@@ -67,6 +68,10 @@ def main(home: Path) -> None:
         dsbf.profile(
             CITIES, name="cities", dataset="cities", checks=["fuzzy_duplicates"]
         )
+    )
+    repository.save(
+        dsbf.profile(TITANIC, name="bare", dataset="bare", depth="quick"),
+        snapshot_rows=0,
     )
 
 

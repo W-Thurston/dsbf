@@ -75,10 +75,21 @@ components, so nothing here is checked by hand:
   opens it;
 - a finding's artifact loads only on request and pages by row range.
 
+## Column view
+
+Covered by `frontend/e2e/column-view.spec.ts` and the Vitest tests in
+`frontend/src/components/column/`, so nothing here is checked by hand:
+
+- the column browser filters by name and type with both in the URL;
+- a numeric column's histogram draws the profile's stored edges and counts, and a
+  categorical column draws its top values;
+- a column the normality check flagged shows its Q-Q plot with the reference line, and a
+  column without one says why;
+- the sample pages the snapshot, and a run without a snapshot says so there.
+
 ## Tabs not yet built
 
-Each belongs to the unit in `ROADMAP.md` that builds it (column view,
-relationships, quality and ML readiness, time series). The wording is the old dashboard's
+Each belongs to the unit in `ROADMAP.md` that builds it (relationships, quality and ML readiness, time series). The wording is the old dashboard's
 and is rewritten when its unit converts it into tests. Lines that mention a tab by its
 old name ("Distributions", "Quality") describe what that tab must still show.
 

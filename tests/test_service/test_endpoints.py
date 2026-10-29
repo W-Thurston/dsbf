@@ -188,6 +188,19 @@ class TestFindings:
 
 
 class TestProfiles:
+    def test_lists_every_column_in_dataset_order(self, client, runs):
+        run = runs["hostile"]
+        body = client.get(f"/v2/runs/{run.run_id}/columns").json()
+        assert [c["name"] for c in body] == [c.name for c in run.profile.columns]
+        positions = [c.position for c in run.profile.columns]
+        assert [c["position"] for c in body] == positions
+        first = run.profile.columns[0]
+        assert body[0]["counts"] == first.counts.model_dump(mode="json")
+        assert body[0]["semantic_type"] == first.semantic_type
+
+    def test_listing_columns_of_an_unknown_run_is_a_404(self, client):
+        assert_problem(client.get(f"/v2/runs/{uuid4()}/columns"), 404)
+
     # A client resolves a ".." segment before sending, so that name travels in the
     # query form only.
     @pytest.mark.parametrize("column", [c for c in HOSTILE_COLUMNS if c != ".."])

@@ -2,12 +2,15 @@
 //
 // Set from the first build of the rebuilt shell (2026-10-28): the entry chunk was
 // 96.7 KB and the whole bundle 120 KB. A tab unit that needs more raises the budget
-// here, in the same commit, so growth is a decision.
+// here, in the same commit, so growth is a decision. The column view (2026-10-28) is
+// the first to draw a chart, so the total now includes the lazy chunk that holds
+// ECharts (about 700 KB, 236 KB gzipped, fetched only on a page with a chart); the
+// entry budget, which every page pays, is unchanged.
 import { readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const KB = 1024
-const BUDGET = { entry: 110 * KB, total: 140 * KB }
+const BUDGET = { entry: 110 * KB, total: 880 * KB }
 const assets = join(import.meta.dirname, '..', 'dist', 'assets')
 
 const files = readdirSync(assets).map((name) => ({ name, size: statSync(join(assets, name)).size }))
