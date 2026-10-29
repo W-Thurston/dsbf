@@ -21,6 +21,7 @@ from dsbf.store.artifacts import (
 from dsbf.store.jobs import Job, JobEvent, JobRequest, JobState
 from dsbf.store.repository import (
     SNAPSHOT_REF,
+    ColumnSummary,
     DatasetSummary,
     FindingCount,
     FindingOccurrence,
@@ -44,6 +45,7 @@ __all__ = [
     "SNAPSHOT_REF",
     "ArtifactNotFoundError",
     "ArtifactStore",
+    "ColumnSummary",
     "DatasetSummary",
     "FindingCount",
     "FindingOccurrence",

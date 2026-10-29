@@ -12,6 +12,7 @@ from pydantic import AwareDatetime, Field
 from dsbf.model import (
     CheckResult,
     CheckStatus,
+    ColumnCounts,
     ColumnProfile,
     Confidence,
     DatasetManifest,
@@ -22,6 +23,7 @@ from dsbf.model import (
     PolicyOutcome,
     Run,
     RunHealth,
+    SemanticType,
     Severity,
 )
 from dsbf.model.base import Contract
@@ -109,6 +111,16 @@ class FindingCount(Contract):
     dimension: Dimension
     severity: Severity
     count: int = Field(ge=1)
+
+
+class ColumnSummary(Contract):
+    """A column in brief: enough to list and filter a run's columns."""
+
+    name: str
+    position: int = Field(ge=0, description="Place in the dataset's column order.")
+    semantic_type: SemanticType
+    physical_dtype: str
+    counts: ColumnCounts
 
 
 SNAPSHOT_REF = "snapshot"
@@ -204,6 +216,13 @@ class RunRepository(Protocol):
 
         Raises:
             RunNotFoundError: no such run, or the run has no such column.
+        """
+
+    def list_columns(self, run_id: UUID) -> tuple[ColumnSummary, ...]:
+        """Every profiled column in the dataset's order, without its statistics.
+
+        Raises:
+            RunNotFoundError: no such run.
         """
 
     def get_result(self, run_id: UUID, check_id: str) -> CheckResult:

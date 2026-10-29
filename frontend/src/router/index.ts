@@ -24,5 +24,17 @@ export default createRouter({
       component: () => import('../views/FindingsView.vue'),
       props: true,
     },
+    {
+      path: '/runs/:runId/columns',
+      name: 'columns',
+      component: () => import('../views/ColumnsView.vue'),
+      props: true,
+    },
+    {
+      path: '/runs/:runId/columns/:column',
+      name: 'column',
+      component: () => import('../views/ColumnView.vue'),
+      props: true,
+    },
   ],
 })
