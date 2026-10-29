@@ -7,7 +7,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from dsbf.comparison import DEFAULT_TOLERANCE, compare
-from dsbf.model import CheckResult, ColumnProfile, Dimension, Finding, Severity
+from dsbf.model import (
+    CheckResult,
+    ColumnProfile,
+    Confidence,
+    Dimension,
+    Finding,
+    Severity,
+)
 from dsbf.model.diff import RunDiff
 from dsbf.service.problems import Problem, ValidationProblem
 from dsbf.service.views import (
@@ -21,6 +28,7 @@ from dsbf.store import (
     SNAPSHOT_REF,
     DatasetSummary,
     FindingOccurrence,
+    FindingSort,
     Page,
     RunRepository,
     RunSummary,
@@ -130,21 +138,32 @@ def list_findings(
     repo: Repo,
     dimension: Dimension | None = None,
     min_severity: Severity | None = None,
+    min_confidence: Confidence | None = None,
     code: str | None = None,
-    column: Annotated[
-        str | None, Query(description="Findings about this column.")
+    check: Annotated[
+        str | None, Query(description="Findings of this check id.")
     ] = None,
+    column: Annotated[
+        str | None,
+        Query(description="Findings about this column (a pair matches either)."),
+    ] = None,
+    sort: Annotated[
+        FindingSort, Query(description="Highest severity first, or by check or code.")
+    ] = "severity",
     limit: Limit = 50,
     offset: Offset = 0,
 ) -> Page[Finding]:
-    """A run's findings, highest severity first."""
+    """A run's findings, highest severity first unless sorted otherwise."""
     repo.get_header(run_id)
     return repo.find_findings(
         run_id,
         dimension=dimension,
         min_severity=min_severity,
+        min_confidence=min_confidence,
         code=code,
+        check=check,
         column=column,
+        sort=sort,
         limit=limit,
         offset=offset,
     )

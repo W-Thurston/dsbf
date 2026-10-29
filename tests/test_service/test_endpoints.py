@@ -136,6 +136,28 @@ class TestFindings:
         by_dimension = client.get(url, params={"dimension": dimension}).json()
         assert {i["dimension"] for i in by_dimension["items"]} == {dimension}
 
+    def test_check_confidence_and_sort_agree_with_the_run_filter(self, client, runs):
+        run = runs["titanic"]
+        url = f"/v2/runs/{run.run_id}/findings"
+        check = run.findings[0].check_id
+        by_check = client.get(url, params={"check": check, "limit": 500}).json()
+        assert by_check["total"] == len(run.findings.filter(check=check))
+        high = client.get(url, params={"min_confidence": "high", "limit": 500}).json()
+        assert high["total"] == len(run.findings.filter(confidence=">=high"))
+        by_code = client.get(url, params={"sort": "code", "limit": 500}).json()
+        codes = [i["code"] for i in by_code["items"]]
+        assert codes == sorted(codes)
+
+    def test_a_pair_finding_appears_under_both_of_its_columns(self, client, runs):
+        run = runs["titanic"]
+        url = f"/v2/runs/{run.run_id}/findings"
+        pair = next((f for f in run.findings if len(f.subject.columns) > 1), None)
+        assert pair is not None
+        for column in pair.subject.columns:
+            page = client.get(url, params={"column": column, "limit": 500}).json()
+            assert pair.id in {i["id"] for i in page["items"]}
+            assert page["total"] == len(run.findings.filter(column=column))
+
     def test_the_offset_moves_through_the_list(self, client, runs):
         url = f"/v2/runs/{runs['titanic'].run_id}/findings"
         first = client.get(url, params={"limit": 5}).json()["items"]

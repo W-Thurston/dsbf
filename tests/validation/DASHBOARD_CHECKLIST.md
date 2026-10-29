@@ -63,9 +63,21 @@ Expected values are what `dsbf profile` printed on 2026-10-28.
 - [ ] Header reads 1,000 rows × 100 columns; Findings: 49 `warn`, 221 `info`; Top findings lists 10 and says 'Showing 10 of 270'
 - [ ] Opening the run stays under 200 KB (the Playwright test measures titanic)
 
+## Findings explorer
+
+Covered by `frontend/e2e/findings-explorer.spec.ts` and the Vitest tests beside the
+components, so nothing here is checked by hand:
+
+- filters, sort and page live in the URL and survive a reload;
+- a filtered count equals the API's, which `tests/test_service/test_endpoints.py` holds
+  to `run.findings.filter`, a pair finding under both of its columns;
+- an opened finding shows its evidence and guidance, and a top finding on the overview
+  opens it;
+- a finding's artifact loads only on request and pages by row range.
+
 ## Tabs not yet built
 
-Each belongs to the unit in `ROADMAP.md` that builds it (findings explorer, column view,
+Each belongs to the unit in `ROADMAP.md` that builds it (column view,
 relationships, quality and ML readiness, time series). The wording is the old dashboard's
 and is rewritten when its unit converts it into tests. Lines that mention a tab by its
 old name ("Distributions", "Quality") describe what that tab must still show.
