@@ -138,3 +138,11 @@ job_events = sa.Table(
     sa.Column("seq", sa.Integer, primary_key=True),
     sa.Column("event_json", sa.Text, nullable=False),
 )
+
+dataset_settings = sa.Table(
+    "dataset_settings",
+    metadata,
+    sa.Column("dataset_key", sa.Text, primary_key=True),
+    sa.Column("overlay_json", sa.Text, nullable=False),
+    sa.Column("updated_at", sa.Text, nullable=False),
+)

@@ -29,6 +29,8 @@
       </template>
     </section>
 
+    <DatasetSettings v-if="runs.page.value?.items.length" :dataset-key="datasetKey" />
+
     <FindingHistory
       v-if="runs.page.value?.items.length"
       :dataset-key="datasetKey"
@@ -40,6 +42,7 @@
 <script setup lang="ts">
 import { api, unwrap } from '../api/client'
 import FindingHistory from '../components/dataset/FindingHistory.vue'
+import DatasetSettings from '../components/settings/DatasetSettings.vue'
 import LineageTable from '../components/dataset/LineageTable.vue'
 import PagerNav from '../components/PagerNav.vue'
 import RunTable from '../components/RunTable.vue'

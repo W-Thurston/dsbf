@@ -1,6 +1,7 @@
 # dsbf/store/job_rows.py
 """Job rows of the SQLite repository: the jobs table and each job's events."""
 
+import json
 import threading
 from datetime import UTC, datetime
 from typing import Any
@@ -221,3 +222,46 @@ class JobRows:
             sa.update(t.jobs).where(t.jobs.c.job_id == str(job_id)).values(last_seq=seq)
         )
         return event
+
+
+class SettingsRows:
+    """Mixed into the repository, which owns ``_engine`` and ``_write_lock``."""
+
+    _engine: sa.Engine
+    _write_lock: threading.Lock
+
+    def get_settings_overlay(self, dataset_key: str) -> dict[str, Any] | None:
+        with self._engine.connect() as connection:
+            row = connection.execute(
+                sa.select(t.dataset_settings.c.overlay_json).where(
+                    t.dataset_settings.c.dataset_key == dataset_key
+                )
+            ).first()
+        return None if row is None else json.loads(row.overlay_json)
+
+    def set_settings_overlay(self, dataset_key: str, overlay: dict[str, Any]) -> None:
+        values = {
+            "overlay_json": json.dumps(overlay),
+            "updated_at": _text(datetime.now(UTC)),
+        }
+        with self._write_lock, self._engine.begin() as connection:
+            updated = connection.execute(
+                sa.update(t.dataset_settings)
+                .where(t.dataset_settings.c.dataset_key == dataset_key)
+                .values(**values)
+            )
+            if not updated.rowcount:
+                connection.execute(
+                    sa.insert(t.dataset_settings).values(
+                        dataset_key=dataset_key, **values
+                    )
+                )
+
+    def delete_settings_overlay(self, dataset_key: str) -> bool:
+        with self._write_lock, self._engine.begin() as connection:
+            deleted = connection.execute(
+                sa.delete(t.dataset_settings).where(
+                    t.dataset_settings.c.dataset_key == dataset_key
+                )
+            )
+        return bool(deleted.rowcount)

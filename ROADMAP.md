@@ -247,7 +247,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Kitchen5k with its time index shows the four STL series and the ACF bands. A run with no time index shows the empty state.
 
 ### U6-16 · Run compare and history
-- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-15 · **Resolves:** REVIEW_FINDINGS part 2 D (run comparison UI)
+- **Status:** done (2026-10-29, #168, `71d77cd`) · **Size:** M · **Depends on:** U6-15 · **Resolves:** REVIEW_FINDINGS part 2 D (run comparison UI)
 - **Outcome:** `/compare?base=&head=` picks any two stored runs (the run page pre-fills the previous run of the same dataset as base) and shows new, resolved and changed findings and check status changes, with a notice when the runs are of different datasets. The dataset page gained a lineage table, fed by the new `GET /v2/datasets/{key}/lineage` (location and content changes against the previous run), and a finding-history panel. **Deviations:** the lineage endpoint was not in U6-07, whose endpoints carried no location or fingerprint; the count-scaled-metric note below is not addressed (carried to U6-18).
 - **Note from U6-06:** `compare` reports most count-scaled statistics (chi², `n_missing`) as changed when two runs have different row counts (107 of 117 titanic findings against a copy with 100 rows dropped); a per-metric tolerance or a list of metrics that scale with n would cut the noise.
 - **Goal:** A compare view of any two runs, chosen explicitly and pre-filled with the previous run of the same dataset, showing new, resolved and changed findings and status changes from the compare endpoint. A dataset page with its run lineage (changes of location and fingerprint) and the history of one finding across runs.
@@ -257,7 +257,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Comparing two titanic runs with a planted change shows the expected diff. Comparing runs of two datasets works and says they differ. A changed source location is flagged in the lineage.
 
 ### U6-17 · Settings and rerun
-- **Status:** todo · **Size:** M · **Depends on:** U6-16 · **Resolves:** REVIEW_FINDINGS part 2 D (settings panel)
+- **Status:** done (2026-10-29) · **Size:** M · **Depends on:** U6-16 · **Resolves:** REVIEW_FINDINGS part 2 D (settings panel)
+- **Outcome:** The dataset page has a settings form generated from the `ProfileConfig` schema in `/v2/openapi.json`, with Save, Reset and "Save and rerun". The overlay is stored per dataset key (Alembic revision 0004) behind `GET|PUT|DELETE /v2/datasets/{key}/settings`; `POST /v2/datasets/{key}/rerun` queues a job from the latest run's source and the overlay, and the page follows its progress to the new run or shows its error. **Deviations:** a run does not store its settings, so a rerun uses the overlay over defaults rather than the earlier run's own settings; the rerun carries no `policy` or `previous` (the U6-08 note stands).
 - **Note from U6-08:** the job request takes `source`, `name` and `settings` only; a rerun that wants a policy verdict needs `policy` and `previous` added to it.
 - **Goal:** A settings form generated from the `ProfileConfig` JSON Schema (target, time index, depth, checks and their parameters), saved as a per-dataset overlay in the store, and a rerun that submits a job, follows its progress and lands on the new run.
 - **Decided in U6-00:** the overlay is stored per dataset key; an ungrouped run reruns with its own settings and no overlay.
@@ -267,6 +268,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6-18 · Stable 1.0 schemas
 - **Status:** todo · **Size:** S · **Depends on:** U6-17
+- **Note from U6-17:** a stored run does not record the settings it ran with, so a rerun cannot reuse them (it uses the dataset's overlay over defaults). Decide whether 1.0 records the effective `ProfileConfig` in the run before the run schema is frozen.
 - **Note from U6-16:** comparing titanic's full run with its 300-row sample reports 101 changed findings, mostly count-scaled statistics (the U6-06 note below). A per-metric tolerance, or a list of metrics that scale with n, changes what `RunDiff` reports, so decide it before `RunDiff` is frozen at 1.0.0.
 - **Note from U6-06:** `RunDiff` has a schema file (`schema/diff.schema.json`) but no breaking-change gate yet.
 - **Goal:** Review every published contract (the run, the check schemas, the Parquet tables, the policy, `RunDiff`, OpenAPI) for what 1.x has to keep. Raise each to 1.0.0, and document the compatibility rules (additive within 1.x, a deprecation lasting one minor release; REFACTOR_PLAN §4.3), which the breaking-change gates enforce.
@@ -275,6 +277,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Every schema is at 1.0.0, and each gate fails on a breaking change without a major bump.
 
 ### U6-19 · Bundle the dashboard and release 1.0.0
+- **Note from U6-17:** the dashboard bundle is 878.1 of 880 KB, so a unit that adds to it raises the budget in `frontend/scripts/check-bundle.mjs` or splits a chunk. `gc` leaves a dataset's settings overlay behind when it deletes the dataset's last run.
 - **Status:** todo · **Size:** M · **Depends on:** U6-18 · **Resolves:** REVIEW_FINDINGS part 2 D (`dsbf dashboard`) and E (the frontend in the wheel), F-29
 - **Note from U6-15:** the checklist's remaining archetype lines (relationships on `severe_multicollinearity`, `wide`, `all_categorical` and `single_column`; quality and ML readiness for the other archetypes) still need fixture stores in `frontend/e2e/fixture_store.py`; build them here or drop the lines.
 - **Note from U6-12:** the column page's chunk holds ECharts (about 700 KB, 236 KB gzipped); split ECharts into its own chunk and register only the chart types in use before the release gate. `DsbfChart.vue` also hard-codes dark colours for its card, title and tab strip, so the light theme draws them wrongly (the U0-16 carry-in is still open); move them to the theme tokens.

@@ -34,7 +34,7 @@ from dsbf.paths import dsbf_home
 from dsbf.sinks.files import artifact_path
 from dsbf.store import tables as t
 from dsbf.store.artifacts import FsspecArtifactStore
-from dsbf.store.job_rows import JobRows
+from dsbf.store.job_rows import JobRows, SettingsRows
 from dsbf.store.repository import (
     SNAPSHOT_REF,
     ColumnSummary,
@@ -123,7 +123,7 @@ def _dump(model: Any, **options: Any) -> str:
     return json.dumps(model.model_dump(mode="json", **options), ensure_ascii=False)
 
 
-class SqliteRunRepository(JobRows):
+class SqliteRunRepository(JobRows, SettingsRows):
     """Runs in a SQLite file in WAL mode, with one writer at a time.
 
     Opening applies the migrations. A database written by a newer DSBF is refused

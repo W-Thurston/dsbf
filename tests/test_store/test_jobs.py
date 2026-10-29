@@ -131,3 +131,17 @@ def test_the_job_tables_are_removed_by_the_downgrade(tmp_path):
     }
     assert not {"jobs", "job_events"} & names
     assert "artifacts" in names
+
+
+def test_a_settings_overlay_is_saved_replaced_and_deleted(tmp_path):
+    repo = SqliteRunRepository(tmp_path / "dsbf.db", tmp_path / "artifacts")
+    try:
+        assert repo.get_settings_overlay("a") is None
+        repo.set_settings_overlay("a", {"target": "y"})
+        repo.set_settings_overlay("a", {"depth": "quick"})
+        assert repo.get_settings_overlay("a") == {"depth": "quick"}
+        assert repo.get_settings_overlay("b") is None
+        assert repo.delete_settings_overlay("a") is True
+        assert repo.delete_settings_overlay("a") is False
+    finally:
+        repo.close()

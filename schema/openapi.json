@@ -5172,7 +5172,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.6.0"
+    "version": "1.7.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5443,6 +5443,59 @@
         ]
       }
     },
+    "/v2/datasets/{key}/rerun": {
+      "post": {
+        "description": "Queue a profiling run of the dataset's latest source with its saved\nsettings. The source is read again, so a file that has gone fails the job.",
+        "operationId": "rerunDataset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Rerun",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
     "/v2/datasets/{key}/runs": {
       "get": {
         "description": "A dataset's runs, newest first. The key is the dataset key, percent-encoded.",
@@ -5518,6 +5571,170 @@
           }
         },
         "summary": "List Dataset Runs",
+        "tags": [
+          "datasets"
+        ]
+      }
+    },
+    "/v2/datasets/{key}/settings": {
+      "delete": {
+        "description": "Forget a dataset's saved settings.",
+        "operationId": "deleteDatasetSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Delete Settings",
+        "tags": [
+          "datasets"
+        ]
+      },
+      "get": {
+        "description": "The settings saved for a dataset: the fields it overrides, `{}` when it has\nnone. The key is the dataset key, percent-encoded.",
+        "operationId": "getDatasetSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Getdatasetsettings",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Settings",
+        "tags": [
+          "datasets"
+        ]
+      },
+      "put": {
+        "description": "Save a dataset's settings, replacing any earlier ones. The body holds\n`ProfileConfig` fields; only those it sets are kept.",
+        "operationId": "putDatasetSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "Overlay",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Putdatasetsettings",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Put Settings",
         "tags": [
           "datasets"
         ]
