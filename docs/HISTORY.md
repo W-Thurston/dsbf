@@ -118,7 +118,7 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
 | U6-16 | feat(frontend): compare any two runs and follow a dataset's lineage and finding history in the dashboard | #168 | `71d77cd` | 2026-10-29 |
 | U6-17 | feat(frontend): edit a dataset's saved settings in a generated form and rerun it from the dashboard | #169 | `02a0ad6` | 2026-10-29 |
 | U6-18 | feat(schema): record a run's settings, raise the run and table schemas to 1.0.0 and gate the run comparison schema | #170 | `7dba424` | 2026-10-29 |
-| U6-19 | feat(dashboard): bundle the dashboard in the wheel and gate coverage | this PR (filled in by the next unit) | | 2026-10-29 |
+| U6-19 | feat(dashboard): bundle the dashboard in the wheel and gate coverage | #171 | `7709003` | 2026-10-29 |
 
 ---
 
@@ -328,4 +328,4 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
   - The archetype fixture stores for the dashboard checklist (`severe_multicollinearity`, `wide`, `all_categorical`, `single_column`; quality and readiness for the other archetypes) were not built, and those lines are not Playwright tests.
   - `RunDiff` reports count-scaled statistics as changed when two runs differ in sample size; the user deferred it (a documented 1.x limitation, carried to U7-00).
   - `gc` leaves a dataset's settings overlay behind when it deletes the dataset's last run (carried to U7-00).
-- **PRs:** #147 (U6-00, `a03c940`), #148 (U6-01, `30e0208`), #149 (U6-02, `b0066c9`), #150 (U6-03, `f41e377`), #151 (U6-04, `b424a1c`), #152 (U6-05, `e2f978a`), #153 (U6-06, `c753135`), #154 (U6-07, `0b0ce1b`), #156 (U6-08, `a89d36a`), #157 (U6-09, `15a6ac1`), #160 (U6-10, `2dfdbf3`), #163 (U6-11, `f75b769`), #164 (U6-12, `95dc699`), #165 (U6-13, `8c169d7`), #166 (U6-14, `fa0c5cd`), #167 (U6-15, `f0b441a`), #168 (U6-16, `71d77cd`), #169 (U6-17, `02a0ad6`), #170 (U6-18, `7dba424`), and U6-19 (this PR, filled in by the next unit).
+- **PRs:** #147 (U6-00, `a03c940`), #148 (U6-01, `30e0208`), #149 (U6-02, `b0066c9`), #150 (U6-03, `f41e377`), #151 (U6-04, `b424a1c`), #152 (U6-05, `e2f978a`), #153 (U6-06, `c753135`), #154 (U6-07, `0b0ce1b`), #156 (U6-08, `a89d36a`), #157 (U6-09, `15a6ac1`), #160 (U6-10, `2dfdbf3`), #163 (U6-11, `f75b769`), #164 (U6-12, `95dc699`), #165 (U6-13, `8c169d7`), #166 (U6-14, `fa0c5cd`), #167 (U6-15, `f0b441a`), #168 (U6-16, `71d77cd`), #169 (U6-17, `02a0ad6`), #170 (U6-18, `7dba424`), #171 (U6-19, `7709003`).
