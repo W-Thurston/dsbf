@@ -7,7 +7,7 @@ Work in this repo is planned at two levels:
 The documents involved:
 - `ROADMAP.md` is the backlog of programs and their units: status, dependencies, assumptions, steps and acceptance criteria.
 - `PLAN.md` holds the **active unit**, at most one, and nothing else.
-- `docs/REFACTOR_PLAN.md` is the design, and `docs/adr/` records the architecture decisions (D1–D11) it rests on. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite, with each one's status. `docs/HISTORY.md` holds the summaries of finished programs and every unit's PR. `docs/WALKTHROUGH.md` explains how a legacy run works.
+- `docs/REFACTOR_PLAN.md` is the design, and `docs/adr/` records the architecture decisions (D1–D11) it rests on. `docs/REVIEW_FINDINGS.md` defines the F-xx and N-xx IDs that units cite, with each one's status. `docs/HISTORY.md` holds the summaries of finished programs and every unit's PR. `docs/DASHBOARD_DESIGN.md` is the dashboard's design record: the old-dashboard inventory each Phase 6b page unit cites. `docs/WALKTHROUGH.md` explains how a legacy run works.
 
 ## Ways of working
 
@@ -17,7 +17,7 @@ Read this section before planning or modifying the repository.
 2. **Locate first, then read the owning boundary.** Use targeted searches to find the relevant files, functions, tests, commands, artifacts and generated contracts. Read the exact owning boundaries before designing or editing them.
 3. **Design at two levels before implementation.** The program level is locked in the phase block in `ROADMAP.md`. The unit level is the unit in `PLAN.md`, with its goal, design decisions, tests and acceptance criteria, written before code changes.
 4. **Keep one active bounded unit.** Start new work only after selecting it from `ROADMAP.md` and scoping it in `PLAN.md`. Completed units are recorded in `ROADMAP.md`. At program closeout, their detailed entries are condensed into a program summary.
-5. **Use descriptive implementation language.** Program, unit and finding IDs (`U0-03`, `F-12`) belong in planning documents only: `ROADMAP.md`, `PLAN.md`, `docs/REFACTOR_PLAN.md`, `docs/REVIEW_FINDINGS.md`, ADRs and PR bodies. Source names, comments, docstrings, tests, artifacts, commands and commit subjects describe lasting domain behaviour.
+5. **Use descriptive implementation language.** Program, unit and finding IDs (`U0-03`, `F-12`) belong in planning documents only: `ROADMAP.md`, `PLAN.md`, `docs/REFACTOR_PLAN.md`, `docs/REVIEW_FINDINGS.md`, `docs/DASHBOARD_DESIGN.md`, ADRs and PR bodies. Source names, comments, docstrings, tests, artifacts, commands and commit subjects describe lasting domain behaviour.
 6. **Commit small coherent units.** Each completed unit produces one focused commit:
    - a Conventional Commit subject;
    - a detailed bullet-list body covering implementation, tests and documentation.
