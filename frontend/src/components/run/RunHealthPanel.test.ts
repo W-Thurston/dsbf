@@ -45,6 +45,15 @@ describe('RunHealthPanel', () => {
     expect(text).toContain('Blocked by a_err')
   })
 
+  it('folds the not-applicable checks away until they are opened', () => {
+    const panel = mount(RunHealthPanel, { props: { health: health(ISSUES), notes: [] } })
+
+    const folded = panel.get('details[data-role="not-applicable"]')
+    expect(folded.attributes('open')).toBeUndefined()
+    expect(folded.text()).toContain('No numeric columns.')
+    expect(panel.find('h3').text()).toBe('error')
+  })
+
   it('lists the run notes', () => {
     const notes: components['schemas']['Note'][] = [
       {

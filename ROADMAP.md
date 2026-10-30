@@ -100,7 +100,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** Both fields are served and typed, measured payloads are recorded, and the run and table schemas are unchanged (the fields are API views, not run-schema fields). No screenshot: the fields are signed off through U6b-03 and U6b-10.
 
 ### U6b-03 · Overview tab, chart-led
-- **Status:** done (2026-10-30) · **Size:** L · **Depends on:** U6b-01, U6b-02
+- **Status:** done (2026-10-30, #176 `ba74641`) · **Size:** L · **Depends on:** U6b-01, U6b-02
 - **Notes:** The Overview is a metric strip, findings by dimension and severity, column types, a sortable and filterable column table with an inline chart per row, missing values with a null co-occurrence matrix, the sample, run health and dtype savings; lineage moved into the header. Deviations: a new `GET /v2/runs/{id}/dataset` (memory and null pairs were not served; API 1.10.0); the page's charts are CSS and SVG, because ECharts pushed titanic to 329 KB, and the service now gzips (titanic transfers 102 KB); bundle budget 900 KB; top findings show 5.
 - **Carry in from U6-19:** run-health and findings views that show counts could chart them instead; the dashboard is served uncompressed (add gzip if a page pushes the 200 KB transfer budget; titanic is 151 KB).
 - **Carry in from U6b-01:** the run page still shows the Phase 6 cards (policy, run health, finding counts, top findings) under a mostly empty "Run" card with the source path, a Findings link and the compare link; redesign them chart-led, and keep the compare link's "previous run" text (it appears once the previous-run lookup finishes).
@@ -110,9 +110,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the Overview on titanic and `high_missingness`, in both themes, as readable and chart-led; opening titanic's run transfers under 200 KB.
 
 ### U6b-04 · Quality tab
-- **Status:** todo · **Size:** M · **Depends on:** U6b-01
-- **Carry in from U6b-03:** the Run health card lists every not-applicable check in full; collapse that group (it is most of the Overview on a run without a target or time index).
-- **Carry in from U6b-01:** `QualityView` still renders the Phase 6 `DimensionCard`s; replace them with the traffic-light cards and charts. The ML readiness cards now live on the ML Readiness tab (U6b-08).
+- **Status:** done (2026-10-30) · **Size:** M · **Depends on:** U6b-01
+- **Notes:** Quality is a trust banner, five traffic-light cards that open their sections, collapsible sections with sortable findings tables whose rows fetch their evidence and guidance on expand, clean columns, the missingness mechanism with predictor bars, fuzzy duplicates and the coverage; the Run health card folds its not-applicable checks. Deviations: sample values show only where evidence carries them; Cramér's V bars are unsigned; bundle budget 920 KB. Follow-up: hide the near-duplicate card on runs without that check (U6b-12).
 - **Goal:** Quality answers "what is wrong with this data, by dimension?" (inventory: Quality). The trust banner (overall level, its label and sentence, columns checked, fully clean, dimensions flagged of those assessed); five traffic-light dimension cards that scroll to their sections; a collapsible section per dimension with a sortable findings table whose expanded rows show the finding's evidence, sample values and guidance; clean columns; the missingness mechanism with its predictor bars; fuzzy duplicates with similarity bars; and the check coverage, beside the dimension coverage. The "mark as reviewed" star is dropped (decided in U6b-00: unsaved, it was lost on reload).
 - **Assumptions to confirm:** findings' `evidence` carries the per-issue metrics the old detail column showed (missing share, violation count, zero share, mode share, unique count, VIF, correlation); `missingness_mechanism` predictors give a signed effect for the bars.
 - **Steps:** the page and its parts; Playwright tests for the quality checklist lines; the `clean` and `high_missingness` fixtures.
@@ -172,6 +171,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-12 · Screenshot review on the fixture store
 - **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Carry in from U6b-04:** the Quality tab's Near-duplicate rows card says "did not run" on every run without that check; hide an absent optional check's card.
 - **Carry in from U6-19:** the quality lines for the other archetypes still need fixture stores.
 - **Carry in from U6b-01:** `e2e/run-shell.spec.ts` saves the shell screenshots when `SCREENSHOT_DIR` is set; extend that pattern to every page.
 - **Goal:** A review of every page on the fixture store, with the archetype stores, against the phase's questions: a screenshot set the user signs off, the remaining archetype checklist lines as Playwright tests, and the fixes the review finds (each small, or a follow-up unit).

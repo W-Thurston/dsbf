@@ -2,6 +2,8 @@
 // shows. A dimension that was not assessed has no level and its own neutral state: it is
 // never drawn as green.
 
+import { severityRank, type SeverityName } from '../../generated/ranks'
+
 export type Level = 'green' | 'blue' | 'amber' | 'red'
 export type Gate = 'ready' | 'needs_work' | 'not_ready' | 'not_assessed'
 export type InputState = 'assessed' | 'nothing_to_check' | 'needs_setting' | 'not_run' | 'failed'
@@ -142,4 +144,100 @@ export function percent(share: number): string {
 export function actionWords(action: NonNullable<FindingRef['actions']>[number]): string {
   const where = action.columns?.length ? ` ${action.columns.join(', ')}` : ''
   return `${action.action}${action.method ? ` (${action.method})` : ''}${where}`
+}
+
+const LEVEL_ORDER: Level[] = ['green', 'blue', 'amber', 'red']
+
+export interface Trust {
+  level: Level | null
+  headline: string
+  detail: string
+}
+
+const TRUST_WORDS: Record<Level, string> = {
+  green: 'Looking good',
+  blue: 'Minor issues',
+  amber: 'Worth investigating',
+  red: 'Needs attention',
+}
+
+/** The worst level among the assessed dimensions, in words, with the counts behind it. */
+export function trustOf(output: QualityOutput): Trust {
+  const dimensions = Object.values(output.dimensions)
+  const assessed = dimensions.filter((d) => d.assessed && d.level)
+  const flagged = assessed.filter((d) => d.level !== 'green').length
+  const level = assessed.reduce<Level | null>(
+    (worst, d) =>
+      !worst || LEVEL_ORDER.indexOf(d.level as Level) > LEVEL_ORDER.indexOf(worst)
+        ? (d.level as Level)
+        : worst,
+    null,
+  )
+  const counts = `${output.clean_columns.length} of ${output.total_columns} columns fully clean · ${flagged} of ${assessed.length} assessed dimensions flagged`
+  return {
+    level,
+    headline: level ? TRUST_WORDS[level] : 'Not assessed',
+    detail: level ? counts : 'No quality dimension could be assessed.',
+  }
+}
+
+/** How many columns a dimension flags, as the card's summary line. */
+export function dimensionSummary(dimension: QualityDimension, total: number): string {
+  if (!dimension.assessed) return unassessedReason(dimension.inputs)
+  if (!dimension.findings.length) return 'No findings.'
+  const columns = dimension.affected_count
+  const share = `${percent(dimension.pct_affected)} of ${total}`
+  return columns
+    ? `${columns} ${columns === 1 ? 'column' : 'columns'} affected (${share}).`
+    : `${dimension.findings.length} dataset-level ${dimension.findings.length === 1 ? 'finding' : 'findings'}.`
+}
+
+/** The kinds of finding a dimension holds, with how many of each, most common first. */
+export function issueChips(findings: FindingRef[]): { code: string; count: number }[] {
+  const counts = new Map<string, number>()
+  for (const f of findings) counts.set(f.code, (counts.get(f.code) ?? 0) + 1)
+  return [...counts]
+    .map(([code, count]) => ({ code, count }))
+    .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code))
+}
+
+export type FindingSort = 'severity' | 'column' | 'finding'
+
+/** The findings in the order a column header asks for; severity puts the worst first. */
+export function sortFindings(
+  findings: FindingRef[],
+  by: FindingSort,
+  descending: boolean,
+): FindingRef[] {
+  const key = (f: FindingRef): string | number =>
+    by === 'severity'
+      ? severityRank(f.severity as SeverityName)
+      : by === 'column'
+        ? f.columns.join(', ')
+        : f.title
+  const sign = descending ? -1 : 1
+  return [...findings].sort((a, b) => {
+    const x = key(a)
+    const y = key(b)
+    const order = typeof x === 'number' ? x - (y as number) : x.localeCompare(y as string)
+    return sign * order || a.id.localeCompare(b.id)
+  })
+}
+
+export interface Predictor {
+  column: string
+  effect: number
+  effect_name: 'rank_biserial' | 'cramers_v'
+  p_adjusted: number
+  flagged: boolean
+}
+
+/** A predictor's bar: the size of the effect, and the sign only where the effect has one. */
+export function effectBar(p: Pick<Predictor, 'effect' | 'effect_name'>): {
+  width: number
+  text: string
+} {
+  const size = Math.min(Math.abs(p.effect), 1)
+  const sign = p.effect_name === 'rank_biserial' && p.effect < 0 ? '−' : ''
+  return { width: size, text: `${sign}${size.toFixed(2)}` }
 }
