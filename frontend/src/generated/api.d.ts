@@ -916,6 +916,41 @@ export interface components {
             examined_by: number;
         };
         /**
+         * ColumnSketch
+         * @description A column's figures and small distribution, cut from its profile for a table row
+         *     and its inline chart. A field the column's type has no figure for is null.
+         */
+        ColumnSketch: {
+            /**
+             * Bins
+             * @description A numeric column's finite values in at most 12 equal-width bins from `min` to `max`.
+             * @default []
+             */
+            bins: number[];
+            /** Max */
+            max: number | null;
+            /** Min */
+            min: number | null;
+            /**
+             * Mode
+             * @description The most frequent non-null value; null for a numeric column, and for a string too long to be listed.
+             */
+            mode: string | null;
+            /**
+             * Mode Share
+             * @description The mode's share of the non-null rows.
+             */
+            mode_share: number | null;
+            /** Skewness */
+            skewness: number | null;
+            /**
+             * Top Values
+             * @description Up to five of the most frequent values, most first.
+             * @default []
+             */
+            top_values: components["schemas"]["ValueCount"][];
+        };
+        /**
          * ColumnSummary
          * @description A column in brief: enough to list and filter a run's columns.
          */
@@ -935,6 +970,7 @@ export interface components {
              * @enum {string}
              */
             semantic_type: "numeric" | "categorical" | "boolean" | "datetime" | "text" | "identifier" | "unknown";
+            sketch: components["schemas"]["ColumnSketch"];
         };
         /**
          * Confidence
@@ -991,6 +1027,13 @@ export interface components {
          * @description A dataset's history in brief: how many runs, and the latest.
          */
         DatasetSummary: {
+            /**
+             * Dimension Levels
+             * @description The latest run's quality dimensions and their levels; a level is null for a dimension that was not assessed, and the mapping is empty when the run has no quality_dimensions result.
+             */
+            dimension_levels: {
+                [key: string]: ("green" | "blue" | "amber" | "red") | null;
+            };
             /** Key */
             key: string;
             /** @description The highest severity in the latest run; null when it has none. */
