@@ -253,5 +253,34 @@ export function registerDsbfThemes() {
   echarts.registerTheme('dsbf-light', LIGHT)
 }
 
+// ── Marks ─────────────────────────────────────────────────────────────────────
+// The colours of the dashboard's meaningful marks, per theme. ECharts cannot read CSS
+// custom properties, so these repeat tokens.css; tokens.test.ts fails when they drift.
+export type MarkName =
+  'primary' | 'secondary' | 'reference' | 'green' | 'blue' | 'amber' | 'red' | 'none'
+
+export const MARKS: Record<'dark' | 'light', Record<MarkName, string>> = {
+  dark: {
+    primary: '#60a5fa',
+    secondary: '#fb923c',
+    reference: '#f87171',
+    green: '#4ade80',
+    blue: '#60a5fa',
+    amber: '#fbbf24',
+    red: '#f87171',
+    none: '#94a3b8',
+  },
+  light: {
+    primary: '#2563eb',
+    secondary: '#c2410c',
+    reference: '#dc2626',
+    green: '#15803d',
+    blue: '#2563eb',
+    amber: '#b45309',
+    red: '#dc2626',
+    none: '#64748b',
+  },
+}
+
 // Export raw objects for use in option merging if needed
 export { DARK as dsbfDarkTheme, LIGHT as dsbfLightTheme, PALETTE as dsbfPalette }

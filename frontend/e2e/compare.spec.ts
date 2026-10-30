@@ -17,7 +17,9 @@ test('a run links to a comparison with its previous run, and the diff shows the 
 }) => {
   const [head, base] = await runsOf(request, 'titanic')
   await page.goto(`/runs/${head!.run_id}`)
-  await page.locator('[data-role="compare-link"]').click()
+  const link = page.locator('[data-role="compare-link"]')
+  await expect(link).toHaveText('Compare with previous run')
+  await link.click()
 
   await expect(page.getByRole('heading', { name: 'Compare runs' })).toBeVisible()
   await expect(page.locator('[data-role="base"]')).toHaveValue(base!.run_id)

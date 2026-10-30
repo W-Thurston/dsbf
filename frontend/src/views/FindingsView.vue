@@ -1,10 +1,6 @@
 <template>
   <div class="stack">
     <section class="card" aria-labelledby="explorer-title">
-      <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-      </p>
       <h1 id="explorer-title" class="run-name">Findings</h1>
       <FindingFilters :query="query" :dimensions="dimensions" @change="go" />
     </section>
@@ -125,9 +121,6 @@ unwrap(api.GET('/v2/runs/{run_id}', { params: { path: { run_id: props.runId } } 
 <style scoped>
 .run-name {
   font-size: 22px;
-}
-.crumbs {
-  margin: 0 0 4px;
 }
 .findings {
   list-style: none;

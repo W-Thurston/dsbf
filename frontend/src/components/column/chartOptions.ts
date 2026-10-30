@@ -1,5 +1,8 @@
 import type { EChartsOption } from 'echarts'
 import type { components } from '../../generated/api'
+import { histogramBars, topValues } from '../charts/options'
+
+type Theme = 'dark' | 'light'
 
 type Histogram = components['schemas']['Histogram']
 type ValueCount = components['schemas']['ValueCount']
@@ -31,49 +34,16 @@ export function qqOf(
 }
 
 /** Bars on a value axis: each spans its stored edges, so the axis reads in the column's units. */
-export function histogramOption(histogram: Histogram | null): EChartsOption {
-  if (!histogram) return {}
-  const { edges, counts } = histogram
-  const bins = counts.map((count, i) => [edges[i], edges[i + 1], count])
-  return {
-    grid: { left: 56, right: 24, top: 16, bottom: 36 },
-    tooltip: {
-      trigger: 'item',
-      formatter: (p: unknown) => {
-        const [low, high, count] = (p as { value: number[] }).value
-        return `${low} to ${high}<br/>${count} values`
-      },
-    },
-    xAxis: { type: 'value', min: edges[0], max: edges[edges.length - 1], scale: true },
-    yAxis: { type: 'value', name: 'values' },
-    series: [
-      {
-        type: 'custom',
-        data: bins,
-        encode: { x: [0, 1], y: 2 },
-        renderItem: (_params, api) => {
-          const [x0 = 0, y0 = 0] = api.coord([api.value(0), api.value(2)])
-          const [x1 = 0, y1 = 0] = api.coord([api.value(1), 0])
-          return {
-            type: 'rect',
-            shape: { x: x0, y: y0, width: Math.max(x1 - x0 - 1, 1), height: y1 - y0 },
-            style: api.style(),
-          }
-        },
-      },
-    ],
-  }
+export function histogramOption(histogram: Histogram | null, theme: Theme = 'dark'): EChartsOption {
+  return histogram ? histogramBars(histogram.edges, histogram.counts, theme) : {}
 }
 
 /** The most common values as horizontal bars, largest first. */
-export function topValuesOption(values: ValueCount[]): EChartsOption {
-  return {
-    grid: { left: 120, right: 24, top: 8, bottom: 24 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'value' },
-    yAxis: { type: 'category', inverse: true, data: values.map((v) => String(v.value)) },
-    series: [{ type: 'bar', data: values.map((v) => v.count) }],
-  }
+export function topValuesOption(values: ValueCount[], theme: Theme = 'dark'): EChartsOption {
+  return topValues(
+    values.map((v) => ({ label: String(v.value), count: v.count })),
+    theme,
+  )
 }
 
 /** The column's quantiles against a fitted normal's, with the line through Q1 and Q3. */

@@ -1,10 +1,6 @@
 <template>
   <div class="stack">
     <section class="card" aria-labelledby="columns-title">
-      <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-      </p>
       <h1 id="columns-title" class="run-name">Columns</h1>
       <form class="filters" aria-label="Filter columns" @submit.prevent>
         <label>Name <input v-model.trim="name" type="search" /></label>
@@ -93,8 +89,5 @@ unwrap(api.GET('/v2/runs/{run_id}/columns', { params: { path: { run_id: props.ru
 <style scoped>
 .run-name {
   font-size: 22px;
-}
-.crumbs {
-  margin: 0 0 4px;
 }
 </style>

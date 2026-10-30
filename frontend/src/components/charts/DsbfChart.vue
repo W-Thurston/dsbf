@@ -111,9 +111,11 @@ import { ref, computed } from 'vue'
 import VChart from 'vue-echarts'
 import type { EChartsOption } from 'echarts'
 import { registerDsbfThemes } from '../../chartTheme'
+import { useThemeStore } from '../../stores/theme'
 
-// vue-echarts requires explicit component registration of the ECharts modules
-// you use. Import only what's needed to keep the bundle small.
+// vue-echarts requires explicit component registration of the ECharts modules you
+// use. Register only the chart types and components the dashboard's charts draw with;
+// a chart that needs another adds it here.
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import {
@@ -127,12 +129,9 @@ import {
 import {
   GridComponent,
   TooltipComponent,
-  LegendComponent,
   DataZoomComponent,
-  ToolboxComponent,
-  TitleComponent,
   MarkLineComponent,
-  MarkAreaComponent,
+  VisualMapComponent,
 } from 'echarts/components'
 
 use([
@@ -145,12 +144,9 @@ use([
   CustomChart,
   GridComponent,
   TooltipComponent,
-  LegendComponent,
   DataZoomComponent,
-  ToolboxComponent,
-  TitleComponent,
   MarkLineComponent,
-  MarkAreaComponent,
+  VisualMapComponent,
 ])
 
 // Registered here, not in main.ts, so echarts loads only with the first chart.
@@ -167,7 +163,7 @@ const props = withDefaults(
     option: EChartsOption
     title?: string
     subtitle?: string
-    theme?: 'dark' | 'light'
+    theme?: 'dark' | 'light' | null
     height?: string
     fillParent?: boolean
     loading?: boolean
@@ -180,7 +176,7 @@ const props = withDefaults(
   {
     title: '',
     subtitle: '',
-    theme: 'dark',
+    theme: null,
     height: '300px',
     fillParent: false,
     loading: false,
@@ -196,7 +192,10 @@ defineEmits<{ 'update:modelValue': [key: string] }>()
 
 // ── Internals ─────────────────────────────────────────────────────────────────
 const chartRef = ref<InstanceType<typeof VChart> | null>(null)
-const echartsTheme = computed(() => (props.theme === 'light' ? 'dsbf-light' : 'dsbf-dark'))
+// A chart follows the dashboard's theme unless the caller pins one.
+const themeStore = useThemeStore()
+const theme = computed(() => props.theme ?? themeStore.theme)
+const echartsTheme = computed(() => (theme.value === 'light' ? 'dsbf-light' : 'dsbf-dark'))
 
 // ── Export helpers ────────────────────────────────────────────────────────────
 function exportPng() {
@@ -205,7 +204,7 @@ function exportPng() {
   const url = chart.getDataURL({
     type: 'png',
     pixelRatio: 2, // retina-quality for slides
-    backgroundColor: props.theme === 'light' ? '#ffffff' : '#0f172a',
+    backgroundColor: theme.value === 'light' ? '#ffffff' : '#0f172a',
     excludeComponents: ['toolbox'],
   })
   download(url, `${props.exportName}.png`)

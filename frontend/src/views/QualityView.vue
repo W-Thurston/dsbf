@@ -1,46 +1,12 @@
 <template>
   <div class="stack">
     <section class="card" aria-labelledby="quality-title">
-      <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-      </p>
-      <h1 id="quality-title" class="run-name">Quality and ML readiness</h1>
+      <h1 id="quality-title" class="run-name">Quality</h1>
       <p class="muted">
-        Both summaries are read from other checks' findings. A dimension whose checks could not be
-        read has no level; it is not clear, only unassessed.
+        The summary is read from other checks' findings. A dimension whose checks could not be read
+        has no level; it is not clear, only unassessed.
       </p>
     </section>
-
-    <CheckCard v-slot="{ output }" :run-id="runId" check-id="ml_readiness" title="ML readiness">
-      <template v-for="ml in [asReadiness(output)]" :key="ml.gate">
-        <p class="gate" data-role="gate">
-          <span :class="['badge', gateClass(ml.gate)]">{{ gateWords(ml.gate) }}</span>
-          <span v-if="gateCaveat(ml, labels(ml))" class="muted" data-role="caveat">{{
-            gateCaveat(ml, labels(ml))
-          }}</span>
-        </p>
-        <div class="grid">
-          <DimensionCard
-            v-for="(d, key) in ml.dimensions"
-            :id="`ml-${key}`"
-            :key="key"
-            :run-id="runId"
-            :label="d.label"
-            :assessed="d.assessed"
-            :level="d.level"
-            :coverage="d.coverage"
-            :inputs="d.inputs"
-            :findings="d.findings"
-          />
-        </div>
-        <p class="muted" data-role="column-status">
-          {{ ml.action_columns.length }} column(s) need action,
-          {{ ml.advisory_columns.length }} have advice only, {{ ml.clean_columns.length }} have no
-          finding.
-        </p>
-      </template>
-    </CheckCard>
 
     <CheckCard
       v-slot="{ output }"
@@ -83,20 +49,11 @@
 import CheckCard from '../components/relationships/CheckCard.vue'
 import ColumnCoverage from '../components/quality/ColumnCoverage.vue'
 import DimensionCard from '../components/quality/DimensionCard.vue'
-import {
-  gateCaveat,
-  gateClass,
-  gateWords,
-  type QualityOutput,
-  type ReadinessOutput,
-} from '../components/quality/quality'
+import { type QualityOutput } from '../components/quality/quality'
 
 defineProps<{ runId: string }>()
 
-const asReadiness = (output: unknown) => output as ReadinessOutput
 const asQuality = (output: unknown) => output as QualityOutput
-const labels = (ml: ReadinessOutput) =>
-  Object.fromEntries(Object.entries(ml.dimensions).map(([key, d]) => [key, d.label]))
 </script>
 
 <style scoped>
@@ -104,13 +61,6 @@ const labels = (ml: ReadinessOutput) =>
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
-}
-.gate {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 16px;
-  margin-bottom: 12px;
 }
 .clean {
   display: flex;
