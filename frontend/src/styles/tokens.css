@@ -19,6 +19,20 @@ body {
   --info-fg: #cbd5e1;
   --ok-bg: #14291f;
   --ok-fg: #86efac;
+
+  /* Traffic-light marks (dots, bars, heatmap ends): drawn on --surface, so each is
+     checked at 3:1, the WCAG minimum for a graphical object. --level-none is the
+     grey of a dimension nobody assessed. */
+  --level-green: #4ade80;
+  --level-blue: #60a5fa;
+  --level-amber: #fbbf24;
+  --level-red: #f87171;
+  --level-none: #94a3b8;
+
+  /* Chart marks: the main series, a second series, and a reference line. */
+  --chart-primary: #60a5fa;
+  --chart-secondary: #fb923c;
+  --chart-reference: #f87171;
 }
 
 body.theme-light {
@@ -40,4 +54,14 @@ body.theme-light {
   --info-fg: #334155;
   --ok-bg: #dcfce7;
   --ok-fg: #166534;
+
+  --level-green: #15803d;
+  --level-blue: #2563eb;
+  --level-amber: #b45309;
+  --level-red: #dc2626;
+  --level-none: #64748b;
+
+  --chart-primary: #2563eb;
+  --chart-secondary: #c2410c;
+  --chart-reference: #dc2626;
 }

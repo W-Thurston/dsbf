@@ -1,10 +1,6 @@
 <template>
   <div class="stack">
     <section class="card" aria-labelledby="relationships-title">
-      <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-      </p>
       <h1 id="relationships-title" class="run-name">Relationships</h1>
       <p class="muted">
         Each cell is the statistic one check measured for that pair; an empty square was not tested.
@@ -278,9 +274,6 @@ unwrap(api.GET('/v2/runs/{run_id}/columns', path))
 <style scoped>
 .run-name {
   font-size: 22px;
-}
-.crumbs {
-  margin: 0 0 4px;
 }
 .coverage {
   margin: 0;

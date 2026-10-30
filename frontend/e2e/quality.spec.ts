@@ -21,29 +21,28 @@ test('a clean dataset is ready, and a dimension without a target is not assessed
 }) => {
   const run = await runOf(request, 'clean')
   await page.goto(`/runs/${run}/quality`)
-  await expect(
-    page.getByRole('heading', { name: 'Quality and ML readiness', level: 1 }),
-  ).toBeVisible()
-  await expect(page.locator('[data-role="gate"]')).toContainText('Ready for modelling')
-  await expect(page.locator('[data-role="caveat"]')).toContainText('Leakage risk')
-
+  await expect(page.getByRole('heading', { name: 'Quality', level: 1 })).toBeVisible()
   for (const id of [
     'quality-completeness',
     'quality-validity',
     'quality-usability',
     'quality-redundancy',
-    'ml-transformations',
-    'ml-encoding',
-    'ml-missingness',
-    'ml-unusable',
   ]) {
     await expect(level(page, id)).toHaveText('All clear')
   }
-  for (const id of ['quality-leakage', 'ml-leakage']) {
-    await expect(level(page, id)).toHaveText('Not assessed')
-    await expect(card(page, id).locator('[data-role="not-assessed"]')).toBeVisible()
-    await expect(level(page, id)).not.toHaveClass(/badge-ok/)
+  await expect(level(page, 'quality-leakage')).toHaveText('Not assessed')
+  await expect(card(page, 'quality-leakage').locator('[data-role="not-assessed"]')).toBeVisible()
+  await expect(level(page, 'quality-leakage')).not.toHaveClass(/badge-ok/)
+
+  await page.goto(`/runs/${run}/ml-readiness`)
+  await expect(page.locator('[data-role="gate"]')).toContainText('Ready for modelling')
+  await expect(page.locator('[data-role="caveat"]')).toContainText('Leakage risk')
+  for (const id of ['ml-transformations', 'ml-encoding', 'ml-missingness', 'ml-unusable']) {
+    await expect(level(page, id)).toHaveText('All clear')
   }
+  await expect(level(page, 'ml-leakage')).toHaveText('Not assessed')
+  await expect(card(page, 'ml-leakage').locator('[data-role="not-assessed"]')).toBeVisible()
+  await expect(level(page, 'ml-leakage')).not.toHaveClass(/badge-ok/)
 })
 
 test('every column of a clean dataset is listed as clean', async ({ page, request }) => {
@@ -58,10 +57,11 @@ test('missing values make completeness serious and the dataset not ready', async
   request,
 }) => {
   const run = await runOf(request, 'high_missingness')
-  await page.goto(`/runs/${run}/quality`)
+  await page.goto(`/runs/${run}/ml-readiness`)
   await expect(page.locator('[data-role="gate"]')).toContainText('Not ready for modelling')
-  await expect(level(page, 'quality-completeness')).toHaveText('Serious')
   await expect(level(page, 'ml-missingness')).toHaveText('Serious')
+  await page.goto(`/runs/${run}/quality`)
+  await expect(level(page, 'quality-completeness')).toHaveText('Serious')
   const completeness = card(page, 'quality-completeness')
   for (const column of ['device_type', 'premium_score', 'notes']) {
     await expect(completeness).toContainText(column)
@@ -73,7 +73,7 @@ test('a readiness finding offers its actions and links to the findings explorer'
   request,
 }) => {
   const run = await runOf(request, 'high_missingness')
-  await page.goto(`/runs/${run}/quality`)
+  await page.goto(`/runs/${run}/ml-readiness`)
   const missingness = card(page, 'ml-missingness')
   await expect(missingness.locator('.actions li').first()).toBeVisible()
   await missingness.locator('.findings a').first().click()

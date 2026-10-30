@@ -154,7 +154,64 @@ tabs. The Phase 6 line of links on the run page is replaced.
 
 ## Visual language
 
-Starting point, agreed with the user on 2026-10-29: the old dashboard's look (dark slate theme by
-default, a centred fixed-width layout, bordered cards with uppercase titles, traffic-light dots),
-changed only where a chart needs it. The user's complaint was the content (tables and text), not
-the theme. U6b-01 records the tokens, palettes, chart types and density here.
+Decided in U6b-01 and signed off by the user with the shell screenshots (2026-10-30). Starting point,
+agreed with the user on 2026-10-29: the old dashboard's look (dark slate theme by default, a
+centred fixed-width layout, bordered cards with uppercase titles, traffic-light dots), changed only
+where a chart needs it. The user's complaint was the content (tables and text), not the theme.
+
+**Tokens** (`frontend/src/styles/tokens.css`; `tokens.test.ts` checks every pair).
+- Surfaces and text keep the old slate palette in both themes, AA-checked at 4.5:1.
+- Meaning by colour has its own tokens, checked at 3:1 against the card surface (the WCAG minimum
+  for a graphical object): `--level-green|blue|amber|red` for the traffic lights and `--level-none`
+  for an unassessed dimension; `--chart-primary`, `--chart-secondary` and `--chart-reference` for
+  chart marks. Light-theme values are darker (for example green `#15803d`) so a dot holds 3:1 on white.
+- ECharts cannot read CSS variables, so `chartTheme.ts` repeats the marks per theme (`MARKS`), and
+  `tokens.test.ts` fails when the two drift.
+
+**Severity and level vocabulary.**
+- Four levels, always with words: green "All clear", blue "Minor", amber "Warning", red "Serious".
+  Colour never carries the state alone: every dot has an accessible label and the words beside it.
+- A fifth, grey state means "not assessed" (a dimension no check could read, such as leakage
+  without a target). It is an empty ring, not a filled dot, so it cannot be read as green.
+- Finding severity (info, notice, warn, error) keeps its badges; the levels are the dimensions'
+  roll-up, not a second scale of findings.
+
+**Categorical palette.** The ECharts theme palette in `chartTheme.ts` (blue, green, orange, red,
+purple, emerald, amber, sky, fuchsia, slate) is the series order. One series uses
+`--chart-primary`; a second uses `--chart-secondary`; a reference line (mean, threshold) is always
+`--chart-reference`, dashed.
+
+**Layout and density.** A centred page (max 1400 px). A run page is a stack: header (dataset ›
+run date, then rows × columns, depth, "sampled" when it was), the health bar, the six tabs, then
+the tab. Cards have a 1 px border, 10 px radius and 20 px padding; card titles are 13 px uppercase.
+The health bar is one compact card of five dots, with a hover or focus tooltip giving the
+dimension's definition and "N of M columns (x%)"; the dimensions a tab does not speak to are dimmed
+to 45%.
+
+**Chart components** (`frontend/src/components/charts/`). Each takes plain arrays, builds its
+option in `options.ts` (unit-tested without a canvas) and follows the dashboard theme unless a
+caller pins one.
+
+| Component | Draws | Notes |
+|---|---|---|
+| `HistogramChart` | bars on the stored bin edges, value axis | optional dashed reference lines (mean, median, thresholds) |
+| `BoxPlotChart` | one horizontal box per row | shared axis, so spreads compare |
+| `TopValuesChart` | horizontal bars, order as given | category labels on the y axis |
+| `HeatmapChart` | a labelled matrix | signed scales centre on zero (correlation); unsigned run min to max |
+| `SparklineChart` | inline 80 × 20 SVG line | not ECharts: a table row needs no chart chunk |
+| `StrengthBar` | stacked CSS bar of segments | segments sized by value, empty ones omitted |
+| `TrafficDot` | filled dot, or a ring for "not assessed" | accessible label |
+| `TrafficCard` | a card with dot, title and one summary line | grey state has a dashed border |
+| `LevelBanner` | a full-width banner with a level stripe | headline and detail |
+
+`DsbfChart` stays one lazy chunk. Its registrations are trimmed to the chart types and components
+the dashboard draws with (bar, line, heatmap, scatter, boxplot, custom; grid, tooltip, data zoom,
+mark line, visual map). Legend, toolbox, title and mark area are no longer registered. The visual
+map was used by the relationships heatmap but never registered, so its colour scale was not
+applied; it is now. The chunk went from 690,875 to 670,670 bytes.
+
+**Routes.** `/runs/:runId` is a shell (header, health bar, tabs); each tab is a child route
+(`''`, `quality`, `distributions`, `relationships`, `ml-readiness`, `time-series`), and the findings
+explorer and one-column pages are children with no tab. `/runs/:runId/columns` redirects to
+`distributions`. The ML readiness cards moved from the Quality page to their own tab; U6b-04 and
+U6b-08 redesign both.

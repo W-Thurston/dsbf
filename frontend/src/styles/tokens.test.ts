@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { MARKS as CHART_MARKS } from '../chartTheme'
 
 const css = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8')
 
@@ -39,6 +40,19 @@ const PAIRS: [string, string][] = [
   ['error-fg', 'surface'],
 ]
 
+// Marks that carry meaning by colour alone are checked at the 3:1 WCAG asks of a
+// graphical object.
+const MARKS = [
+  'level-green',
+  'level-blue',
+  'level-amber',
+  'level-red',
+  'level-none',
+  'chart-primary',
+  'chart-secondary',
+  'chart-reference',
+]
+
 describe.each([['body'], ['body.theme-light']])('the %s theme tokens', (selector) => {
   const theme = { ...tokens('body'), ...tokens(selector) }
 
@@ -46,5 +60,20 @@ describe.each([['body'], ['body.theme-light']])('the %s theme tokens', (selector
     expect(theme[foreground], foreground).toBeDefined()
     expect(theme[background], background).toBeDefined()
     expect(contrast(theme[foreground]!, theme[background]!)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it.each(MARKS)('%s is visible on the card surface (3:1)', (mark) => {
+    expect(theme[mark], mark).toBeDefined()
+    expect(contrast(theme[mark]!, theme['surface']!)).toBeGreaterThanOrEqual(3)
+  })
+
+  it('is repeated exactly by the chart theme', () => {
+    const marks = CHART_MARKS[selector === 'body' ? 'dark' : 'light']
+    for (const [name, value] of Object.entries(marks)) {
+      const token = ['green', 'blue', 'amber', 'red', 'none'].includes(name)
+        ? `level-${name}`
+        : `chart-${name}`
+      expect(theme[token], token).toBe(value)
+    }
   })
 })

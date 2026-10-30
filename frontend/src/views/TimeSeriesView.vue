@@ -1,10 +1,6 @@
 <template>
   <div class="stack">
     <section class="card" aria-labelledby="ts-title">
-      <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-      </p>
       <h1 id="ts-title" class="run-name">Time series</h1>
       <p v-if="state === 'loading'" class="loading">Loading…</p>
     </section>

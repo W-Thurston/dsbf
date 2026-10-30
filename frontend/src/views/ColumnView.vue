@@ -2,9 +2,7 @@
   <div class="stack">
     <section class="card" aria-labelledby="column-title">
       <p class="muted crumbs">
-        <router-link to="/">Datasets</router-link> /
-        <router-link :to="{ name: 'run', params: { runId } }">Run</router-link> /
-        <router-link :to="{ name: 'columns', params: { runId } }">Columns</router-link> /
+        <router-link :to="{ name: 'columns', params: { runId } }">Distributions</router-link> /
       </p>
       <h1 id="column-title" class="run-name">{{ column }}</h1>
       <p v-if="profile" class="muted">
@@ -30,7 +28,7 @@
         title="Histogram"
         :subtitle="histogramSubtitle"
         :theme="theme"
-        :option="histogramOption(profile.histogram)"
+        :option="histogramOption(profile.histogram, theme)"
         :empty="!profile.histogram"
         empty-message="No histogram: the column has no finite values."
         :export-name="`${column}-histogram`"
@@ -40,7 +38,7 @@
         v-if="topValues.length"
         title="Top values"
         :theme="theme"
-        :option="topValuesOption(topValues)"
+        :option="topValuesOption(topValues, theme)"
         :height="`${Math.max(topValues.length * 26 + 40, 120)}px`"
         :export-name="`${column}-top-values`"
       />

@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// One lazy chunk per route; the dashboard's views are added unit by unit. A dataset key
-// is a path or a name, so it travels percent-encoded in a single path segment.
+// One lazy chunk per route. A dataset key is a path or a name, so it travels
+// percent-encoded in a single path segment. A run's pages share one shell (header,
+// health bar, tabs); `meta.tab` names the tab a page belongs to, and a page without one
+// (the findings explorer, one column) leaves every tab inactive.
 export default createRouter({
   history: createWebHistory(),
   routes: [
@@ -15,45 +17,70 @@ export default createRouter({
     { path: '/compare', name: 'compare', component: () => import('../views/CompareView.vue') },
     {
       path: '/runs/:runId',
-      name: 'run',
-      component: () => import('../views/RunView.vue'),
+      component: () => import('../views/RunShell.vue'),
       props: true,
-    },
-    {
-      path: '/runs/:runId/findings',
-      name: 'findings',
-      component: () => import('../views/FindingsView.vue'),
-      props: true,
-    },
-    {
-      path: '/runs/:runId/columns',
-      name: 'columns',
-      component: () => import('../views/ColumnsView.vue'),
-      props: true,
-    },
-    {
-      path: '/runs/:runId/relationships',
-      name: 'relationships',
-      component: () => import('../views/RelationshipsView.vue'),
-      props: true,
-    },
-    {
-      path: '/runs/:runId/quality',
-      name: 'quality',
-      component: () => import('../views/QualityView.vue'),
-      props: true,
-    },
-    {
-      path: '/runs/:runId/time-series',
-      name: 'time-series',
-      component: () => import('../views/TimeSeriesView.vue'),
-      props: true,
-    },
-    {
-      path: '/runs/:runId/columns/:column',
-      name: 'column',
-      component: () => import('../views/ColumnView.vue'),
-      props: true,
+      children: [
+        {
+          path: '',
+          name: 'run',
+          component: () => import('../views/RunView.vue'),
+          props: true,
+          meta: { tab: 'overview' },
+        },
+        {
+          path: 'quality',
+          name: 'quality',
+          component: () => import('../views/QualityView.vue'),
+          props: true,
+          meta: { tab: 'quality' },
+        },
+        {
+          path: 'distributions',
+          name: 'columns',
+          component: () => import('../views/ColumnsView.vue'),
+          props: true,
+          meta: { tab: 'distributions' },
+        },
+        // The Phase 6 address of the column list.
+        {
+          path: 'columns',
+          redirect: (to) => ({ name: 'columns', params: to.params, query: to.query }),
+        },
+        {
+          path: 'columns/:column',
+          name: 'column',
+          component: () => import('../views/ColumnView.vue'),
+          props: true,
+          meta: { tab: 'distributions' },
+        },
+        {
+          path: 'relationships',
+          name: 'relationships',
+          component: () => import('../views/RelationshipsView.vue'),
+          props: true,
+          meta: { tab: 'relationships' },
+        },
+        {
+          path: 'ml-readiness',
+          name: 'ml-readiness',
+          component: () => import('../views/MlReadinessView.vue'),
+          props: true,
+          meta: { tab: 'ml-readiness' },
+        },
+        {
+          path: 'time-series',
+          name: 'time-series',
+          component: () => import('../views/TimeSeriesView.vue'),
+          props: true,
+          meta: { tab: 'time-series' },
+        },
+        {
+          path: 'findings',
+          name: 'findings',
+          component: () => import('../views/FindingsView.vue'),
+          props: true,
+        },
+      ],
     },
   ],
 })
