@@ -8,6 +8,7 @@ from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import HTMLResponse, Response
@@ -21,7 +22,7 @@ from dsbf.service.security import LOCAL_HOSTS, JsonWritesOnly, LocalHostOnly
 from dsbf.service.settings_routes import settings_router
 from dsbf.store import RunRepository
 
-API_VERSION = "1.9.0"
+API_VERSION = "1.10.0"
 """The version of the OpenAPI document; the breaking-change gate reads it."""
 
 
@@ -84,6 +85,8 @@ def create_app(
             allow_origins=list(cors_origins),
             allow_methods=["GET", "POST"],
         )
+    # The chart chunk is 670 KB of script; compressed it is a third of that.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(JsonWritesOnly, hosts=allowed_hosts, origins=tuple(cors_origins))
     app.add_middleware(LocalHostOnly, hosts=allowed_hosts)
     if static_dir is not None and static_dir.is_dir():

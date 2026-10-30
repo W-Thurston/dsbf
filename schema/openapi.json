@@ -1051,6 +1051,75 @@
         "title": "ConfidenceComparison",
         "type": "object"
       },
+      "DatasetFacts": {
+        "additionalProperties": false,
+        "description": "What a run's profile says about the dataset as a whole, without its columns.",
+        "properties": {
+          "approx_memory_bytes": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approx Memory Bytes"
+          },
+          "duplicate_rows": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rows equal to an earlier row; null if not computed.",
+            "title": "Duplicate Rows"
+          },
+          "missingness": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Missingness"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which columns go missing together; null if not computed."
+          },
+          "n_rows": {
+            "description": "Rows profiled, after any sampling.",
+            "minimum": 0.0,
+            "title": "N Rows",
+            "type": "integer"
+          },
+          "rows_with_any_null": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows With Any Null"
+          }
+        },
+        "required": [
+          "n_rows",
+          "approx_memory_bytes",
+          "duplicate_rows",
+          "rows_with_any_null",
+          "missingness"
+        ],
+        "title": "DatasetFacts",
+        "type": "object"
+      },
       "DatasetManifest": {
         "additionalProperties": false,
         "description": "The identity of the data a run looked at.",
@@ -2829,6 +2898,38 @@
         "title": "MetricComparison",
         "type": "object"
       },
+      "Missingness": {
+        "additionalProperties": false,
+        "description": "Which columns go missing together.",
+        "properties": {
+          "columns_considered": {
+            "description": "Columns paired: the ones with the most nulls, when there are more than the pairing limit.",
+            "minimum": 0.0,
+            "title": "Columns Considered",
+            "type": "integer"
+          },
+          "columns_with_nulls": {
+            "minimum": 0.0,
+            "title": "Columns With Nulls",
+            "type": "integer"
+          },
+          "pairs": {
+            "description": "The strongest co-occurring pairs, most similar first; only pairs that share at least one null row.",
+            "items": {
+              "$ref": "#/components/schemas/NullPair"
+            },
+            "title": "Pairs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "columns_with_nulls",
+          "columns_considered",
+          "pairs"
+        ],
+        "title": "Missingness",
+        "type": "object"
+      },
       "Note": {
         "additionalProperties": false,
         "description": "An operational message: why a check was skipped, failed or degraded.",
@@ -2918,6 +3019,42 @@
           "count"
         ],
         "title": "Note",
+        "type": "object"
+      },
+      "NullPair": {
+        "additionalProperties": false,
+        "description": "Two columns that are null in the same rows.",
+        "properties": {
+          "a": {
+            "description": "The earlier column in the dataset's column order.",
+            "title": "A",
+            "type": "string"
+          },
+          "b": {
+            "title": "B",
+            "type": "string"
+          },
+          "both_null": {
+            "description": "Rows where both columns are null.",
+            "minimum": 1.0,
+            "title": "Both Null",
+            "type": "integer"
+          },
+          "jaccard": {
+            "description": "Rows null in both over rows null in either: 1 means the columns are null in exactly the same rows.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Jaccard",
+            "type": "number"
+          }
+        },
+        "required": [
+          "a",
+          "b",
+          "both_null",
+          "jaccard"
+        ],
+        "title": "NullPair",
         "type": "object"
       },
       "NumericProfile": {
@@ -5300,7 +5437,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.9.0"
+    "version": "1.10.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -6627,6 +6764,60 @@
           }
         },
         "summary": "Get Coverage",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/v2/runs/{run_id}/dataset": {
+      "get": {
+        "description": "The dataset's shape, memory, duplicate rows and null co-occurrence.",
+        "operationId": "getDatasetFacts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasetFacts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblem"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Get Dataset Facts",
         "tags": [
           "runs"
         ]

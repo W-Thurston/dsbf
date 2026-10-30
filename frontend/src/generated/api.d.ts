@@ -349,6 +349,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/runs/{run_id}/dataset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Dataset Facts
+         * @description The dataset's shape, memory, duplicate rows and null co-occurrence.
+         */
+        get: operations["getDatasetFacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/runs/{run_id}/findings": {
         parameters: {
             query?: never;
@@ -986,6 +1006,28 @@ export interface components {
             /** @default == */
             op: components["schemas"]["Operator"];
             value: components["schemas"]["Confidence"];
+        };
+        /**
+         * DatasetFacts
+         * @description What a run's profile says about the dataset as a whole, without its columns.
+         */
+        DatasetFacts: {
+            /** Approx Memory Bytes */
+            approx_memory_bytes: number | null;
+            /**
+             * Duplicate Rows
+             * @description Rows equal to an earlier row; null if not computed.
+             */
+            duplicate_rows: number | null;
+            /** @description Which columns go missing together; null if not computed. */
+            missingness: components["schemas"]["Missingness"] | null;
+            /**
+             * N Rows
+             * @description Rows profiled, after any sampling.
+             */
+            n_rows: number;
+            /** Rows With Any Null */
+            rows_with_any_null: number | null;
         };
         /**
          * DatasetManifest
@@ -1739,6 +1781,24 @@ export interface components {
             value: boolean | number | string;
         };
         /**
+         * Missingness
+         * @description Which columns go missing together.
+         */
+        Missingness: {
+            /**
+             * Columns Considered
+             * @description Columns paired: the ones with the most nulls, when there are more than the pairing limit.
+             */
+            columns_considered: number;
+            /** Columns With Nulls */
+            columns_with_nulls: number;
+            /**
+             * Pairs
+             * @description The strongest co-occurring pairs, most similar first; only pairs that share at least one null row.
+             */
+            pairs: components["schemas"]["NullPair"][];
+        };
+        /**
          * Note
          * @description An operational message: why a check was skipped, failed or degraded.
          */
@@ -1778,6 +1838,29 @@ export interface components {
             message: string;
             /** @default info */
             severity: components["schemas"]["Severity"];
+        };
+        /**
+         * NullPair
+         * @description Two columns that are null in the same rows.
+         */
+        NullPair: {
+            /**
+             * A
+             * @description The earlier column in the dataset's column order.
+             */
+            a: string;
+            /** B */
+            b: string;
+            /**
+             * Both Null
+             * @description Rows where both columns are null.
+             */
+            both_null: number;
+            /**
+             * Jaccard
+             * @description Rows null in both over rows null in either: 1 means the columns are null in exactly the same rows.
+             */
+            jaccard: number;
         };
         /** NumericProfile */
         NumericProfile: {
@@ -3728,6 +3811,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunCoverage"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationProblem"];
+                };
+            };
+        };
+    };
+    getDatasetFacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasetFacts"];
                 };
             };
             /** @description Not Found */
