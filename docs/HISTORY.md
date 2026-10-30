@@ -99,6 +99,26 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
 | U5-11 | fix(checks): close the calibration gaps in outlier, bimodality, stationarity and duplicate checks | #141 | `d58077c` | 2026-10-26 |
 | U5-08 | docs: add guides, a generated check reference and an example workflow for embedded use | #142 | `06c4148` | 2026-10-26 |
 | U5-09 | build: add the wheel smoke install, a Windows leg, coverage and a release workflow for 1.0.0a1 | #143 | `28f330c` | 2026-10-26 |
+| U6-00 | docs: plan Phase 6 against the repository | #147 | `a03c940` | 2026-10-27 |
+| U6-01 | fix(checks): stop one-character deletion blocking from flooding fuzzy_duplicates with code-space pairs | #148 | `30e0208` | 2026-10-27 |
+| U6-02 | feat(engine): let a check attach bulky evidence as artifacts the run, cache and files carry | #149 | `b0066c9` | 2026-10-27 |
+| U6-03 | feat(engine): record a dataset key, the columns each check examined and the codes it can raise | #150 | `f41e377` | 2026-10-27 |
+| U6-04 | feat(store): keep runs, findings and their history in a SQLite repository | #151 | `b424a1c` | 2026-10-27 |
+| U6-05 | feat(store): keep each run's artifacts and a Parquet snapshot of the analysed data in an artifact store | #152 | `e2f978a` | 2026-10-28 |
+| U6-06 | feat(store): keep runs in the store from the CLI, compare any two runs and manage them with `dsbf runs` | #153 | `c753135` | 2026-10-28 |
+| U6-07 | feat(service): serve stored runs, findings, profiles, artifacts and comparisons over a read-only local API with `dsbf dashboard` | #154 | `0b0ce1b` | 2026-10-28 |
+| U6-08 | feat(service): run profiling jobs from the local API, queued in the store with progress events and cancel | #156 | `a89d36a` | 2026-10-28 |
+| U6-09 | feat(frontend): rebuild the dashboard shell in TypeScript on a client generated from the OpenAPI document | #157 | `15a6ac1` | 2026-10-28 |
+| U6-10 | feat(frontend): show a run's overview with its health, policy and findings in the dashboard, tested in a browser | #160 | `2dfdbf3` | 2026-10-28 |
+| U6-11 | feat(frontend): explore a run's findings with filters, sort, evidence and paged artifacts in the dashboard | #163 | `f75b769` | 2026-10-28 |
+| U6-12 | feat(frontend): browse a run's columns and see each one's profile, histogram, Q-Q plot, findings and sample in the dashboard | #164 | `95dc699` | 2026-10-29 |
+| U6-13 | feat(frontend): explore a run's pairwise relationships with a statistic-aware matrix and a pair plot from the data snapshot | #165 | `8c169d7` | 2026-10-29 |
+| U6-14 | feat(frontend): show a run's quality dimensions, ML-readiness gate and per-column coverage in the dashboard | #166 | `fa0c5cd` | 2026-10-29 |
+| U6-15 | feat(frontend): show a run's stationarity, ACF and PACF and STL decomposition in the dashboard, with an empty state for runs without a time index | #167 | `f0b441a` | 2026-10-29 |
+| U6-16 | feat(frontend): compare any two runs and follow a dataset's lineage and finding history in the dashboard | #168 | `71d77cd` | 2026-10-29 |
+| U6-17 | feat(frontend): edit a dataset's saved settings in a generated form and rerun it from the dashboard | #169 | `02a0ad6` | 2026-10-29 |
+| U6-18 | feat(schema): record a run's settings, raise the run and table schemas to 1.0.0 and gate the run comparison schema | #170 | `7dba424` | 2026-10-29 |
+| U6-19 | feat(dashboard): bundle the dashboard in the wheel and gate coverage | this PR (filled in by the next unit) | | 2026-10-29 |
 
 ---
 
@@ -267,3 +287,45 @@ Every unit is one squash-merged PR. The commit subject is the PR title.
   - The Windows leg, `twine check`, the release workflow and the coverage step ran for the first time on the U5-09 PR; the perf baseline predates U5-11 and is promoted from the 2026-10-27 nightly (carried to U6-00).
   - The HTML report omits the policy outcome (the CLI prints it); the dashboard or report shows it in Phase 6.
 - **PRs:** #132 (U5-00, `b93ff03`), #133 (U5-10, `24c33cd`), #134 (U5-01, `b68ae76`), #135 (U5-02, `502dbec`), #136 (U5-03, `aa0c552`), #137 (U5-04, `569b60b`), #138 (U5-05, `385a80f`), #139 (U5-06, `92810b4`), #140 (U5-07, `9c0e862`), #141 (U5-11, `d58077c`), #142 (U5-08, `06c4148`), #143 (U5-09, `28f330c`).
+
+---
+
+## Phase 6: Store, service and dashboard v2. Standalone local
+
+- **Capability:** Artifacts for bulky evidence, a run store (SQLite with Alembic) and an artifact store (fsspec) with a snapshot of the data as profiled, `dsbf runs ...`, API v2 with a local job runner, a generated TypeScript client, and the dashboard rebuilt in TypeScript on API v2 and served by `dsbf dashboard` from the wheel; stable 1.0 schemas and release `1.0.0`.
+- **Motivation:** Mode 2 (standalone, local): DSBF is the pipeline, with history and a bundled UI (REFACTOR_PLAN §8.2–§8.4).
+- **Boundaries:** Local and single-user only: no Postgres, auth or queue (Phase 8). API v1 and the old store were deleted in U4-18, so this phase builds new and migrates nothing. Drift from stored profiles and recurring-dataset views stay in Phase 7 (T4); this phase keeps the history of a finding across runs. The result schemas become stable at `1.0.0`, so the contract changes the store and dashboard need land before it (U6-02, U6-03, U6-18).
+- **Sequence and dependencies:** Depends on Phase 5. The fuzzy-duplicate cost first, so later units measure against a green perf baseline; then the contract changes, the store, `dsbf runs`, the read API, jobs, the TypeScript client, the dashboard shell and its tabs one by one, the stable schemas, and the bundled release.
+- **Success criteria:**
+  - `pip install "dsbf[server]" && dsbf check data.csv --sink store && dsbf dashboard` works on a clean machine, as a CI job.
+  - Opening a run transfers under 200 KB (titanic, measured by the Playwright test).
+  - Every published schema is at 1.0.0, guarded by its breaking-change gate.
+  - The perf, golden and calibration nightlies are green on the release commit, and `1.0.0` is on PyPI.
+- **Decided in U6-00 (2026-10-27), for the whole phase:**
+  - Comparison is explicit: `dsbf runs diff`, the compare endpoint and the compare view take any two runs, even of different datasets (train against test, staging against production). The dashboard pre-fills the previous run of the same dataset, nothing more. (Asked the user.)
+  - Dataset key, which groups runs into a history: an explicit `dataset` (`--dataset`, `dataset=`) wins; otherwise the canonical source location (the absolute path of a file; a connection and table from Phase 7). An in-memory frame with no key is stored ungrouped: comparable, with no history. Every run records its name, location and fingerprint, so a change of source shows in the lineage. The pipeline guide tells pipelines to set the key.
+  - The dashboard is a new TypeScript app that replaces the old one (asked the user): Vue 3, Pinia, vue-router 5, ECharts only. Tests grow with the tabs (Vitest component tests and a Playwright test per tab against a fixture store), and routes are split from the shell, so there is no separate frontend-test or code-split unit.
+  - The store keeps a snapshot of the data as profiled, on by default and capped, with a setting to turn it off (asked the user).
+  - Artifacts on fsspec as ADR 0008 says, local in this phase.
+  - Jobs run on one worker thread in the server, persisted in the store, with progress read by polling.
+  - The service binds `127.0.0.1`, rejects a `Host` that is not local, takes POSTs only as JSON, has no CORS unless configured, and has no auth (Phase 8).
+  - One release, `1.0.0`, at the end.
+
+**Done (2026-10-29), 20 units.** Detailed unit entries were condensed here at close-out; the notes later units depend on were carried into them. Two success criteria were not met in this program: the review on 2026-10-29 found the dashboard unusable as a visual exploration, so Phase 6b (dashboard design) was added and the `1.0.0` release moved to its end.
+
+- **Capability delivered:** a check can attach bulky evidence as artifacts, which ride on the `Run`, the cache and the `json` sink. `--sink store` keeps runs in a SQLite repository (Alembic revisions 0001–0004: datasets, runs, profiles, check results, findings, artifacts, jobs and per-dataset settings) with an fsspec artifact store and a capped Parquet snapshot of the data as profiled. `dsbf runs` (`list`, `show`, `diff`, `delete`, `gc`, `import`) and `dsbf.compare` read it. `dsbf.service` is a local FastAPI app (`/v2`, `schema/openapi.json`) with read endpoints, a job runner for profiling and rerunning, and a local-only security model. The dashboard is a TypeScript Vue 3 app on a generated client, served with the API by `dsbf dashboard` from the wheel: datasets with lineage and finding history, a run overview with the health panel, findings, columns, relationships, quality and ML readiness, time series, comparison of any two runs, and a settings form with a rerun. The run and Parquet table schemas are at 1.0.0, `RunDiff` joined the breaking-change gates, and the compatibility rules are in `docs/guides/compatibility.md`. The dashboard is a first version with a page per area, mostly tables and cards; the user judged it unusable as a visual exploration (see the deviations).
+- **Success criteria, measured:**
+  - `pip install "dsbf[server]" && dsbf check data.csv --sink store && dsbf dashboard` as a CI job: the `package` job and the Windows leg build the frontend into the wheel, install it with `[server]` in a clean venv, run `dsbf check --sink store`, start `dsbf dashboard` and fetch `/`, a run summary and a page-route fallback (`.github/scripts/smoke_install.sh`). Run locally on Linux on the built wheel: passed. The release workflow builds the dashboard into the wheel and checks that it is in the TestPyPI install.
+  - Opening a run transfers under 200 KB: 151.4 KB for titanic in the Playwright test (U6-10 measured 146 KB).
+  - Every published schema at 1.0.0 and gated: the run, tables and `RunDiff` (U6-18), the policy (version 1), each check's own 1.x; OpenAPI stays on its 1.x line (1.8.0) because its gate refuses a version that goes backwards.
+  - Nightlies green on the release commit and `1.0.0` on PyPI: **not met in this program.** The release moved to the end of Phase 6b, so the version stays `1.0.0a1` and the changelog's section is `[Unreleased]`.
+- **Key decisions:** comparison is explicit and takes any two runs, with the previous run of a dataset only pre-filled (asked the user); the dataset key is an explicit `dataset` or else the file's absolute path; the dashboard is a new TypeScript app that replaced the old one (asked the user); the data snapshot is on by default and capped (asked the user); artifacts on fsspec as in ADR 0008; jobs on one worker thread persisted in the store; the service binds local addresses only, checks `Host`, takes JSON writes only and has no auth; the frontend is built in CI and the release workflow and never committed, and a checkout's `frontend/dist` wins over the packaged copy; the coverage floor is 95 (measured 96%).
+- **Deviations from the phase block:**
+  - The phase block's acceptance for the dashboard was functional (the right data, empty states, a test and a size budget per page), with no visual acceptance. Reviewing the finished dashboard on 2026-10-29, the user found it "entirely unusable": tables, counts and cards, "more like a knowledge base page" than a visual exploration of data, and less than the old dashboard. The user chose to merge U6-19 without tagging and to add Phase 6b (dashboard design and the `1.0.0` release); U6-19 therefore did not release.
+  - Three units were added after U6-00: the fuzzy-duplicate regression (U6-01), the contract fields the store needs (U6-03) and the stable schemas (U6-18). Several tab units added the API endpoints their tab needed (columns, relationships, coverage, lineage, settings) beyond U6-07's.
+  - Cancelling a job needed an engine change (`execute(cancel=)`), and the health panel moved `not_applicable` checks into `RunHealth.issues` (run schema 0.13.0).
+  - OpenAPI is not at 1.0.0.
+  - The archetype fixture stores for the dashboard checklist (`severe_multicollinearity`, `wide`, `all_categorical`, `single_column`; quality and readiness for the other archetypes) were not built, and those lines are not Playwright tests.
+  - `RunDiff` reports count-scaled statistics as changed when two runs differ in sample size; the user deferred it (a documented 1.x limitation, carried to U7-00).
+  - `gc` leaves a dataset's settings overlay behind when it deletes the dataset's last run (carried to U7-00).
+- **PRs:** #147 (U6-00, `a03c940`), #148 (U6-01, `30e0208`), #149 (U6-02, `b0066c9`), #150 (U6-03, `f41e377`), #151 (U6-04, `b424a1c`), #152 (U6-05, `e2f978a`), #153 (U6-06, `c753135`), #154 (U6-07, `0b0ce1b`), #156 (U6-08, `a89d36a`), #157 (U6-09, `15a6ac1`), #160 (U6-10, `2dfdbf3`), #163 (U6-11, `f75b769`), #164 (U6-12, `95dc699`), #165 (U6-13, `8c169d7`), #166 (U6-14, `fa0c5cd`), #167 (U6-15, `f0b441a`), #168 (U6-16, `71d77cd`), #169 (U6-17, `02a0ad6`), #170 (U6-18, `7dba424`), and U6-19 (this PR, filled in by the next unit).

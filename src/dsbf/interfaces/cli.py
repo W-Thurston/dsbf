@@ -462,7 +462,7 @@ def dashboard(
         True, "--open/--no-open", help="Open the browser once the server starts."
     ),
 ) -> None:
-    """Serve the stored runs over the local API (and the dashboard, when built)."""
+    """Serve the stored runs and the dashboard over the local API."""
     try:
         from dsbf.service.serve import NotLocalError, serve  # noqa: PLC0415
     except ImportError as error:

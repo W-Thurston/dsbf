@@ -35,7 +35,7 @@ DSBF takes a different set of design bets:
 
 `run.write(dir, sinks=["html"])` (or `dsbf profile --sink html`) writes a self-contained `report.html` with the health summary, the findings by dimension and severity, and a profile of every column; it opens offline and can be sent to a person. [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) shows how to build your own view from the Parquet tables, the NDJSON stream or `run.json`.
 
-`dsbf profile data.csv -s store` keeps the run in a local store, and `dsbf dashboard` serves it over a local API. In a source checkout, `pnpm --dir frontend build` first and `dsbf dashboard` also serves the Vue 3 dashboard in `frontend/`: the datasets and runs, and each run's overview (health with the reason for every check that did not run, the policy verdict, finding counts and the top findings). The other pages (findings, columns, relationships, quality, ML readiness, time series) are rebuilt unit by unit (Phase 6 in [`ROADMAP.md`](ROADMAP.md)); the dashboard is not in the wheel until the end of that phase.
+`dsbf check data.csv --sink store` keeps the run in a local store, and `dsbf dashboard` serves the store and the Vue 3 dashboard on one local port; the wheel built from `main` carries the dashboard, and `pip install "dsbf[server]"` adds what it needs. **The dashboard is a first version and is being redesigned:** it shows the right data page by page, but mostly as tables and cards, and a visual, chart-led design is the work of Phase 6b. It has the datasets and their lineage, each run's overview (health with the reason for every check that did not run, the policy verdict, finding counts), findings, columns, relationships, quality and ML readiness, time series, a comparison of two runs and a form for a dataset's settings with a rerun. [Run DSBF on your own machine](docs/guides/standalone-local.md) walks through it; in a checkout, `.github/scripts/build_dashboard.sh` builds the frontend into the package.
 
 The screenshot shows what the previous dashboard presented: five traffic-light quality indicators (Completeness, Validity, Usability, Redundancy, Leakage), per-column distributions, pairwise associations, severity-ranked findings, five ML-preparation dimensions with a gate, and time series diagnostics. `run.results["quality_dimensions"]` and `run.results["ml_readiness"]` already carry the quality and readiness levels.
 
@@ -86,6 +86,8 @@ The first release, `1.0.0a1`, is an alpha on PyPI. A pre-release needs the exact
 pip install dsbf==1.0.0a1
 ```
 
+That release has the engine, the checks, the sinks and the CLI. The run store (`--sink store`, `dsbf runs`), the local API and `dsbf dashboard` are on `main` and ship with the next release, `1.0.0`, which waits for the dashboard redesign (Phase 6b in [`ROADMAP.md`](ROADMAP.md)).
+
 To work on DSBF, install from a checkout:
 
 ```bash
@@ -103,12 +105,13 @@ uv sync
 | `text` | rapidfuzz | `fuzzy_duplicates` (runs at the `deep` depth) |
 | `excel` | fastexcel | reading `.xlsx` files |
 | `pandas` | pandas | passing pandas frames to `dsbf.profile()` |
-| `sql`, `server` | ibis, FastAPI and friends | reserved for later phases; nothing imports them yet |
+| `server` | FastAPI, SQLAlchemy and friends | the run store (`--sink store`, `dsbf runs`) and `dsbf dashboard` |
+| `sql` | ibis | reserved for a later phase; nothing imports it yet |
 | `all` | every extra above | |
 
 A check whose extra is missing ends `unavailable` with the `pip install 'dsbf[...]'` line that fixes it, and the rest of the run is unaffected. In a checkout, `uv sync` installs the extras the tests need as well as the dev tools, and `uv sync --no-dev` is the base install.
 
-**Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only for the dashboard source in `frontend/`)
+**Requirements:** Python 3.12+ · [uv](https://docs.astral.sh/uv/) · Node.js 24 (only to build the dashboard in a checkout)
 
 ---
 
@@ -167,6 +170,7 @@ uv run dsbf check data.csv --policy policy.yaml --out results --sink json --sink
 
 - [Use DSBF in your pipeline](docs/guides/pipeline.md), with an [example GitHub Actions workflow](examples/github-actions/dsbf-check.yml) that uploads Parquet findings
 - [Write a policy](docs/guides/policy.md)
+- [Run DSBF on your own machine](docs/guides/standalone-local.md)
 - [Consume DSBF findings in your own dashboard](docs/guides/dashboard.md) and [in your warehouse](docs/CONSUMING_PARQUET.md)
 - [Write a check](docs/guides/write-a-check.md)
 - [What stays compatible in 1.x](docs/guides/compatibility.md)

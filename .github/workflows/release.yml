@@ -38,13 +38,29 @@ jobs:
             exit 1
           fi
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Build the dashboard into the wheel's files
+        shell: bash
+        run: .github/scripts/build_dashboard.sh
+
       - name: Build
         run: uv build
 
       - name: Check the metadata
         run: uvx twine check dist/*
 
-      - name: Install and run the wheel
+      - name: Install and run the wheel, and serve its dashboard
         run: .github/scripts/smoke_install.sh dist/*.whl
 
       - name: Upload the distributions
@@ -110,6 +126,7 @@ jobs:
           "$RUNNER_TEMP/venv/bin/dsbf" version
           "$RUNNER_TEMP/venv/bin/dsbf" check small.csv --out out
           test -s out/run.json
+          test -s "$RUNNER_TEMP"/venv/lib/python*/site-packages/dsbf/service/dashboard/index.html
 
   publish:
     name: Publish to PyPI

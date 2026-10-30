@@ -210,11 +210,14 @@ class TestTimeoutKillsTheWorker:
 
     def test_the_budget_kills_a_worker_too(self, tmp_path):
         pid_file = tmp_path / "pid"
+        # A spawned worker (Windows) takes about 0.44 s to start, and the budget must
+        # outlast it for the worker to write its pid file before it is killed.
+        budget = 4.0 if sys.platform == "win32" else 0.8
 
         run = run_with(
             [toys.py_sleeper],
             params={"py_sleeper": {"path": str(pid_file)}},
-            limits=Limits(run_budget_seconds=0.8, cancel_grace_seconds=0.05),
+            limits=Limits(run_budget_seconds=budget, cancel_grace_seconds=0.05),
         )
 
         result = run.results["py_sleeper"]

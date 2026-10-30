@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.responses import Response
+from starlette.responses import HTMLResponse, Response
 from starlette.types import Scope
 
 from dsbf.service.job_routes import job_router
@@ -90,7 +90,24 @@ def create_app(
         app.mount(
             "/", DashboardFiles(directory=static_dir, html=True), name="dashboard"
         )
+    else:
+        app.add_api_route(
+            "/",
+            _dashboard_missing,
+            methods=["GET"],
+            include_in_schema=False,
+            response_class=HTMLResponse,
+        )
     return app
+
+
+def _dashboard_missing() -> str:
+    return (
+        "<!doctype html><title>DSBF</title><h1>The dashboard is not installed</h1>"
+        "<p>This build of DSBF has no dashboard files, so only the API is served: "
+        '<a href="/v2/docs">/v2/docs</a>. Install a release wheel, or build the '
+        "frontend (<code>pnpm --dir frontend build</code>) in a source checkout.</p>"
+    )
 
 
 def openapi_document() -> dict[str, Any]:
