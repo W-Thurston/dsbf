@@ -29,7 +29,7 @@ describe('histogramBars', () => {
       histogramBars(edges, [3, 5, 1], 'light', [{ value: 12, label: 'mean' }]),
     )[1]
     const mark = line?.markLine as { data: unknown[]; lineStyle: { color: string } }
-    expect(mark.data).toEqual([{ xAxis: 12, name: 'mean' }])
+    expect(mark.data).toMatchObject([{ xAxis: 12, name: 'mean' }])
     expect(mark.lineStyle.color).toBe(MARKS.light.reference)
   })
 

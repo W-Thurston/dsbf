@@ -118,7 +118,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Quality on titanic and `high_missingness`, in both themes.
 
 ### U6b-05 · Findings explorer
-- **Status:** done (2026-10-30) · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-30, #178 `f1a3a91`) · **Size:** S · **Depends on:** U6b-01
 - **Notes:** The explorer reuses the Overview's findings-by-dimension-and-severity chart as its count chart; the chart's dimension names and severities, each Quality section's count and each ML Readiness check count link into the explorer filtered. Deviation: ML Readiness links by check, as its dimensions are not finding dimensions. The list and filter form were not restyled.
 - **Goal:** The findings explorer (a Phase 6 page with no old counterpart; closest to the old data signals and Quality sections) in the new shell and visual language: severity and dimension counts charted above the filters, every finding count elsewhere linking into it with its filter set, and the detail showing guidance as the Quality tab does.
 - **Assumptions to confirm:** the explorer's filter state is already in the URL, so counts on other pages can link to a filtered view.
@@ -126,7 +126,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the explorer on titanic, filtered and unfiltered, in both themes.
 
 ### U6b-06 · Distributions tab
-- **Status:** todo · **Size:** L · **Depends on:** U6b-01
+- **Status:** done (2026-10-30) · **Size:** L · **Depends on:** U6b-01
+- **Notes:** The Phase 6 column page became this tab's detail: one master-detail page serves `columns` and `columns/:column`. Q-Q data exists only for columns the normality check flags, so passing columns say why there is no plot. The bimodal overlay is a toggle, off by default, chosen by the user. The outlier consensus callout is not yet coloured by consensus (carried to U6b-12).
 - **Goal:** Distributions answers "what does each column look like?" (inventory: Distributions). The column browser grouped by type, with a warning dot and a missing % bar per column; the column heading; the stats strip by type; the distribution chart from the profile's real histogram, with mean and median lines and a box-plot toggle for numeric columns and a top-values bar for categorical ones; the column's guidance beside the chart; the bimodal callout; percentiles or value counts and text lengths; outlier analysis (IQR, z-score, MAD and their consensus); normality with the Q-Q plot built from `QQData` (the old dashboard's placeholder); the top correlations, each selecting that column. The column page from Phase 6 becomes this tab's detail.
 - **Assumptions to confirm:** every numeric profile has a histogram (or say when it does not); whether the bimodal callout should overlay the two fitted components on the histogram (prototype it on a bimodal archetype; ask the user).
 - **Steps:** the tab and its parts; the Q-Q chart; Playwright tests for the column checklist lines.
@@ -172,6 +173,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-12 · Screenshot review on the fixture store
 - **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Carry in from U6b-06:** the Distributions tab's outlier consensus callout has one amber border whether or not the methods agree; colour it by consensus.
 - **Carry in from U6b-04:** the Quality tab's Near-duplicate rows card says "did not run" on every run without that check; hide an absent optional check's card.
 - **Carry in from U6-19:** the quality lines for the other archetypes still need fixture stores.
 - **Carry in from U6b-01:** `e2e/run-shell.spec.ts` saves the shell screenshots when `SCREENSHOT_DIR` is set; extend that pattern to every page.

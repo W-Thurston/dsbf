@@ -37,7 +37,7 @@ export default createRouter({
         {
           path: 'distributions',
           name: 'columns',
-          component: () => import('../views/ColumnsView.vue'),
+          component: () => import('../views/DistributionsView.vue'),
           props: true,
           meta: { tab: 'distributions' },
         },
@@ -49,7 +49,7 @@ export default createRouter({
         {
           path: 'columns/:column',
           name: 'column',
-          component: () => import('../views/ColumnView.vue'),
+          component: () => import('../views/DistributionsView.vue'),
           props: true,
           meta: { tab: 'distributions' },
         },
