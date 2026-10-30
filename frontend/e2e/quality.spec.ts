@@ -21,7 +21,7 @@ test('a clean dataset is ready, and a dimension without a target is not assessed
 }) => {
   const run = await runOf(request, 'clean')
   await page.goto(`/runs/${run}/quality`)
-  await expect(page.getByRole('heading', { name: 'Quality', level: 1 })).toBeVisible()
+  await expect(page.locator('[data-role="trust"]')).toContainText('Looking good')
   for (const id of [
     'quality-completeness',
     'quality-validity',
@@ -31,7 +31,7 @@ test('a clean dataset is ready, and a dimension without a target is not assessed
     await expect(level(page, id)).toHaveText('All clear')
   }
   await expect(level(page, 'quality-leakage')).toHaveText('Not assessed')
-  await expect(card(page, 'quality-leakage').locator('[data-role="not-assessed"]')).toBeVisible()
+  await expect(page.locator('[data-section="leakage"] [data-role="not-assessed"]')).toBeVisible()
   await expect(level(page, 'quality-leakage')).not.toHaveClass(/badge-ok/)
 
   await page.goto(`/runs/${run}/ml-readiness`)
@@ -62,7 +62,7 @@ test('missing values make completeness serious and the dataset not ready', async
   await expect(level(page, 'ml-missingness')).toHaveText('Serious')
   await page.goto(`/runs/${run}/quality`)
   await expect(level(page, 'quality-completeness')).toHaveText('Serious')
-  const completeness = card(page, 'quality-completeness')
+  const completeness = page.locator('[data-section="completeness"]')
   for (const column of ['device_type', 'premium_score', 'notes']) {
     await expect(completeness).toContainText(column)
   }
@@ -97,4 +97,78 @@ test('the run overview links to the tab', async ({ page, request }) => {
   await page.goto(`/runs/${run}`)
   await page.getByRole('link', { name: 'Quality' }).click()
   await expect(page).toHaveURL(new RegExp(`/runs/${run}/quality$`))
+})
+
+test('the trust banner names the worst level and a card opens its section', async ({
+  page,
+  request,
+}) => {
+  const run = await runOf(request, 'high_missingness')
+  await page.goto(`/runs/${run}/quality`)
+  await expect(page.locator('[data-role="trust"]')).toContainText('Needs attention')
+  await expect(page.locator('[data-role="trust"]')).toContainText('fully clean')
+  const section = page.locator('[data-section="usability"]')
+  if (await section.evaluate((e: HTMLDetailsElement) => e.open)) {
+    await section.locator('summary').click()
+  }
+  await expect(section).not.toHaveAttribute('open', '')
+  await card(page, 'quality-usability').click()
+  await expect(section).toHaveAttribute('open', '')
+})
+
+test('a finding row expands to its evidence and guidance', async ({ page, request }) => {
+  const run = await runOf(request, 'high_missingness')
+  await page.goto(`/runs/${run}/quality`)
+  const completeness = page.locator('[data-section="completeness"]')
+  const row = completeness.locator('tr.row', { hasText: 'notes' }).first()
+  await row.getByRole('button').click()
+  const detail = completeness.locator('[data-role="finding-detail"]').first()
+  await expect(detail).toContainText('null share')
+  await expect(detail).toContainText('0.75')
+  await expect(detail.locator('.guidance li').first()).toBeVisible()
+  await row.getByRole('button').click()
+  await expect(completeness.locator('[data-role="finding-detail"]')).toHaveCount(0)
+})
+
+test('the findings table sorts by column', async ({ page, request }) => {
+  const run = await runOf(request, 'high_missingness')
+  await page.goto(`/runs/${run}/quality`)
+  const completeness = page.locator('[data-section="completeness"]')
+  await completeness.getByRole('button', { name: 'Column' }).click()
+  await expect(completeness.locator('th[aria-sort="ascending"]')).toContainText('Column')
+  const columns = await completeness.locator('tr.row td:nth-child(3)').allTextContents()
+  expect(columns).toEqual([...columns].sort((a, b) => a.localeCompare(b)))
+})
+
+test('missingness that depends on another column is drawn as bars', async ({ page, request }) => {
+  const run = await runOf(request, 'high_missingness')
+  await page.goto(`/runs/${run}/quality`)
+  const device = page.locator('[data-column="device_type"]')
+  await expect(device).toContainText('Depends on other columns')
+  await expect(device.locator('[data-predictor="channel"]')).toContainText('0.89')
+  await expect(page.locator('[data-column="notes"]')).toContainText('No dependence found')
+})
+
+test('near-duplicate rows are listed with their similarity', async ({ page, request }) => {
+  const run = await runOf(request, 'cities')
+  await page.goto(`/runs/${run}/quality`)
+  const pairs = page.locator('[data-role="pair"]')
+  await expect(pairs.first()).toContainText('%')
+  await expect(pairs.first()).toContainText('name')
+})
+
+// With SCREENSHOT_DIR set, save the tab in both themes for review.
+test('save the quality screenshots', async ({ page, request }) => {
+  const dir = process.env.SCREENSHOT_DIR
+  test.skip(!dir, 'SCREENSHOT_DIR is not set')
+  await page.setViewportSize({ width: 1280, height: 900 })
+  for (const dataset of ['titanic', 'high_missingness']) {
+    const run = await runOf(request, dataset)
+    for (const theme of ['dark', 'light']) {
+      await page.goto(`/runs/${run}/quality`)
+      if (theme === 'light') await page.getByRole('button', { name: /theme/ }).click()
+      await expect(page.locator('[data-role="trust"]')).toBeVisible()
+      await page.screenshot({ path: `${dir}/quality-${dataset}-${theme}.png`, fullPage: true })
+    }
+  }
 })

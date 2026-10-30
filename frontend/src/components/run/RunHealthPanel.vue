@@ -14,17 +14,30 @@
     </p>
 
     <template v-for="status in issueStatuses" :key="status">
-      <h3 class="group">{{ words(status) }}</h3>
-      <ul class="issues" :data-status="status">
-        <li v-for="issue in issuesWith(status)" :key="issue.check_id">
-          <code>{{ issue.check_id }}</code>
-          <p>{{ issue.message }}</p>
-          <p v-if="issue.hint" class="muted">Hint: {{ issue.hint }}</p>
-          <p v-if="issue.blocked_by.length" class="muted">
-            Blocked by <code>{{ issue.blocked_by.join(', ') }}</code>
-          </p>
-        </li>
-      </ul>
+      <details v-if="status === 'not_applicable'" class="collapsed" data-role="not-applicable">
+        <summary>
+          {{ words(status) }} <span class="count">{{ issuesWith(status).length }}</span>
+        </summary>
+        <ul class="issues" :data-status="status">
+          <li v-for="issue in issuesWith(status)" :key="issue.check_id">
+            <code>{{ issue.check_id }}</code>
+            <p>{{ issue.message }}</p>
+          </li>
+        </ul>
+      </details>
+      <template v-else>
+        <h3 class="group">{{ words(status) }}</h3>
+        <ul class="issues" :data-status="status">
+          <li v-for="issue in issuesWith(status)" :key="issue.check_id">
+            <code>{{ issue.check_id }}</code>
+            <p>{{ issue.message }}</p>
+            <p v-if="issue.hint" class="muted">Hint: {{ issue.hint }}</p>
+            <p v-if="issue.blocked_by.length" class="muted">
+              Blocked by <code>{{ issue.blocked_by.join(', ') }}</code>
+            </p>
+          </li>
+        </ul>
+      </template>
     </template>
 
     <template v-if="notes.length">
@@ -103,6 +116,15 @@ function statusClass(status: Status): string {
   font-size: 13px;
   text-transform: capitalize;
   margin: 16px 0 6px;
+}
+.collapsed {
+  margin: 16px 0 6px;
+  font-size: 13px;
+}
+.collapsed summary {
+  cursor: pointer;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 .issues {
   list-style: none;

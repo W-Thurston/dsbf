@@ -7,12 +7,14 @@
 // ECharts (about 700 KB, 236 KB gzipped, fetched only on a page with a chart); the
 // entry budget, which every page pays, is unchanged. The Overview (2026-10-30) raised
 // the total from 880 to 900 KB: its table, sample, missingness and signals parts add
-// about 7 KB of lazy route code; the entry chunk did not grow past its budget.
+// about 7 KB of lazy route code; the entry chunk did not grow past its budget. The Quality
+// tab (2026-10-30) raised it to 920 KB: its sections, finding rows and missingness and
+// near-duplicate panels add about 10 KB of lazy route code; the entry chunk is unchanged.
 import { readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const KB = 1024
-const BUDGET = { entry: 110 * KB, total: 900 * KB }
+const BUDGET = { entry: 110 * KB, total: 920 * KB }
 const assets = join(import.meta.dirname, '..', 'dist', 'assets')
 
 const files = readdirSync(assets).map((name) => ({ name, size: statSync(join(assets, name)).size }))
