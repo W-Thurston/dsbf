@@ -12,7 +12,14 @@
     <ul class="inputs">
       <li v-for="input in inputs" :key="input.check_id">
         <code>{{ input.check_id }}</code> {{ inputWords(input.state)
-        }}<template v-if="input.state === 'assessed'">, {{ input.findings }} finding(s)</template>
+        }}<template v-if="input.state === 'assessed'"
+          >,
+          <router-link
+            v-if="input.findings"
+            :to="{ name: 'findings', params: { runId }, query: { check: input.check_id } }"
+            >{{ input.findings }} finding(s)</router-link
+          ><template v-else>0 findings</template></template
+        >
       </li>
     </ul>
     <ul v-if="findings.length" class="findings">

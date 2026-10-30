@@ -1,5 +1,6 @@
 <template>
   <div class="stack">
+    <FindingCounts v-if="counts.length" :counts="counts" :run-id="runId" />
     <section class="card" aria-labelledby="explorer-title">
       <h1 id="explorer-title" class="run-name">Findings</h1>
       <FindingFilters :query="query" :dimensions="dimensions" @change="go" />
@@ -44,6 +45,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, unwrap } from '../api/client'
+import FindingCounts from '../components/run/FindingCounts.vue'
 import FindingDetail from '../components/findings/FindingDetail.vue'
 import FindingFilters from '../components/findings/FindingFilters.vue'
 import PagerNav from '../components/PagerNav.vue'
@@ -65,7 +67,8 @@ const query = computed(() => parseFindingQuery(route.query))
 
 const page = ref<components['schemas']['Page_Finding_'] | null>(null)
 const detail = ref<components['schemas']['Finding'] | null>(null)
-const dimensions = ref<string[]>([])
+const counts = ref<components['schemas']['FindingCount'][]>([])
+const dimensions = computed(() => [...new Set(counts.value.map((c) => c.dimension))].sort())
 const error = ref('')
 const detailError = ref('')
 
@@ -111,7 +114,7 @@ watch(() => query.value.finding, loadDetail, { immediate: true })
 
 unwrap(api.GET('/v2/runs/{run_id}', { params: { path: { run_id: props.runId } } }))
   .then((overview) => {
-    dimensions.value = [...new Set(overview.finding_counts.map((c) => c.dimension))].sort()
+    counts.value = overview.finding_counts
   })
   .catch(() => {
     // The filter still works typed; only its choices are missing.
