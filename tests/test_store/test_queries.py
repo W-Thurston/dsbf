@@ -197,3 +197,24 @@ def test_datasets_header_counts_and_column_profile(repo, demo_run):
     assert repo.get_column_profile(demo_run.run_id, column.name) == column
     with pytest.raises(RunNotFoundError, match="no column"):
         repo.get_column_profile(demo_run.run_id, "absent")
+
+
+def test_columns_carry_a_sketch_and_datasets_their_dimension_levels(repo, demo_run):
+    repo.save(demo_run)
+    by_name = {c.name: c for c in repo.list_columns(demo_run.run_id)}
+    for column in demo_run.profile.columns:
+        sketch = by_name[column.name].sketch
+        if column.semantic_type == "numeric" and column.stats is not None:
+            assert (sketch.min, sketch.max) == (column.stats.min, column.stats.max)
+            assert sketch.mode is None
+            if column.histogram:
+                assert sum(sketch.bins) == column.histogram.total
+                assert len(sketch.bins) <= 12
+        elif column.semantic_type == "categorical" and column.top_values:
+            assert sketch.mode == str(column.top_values[0].value)
+            assert 0 < sketch.mode_share <= 1
+            assert len(sketch.top_values) <= 5
+
+    levels = repo.list_datasets().items[0].dimension_levels
+    output = demo_run.results["quality_dimensions"].output
+    assert levels == {k: v["level"] for k, v in output["dimensions"].items()}

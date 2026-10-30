@@ -39,6 +39,7 @@ from dsbf.store.repository import (
     SNAPSHOT_REF,
     ColumnSummary,
     DatasetSummary,
+    DimensionLevel,
     FindingCount,
     FindingOccurrence,
     FindingSort,
@@ -52,6 +53,7 @@ from dsbf.store.repository import (
     StoredArtifact,
     StoreError,
 )
+from dsbf.store.sketch import sketch_of
 
 DATABASE_FILE = "dsbf.db"
 ARTIFACTS_DIR = "artifacts"
@@ -59,6 +61,26 @@ _MIGRATIONS = Path(__file__).parent / "migrations"
 _BUSY_TIMEOUT_MS = 30_000
 _SEVERITIES = list(Severity)
 _COLUMN_PROFILE: TypeAdapter[ColumnProfile] = TypeAdapter(ColumnProfile)
+
+
+def _dimension_levels(
+    connection: sa.Connection, run_keys: Sequence[str]
+) -> dict[str, dict[str, DimensionLevel | None]]:
+    """Each run's quality dimensions and their levels, from its stored
+    ``quality_dimensions`` result; a run without the result has no entry."""
+    texts = connection.execute(
+        sa.select(t.check_results.c.run_id, t.check_results.c.result_json).where(
+            t.check_results.c.run_id.in_(run_keys),
+            t.check_results.c.check_id == "quality_dimensions",
+        )
+    )
+    levels: dict[str, dict[str, DimensionLevel | None]] = {}
+    for run_key, text in texts:
+        dimensions = (json.loads(text).get("output") or {}).get("dimensions") or {}
+        levels[run_key] = {name: d.get("level") for name, d in dimensions.items()}
+    return levels
+
+
 DEFAULT_SNAPSHOT_ROWS = 10_000
 SNAPSHOT_FILE = "snapshot.parquet"
 SNAPSHOT_SEED = 0
@@ -505,6 +527,7 @@ class SqliteRunRepository(JobRows, SettingsRows):
                 .limit(limit)
                 .offset(offset)
             ).all()
+            levels = _dimension_levels(connection, [row.run_id for row in rows])
         items = tuple(
             DatasetSummary(
                 key=key,
@@ -513,6 +536,7 @@ class SqliteRunRepository(JobRows, SettingsRows):
                 last_run_id=UUID(run_key),
                 last_run_at=datetime.fromisoformat(started),
                 last_max_severity=None if rank is None else _SEVERITIES[rank],
+                dimension_levels=levels.get(run_key, {}),
             )
             for key, n_runs, run_key, name, started, rank in rows
         )
@@ -571,12 +595,20 @@ class SqliteRunRepository(JobRows, SettingsRows):
             ).scalar_one_or_none()
         if text is None:
             raise RunNotFoundError(f"no stored run {run_id}")
-        return tuple(
-            ColumnSummary.model_validate(
-                {key: column[key] for key in ColumnSummary.model_fields}
+        summaries = []
+        for stored in json.loads(text)["columns"]:
+            column = _COLUMN_PROFILE.validate_python(stored)
+            summaries.append(
+                ColumnSummary(
+                    name=column.name,
+                    position=column.position,
+                    semantic_type=column.semantic_type,
+                    physical_dtype=column.physical_dtype,
+                    counts=column.counts,
+                    sketch=sketch_of(column),
+                )
             )
-            for column in json.loads(text)["columns"]
-        )
+        return tuple(summaries)
 
     def get_finding(self, run_id: UUID, finding_id: str) -> Finding:
         with self._engine.connect() as connection:

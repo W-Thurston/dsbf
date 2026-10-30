@@ -25,8 +25,9 @@ from dsbf.model import (
     RunHealth,
     SemanticType,
     Severity,
+    ValueCount,
 )
-from dsbf.model.base import Contract
+from dsbf.model.base import Contract, FiniteFloat
 from dsbf.model.evidence import SamplingInfo
 from dsbf.store.jobs import Job, JobEvent, JobRequest, JobState
 
@@ -77,6 +78,10 @@ class RunSummary(Contract):
     )
 
 
+DimensionLevel = Literal["green", "blue", "amber", "red"]
+"""A quality dimension's level, as ``quality_dimensions`` reports it."""
+
+
 class DatasetSummary(Contract):
     """A dataset's history in brief: how many runs, and the latest."""
 
@@ -87,6 +92,11 @@ class DatasetSummary(Contract):
     last_run_at: AwareDatetime
     last_max_severity: Severity | None = Field(
         description="The highest severity in the latest run; null when it has none."
+    )
+    dimension_levels: dict[str, DimensionLevel | None] = Field(
+        description="The latest run's quality dimensions and their levels; a level is "
+        "null for a dimension that was not assessed, and the mapping is empty when the "
+        "run has no quality_dimensions result."
     )
 
 
@@ -113,6 +123,31 @@ class FindingCount(Contract):
     count: int = Field(ge=1)
 
 
+class ColumnSketch(Contract):
+    """A column's figures and small distribution, cut from its profile for a table row
+    and its inline chart. A field the column's type has no figure for is null."""
+
+    mode: str | None = Field(
+        default=None,
+        description="The most frequent non-null value; null for a numeric column, and "
+        "for a string too long to be listed.",
+    )
+    mode_share: float | None = Field(
+        default=None, ge=0, le=1, description="The mode's share of the non-null rows."
+    )
+    skewness: FiniteFloat | None = None
+    min: FiniteFloat | None = None
+    max: FiniteFloat | None = None
+    bins: tuple[int, ...] = Field(
+        default=(),
+        description="A numeric column's finite values in at most 12 equal-width bins "
+        "from `min` to `max`.",
+    )
+    top_values: tuple[ValueCount, ...] = Field(
+        default=(), description="Up to five of the most frequent values, most first."
+    )
+
+
 class ColumnSummary(Contract):
     """A column in brief: enough to list and filter a run's columns."""
 
@@ -121,6 +156,7 @@ class ColumnSummary(Contract):
     semantic_type: SemanticType
     physical_dtype: str
     counts: ColumnCounts
+    sketch: ColumnSketch
 
 
 SNAPSHOT_REF = "snapshot"
@@ -383,7 +419,9 @@ class RunRepository(Protocol):
 
 
 __all__ = [
+    "ColumnSketch",
     "DatasetSummary",
+    "DimensionLevel",
     "FindingCount",
     "FindingOccurrence",
     "FindingSort",

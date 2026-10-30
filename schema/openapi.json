@@ -879,6 +879,100 @@
         "title": "ColumnCoverage",
         "type": "object"
       },
+      "ColumnSketch": {
+        "additionalProperties": false,
+        "description": "A column's figures and small distribution, cut from its profile for a table row\nand its inline chart. A field the column's type has no figure for is null.",
+        "properties": {
+          "bins": {
+            "default": [],
+            "description": "A numeric column's finite values in at most 12 equal-width bins from `min` to `max`.",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Bins",
+            "type": "array"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most frequent non-null value; null for a numeric column, and for a string too long to be listed.",
+            "title": "Mode"
+          },
+          "mode_share": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The mode's share of the non-null rows.",
+            "title": "Mode Share"
+          },
+          "skewness": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skewness"
+          },
+          "top_values": {
+            "default": [],
+            "description": "Up to five of the most frequent values, most first.",
+            "items": {
+              "$ref": "#/components/schemas/ValueCount"
+            },
+            "title": "Top Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "mode_share",
+          "skewness",
+          "min",
+          "max",
+          "bins",
+          "top_values"
+        ],
+        "title": "ColumnSketch",
+        "type": "object"
+      },
       "ColumnSummary": {
         "additionalProperties": false,
         "description": "A column in brief: enough to list and filter a run's columns.",
@@ -912,6 +1006,9 @@
             ],
             "title": "Semantic Type",
             "type": "string"
+          },
+          "sketch": {
+            "$ref": "#/components/schemas/ColumnSketch"
           }
         },
         "required": [
@@ -919,7 +1016,8 @@
           "position",
           "semantic_type",
           "physical_dtype",
-          "counts"
+          "counts",
+          "sketch"
         ],
         "title": "ColumnSummary",
         "type": "object"
@@ -1023,6 +1121,27 @@
         "additionalProperties": false,
         "description": "A dataset's history in brief: how many runs, and the latest.",
         "properties": {
+          "dimension_levels": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "green",
+                    "blue",
+                    "amber",
+                    "red"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "The latest run's quality dimensions and their levels; a level is null for a dimension that was not assessed, and the mapping is empty when the run has no quality_dimensions result.",
+            "title": "Dimension Levels",
+            "type": "object"
+          },
           "key": {
             "title": "Key",
             "type": "string"
@@ -1065,7 +1184,8 @@
           "n_runs",
           "last_run_id",
           "last_run_at",
-          "last_max_severity"
+          "last_max_severity",
+          "dimension_levels"
         ],
         "title": "DatasetSummary",
         "type": "object"
@@ -5180,7 +5300,7 @@
   "info": {
     "summary": "Stored DSBF runs, and jobs that profile a local file into the store.",
     "title": "DSBF API",
-    "version": "1.8.0"
+    "version": "1.9.0"
   },
   "openapi": "3.1.0",
   "paths": {

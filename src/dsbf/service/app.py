@@ -21,7 +21,7 @@ from dsbf.service.security import LOCAL_HOSTS, JsonWritesOnly, LocalHostOnly
 from dsbf.service.settings_routes import settings_router
 from dsbf.store import RunRepository
 
-API_VERSION = "1.8.0"
+API_VERSION = "1.9.0"
 """The version of the OpenAPI document; the breaking-change gate reads it."""
 
 
