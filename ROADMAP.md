@@ -110,7 +110,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the Overview on titanic and `high_missingness`, in both themes, as readable and chart-led; opening titanic's run transfers under 200 KB.
 
 ### U6b-04 · Quality tab
-- **Status:** done (2026-10-30) · **Size:** M · **Depends on:** U6b-01
+- **Status:** done (2026-10-30, #177 `bd3642c`) · **Size:** M · **Depends on:** U6b-01
 - **Notes:** Quality is a trust banner, five traffic-light cards that open their sections, collapsible sections with sortable findings tables whose rows fetch their evidence and guidance on expand, clean columns, the missingness mechanism with predictor bars, fuzzy duplicates and the coverage; the Run health card folds its not-applicable checks. Deviations: sample values show only where evidence carries them; Cramér's V bars are unsigned; bundle budget 920 KB. Follow-up: hide the near-duplicate card on runs without that check (U6b-12).
 - **Goal:** Quality answers "what is wrong with this data, by dimension?" (inventory: Quality). The trust banner (overall level, its label and sentence, columns checked, fully clean, dimensions flagged of those assessed); five traffic-light dimension cards that scroll to their sections; a collapsible section per dimension with a sortable findings table whose expanded rows show the finding's evidence, sample values and guidance; clean columns; the missingness mechanism with its predictor bars; fuzzy duplicates with similarity bars; and the check coverage, beside the dimension coverage. The "mark as reviewed" star is dropped (decided in U6b-00: unsaved, it was lost on reload).
 - **Assumptions to confirm:** findings' `evidence` carries the per-issue metrics the old detail column showed (missing share, violation count, zero share, mode share, unique count, VIF, correlation); `missingness_mechanism` predictors give a signed effect for the bars.
@@ -118,7 +118,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Quality on titanic and `high_missingness`, in both themes.
 
 ### U6b-05 · Findings explorer
-- **Status:** todo · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-30) · **Size:** S · **Depends on:** U6b-01
+- **Notes:** The explorer reuses the Overview's findings-by-dimension-and-severity chart as its count chart; the chart's dimension names and severities, each Quality section's count and each ML Readiness check count link into the explorer filtered. Deviation: ML Readiness links by check, as its dimensions are not finding dimensions. The list and filter form were not restyled.
 - **Goal:** The findings explorer (a Phase 6 page with no old counterpart; closest to the old data signals and Quality sections) in the new shell and visual language: severity and dimension counts charted above the filters, every finding count elsewhere linking into it with its filter set, and the detail showing guidance as the Quality tab does.
 - **Assumptions to confirm:** the explorer's filter state is already in the URL, so counts on other pages can link to a filtered view.
 - **Steps:** the page restyled; the count chart; links from the Overview, Quality and ML Readiness counts; Playwright tests.

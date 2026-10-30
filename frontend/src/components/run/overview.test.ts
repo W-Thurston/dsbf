@@ -66,6 +66,25 @@ describe('FindingCounts', () => {
     ])
   })
 
+  it('links dimensions and severities into the explorer when given a run', () => {
+    const RouterLink = { props: ['to'], template: '<a :data-to="JSON.stringify(to)"><slot /></a>' }
+    const panel = mount(FindingCounts, {
+      props: { counts: [{ dimension: 'leakage', severity: 'error', count: 1 }], runId: 'r1' },
+      global: { stubs: { RouterLink } },
+    })
+    const targets = panel.findAll('a').map((a) => JSON.parse(a.attributes('data-to') ?? ''))
+    expect(targets).toContainEqual({
+      name: 'findings',
+      params: { runId: 'r1' },
+      query: { dimension: 'leakage' },
+    })
+    expect(targets).toContainEqual({
+      name: 'findings',
+      params: { runId: 'r1' },
+      query: { severity: 'error' },
+    })
+  })
+
   it('says when there are no findings', () => {
     expect(mount(FindingCounts, { props: { counts: [] } }).text()).toContain('No findings.')
   })

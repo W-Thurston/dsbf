@@ -12,7 +12,7 @@
     </nav>
 
     <div class="pair">
-      <FindingCounts :counts="overview.finding_counts" />
+      <FindingCounts :counts="overview.finding_counts" :run-id="runId" />
       <ColumnTypes v-if="data.columns.value" :columns="data.columns.value" />
     </div>
     <TopFindings :run-id="runId" />

@@ -5,7 +5,13 @@
     <template v-else>
       <ul class="rows">
         <li v-for="dimension in dimensions" :key="dimension" :data-finding-dimension="dimension">
-          <span class="name">{{ dimension }}</span>
+          <router-link
+            v-if="runId"
+            class="name"
+            :to="{ name: 'findings', params: { runId }, query: { dimension } }"
+            >{{ dimension }}</router-link
+          >
+          <span v-else class="name">{{ dimension }}</span>
           <StrengthBar :segments="segments(dimension)" />
           <span class="total">{{ total(dimension) }}</span>
         </li>
@@ -13,7 +19,13 @@
       <ul class="legend" aria-label="Severity colours">
         <li v-for="severity in severities" :key="severity">
           <span class="swatch" :style="{ background: `var(--level-${SEVERITY_MARK[severity]})` }" />
-          {{ severity }}
+          <router-link
+            v-if="runId"
+            :to="{ name: 'findings', params: { runId }, query: { severity } }"
+            :title="`${severity} and above`"
+            >{{ severity }}</router-link
+          >
+          <template v-else>{{ severity }}</template>
         </li>
       </ul>
       <table class="data-table sr-only" aria-label="Finding counts">
@@ -47,7 +59,8 @@ import { SEVERITY_MARK } from '../overview/overview'
 
 type Counts = components['schemas']['FindingCount'][]
 
-const props = defineProps<{ counts: Counts }>()
+// With a run id the dimension names and severities link into the explorer, filtered.
+const props = defineProps<{ counts: Counts; runId?: string }>()
 
 // Most severe first, so the eye lands on the left.
 const severities = [...SEVERITY_ORDER].reverse()

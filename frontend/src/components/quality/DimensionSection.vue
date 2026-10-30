@@ -8,9 +8,14 @@
     <summary>
       <TrafficDot :mark="dimension.level ?? 'none'" :size="12" />
       <h2 class="card-title title">{{ label }}</h2>
-      <span class="muted"
-        >{{ findings.length }} {{ findings.length === 1 ? 'finding' : 'findings' }}</span
+      <router-link
+        v-if="findings.length"
+        class="muted"
+        :to="{ name: 'findings', params: { runId }, query: { dimension: name } }"
+        @click.stop
+        >{{ findings.length }} {{ findings.length === 1 ? 'finding' : 'findings' }}</router-link
       >
+      <span v-else class="muted">0 findings</span>
     </summary>
     <p v-if="!dimension.assessed" class="muted" data-role="not-assessed">
       {{ unassessedReason(dimension.inputs) }}

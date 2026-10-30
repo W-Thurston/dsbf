@@ -74,3 +74,23 @@ test('a fuzzy-duplicate finding offers its pair list, paged on demand', async ({
   expect(artifactRequests).toHaveLength(2)
   expect(artifactRequests[1]).toContain('offset=20')
 })
+
+test('the count chart filters the explorer, and the Overview counts link here', async ({
+  page,
+  request,
+}) => {
+  const run = await runOf(request, 'titanic')
+  await page.goto(`/runs/${run}`)
+  await page
+    .getByRole('region', { name: 'Findings by dimension and severity' })
+    .getByRole('link')
+    .first()
+    .click()
+  await expect(page).toHaveURL(/findings\?dimension=/)
+  const dimension = new URL(page.url()).searchParams.get('dimension') ?? ''
+  const expected = (await (
+    await request.get(`/v2/runs/${run}/findings?dimension=${dimension}&limit=1`)
+  ).json()) as { total: number }
+  await expect(page.getByRole('status')).toHaveText(`${expected.total} findings`)
+  await expect(page.getByRole('combobox', { name: 'Dimension' })).toHaveValue(dimension)
+})
