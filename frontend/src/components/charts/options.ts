@@ -38,7 +38,13 @@ export function histogramBars(
         return `${low} to ${high}<br/>${count} values`
       },
     },
-    xAxis: { type: 'value', min: edges[0], max: edges[edges.length - 1], scale: true },
+    xAxis: {
+      type: 'value',
+      min: edges[0],
+      max: edges[edges.length - 1],
+      scale: true,
+      axisLabel: { formatter: (v: number) => String(Number(v.toPrecision(3))) },
+    },
     yAxis: { type: 'value', name: 'values' },
     series: [
       {
@@ -66,7 +72,12 @@ export function histogramBars(
           animation: false,
           lineStyle: { color: marks.reference, type: 'dashed', width: 1.5 },
           label: { formatter: '{b}', color: marks.reference },
-          data: references.map((r) => ({ xAxis: r.value, name: r.label })),
+          // Neighbouring lines (a mean beside a median) put their labels on opposite sides.
+          data: references.map((r, i) => ({
+            xAxis: r.value,
+            name: r.label,
+            label: { position: i % 2 ? 'insideEndBottom' : 'insideEndTop' },
+          })),
         },
       },
     ],

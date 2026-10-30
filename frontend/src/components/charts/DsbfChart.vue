@@ -46,6 +46,7 @@
         <span v-if="subtitle" class="dc-subtitle">{{ subtitle }}</span>
       </div>
       <div class="dc-actions">
+        <slot name="actions" />
         <button
           v-if="!empty && !loading"
           class="dc-action-btn"

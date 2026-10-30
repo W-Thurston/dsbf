@@ -1,6 +1,7 @@
 import type { EChartsOption } from 'echarts'
 import type { components } from '../../generated/api'
-import { histogramBars, topValues } from '../charts/options'
+import { MARKS } from '../../chartTheme'
+import { boxPlot, histogramBars, topValues } from '../charts/options'
 
 type Theme = 'dark' | 'light'
 
@@ -36,6 +37,55 @@ export function qqOf(
 /** Bars on a value axis: each spans its stored edges, so the axis reads in the column's units. */
 export function histogramOption(histogram: Histogram | null, theme: Theme = 'dark'): EChartsOption {
   return histogram ? histogramBars(histogram.edges, histogram.counts, theme) : {}
+}
+
+/**
+ * The histogram with the column's mean and median marked and, when given, the fitted
+ * components of a bimodal column drawn over it as lines.
+ */
+export function distributionOption(
+  histogram: Histogram | null,
+  theme: Theme,
+  marks: { mean: number | null; median: number | null },
+  components: [number, number][][] = [],
+): EChartsOption {
+  if (!histogram) return {}
+  const references = [
+    ...(marks.mean === null ? [] : [{ value: marks.mean, label: 'mean' }]),
+    ...(marks.median === null ? [] : [{ value: marks.median, label: 'median' }]),
+  ]
+  const base = histogramBars(histogram.edges, histogram.counts, theme, references)
+  const curves = components.map((data, i) => ({
+    type: 'line' as const,
+    name: `component ${i + 1}`,
+    data,
+    smooth: true,
+    symbol: 'none',
+    lineStyle: { width: 2, color: i ? MARKS[theme].green : MARKS[theme].secondary },
+    tooltip: { show: false },
+  }))
+  return { ...base, series: [...(base.series as object[]), ...curves] } as EChartsOption
+}
+
+/** One box from the quartiles, with whiskers at the IQR fences clipped to the data range. */
+export function columnBoxOption(
+  q: { min: number; q1: number; median: number; q3: number; max: number },
+  fences: { lower: number; upper: number } | null,
+  theme: Theme,
+): EChartsOption {
+  return boxPlot(
+    [
+      {
+        label: '',
+        min: fences ? Math.max(q.min, fences.lower) : q.min,
+        q1: q.q1,
+        median: q.median,
+        q3: q.q3,
+        max: fences ? Math.min(q.max, fences.upper) : q.max,
+      },
+    ],
+    theme,
+  )
 }
 
 /** The most common values as horizontal bars, largest first. */
