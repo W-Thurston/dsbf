@@ -19,6 +19,11 @@
         >
         · dsbf {{ header.plan.dsbf_version }}
       </p>
+      <RunLineage
+        :run-id="runId"
+        :dataset-key="header.dataset.key"
+        :source="header.dataset.source"
+      />
     </header>
     <HealthBar :dimensions="run.dimensions.value" :tab="tab ?? 'overview'" />
     <RunTabs :run-id="runId" :tab="tab" />
@@ -30,6 +35,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import HealthBar from '../components/shell/HealthBar.vue'
+import RunLineage from '../components/run/RunLineage.vue'
 import RunTabs from '../components/shell/RunTabs.vue'
 import type { Tab } from '../components/shell/health'
 import { provideRun } from '../composables/useRun'

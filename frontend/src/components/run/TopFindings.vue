@@ -32,7 +32,7 @@ import SeverityBadge from '../SeverityBadge.vue'
 
 const props = defineProps<{ runId: string }>()
 
-const TOP = 10
+const TOP = 5
 const page = ref<components['schemas']['Page_Finding_'] | null>(null)
 const error = ref('')
 

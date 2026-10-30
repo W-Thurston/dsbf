@@ -418,6 +418,25 @@ class TestRelationships:
         assert_problem(client.get(f"/v2/runs/{uuid4()}/relationships"), 404, "run")
 
 
+class TestDatasetFacts:
+    def test_serves_the_datasets_whole_profile_figures_without_its_columns(
+        self, client, runs
+    ):
+        run = runs["titanic"]
+        body = client.get(f"/v2/runs/{run.run_id}/dataset").json()
+        profile = run.profile
+        assert body["n_rows"] == profile.n_rows
+        assert body["approx_memory_bytes"] == profile.approx_memory_bytes
+        assert body["duplicate_rows"] == profile.duplicate_rows
+        assert body["missingness"] == profile.missingness.model_dump(mode="json")
+        assert "columns" not in body
+        assert len(client.get(f"/v2/runs/{run.run_id}/dataset").content) < 2 * KB
+
+    def test_an_unknown_run_is_a_404(self, client):
+        missing = uuid4()
+        assert_problem(client.get(f"/v2/runs/{missing}/dataset"), 404, str(missing))
+
+
 class TestCoverage:
     def test_checks_carry_their_examined_columns(self, client, runs):
         run = runs["titanic"]

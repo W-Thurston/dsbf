@@ -29,6 +29,7 @@ from dsbf.service.relationships import (
 from dsbf.service.views import (
     ArtifactRows,
     ArtifactValue,
+    DatasetFacts,
     LineageEntry,
     RunOverview,
     json_safe,
@@ -252,6 +253,12 @@ def get_coverage(run_id: UUID, repo: Repo) -> RunCoverage:
     """The columns each check analysed, and how many checks read each column."""
     run = repo.get(run_id)
     return build_coverage(run.results, tuple(c.name for c in run.profile.columns))
+
+
+@router.get("/runs/{run_id}/dataset", operation_id="getDatasetFacts", tags=["runs"])
+def get_dataset_facts(run_id: UUID, repo: Repo) -> DatasetFacts:
+    """The dataset's shape, memory, duplicate rows and null co-occurrence."""
+    return DatasetFacts.of(repo.get(run_id).profile)
 
 
 @router.get(

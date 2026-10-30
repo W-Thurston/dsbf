@@ -1,6 +1,7 @@
 <template>
   <section class="card" aria-labelledby="health-title">
     <h2 id="health-title" class="card-title">Run health</h2>
+    <StrengthBar :segments="segments" class="bar" />
     <ul class="status-counts">
       <li v-for="status in statuses" :key="status">
         <span :class="['badge', statusClass(status)]">{{ words(status) }}</span>
@@ -44,6 +45,8 @@
 import { computed } from 'vue'
 import type { components } from '../../generated/api'
 import { words } from '../../format'
+import StrengthBar from '../charts/StrengthBar.vue'
+import { STATUS_MARK } from '../overview/overview'
 import SeverityBadge from '../SeverityBadge.vue'
 
 type Health = components['schemas']['RunHealth']
@@ -54,6 +57,14 @@ const props = defineProps<{ health: Health; notes: components['schemas']['Note']
 const statuses: Status[] = ['ok', 'not_applicable', 'unavailable', 'skipped', 'error', 'timeout']
 // The order a reader needs: what failed first, what was merely not applicable last.
 const ISSUE_ORDER: Status[] = ['error', 'timeout', 'skipped', 'unavailable', 'not_applicable']
+
+const segments = computed(() =>
+  statuses.map((status) => ({
+    label: words(status),
+    value: props.health.counts[status],
+    mark: STATUS_MARK[status] ?? 'none',
+  })),
+)
 
 const issueStatuses = computed(() =>
   ISSUE_ORDER.filter((status) => props.health.issues.some((issue) => issue.status === status)),
@@ -72,6 +83,9 @@ function statusClass(status: Status): string {
 </script>
 
 <style scoped>
+.bar {
+  margin-bottom: 10px;
+}
 .status-counts {
   display: flex;
   flex-wrap: wrap;

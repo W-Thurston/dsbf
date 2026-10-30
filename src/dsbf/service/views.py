@@ -11,6 +11,7 @@ from uuid import UUID
 import pyarrow as pa
 from pydantic import AwareDatetime, Field
 
+from dsbf.model import DatasetProfile, Missingness
 from dsbf.model.base import Contract
 from dsbf.model.evidence import SamplingInfo
 from dsbf.store import FindingCount, Job, JobEvent, RunHeader, StoredArtifact
@@ -27,6 +28,30 @@ class RunOverview(Contract):
     artifacts: tuple[StoredArtifact, ...] = Field(
         description="The files stored for the run, the data snapshot included."
     )
+
+
+class DatasetFacts(Contract):
+    """What a run's profile says about the dataset as a whole, without its columns."""
+
+    n_rows: int = Field(ge=0, description="Rows profiled, after any sampling.")
+    approx_memory_bytes: int | None = Field(ge=0)
+    duplicate_rows: int | None = Field(
+        ge=0, description="Rows equal to an earlier row; null if not computed."
+    )
+    rows_with_any_null: int | None = Field(ge=0)
+    missingness: Missingness | None = Field(
+        description="Which columns go missing together; null if not computed."
+    )
+
+    @classmethod
+    def of(cls, profile: DatasetProfile) -> "DatasetFacts":
+        return cls(
+            n_rows=profile.n_rows,
+            approx_memory_bytes=profile.approx_memory_bytes,
+            duplicate_rows=profile.duplicate_rows,
+            rows_with_any_null=profile.rows_with_any_null,
+            missingness=profile.missingness,
+        )
 
 
 class LineageEntry(Contract):
