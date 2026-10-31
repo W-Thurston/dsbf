@@ -43,7 +43,7 @@ def test_the_fingerprint_is_pinned():
     """A Polars upgrade that changes `Series.hash` fails here: bump the scheme tag."""
     frame = pl.DataFrame({"a": [1, 2, 3], "b": ["x", None, "z"], "c": [0.5, 1.5, None]})
 
-    assert _fingerprint(frame) == "polars-hash-v1:97c1fd6772b14a548d19b787c75daeef"
+    assert _fingerprint(frame) == "polars-hash-v2:372970ba3d617b3657f6b8e4305374cb"
 
 
 def test_the_fingerprint_names_its_scheme():

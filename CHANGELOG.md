@@ -36,6 +36,8 @@ deprecation lasting one minor release.
   is version 1.
 - `fuzzy_duplicates` no longer reports pairs whose one-character deletions only collide in
   code space.
+- Polars 2.1 is the minimum. It changes `Series.hash`, so a dataset's fingerprint is now
+  `polars-hash-v2:…`; a run stored earlier reads as changed against a new run of the same data.
 - The `server` extra now holds the store and the service (FastAPI, SQLAlchemy, Alembic,
   fsspec); the `sql` extra is still a placeholder.
 

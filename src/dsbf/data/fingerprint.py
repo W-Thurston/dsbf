@@ -7,7 +7,7 @@ import polars as pl
 
 # Polars does not promise `Series.hash` is stable across its versions. A test pins a
 # fingerprint, so an upgrade that changes the hash fails there and bumps this tag.
-SCHEME = "polars-hash-v1"
+SCHEME = "polars-hash-v2"
 _SEED = 0
 _DIGEST_BYTES = 16
 
