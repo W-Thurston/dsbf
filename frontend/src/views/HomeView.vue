@@ -1,6 +1,6 @@
 <template>
   <div class="stack">
-    <section class="card" aria-labelledby="datasets-title">
+    <section aria-labelledby="datasets-title">
       <h1 id="datasets-title" class="card-title">Datasets</h1>
       <p v-if="datasets.error.value" class="error">{{ datasets.error.value }}</p>
       <p v-else-if="datasets.page.value === null" class="loading">Loading…</p>
@@ -8,32 +8,14 @@
         No runs are stored yet. Profile a file with <code>dsbf profile data.csv -s store</code>.
       </p>
       <template v-else>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th scope="col">Dataset</th>
-              <th scope="col">Last run</th>
-              <th scope="col" class="num">Runs</th>
-              <th scope="col">Highest</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="dataset in datasets.page.value.items" :key="dataset.key">
-              <td>
-                <router-link :to="{ name: 'dataset', params: { datasetKey: dataset.key } }">{{
-                  dataset.name
-                }}</router-link>
-              </td>
-              <td>
-                <router-link :to="{ name: 'run', params: { runId: dataset.last_run_id } }">{{
-                  formatDateTime(dataset.last_run_at)
-                }}</router-link>
-              </td>
-              <td class="num">{{ dataset.n_runs }}</td>
-              <td><SeverityBadge :severity="dataset.last_max_severity" /></td>
-            </tr>
-          </tbody>
-        </table>
+        <label class="search">
+          <span class="visually-hidden">Search datasets</span>
+          <input v-model="query" type="search" placeholder="Search datasets" data-role="search" />
+        </label>
+        <p v-if="!shown.length" class="muted" data-role="no-match">
+          No dataset on this page matches “{{ query }}”.
+        </p>
+        <DatasetCards v-else :datasets="shown" />
         <PagerNav
           v-model:offset="datasets.offset.value"
           :limit="datasets.size"
@@ -60,17 +42,38 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { api, unwrap } from '../api/client'
+import DatasetCards from '../components/dataset/DatasetCards.vue'
 import PagerNav from '../components/PagerNav.vue'
 import RunTable from '../components/RunTable.vue'
-import SeverityBadge from '../components/SeverityBadge.vue'
 import { usePage } from '../composables/usePage'
-import { formatDateTime } from '../format'
 
 const datasets = usePage((limit, offset) =>
   unwrap(api.GET('/v2/datasets', { params: { query: { limit, offset } } })),
 )
+const query = ref('')
+// The search narrows the datasets on the current page by name or key.
+const shown = computed(() => {
+  const needle = query.value.trim().toLowerCase()
+  const items = datasets.page.value?.items ?? []
+  return needle ? items.filter((d) => `${d.name} ${d.key}`.toLowerCase().includes(needle)) : items
+})
 const runs = usePage((limit, offset) =>
   unwrap(api.GET('/v2/runs', { params: { query: { limit, offset } } })),
 )
 </script>
+
+<style scoped>
+.search input {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: 16px;
+}
+</style>
