@@ -7,6 +7,11 @@ updates:
     groups:
       python-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Polars 2.1 changes Series.hash, which the dataset fingerprint is built on
+      # (tests/test_data/test_fingerprint.py). Taking it means a new fingerprint scheme.
+      - dependency-name: polars
+        update-types: ["version-update:semver-minor"]
   - package-ecosystem: npm
     directory: /frontend
     schedule:
