@@ -13,12 +13,14 @@
 // Relationships tab (2026-10-30) raised it to 940 KB: its summary, associations browser and
 // pair detail add about 5 KB of lazy route code; the entry chunk is unchanged. The ML
 // Readiness tab (2026-10-31) raised it to 960 KB: its action dictionary (about 9 KB of text),
-// transformation preview and gate parts are lazy route code; the entry chunk is unchanged.
+// transformation preview and gate parts are lazy route code; the entry chunk is unchanged. The
+// settings form (2026-10-31) raised it to 970 KB: its scoped styles add about 1.2 KB to the
+// dataset page's lazy route chunk; the entry chunk is unchanged.
 import { readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const KB = 1024
-const BUDGET = { entry: 110 * KB, total: 960 * KB }
+const BUDGET = { entry: 110 * KB, total: 970 * KB }
 const assets = join(import.meta.dirname, '..', 'dist', 'assets')
 
 const files = readdirSync(assets).map((name) => ({ name, size: statSync(join(assets, name)).size }))

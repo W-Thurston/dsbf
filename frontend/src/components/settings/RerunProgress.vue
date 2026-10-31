@@ -24,3 +24,34 @@ function describe(event: JobEvent): string {
   return `${event.check_id ?? 'working'}${where}`
 }
 </script>
+
+<style scoped>
+.rerun {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--level-blue);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 14px;
+}
+.rerun[data-state='succeeded'] {
+  border-left-color: var(--level-green);
+}
+.rerun[data-state='failed'],
+.rerun[data-state='cancelled'],
+.rerun[data-state='interrupted'] {
+  border-left-color: var(--level-red);
+}
+.rerun p {
+  margin: 0;
+}
+[data-role='job-state'] {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
+}
+.error {
+  margin-top: 10px;
+}
+</style>

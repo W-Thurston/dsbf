@@ -161,7 +161,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Time Series on a run with a time index and on titanic (the empty state), in both themes.
 
 ### U6b-10 · Dataset list, runs, compare and history
-- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-01, U6b-02
+- **Status:** done (2026-10-31, #183 `a26702f`) · **Size:** M · **Depends on:** U6b-01, U6b-02
 - **Notes:** The dataset list is a card grid with a name and key search and five dimension dots per card (the empty ring for an unassessed dimension). Compare gains a count-per-kind bar chart above its sections, and each findings section shows 25 rows with a show-all toggle. The dataset page's runs, lineage and history keep their markup. Bundle 958.7 KB, inside the 960 KB budget (1.3 KB spare). Follow-ups: the search covers only the loaded page of 25 datasets (server-side search needs an API change); compare's changed list could group near-identical findings by code.
 - **Goal:** The dataset-level pages answer "what changed since the last run?" and get a person to a run. The dataset list as the old card grid with search, with the latest run's five dimension dots in place of the old score; a dataset's runs; compare (any two runs) with its changes charted; finding history and lineage, in the new shell and visual language.
 - **Assumptions to confirm:** the compare view's diff sections can be summarised as counts per kind of change for a chart.
@@ -169,7 +169,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off screenshots of the dataset list (fixture store), a run list, and titanic's full run compared with its sample, in both themes.
 
 ### U6b-11 · Settings and rerun
-- **Status:** todo · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-01
+- **Notes:** The settings form and rerun progress, which had no styles, are a responsive field grid with bordered group fieldsets, a primary "Save and rerun" button and a progress card edged by job state. The form stays a card on the dataset page and its fields and API calls are unchanged. Bundle 961.2 KB; budget raised from 960 to 970 KB.
 - **Goal:** The dataset settings form and rerun progress in the new shell and visual language.
 - **Assumptions to confirm:** the generated settings form needs no change beyond styling.
 - **Steps:** the page restyled; Playwright tests still green.
@@ -177,6 +178,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-12 · Screenshot review on the fixture store
 - **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Carry in from U6b-11:** the rerun progress card shows only "Rerun RUNNING" until the first progress event arrives; consider a spinner or a "starting" line.
 - **Carry in from U6b-08:** 33 emitted guidance pairs have no action note (`uncovered` in `frontend/src/components/readiness/actionMeta.json`, e.g. `convert:*`, `transform:pca`, `impute:multiple_imputation`); write the notes, or accept the finding's own detail, and shrink the list. The coverage test keeps the list exact.
 - **Carry in from U6b-07:** the Relationships tab's warning chips narrow the column list and pairs table but not the heatmap panels; dim or drop the other columns there.
 - **Carry in from U6b-06:** the Distributions tab's outlier consensus callout has one amber border whether or not the methods agree; colour it by consensus.
