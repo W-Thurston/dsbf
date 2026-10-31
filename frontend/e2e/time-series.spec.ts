@@ -55,9 +55,72 @@ test('the STL series are the stored artifact rows of the selected column', async
   expect(pages[0]).toContain('offset=0')
   expect(pages[0]).toContain('limit=365')
 
-  await page.locator('[data-role="column"]').selectOption({ index: 1 })
+  await page.locator('[data-section="column-browser"] [data-column]').nth(1).click()
   await expect(page.locator('[data-section="decomposition"] canvas')).toHaveCount(1)
   expect(pages[1]).toContain('offset=365')
+})
+
+test('the header strip names the index, the frequency and the value columns', async ({
+  page,
+  request,
+}) => {
+  const run = await runOf(request, 'kitchen5k')
+  await page.goto(`/runs/${run}/time-series`)
+  const strip = page.locator('[data-role="series"]')
+  await expect(strip.locator('[data-role="index"]')).not.toBeEmpty()
+  await expect(strip.locator('[data-role="frequency"]')).toContainText(/day|daily|D/i)
+  await expect(strip.locator('[data-role="periods"]')).toContainText('365')
+  await expect(strip.locator('[data-role="value-columns"]')).toHaveText(/^\d+$/)
+})
+
+test('the selected column is in the URL and survives a reload', async ({ page, request }) => {
+  const run = await runOf(request, 'kitchen5k')
+  await page.goto(`/runs/${run}/time-series`)
+  const second = page.locator('[data-section="column-browser"] [data-column]').nth(1)
+  const name = await second.getAttribute('data-column')
+  await second.click()
+  await expect(page).toHaveURL(new RegExp(`column=${name}`))
+  await page.reload()
+  await expect(
+    page.locator(`[data-section="column-browser"] [data-column="${name}"]`),
+  ).toHaveAttribute('aria-current', 'true')
+  await expect(page.locator(`[data-section="stationarity"] [data-column="${name}"]`)).toHaveClass(
+    /selected/,
+  )
+})
+
+test('the decomposition shows trend and seasonal strength against the noise floor', async ({
+  page,
+  request,
+}) => {
+  const run = await runOf(request, 'kitchen5k')
+  await page.goto(`/runs/${run}/time-series`)
+  const strengths = page.locator('[data-role="strengths"]')
+  await expect(strengths.locator('[data-name="Trend"]')).toBeVisible()
+  await expect(strengths.locator('[data-name="Seasonal"]')).toBeVisible()
+  await expect(page.locator('[data-role="lags"]')).toContainText('Significant ACF lags')
+})
+
+// With SCREENSHOT_DIR set, save the tab in both themes for review.
+test('save the time series screenshots', async ({ page, request }) => {
+  const dir = process.env.SCREENSHOT_DIR
+  test.skip(!dir, 'SCREENSHOT_DIR is not set')
+  await page.setViewportSize({ width: 1280, height: 900 })
+  for (const dataset of ['kitchen5k', 'titanic']) {
+    const run = await runOf(request, dataset)
+    for (const theme of ['dark', 'light']) {
+      await page.goto(`/runs/${run}/time-series`)
+      if (theme === 'light') await page.getByRole('button', { name: /theme/ }).click()
+      await expect(
+        page.locator(
+          dataset === 'titanic'
+            ? '[data-role="empty-state"]'
+            : '[data-section="decomposition"] canvas',
+        ),
+      ).toBeVisible()
+      await page.screenshot({ path: `${dir}/time-series-${dataset}-${theme}.png`, fullPage: true })
+    }
+  }
 })
 
 test('a run with no time index says how to set one', async ({ page, request }) => {

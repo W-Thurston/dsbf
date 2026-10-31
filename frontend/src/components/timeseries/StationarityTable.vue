@@ -5,6 +5,17 @@
       ADF has a unit root as its null; KPSS has stationarity. Each is also run with a linear trend.
       Tests at {{ Math.round(output.alpha * 100) }}%.
     </p>
+    <details class="reading" data-role="reading">
+      <summary>How to read the two tests together</summary>
+      <ul>
+        <li>ADF rejects and KPSS does not: stationary.</li>
+        <li>KPSS rejects and ADF does not: not stationary, it has a unit root.</li>
+        <li>
+          Both reject: the series has a trend or a structural break; the trend variants say which.
+        </li>
+        <li>Neither rejects: inconclusive; the series may be too short to tell.</li>
+      </ul>
+    </details>
     <table class="data-table">
       <thead>
         <tr>
@@ -58,6 +69,12 @@ defineEmits<{ select: [column: string] }>()
 </script>
 
 <style scoped>
+td {
+  white-space: nowrap;
+}
+.reading {
+  margin: 8px 0;
+}
 .link {
   background: none;
   border: 0;

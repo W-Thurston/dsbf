@@ -3,6 +3,7 @@
     <section class="card" aria-labelledby="ts-title">
       <h1 id="ts-title" class="run-name">Time series</h1>
       <p v-if="state === 'loading'" class="loading">Loading…</p>
+      <p v-else class="muted">How the columns behave over time.</p>
     </section>
 
     <section
@@ -21,46 +22,39 @@
       </p>
     </section>
 
-    <template v-else-if="state === 'ready'">
-      <section class="card" aria-label="Series" data-role="series">
-        <p class="muted">
-          Ordered by <code>{{ series.index }}</code
-          >, as {{ plural(series.periods_total, `${series.frequency} period`)
-          }}<template v-if="series.truncated"
-            >; the latest {{ series.max_periods }} are used</template
-          >, each the {{ series.aggregate }} of its rows.
-        </p>
-        <label>
-          Column
-          <select v-model="column" data-role="column">
-            <option v-for="name in names" :key="name" :value="name">{{ name }}</option>
-          </select>
-        </label>
-        <ul v-if="notRun.length" class="muted" data-role="not-run">
-          <li v-for="item in notRun" :key="item.id">{{ item.id }}: {{ item.reason }}</li>
-        </ul>
-      </section>
-
-      <StationarityTable
-        v-if="stationarity"
-        :output="stationarity"
-        :column="column"
-        @select="column = $event"
+    <div v-else-if="state === 'ready'" class="layout">
+      <SeriesBrowser
+        :names="names"
+        :selected="column"
+        :assessments="assessments"
+        @select="select"
       />
-      <AutocorrelationPlots v-if="autocorrelation" :output="autocorrelation" :column="column" />
-      <DecompositionPlots
-        v-if="decomposition"
-        :run-id="runId"
-        :output="decomposition"
-        :column="column"
-      />
-    </template>
+      <div class="stack">
+        <SeriesHeader :series="series" :columns="names.length" :not-run="notRun" />
+        <StationarityTable
+          v-if="stationarity"
+          :output="stationarity"
+          :column="column"
+          @select="select"
+        />
+        <AutocorrelationPlots v-if="autocorrelation" :output="autocorrelation" :column="column" />
+        <DecompositionPlots
+          v-if="decomposition"
+          :run-id="runId"
+          :output="decomposition"
+          :column="column"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { api, unwrap } from '../api/client'
+import SeriesBrowser from '../components/timeseries/SeriesBrowser.vue'
+import SeriesHeader from '../components/timeseries/SeriesHeader.vue'
 import AutocorrelationPlots from '../components/timeseries/AutocorrelationPlots.vue'
 import DecompositionPlots from '../components/timeseries/DecompositionPlots.vue'
 import StationarityTable from '../components/timeseries/StationarityTable.vue'
@@ -71,7 +65,6 @@ import {
   type SeriesOutput,
   type StationarityOutput,
 } from '../components/timeseries/timeseries'
-import { plural } from '../format'
 import type { components } from '../generated/api'
 
 type Result = components['schemas']['CheckResult']
@@ -80,7 +73,15 @@ const props = defineProps<{ runId: string }>()
 
 const results = ref<Record<string, Result>>({})
 const state = ref<'loading' | 'empty' | 'ready'>('loading')
-const column = ref('')
+const route = useRoute()
+const router = useRouter()
+
+// The column is in the URL, so a reload or a shared link keeps it.
+const column = computed(() => {
+  const asked = String(route.query.column ?? '')
+  return names.value.includes(asked) ? asked : (names.value[0] ?? '')
+})
+const select = (name: string) => void router.replace({ query: { ...route.query, column: name } })
 
 const outputOf = <T,>(id: string) =>
   results.value[id]?.status === 'ok' ? (results.value[id].output as T | null) : null
@@ -97,6 +98,15 @@ const names = computed(() => {
     for (const name of Object.keys(output?.columns ?? {})) found.add(name)
   return [...found]
 })
+
+const assessments = computed(() =>
+  Object.fromEntries(
+    Object.entries(stationarity.value?.columns ?? {}).map(([name, info]) => [
+      name,
+      info.assessment,
+    ]),
+  ),
+)
 
 const firstNote = computed(
   () => Object.values(results.value).find((r) => r.notes.length)?.notes[0] ?? null,
@@ -131,9 +141,22 @@ watch(
       }),
     )
     results.value = loaded
-    column.value = names.value[0] ?? ''
     state.value = names.value.length ? 'ready' : 'empty'
   },
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

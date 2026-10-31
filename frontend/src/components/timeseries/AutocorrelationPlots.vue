@@ -12,6 +12,13 @@
         }}
         Bars outside the dashed band are significant; flagged lags are drawn solid.
       </p>
+      <p class="muted" data-role="lags">
+        Significant ACF lags: {{ lagWords(info.significant_acf) }}. Significant PACF lags:
+        {{ lagWords(info.significant_pacf) }}.
+        <template v-if="info.strongest_lag !== null"
+          >The strongest is lag {{ info.strongest_lag }}.</template
+        >
+      </p>
       <DsbfChart
         title="ACF"
         :theme="theme"
@@ -34,7 +41,7 @@
 import { computed } from 'vue'
 import { useThemeStore } from '../../stores/theme'
 import DsbfChart from '../charts/DsbfChart.vue'
-import { acfOption, pacfOption, type AutocorrelationOutput } from './timeseries'
+import { acfOption, lagWords, pacfOption, type AutocorrelationOutput } from './timeseries'
 
 const props = defineProps<{ output: AutocorrelationOutput; column: string }>()
 

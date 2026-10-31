@@ -145,7 +145,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Relationships on titanic and `severe_multicollinearity`, in both themes.
 
 ### U6b-08 · ML Readiness tab
-- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-01
+- **Status:** done (2026-10-31, #181 `1fbe389`) · **Size:** M · **Depends on:** U6b-01
 - **Notes:** ML Readiness is a gate banner, five traffic-light cards that open their sections (the Quality section and finding-row components, now with an action note under every guidance action), a before/after skewness preview and a ready-features grid. The dictionary is `actionMeta.json`, keyed by `action:method` then method, re-keyed from the old action-name keys; a Python test checks it against the emitted guidance. Deviations: 33 emitted action and method pairs have no note yet (the `uncovered` list) and 5 old entries that `/v2` never emits were dropped; bundle budget 960 KB. Follow-up: write the uncovered notes (U6b-12).
 - **Goal:** ML Readiness answers "is it ready to model, and what preparation does it need?" (inventory: ML Readiness). The gate banner (ready, needs work, not ready, with its caveat when a dimension is unassessed); the five dimension cards; a section per dimension whose expanded rows show the finding, its metrics and its suggested actions, each with *what it does*, *trade-off*, *after this* and a reference link, ported from the old dashboard's 38-entry action dictionary (`15a6ac1^:frontend/src/utils/actionMeta.js`) as a frontend lookup by method (decided in U6b-00); the transformation preview as before and after skewness bars per candidate; ready features.
 - **Assumptions to confirm:** the old dictionary's method keys match the `method` values `/v2` guidance emits (list the mismatches and the methods with no entry); the transformation candidates' names match the dictionary's transform entries.
@@ -153,7 +153,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of ML Readiness on titanic and on an archetype that needs work, in both themes.
 
 ### U6b-09 · Time Series tab
-- **Status:** todo · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-01
+- **Notes:** Time Series is master-detail: a column browser with a stationarity badge per column (selection in the URL as `column`), a header strip, the ADF/KPSS table with a reading note, ACF and PACF with their significant lags, and STL with trend and seasonal strength meters against the white-noise floor. No deviations; bundle 955 KB, inside the 960 KB budget.
 - **Goal:** Time Series answers "how does it behave over time?" (inventory: Time Series): the disabled and no-index states with the config to add; the header strip (index column, frequency, value columns); ACF and PACF with confidence bands and significant lags; stationarity with its reading note; STL decomposition, in the new shell and visual language.
 - **Assumptions to confirm:** the fixture store has a run with a time index (or one is added).
 - **Steps:** the tab restyled from the Phase 6 page; Playwright tests.

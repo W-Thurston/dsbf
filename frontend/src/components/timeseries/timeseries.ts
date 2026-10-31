@@ -131,6 +131,13 @@ export function pValueWords(test: UnitRootTest | null): string {
   return `${bound}${test.p_value < 0.001 ? '< 0.001' : test.p_value.toFixed(3)}`
 }
 
+/** A list of lags in words: the first few, then how many more. */
+export function lagWords(lags: readonly number[], shown = 8): string {
+  if (!lags.length) return 'none'
+  const head = lags.slice(0, shown).join(', ')
+  return lags.length > shown ? `${head} and ${lags.length - shown} more` : head
+}
+
 /** Strength of a trend or season as the check labels it, against the noise floor. */
 export function strengthWords(strength: number, floor: number): string {
   if (strength < floor) return 'within noise'
