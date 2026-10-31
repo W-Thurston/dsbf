@@ -70,7 +70,8 @@ class TestOmnibusTests:
         f_stat, f_p = stats.f_oneway(*groups)
         h_stat, h_p = stats.kruskal(*groups)
         n = sum(g.size for g in groups)
-        ssb = sum(g.size * (g.mean() - frame["y"].mean()) ** 2 for g in groups)
+        grand_mean = float(np.mean(frame["y"].to_numpy()))
+        ssb = sum(g.size * (g.mean() - grand_mean) ** 2 for g in groups)
         ssw = sum(((g - g.mean()) ** 2).sum() for g in groups)
 
         found = pair(
