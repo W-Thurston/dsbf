@@ -126,7 +126,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the explorer on titanic, filtered and unfiltered, in both themes.
 
 ### U6b-06 · Distributions tab
-- **Status:** done (2026-10-30) · **Size:** L · **Depends on:** U6b-01
+- **Status:** done (2026-10-30, #179 `4fc8010`) · **Size:** L · **Depends on:** U6b-01
 - **Notes:** The Phase 6 column page became this tab's detail: one master-detail page serves `columns` and `columns/:column`. Q-Q data exists only for columns the normality check flags, so passing columns say why there is no plot. The bimodal overlay is a toggle, off by default, chosen by the user. The outlier consensus callout is not yet coloured by consensus (carried to U6b-12).
 - **Goal:** Distributions answers "what does each column look like?" (inventory: Distributions). The column browser grouped by type, with a warning dot and a missing % bar per column; the column heading; the stats strip by type; the distribution chart from the profile's real histogram, with mean and median lines and a box-plot toggle for numeric columns and a top-values bar for categorical ones; the column's guidance beside the chart; the bimodal callout; percentiles or value counts and text lengths; outlier analysis (IQR, z-score, MAD and their consensus); normality with the Q-Q plot built from `QQData` (the old dashboard's placeholder); the top correlations, each selecting that column. The column page from Phase 6 becomes this tab's detail.
 - **Assumptions to confirm:** every numeric profile has a histogram (or say when it does not); whether the bimodal callout should overlay the two fitted components on the histogram (prototype it on a bimodal archetype; ask the user).
@@ -134,7 +134,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of a numeric and a categorical column on titanic, and of a skewed or bimodal column on an archetype, in both themes.
 
 ### U6b-07 · Relationships tab
-- **Status:** todo · **Size:** M · **Depends on:** U6b-01
+- **Status:** done (2026-10-30) · **Size:** M · **Depends on:** U6b-01
+- **Notes:** The tab is a summary (strength bar, warning chips, multivariate outliers), heatmap panels capped at the 30 strongest columns, a column browser beside a filterable associations table, and a pair detail that folds in the contingency and group-difference results; the selection and filters are in the URL. `multivariate_outliers` sits in the summary because it measures the columns jointly. Deviations: `CheckCard` stays for Quality and ML Readiness; the pair table scrolls in a box; the fixture store gained the four archetypes; bundle budget 940 KB. Follow-up: the warning chips do not yet narrow the heatmaps (U6b-12).
 - **Carry in from U6-19:** the relationships checklist lines for the `severe_multicollinearity`, `wide`, `all_categorical` and `single_column` archetypes were never built as Playwright tests; they need fixture stores in `frontend/e2e/fixture_store.py`.
 - **Carry in from U6b-03:** the Overview draws bars and a null matrix in CSS (`BarList`, `NullMatrix`); use them where a chart here needs no zoom or export, to keep the chart chunk off the page.
 - **Carry in from U6b-01:** the matrix heatmap in `relationships.ts` used a visual map that `DsbfChart` never registered, so its colour scale was not applied until U6b-01 registered it; check its colours in the screenshot and move it onto `HeatmapChart`.
@@ -173,6 +174,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-12 · Screenshot review on the fixture store
 - **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Carry in from U6b-07:** the Relationships tab's warning chips narrow the column list and pairs table but not the heatmap panels; dim or drop the other columns there.
 - **Carry in from U6b-06:** the Distributions tab's outlier consensus callout has one amber border whether or not the methods agree; colour it by consensus.
 - **Carry in from U6b-04:** the Quality tab's Near-duplicate rows card says "did not run" on every run without that check; hide an absent optional check's card.
 - **Carry in from U6-19:** the quality lines for the other archetypes still need fixture stores.

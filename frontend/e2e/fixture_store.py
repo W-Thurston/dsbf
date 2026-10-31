@@ -4,7 +4,9 @@ Two runs of titanic: a full scan, and a 300-row sample that also runs a check th
 raises and a plugin that fails to import, under a policy that fails. A third dataset,
 ``cities``, has near-duplicate names so a finding carries a fuzzy-pair artifact. A
 fourth, ``bare``, is titanic (named ``bare``) stored without a data snapshot. The
-``clean`` and ``high_missingness`` archetypes follow, for the quality tab, and last
+``clean`` and ``high_missingness`` archetypes follow, for the quality tab, then the
+``severe_multicollinearity``, ``wide``, ``all_categorical`` and ``single_column``
+archetypes, for the relationships tab, and last
 ``kitchen5k`` with its time index, for the time series tab. A last dataset,
 ``relocated``, is titanic profiled from two paths, for the lineage. ``settings`` is
 titanic (named ``settings``) that the settings tests save and rerun. ``relocated``
@@ -87,7 +89,14 @@ def main(home: Path) -> None:
         snapshot_rows=0,
     )
     repository.save(dsbf.profile(TITANIC, name="settings", dataset="settings"))
-    for archetype in ("clean", "high_missingness"):
+    for archetype in (
+        "clean",
+        "high_missingness",
+        "severe_multicollinearity",
+        "wide",
+        "all_categorical",
+        "single_column",
+    ):
         repository.save(
             dsbf.profile(GENERATORS[archetype](), name=archetype, dataset=archetype)
         )

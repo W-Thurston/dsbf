@@ -32,7 +32,12 @@ export interface Panel {
   signed: boolean
   cells: Cell[]
   columns: string[]
+  /** Columns the panel's pairs span before any cap; `columns.length` when none was applied. */
+  total: number
 }
+
+/** The most columns one heatmap panel draws; wider panels keep the strongest. */
+export const PANEL_COLUMN_CAP = 30
 
 /** The panels that have a tested pair, with the columns each one draws in dataset order. */
 export function panelsOf(matrix: Matrix): Panel[] {
@@ -42,9 +47,33 @@ export function panelsOf(matrix: Matrix): Panel[] {
     if (!cells.length) return []
     const names = new Set(cells.flatMap((c) => [c.first, c.second]))
     const columns = [...names].sort((a, b) => (position.get(a) ?? 0) - (position.get(b) ?? 0))
-    return [{ title: panel.title, signed: panel.signed, cells, columns }]
+    return [{ title: panel.title, signed: panel.signed, cells, columns, total: columns.length }]
   })
 }
+
+/**
+ * A panel cut to the `limit` columns whose strongest cell is largest in absolute value,
+ * kept in dataset order, and the cells between them. A panel within the limit is returned
+ * as it is.
+ */
+export function capPanel(panel: Panel, limit = PANEL_COLUMN_CAP): Panel {
+  if (panel.columns.length <= limit) return panel
+  const reach = new Map<string, number>()
+  for (const c of panel.cells)
+    for (const name of [c.first, c.second])
+      reach.set(name, Math.max(reach.get(name) ?? 0, Math.abs(c.value)))
+  const keep = new Set(
+    [...panel.columns].sort((a, b) => (reach.get(b) ?? 0) - (reach.get(a) ?? 0)).slice(0, limit),
+  )
+  return {
+    ...panel,
+    columns: panel.columns.filter((name) => keep.has(name)),
+    cells: panel.cells.filter((c) => keep.has(c.first) && keep.has(c.second)),
+  }
+}
+
+/** The height a panel's heatmap needs: a row per column, plus the axis and scale. */
+export const panelHeight = (panel: Panel) => Math.max(panel.columns.length * 22 + 140, 260)
 
 /**
  * A heatmap of one panel. A pair is drawn in both halves; a pair the check did not test
@@ -67,7 +96,7 @@ export function matrixOption(panel: Panel): EChartsOption {
         : [point(x, y), point(y, x)]
   })
   return {
-    grid: { left: 110, right: 24, top: 12, bottom: 90 },
+    grid: { left: 110, right: 24, top: 12, bottom: 100 },
     tooltip: {
       formatter: (p: unknown) => {
         const { value, statistic, n } = (
@@ -86,6 +115,7 @@ export function matrixOption(panel: Panel): EChartsOption {
       orient: 'horizontal',
       left: 'center',
       bottom: 0,
+      inRange: { color: panel.signed ? ['#2563eb', '#e5e7eb', '#dc2626'] : ['#e5e7eb', '#7c3aed'] },
     },
     series: [{ type: 'heatmap', data }],
   }
@@ -223,3 +253,82 @@ export function pairIn<T extends Record<string, unknown>>(
     (r) => (r[keys[0]] === a && r[keys[1]] === b) || (r[keys[0]] === b && r[keys[1]] === a),
   )
 }
+
+export const STRENGTHS = ['strong', 'moderate', 'weak', 'negligible'] as const
+export type Strength = (typeof STRENGTHS)[number]
+
+/** Tested cells per strength band, and those whose check names no band. */
+export function strengthCounts(cells: Cell[]): {
+  counts: Record<Strength, number>
+  unbanded: number
+} {
+  const counts: Record<Strength, number> = { strong: 0, moderate: 0, weak: 0, negligible: 0 }
+  let unbanded = 0
+  for (const c of cells) {
+    if (c.strength !== null && c.strength in counts) counts[c.strength as Strength] += 1
+    else unbanded += 1
+  }
+  return { counts, unbanded }
+}
+
+export interface Association {
+  other: string
+  cell: Cell
+}
+
+/** Every tested pair that includes `column`, strongest first. */
+export function associationsOf(matrix: Matrix, column: string): Association[] {
+  return matrix.cells
+    .filter((c) => c.first === column || c.second === column)
+    .map((cell) => ({ other: cell.first === column ? cell.second : cell.first, cell }))
+    .sort((a, b) => Math.abs(b.cell.value) - Math.abs(a.cell.value))
+}
+
+/** Per column, how many tested pairs are banded strong. */
+export function strongCounts(matrix: Matrix): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const c of matrix.cells) {
+    if (c.strength !== 'strong') continue
+    for (const name of new Set([c.first, c.second])) counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return counts
+}
+
+export interface Chip {
+  id: 'collinearity' | 'duplicates' | 'leakage'
+  label: string
+  columns: string[]
+}
+
+/**
+ * The warning chips, each with the columns it concerns: columns with a VIF of 10 or more,
+ * columns equal to another, and features the leakage check flagged. A chip with no column
+ * is left out.
+ */
+export function chipsOf(outputs: {
+  collinearity?: Record<string, unknown> | null
+  duplicate_columns?: Record<string, unknown> | null
+  target_leakage?: Record<string, unknown> | null
+}): Chip[] {
+  const high = rowsOf<VifRow>(outputs.collinearity ?? {}, 'columns')
+    .filter((r) => r.vif >= 10)
+    .map((r) => r.column)
+  const groups = rowsOf<string[]>(outputs.duplicate_columns ?? {}, 'groups').flat()
+  const leaks = [
+    ...new Set(
+      rowsOf<LeakageRow>(outputs.target_leakage ?? {}, 'features')
+        .filter((r) => r.flagged)
+        .map((r) => r.feature),
+    ),
+  ]
+  const chips: Chip[] = [
+    { id: 'collinearity', label: 'Collinear (VIF ≥ 10)', columns: high },
+    { id: 'duplicates', label: 'Duplicate columns', columns: groups },
+    { id: 'leakage', label: 'Possible leakage', columns: leaks },
+  ]
+  return chips.filter((c) => c.columns.length)
+}
+
+/** Whether a pair involves a column in `columns`, or any pair when `columns` is null. */
+export const touches = (cell: Cell, columns: Set<string> | null) =>
+  columns === null || columns.has(cell.first) || columns.has(cell.second)
