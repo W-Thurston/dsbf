@@ -3,6 +3,9 @@
     <p>
       Rerun <strong data-role="job-state">{{ job.state }}</strong>
       <template v-if="last"> — {{ describe(last) }}</template>
+      <template v-else-if="active">
+        — <span class="spinner" aria-hidden="true" /><span data-role="starting">starting</span>
+      </template>
     </p>
     <p v-if="job.error" class="error" data-role="job-error">{{ job.error }}</p>
   </div>
@@ -23,6 +26,8 @@ function describe(event: JobEvent): string {
   const where = event.position && event.total ? ` (${event.position} of ${event.total})` : ''
   return `${event.check_id ?? 'working'}${where}`
 }
+
+const active = computed(() => ['queued', 'running'].includes(props.job.state.toLowerCase()))
 </script>
 
 <style scoped>
@@ -50,6 +55,26 @@ function describe(event: JobEvent): string {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 12px;
+}
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border: 2px solid var(--border);
+  border-top-color: var(--level-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }
 .error {
   margin-top: 10px;

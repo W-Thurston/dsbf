@@ -7,6 +7,7 @@ import {
   matrixOption,
   pairIn,
   pairOption,
+  restrictPanel,
   panelHeight,
   panelsOf,
   plotKind,
@@ -157,6 +158,24 @@ describe('the heatmap cap', () => {
     const [panel] = panelsOf(wide(6))
     expect(capPanel(panel!, 30)).toBe(panel)
     expect(panelHeight(panel!)).toBeGreaterThanOrEqual(260)
+  })
+
+  describe('restricting a panel', () => {
+    it('keeps only the chosen columns and their cells, and re-counts the total', () => {
+      const [panel] = panelsOf(wide(6))
+      const kept = restrictPanel(panel!, new Set(['c0', 'c1']))
+      expect(kept.columns).toEqual(['c0', 'c1'])
+      expect(kept.total).toBe(2)
+      expect(
+        kept.cells.every(
+          (c) => ['c0', 'c1'].includes(c.first + '') && ['c0', 'c1'].includes(c.second + ''),
+        ),
+      ).toBe(true)
+    })
+    it('returns the panel as it is without a restriction', () => {
+      const [panel] = panelsOf(wide(6))
+      expect(restrictPanel(panel!, null)).toBe(panel)
+    })
   })
 })
 

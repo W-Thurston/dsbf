@@ -173,3 +173,47 @@ test('save the quality screenshots', async ({ page, request }) => {
     }
   }
 })
+
+test('the tiny, near-clean and comprehensive archetypes read at their own levels', async ({
+  page,
+  request,
+}) => {
+  const expectations: Record<string, { trust: string; levels: Record<string, string> }> = {
+    tiny: { trust: 'Worth investigating', levels: { 'quality-usability': 'Warning' } },
+    near_clean: { trust: 'Minor issues', levels: { 'quality-completeness': 'Minor' } },
+    comprehensive: {
+      trust: 'Needs attention',
+      levels: { 'quality-completeness': 'Serious', 'quality-redundancy': 'Warning' },
+    },
+  }
+  for (const [dataset, { trust, levels }] of Object.entries(expectations)) {
+    const run = await runOf(request, dataset)
+    await page.goto(`/runs/${run}/quality`)
+    await expect(page.locator('[data-role="trust"]')).toContainText(trust)
+    for (const [id, text] of Object.entries(levels)) await expect(level(page, id)).toHaveText(text)
+    await expect(level(page, 'quality-leakage')).toHaveText('Not assessed')
+  }
+})
+
+test('a run without the near-duplicate check says why the card is empty', async ({
+  page,
+  request,
+}) => {
+  await page.goto(`/runs/${await runOf(request, 'clean')}/quality`)
+  const card = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Near-duplicate rows' }),
+  })
+  await expect(card.locator('[data-role="check-missing"]')).toContainText('optional')
+  await page.goto(`/runs/${await runOf(request, 'cities')}/quality`)
+  await expect(card.locator('[data-role="pair"]').first()).toBeVisible()
+})
+
+test('a check that does not apply says it was not calculated, in plain words', async ({
+  page,
+  request,
+}) => {
+  await page.goto(`/runs/${await runOf(request, 'tiny')}/quality`)
+  await expect(page.getByRole('heading', { name: 'Why values are missing' })).toBeVisible()
+  await expect(page.getByText('Not calculated: this check does not apply')).toBeVisible()
+  await expect(page.getByText('Status not_applicable')).toHaveCount(0)
+})

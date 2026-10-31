@@ -4,6 +4,7 @@
     :run-id="runId"
     check-id="fuzzy_duplicates"
     title="Near-duplicate rows"
+    missing-note="Near-duplicate rows was not run: this check is optional. Add fuzzy_duplicates to the run's checks to include it."
   >
     <template v-for="f in [asFuzzy(output)]" :key="f.pairs_flagged">
       <p v-if="!f.top_pairs.length" class="muted" data-role="no-pairs">

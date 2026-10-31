@@ -131,7 +131,15 @@
           data-section="outliers"
         >
           <h2 id="outlier-title" class="card-title">Outliers</h2>
-          <p class="callout" data-role="consensus">{{ outlierConsensus(outlier) }}</p>
+          <p
+            class="callout"
+            :data-agreement="
+              outlier.consensus ? 'agree' : outlier.methods_flagging.length ? 'split' : 'none'
+            "
+            data-role="consensus"
+          >
+            {{ outlierConsensus(outlier) }}
+          </p>
           <table class="data-table">
             <thead>
               <tr>
@@ -380,6 +388,12 @@ watch(() => [props.runId, props.column], load, { immediate: true })
 }
 .toggle[aria-pressed='true'] {
   border-color: var(--link);
+}
+.callout[data-agreement='agree'] {
+  border-left-color: var(--level-red);
+}
+.callout[data-agreement='none'] {
+  border-left-color: var(--level-green);
 }
 .callout {
   margin: 12px 0 0;
