@@ -143,3 +143,48 @@ async function poll(after: number) {
   }
 }
 </script>
+
+<style scoped>
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+button {
+  font-size: 14px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+button:hover:not(:disabled) {
+  border-color: var(--link);
+}
+button:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button[data-role='rerun'] {
+  margin-left: auto;
+  color: var(--bg);
+  background: var(--link);
+  border-color: var(--link);
+  font-weight: 600;
+}
+button[data-role='reset'] {
+  color: var(--text-muted);
+}
+.muted {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+[data-role='save-error'] {
+  margin: 12px 0 0;
+}
+</style>

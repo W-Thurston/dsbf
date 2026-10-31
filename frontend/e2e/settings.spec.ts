@@ -34,3 +34,21 @@ test('a rerun of a source that no longer exists fails and shows why', async ({ p
   await expect(page.locator('[data-role="job-state"]')).toHaveText('failed', JOB)
   await expect(page.locator('[data-role="job-error"]')).toContainText('titanic_moved.csv')
 })
+
+// With SCREENSHOT_DIR set, save the settings form and a rerun in progress in both themes.
+test('save the settings screenshots', async ({ page }) => {
+  const dir = process.env.SCREENSHOT_DIR
+  test.skip(!dir, 'SCREENSHOT_DIR is not set')
+  await page.setViewportSize({ width: 1280, height: 900 })
+  const form = page.locator('[data-section="settings"]')
+  for (const theme of ['dark', 'light']) {
+    await page.goto('/datasets/titanic')
+    if (theme === 'light') await page.getByRole('button', { name: /theme/ }).click()
+    await expect(form.locator('[data-field="depth"]')).toBeVisible()
+    await form.screenshot({ path: `${dir}/settings-${theme}.png` })
+    await form.locator('[data-role="rerun"]').click()
+    await expect(page.locator('[data-role="rerun-progress"]')).toBeVisible()
+    await form.screenshot({ path: `${dir}/rerun-progress-${theme}.png` })
+    await expect(page).toHaveURL(/\/runs\//, JOB)
+  }
+})
