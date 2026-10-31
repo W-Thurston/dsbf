@@ -177,7 +177,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the settings page and a rerun in progress, in both themes.
 
 ### U6b-12 · Screenshot review on the fixture store
-- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Status:** done (2026-10-31, #185 `c30de04`) · **Size:** M · **Depends on:** U6b-03 to U6b-11
 - **Notes:** The fixture store holds all nine archetypes and `e2e/screenshots.spec.ts` saves 55 pages in both themes (110 images). Fixed: the near-duplicate card and any inapplicable check now say why they were not calculated (nothing is hidden), the outlier callout is coloured by consensus, the heatmaps follow the warning chips, and rerun progress shows a starting line. Deviations: the user deferred every screenshot sign-off to one full review (U6b-13); the 33 action notes stay uncovered. Bundle 962.8 KB.
 - **Carry in from U6b-11 (done):** the rerun progress card shows only "Rerun RUNNING" until the first progress event arrives; consider a spinner or a "starting" line.
 - **Carry in from U6b-08:** 33 emitted guidance pairs have no action note (`uncovered` in `frontend/src/components/readiness/actionMeta.json`, e.g. `convert:*`, `transform:pca`, `impute:multiple_imputation`); write the notes, or accept the finding's own detail, and shrink the list. The coverage test keeps the list exact.
@@ -190,6 +190,14 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Assumptions to confirm:** every archetype generator in `tests/` can be stored in the fixture store within the e2e job's time.
 - **Steps:** the remaining archetype fixture stores; a script that captures every page in both themes; the review with the user; the fixes.
 - **Acceptance:** The user signs off the full screenshot set, and confirms each of the phase's seven questions can be answered from the dashboard without reading the JSON. (Deferred to U6b-13 by the user.)
+
+### U6b-12a · Fingerprint scheme for Polars 2.1
+- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-12
+- **Notes:** Polars 2.1 is the minimum and fingerprints read `polars-hash-v2:…`; stored `v1` runs read as changed against new ones. The titanic golden snapshot moved by four bootstrap-interval values, from numpy 2.5.4, not Polars. Follow-up: the golden workflow is skipped on pull requests, so a dependency bump can break a snapshot unseen.
+- **Goal:** Take Polars 2.1, whose `Series.hash` differs from 2.0's, without two Polars versions giving one dataset two fingerprints. The scheme tag becomes `polars-hash-v2`, the minimum Polars becomes 2.1 and Dependabot stops ignoring it.
+- **Assumptions to confirm:** the whole suite (unit, integration, golden) passes on Polars 2.1 with only the fingerprint pin changed; no checked-in snapshot or schema carries a fingerprint; a store written under `v1` still opens (its fingerprints only read as changed against new runs, which alpha releases allow, practice 11).
+- **Steps:** bump the tag, the pin and the lower bound; `uv lock`; drop the Dependabot ignore; changelog line; run the tiers.
+- **Acceptance:** CI is green on Polars 2.1; a real run's `run.json` carries a `polars-hash-v2:` fingerprint and compares as unchanged against a second run of the same file.
 
 ### U6b-13 · Polish the frontend
 - **Status:** todo · **Size:** L · **Depends on:** U6b-12
