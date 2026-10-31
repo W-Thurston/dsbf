@@ -3,18 +3,19 @@
     <h2 id="stl-title" class="card-title">Trend and seasonality (STL)</h2>
     <p v-if="!info" class="muted">{{ column }} was not decomposed: {{ skipped }}</p>
     <template v-else>
-      <p class="muted" data-role="strengths">
-        Cycle of {{ info.period }} periods ({{ output.period_source }}). Trend strength
-        {{ info.trend_strength.toFixed(2) }} ({{
-          strengthWords(info.trend_strength, info.trend_floor)
-        }}), seasonal strength {{ info.seasonal_strength.toFixed(2) }} ({{
-          strengthWords(info.seasonal_strength, info.seasonal_floor)
-        }}); the remainder is {{ Math.round(info.remainder_share * 100) }}% of the variance. White
-        noise of this length reaches {{ info.trend_floor.toFixed(2) }} (trend) and
-        {{ info.seasonal_floor.toFixed(2) }} (seasonal).
-      </p>
+      <div class="meters" data-role="strengths">
+        <StrengthMeter label="Trend" :value="info.trend_strength" :floor="info.trend_floor" />
+        <StrengthMeter
+          label="Seasonal"
+          :value="info.seasonal_strength"
+          :floor="info.seasonal_floor"
+        />
+      </div>
       <p class="muted">
-        Period 0 starts {{ info.series_start }}; each period is one {{ output.frequency }} step.
+        Cycle of {{ info.period }} periods ({{ output.period_source }}); the remainder is
+        {{ Math.round(info.remainder_share * 100) }}% of the variance. The marker on each bar is
+        what white noise of this length reaches. Period 0 starts {{ info.series_start }}; each
+        period is one {{ output.frequency }} step.
       </p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <p v-else-if="!components" class="loading">Loading…</p>
@@ -35,12 +36,12 @@ import { computed, ref, watch } from 'vue'
 import { api, unwrap } from '../../api/client'
 import { useThemeStore } from '../../stores/theme'
 import DsbfChart from '../charts/DsbfChart.vue'
+import StrengthMeter from './StrengthMeter.vue'
 import {
   ARTIFACT_PAGE,
   componentsOf,
   rowRange,
   stlOption,
-  strengthWords,
   type Components,
   type DecompositionOutput,
 } from './timeseries'
@@ -89,3 +90,11 @@ watch(
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.meters {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+</style>

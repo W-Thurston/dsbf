@@ -4,6 +4,7 @@ import {
   assessmentClass,
   assessmentWords,
   componentsOf,
+  lagWords,
   pacfOption,
   pValueWords,
   rowRange,
@@ -114,5 +115,13 @@ describe('the charts', () => {
     }) as { series: { name: string }[]; grid: unknown[] }
     expect(option.series.map((s) => s.name)).toEqual(['Observed', 'Trend', 'Seasonal', 'Remainder'])
     expect(option.grid).toHaveLength(4)
+  })
+})
+
+describe('lagWords', () => {
+  it('says none for no lags', () => expect(lagWords([])).toBe('none'))
+  it('lists a few lags and counts the rest', () => {
+    expect(lagWords([1, 2, 3])).toBe('1, 2, 3')
+    expect(lagWords([1, 2, 3, 4, 5], 3)).toBe('1, 2, 3 and 2 more')
   })
 })
