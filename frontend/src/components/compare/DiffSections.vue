@@ -10,19 +10,30 @@
       {{ diff.tolerance }}).
     </p>
 
-    <section v-for="group in groups" :key="group.name" :data-section="group.name">
+    <DiffCounts :diff="diff" />
+
+    <section v-for="group in groups" :key="group.name" class="card" :data-section="group.name">
       <h2 class="card-title">{{ group.title }} ({{ group.findings.length }})</h2>
       <p v-if="!group.findings.length" class="muted">None.</p>
       <ul v-else class="findings">
-        <li v-for="finding in group.findings" :key="finding.id">
+        <li v-for="finding in cap(group.name, group.findings)" :key="finding.id">
           <SeverityBadge :severity="finding.severity" />
           <strong>{{ finding.title }}</strong>
           <span class="muted"> · {{ finding.check_id }} · {{ finding.code }}</span>
         </li>
       </ul>
+      <button
+        v-if="group.findings.length > CAP"
+        type="button"
+        class="more"
+        :data-more="group.name"
+        @click="toggle(group.name)"
+      >
+        {{ open.has(group.name) ? 'Show fewer' : `Show all ${group.findings.length}` }}
+      </button>
     </section>
 
-    <section data-section="changed">
+    <section class="card" data-section="changed">
       <h2 class="card-title">Changed ({{ diff.changed.length }})</h2>
       <p v-if="!diff.changed.length" class="muted">None.</p>
       <table v-else class="data-table">
@@ -34,7 +45,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="change in diff.changed" :key="change.id">
+          <tr v-for="change in cap('changed', diff.changed)" :key="change.id">
             <td>
               {{ change.title }} <span class="muted">· {{ change.code }}</span>
             </td>
@@ -53,9 +64,18 @@
           </tr>
         </tbody>
       </table>
+      <button
+        v-if="diff.changed.length > CAP"
+        type="button"
+        class="more"
+        data-more="changed"
+        @click="toggle('changed')"
+      >
+        {{ open.has('changed') ? 'Show fewer' : `Show all ${diff.changed.length}` }}
+      </button>
     </section>
 
-    <section data-section="status-changes">
+    <section class="card" data-section="status-changes">
       <h2 class="card-title">Check status changes ({{ diff.status_changes.length }})</h2>
       <p v-if="!diff.status_changes.length" class="muted">None.</p>
       <table v-else class="data-table">
@@ -79,10 +99,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { words } from '../../format'
 import type { components } from '../../generated/api'
 import SeverityBadge from '../SeverityBadge.vue'
+import DiffCounts from './DiffCounts.vue'
 
 const props = defineProps<{ diff: components['schemas']['RunDiff'] }>()
 
@@ -91,6 +112,17 @@ const groups = computed(() => [
   { name: 'resolved', title: 'Resolved since base', findings: props.diff.resolved },
 ])
 
+// A full scan against its sample can change hundreds of findings; show the first rows
+// of each section and let the person ask for the rest.
+const CAP = 25
+const open = reactive(new Set<string>())
+function toggle(name: string) {
+  if (!open.delete(name)) open.add(name)
+}
+function cap<T>(name: string, rows: T[]): T[] {
+  return open.has(name) ? rows : rows.slice(0, CAP)
+}
+
 function show(value: boolean | number | string | null): string {
   if (value === null) return '–'
   return typeof value === 'number' ? String(Number(value.toPrecision(4))) : String(value)
@@ -98,6 +130,9 @@ function show(value: boolean | number | string | null): string {
 </script>
 
 <style scoped>
+.more {
+  margin-top: 12px;
+}
 .metric {
   display: block;
 }

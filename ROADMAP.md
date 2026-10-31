@@ -153,7 +153,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of ML Readiness on titanic and on an archetype that needs work, in both themes.
 
 ### U6b-09 · Time Series tab
-- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-31, #182 `9404e59`) · **Size:** S · **Depends on:** U6b-01
 - **Notes:** Time Series is master-detail: a column browser with a stationarity badge per column (selection in the URL as `column`), a header strip, the ADF/KPSS table with a reading note, ACF and PACF with their significant lags, and STL with trend and seasonal strength meters against the white-noise floor. No deviations; bundle 955 KB, inside the 960 KB budget.
 - **Goal:** Time Series answers "how does it behave over time?" (inventory: Time Series): the disabled and no-index states with the config to add; the header strip (index column, frequency, value columns); ACF and PACF with confidence bands and significant lags; stationarity with its reading note; STL decomposition, in the new shell and visual language.
 - **Assumptions to confirm:** the fixture store has a run with a time index (or one is added).
@@ -161,7 +161,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Time Series on a run with a time index and on titanic (the empty state), in both themes.
 
 ### U6b-10 · Dataset list, runs, compare and history
-- **Status:** todo · **Size:** M · **Depends on:** U6b-01, U6b-02
+- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-01, U6b-02
+- **Notes:** The dataset list is a card grid with a name and key search and five dimension dots per card (the empty ring for an unassessed dimension). Compare gains a count-per-kind bar chart above its sections, and each findings section shows 25 rows with a show-all toggle. The dataset page's runs, lineage and history keep their markup. Bundle 958.7 KB, inside the 960 KB budget (1.3 KB spare). Follow-ups: the search covers only the loaded page of 25 datasets (server-side search needs an API change); compare's changed list could group near-identical findings by code.
 - **Goal:** The dataset-level pages answer "what changed since the last run?" and get a person to a run. The dataset list as the old card grid with search, with the latest run's five dimension dots in place of the old score; a dataset's runs; compare (any two runs) with its changes charted; finding history and lineage, in the new shell and visual language.
 - **Assumptions to confirm:** the compare view's diff sections can be summarised as counts per kind of change for a chart.
 - **Steps:** the pages restyled; the dimension dots; Playwright tests.
