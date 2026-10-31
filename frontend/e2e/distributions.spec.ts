@@ -99,6 +99,10 @@ test('outliers list each method with a consensus line, and normality its tests',
   await page.goto(`/runs/${run}/columns/fare`)
   const outliers = detail(page).locator('[data-section="outliers"]')
   await expect(outliers.locator('[data-role="consensus"]')).toBeVisible()
+  await expect(outliers.locator('[data-role="consensus"]')).toHaveAttribute(
+    'data-agreement',
+    /^(agree|split|none)$/,
+  )
   await expect(outliers.getByRole('row', { name: /IQR/ })).toBeVisible()
   await expect(outliers.getByRole('row', { name: /Z-score/ })).toBeVisible()
   await expect(outliers.getByRole('row', { name: /MAD/ })).toBeVisible()

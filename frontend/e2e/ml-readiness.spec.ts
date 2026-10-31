@@ -96,3 +96,21 @@ test('save the ML readiness screenshots', async ({ page, request }) => {
     }
   }
 })
+
+test('the gate follows the archetype: tiny is ready, near-clean needs work, comprehensive is not ready', async ({
+  page,
+  request,
+}) => {
+  const verdicts = {
+    tiny: 'Ready for modelling',
+    near_clean: 'Needs work before modelling',
+    comprehensive: 'Not ready for modelling',
+  }
+  for (const [dataset, verdict] of Object.entries(verdicts)) {
+    await page.goto(`/runs/${await runOf(request, dataset)}/ml-readiness`)
+    await expect(page.locator('[data-role="gate"]')).toContainText(verdict)
+    await expect(page.locator('[data-dimension="ml-leakage"] [data-role="level"]')).toHaveText(
+      'Not assessed',
+    )
+  }
+})

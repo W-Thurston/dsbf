@@ -72,6 +72,18 @@ export function capPanel(panel: Panel, limit = PANEL_COLUMN_CAP): Panel {
   }
 }
 
+/** A panel narrowed to the given columns (all of it when `only` is null), with its total re-counted. */
+export function restrictPanel(panel: Panel, only: ReadonlySet<string> | null): Panel {
+  if (!only) return panel
+  const columns = panel.columns.filter((name) => only.has(name))
+  return {
+    ...panel,
+    columns,
+    total: columns.length,
+    cells: panel.cells.filter((c) => only.has(c.first) && only.has(c.second)),
+  }
+}
+
 /** The height a panel's heatmap needs: a row per column, plus the axis and scale. */
 export const panelHeight = (panel: Panel) => Math.max(panel.columns.length * 22 + 140, 260)
 

@@ -58,6 +58,7 @@ import PairDetail from '../components/relationships/PairDetail.vue'
 import SummaryCard, { type Outliers } from '../components/relationships/SummaryCard.vue'
 import {
   capPanel,
+  restrictPanel,
   chipsOf,
   matrixOption,
   panelHeight,
@@ -102,7 +103,6 @@ const chooseColumn = (name: string) =>
   replaceQuery({ column: name === column.value ? undefined : name })
 const toggleChip = (id: Chip['id']) => replaceQuery({ chip: id === chip.value ? undefined : id })
 
-const panels = computed(() => (matrix.value ? panelsOf(matrix.value).map((p) => capPanel(p)) : []))
 const chips = computed(() =>
   chipsOf({
     collinearity: outputs.value.collinearity,
@@ -114,6 +114,10 @@ const restrict = computed(() => {
   const active = chips.value.find((c) => c.id === chip.value)
   return active ? new Set(active.columns) : null
 })
+// A warning chip narrows the heatmaps to its columns, as it does the column list and the table.
+const panels = computed(() =>
+  matrix.value ? panelsOf(matrix.value).map((p) => capPanel(restrictPanel(p, restrict.value))) : [],
+)
 const outliers = computed<Outliers | null>(() => {
   const o = outputs.value.multivariate_outliers
   return o && Array.isArray(o.feature_columns) ? (o as unknown as Outliers) : null

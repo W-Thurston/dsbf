@@ -169,7 +169,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off screenshots of the dataset list (fixture store), a run list, and titanic's full run compared with its sample, in both themes.
 
 ### U6b-11 · Settings and rerun
-- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-01
+- **Status:** done (2026-10-31, #184 `cb6a054`) · **Size:** S · **Depends on:** U6b-01
 - **Notes:** The settings form and rerun progress, which had no styles, are a responsive field grid with bordered group fieldsets, a primary "Save and rerun" button and a progress card edged by job state. The form stays a card on the dataset page and its fields and API calls are unchanged. Bundle 961.2 KB; budget raised from 960 to 970 KB.
 - **Goal:** The dataset settings form and rerun progress in the new shell and visual language.
 - **Assumptions to confirm:** the generated settings form needs no change beyond styling.
@@ -177,8 +177,9 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of the settings page and a rerun in progress, in both themes.
 
 ### U6b-12 · Screenshot review on the fixture store
-- **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
-- **Carry in from U6b-11:** the rerun progress card shows only "Rerun RUNNING" until the first progress event arrives; consider a spinner or a "starting" line.
+- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Notes:** The fixture store holds all nine archetypes and `e2e/screenshots.spec.ts` saves 55 pages in both themes (110 images). Fixed: the near-duplicate card and any inapplicable check now say why they were not calculated (nothing is hidden), the outlier callout is coloured by consensus, the heatmaps follow the warning chips, and rerun progress shows a starting line. Deviations: the user deferred every screenshot sign-off to one full review (U6b-13); the 33 action notes stay uncovered. Bundle 962.8 KB.
+- **Carry in from U6b-11 (done):** the rerun progress card shows only "Rerun RUNNING" until the first progress event arrives; consider a spinner or a "starting" line.
 - **Carry in from U6b-08:** 33 emitted guidance pairs have no action note (`uncovered` in `frontend/src/components/readiness/actionMeta.json`, e.g. `convert:*`, `transform:pca`, `impute:multiple_imputation`); write the notes, or accept the finding's own detail, and shrink the list. The coverage test keeps the list exact.
 - **Carry in from U6b-07:** the Relationships tab's warning chips narrow the column list and pairs table but not the heatmap panels; dim or drop the other columns there.
 - **Carry in from U6b-06:** the Distributions tab's outlier consensus callout has one amber border whether or not the methods agree; colour it by consensus.
@@ -188,10 +189,18 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Goal:** A review of every page on the fixture store, with the archetype stores, against the phase's questions: a screenshot set the user signs off, the remaining archetype checklist lines as Playwright tests, and the fixes the review finds (each small, or a follow-up unit).
 - **Assumptions to confirm:** every archetype generator in `tests/` can be stored in the fixture store within the e2e job's time.
 - **Steps:** the remaining archetype fixture stores; a script that captures every page in both themes; the review with the user; the fixes.
+- **Acceptance:** The user signs off the full screenshot set, and confirms each of the phase's seven questions can be answered from the dashboard without reading the JSON. (Deferred to U6b-13 by the user.)
+
+### U6b-13 · Polish the frontend
+- **Status:** todo · **Size:** L · **Depends on:** U6b-12
+- **Goal:** The dashboard after the user's full review: the user walks every page (the screenshot set from `SCREENSHOT_DIR=… pnpm test:e2e`, or the running dashboard) and hands over one set of notes; this unit scopes them, fixes them and gets the sign-off.
+- **Carry in from U6b-12:** (1) the never-hide rule: an absent, skipped or inapplicable result shows a plain note saying why it was not calculated or drawn, on every page; audit for any remaining hidden section, raw status string or silent empty chart. (2) Gate semantics: warnings and info must not block "ready for modelling"; `ml_readiness` gives `needs_work` for any amber dimension, so decide whether the gate stays a three-level verdict with cautions as notes (changes the check output, goldens, `tests/validation/DASHBOARD_CHECKLIST.md` and the schema's minor version). (3) The 33 uncovered guidance pairs have no action note (`uncovered` in `actionMeta.json`); write them or accept the finding's own detail.
+- **Assumptions to confirm:** the user's notes arrive before the unit starts; **ask the user** for them, and for the scope of the gate change, before designing.
+- **Steps:** scope the notes into steps in `PLAN.md`; the fixes; refreshed screenshots.
 - **Acceptance:** The user signs off the full screenshot set, and confirms each of the phase's seven questions can be answered from the dashboard without reading the JSON.
 
-### U6b-13 · Release 1.0.0
-- **Status:** todo · **Size:** M · **Depends on:** U6b-12
+### U6b-14 · Release 1.0.0
+- **Status:** todo · **Size:** M · **Depends on:** U6b-13
 - **Carry in from U6-19:** `test_a_killed_worker_has_no_cpu_figure` (`tests/test_engine/test_process_workers.py:357`) failed once on the Python 3.13 full-suite job of #171 (`assert 0.5992 >= 0.6`: the wall time of a worker killed at a 0.6 s timeout, measured on a different clock from the timeout) and passed on rerun. Probable cause, not reproduced: clock jitter. Give the assertion a small tolerance (for example `>= 0.55`) before the release gate relies on the full suite; treat a second failure as a real defect. The wheel smoke script installs `[server]` by `file://` URL because Git Bash on Windows does not convert a path with `[server]` attached; keep that when the script changes.
 - **Goal:** Release `1.0.0`. Set the version to `1.0.0` and the classifier to `Development Status :: 5 - Production/Stable`; rename the changelog's `[Unreleased]` section to `[1.0.0]` with its date and link; restore the README's installation text and the example workflow's pin for a stable release (`pip install dsbf`, `dsbf>=1.0,<2`) and remove the preview notes from the README and the standalone-local guide; reword `CLAUDE.md` practice 11 for the stable 1.x guarantee; replace the README screenshot with the signed-off Overview. The user pushes the `v1.0.0` tag after merge (the release workflow builds the dashboard into the wheel, publishes to TestPyPI, installs it back and then publishes to PyPI).
 - **Assumptions to confirm:** the release workflow still matches what U6-19 left; the perf, golden and calibration nightlies are green on `main`.
