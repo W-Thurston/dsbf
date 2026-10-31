@@ -41,6 +41,22 @@
             <strong>{{ words(item.action) }}</strong>
             <span v-if="item.condition" class="muted"> if {{ item.condition }}</span>
             <span v-if="item.detail"> — {{ item.detail }}</span>
+            <dl v-if="noteOf(item)" class="note" data-role="action-note">
+              <dt>What it does</dt>
+              <dd>{{ noteOf(item)?.what }}</dd>
+              <dt>Trade-off</dt>
+              <dd>{{ noteOf(item)?.tradeoff }}</dd>
+              <dt>After this</dt>
+              <dd>{{ noteOf(item)?.after }}</dd>
+              <template v-if="noteOf(item)?.ref">
+                <dt>Reference</dt>
+                <dd>
+                  <a :href="noteOf(item)?.ref?.url" target="_blank" rel="noopener noreferrer">{{
+                    noteOf(item)?.ref?.label
+                  }}</a>
+                </dd>
+              </template>
+            </dl>
           </li>
         </ul>
         <router-link
@@ -63,9 +79,13 @@ import { words } from '../../format'
 import type { components } from '../../generated/api'
 import type { SeverityName } from '../../generated/ranks'
 import SeverityBadge from '../SeverityBadge.vue'
+import { actionNote } from '../readiness/actionMeta'
 import type { FindingRef } from './quality'
 
 const props = defineProps<{ runId: string; finding: FindingRef }>()
+
+const noteOf = (item: { action: string; method?: string | null }) =>
+  actionNote(item.action, item.method)
 
 const open = ref(false)
 const full = ref<components['schemas']['Finding'] | null>(null)
@@ -131,5 +151,18 @@ const metrics = computed(() =>
 .guidance {
   padding-left: 18px;
   font-size: 13px;
+}
+.note {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 4px 0 8px;
+  color: var(--text-muted);
+}
+.note dt {
+  font-weight: 600;
+}
+.note dd {
+  margin: 0;
 }
 </style>

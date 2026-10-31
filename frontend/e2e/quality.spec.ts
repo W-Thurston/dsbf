@@ -36,12 +36,12 @@ test('a clean dataset is ready, and a dimension without a target is not assessed
 
   await page.goto(`/runs/${run}/ml-readiness`)
   await expect(page.locator('[data-role="gate"]')).toContainText('Ready for modelling')
-  await expect(page.locator('[data-role="caveat"]')).toContainText('Leakage risk')
+  await expect(page.locator('[data-role="gate"]')).toContainText('Leakage risk')
   for (const id of ['ml-transformations', 'ml-encoding', 'ml-missingness', 'ml-unusable']) {
     await expect(level(page, id)).toHaveText('All clear')
   }
   await expect(level(page, 'ml-leakage')).toHaveText('Not assessed')
-  await expect(card(page, 'ml-leakage').locator('[data-role="not-assessed"]')).toBeVisible()
+  await expect(page.locator('[data-section="leakage"] [data-role="not-assessed"]')).toBeVisible()
   await expect(level(page, 'ml-leakage')).not.toHaveClass(/badge-ok/)
 })
 
@@ -74,9 +74,10 @@ test('a readiness finding offers its actions and links to the findings explorer'
 }) => {
   const run = await runOf(request, 'high_missingness')
   await page.goto(`/runs/${run}/ml-readiness`)
-  const missingness = card(page, 'ml-missingness')
-  await expect(missingness.locator('.actions li').first()).toBeVisible()
-  await missingness.locator('.findings a').first().click()
+  const missingness = page.locator('[data-section="missingness"]')
+  await missingness.locator('tr.row').first().getByRole('button').click()
+  await expect(missingness.locator('.guidance li').first()).toBeVisible()
+  await missingness.getByRole('link', { name: 'Open in the findings explorer' }).first().click()
   await expect(page).toHaveURL(new RegExp(`/runs/${run}/findings\\?`))
 })
 
