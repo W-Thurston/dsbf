@@ -1,6 +1,6 @@
 <template>
   <details
-    :id="`quality-section-${name}`"
+    :id="`${idPrefix}-section-${name}`"
     class="card section"
     :open="opensFirst"
     :data-section="name"
@@ -56,14 +56,22 @@ import {
   unassessedReason,
   type FindingSort,
   type QualityDimension,
+  type ReadinessDimension,
 } from './quality'
 
-const props = defineProps<{
-  runId: string
-  name: string
-  label: string
-  dimension: QualityDimension
-}>()
+const props = withDefaults(
+  defineProps<{
+    runId: string
+    name: string
+    label: string
+    dimension: Pick<
+      QualityDimension | ReadinessDimension,
+      'assessed' | 'level' | 'coverage' | 'inputs' | 'findings'
+    >
+    idPrefix?: string
+  }>(),
+  { idPrefix: 'quality' },
+)
 
 // A section with findings or a reason to read opens; a clean one stays folded.
 const opensFirst = props.dimension.findings.length > 0 || !props.dimension.assessed

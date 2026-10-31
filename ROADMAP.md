@@ -134,7 +134,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of a numeric and a categorical column on titanic, and of a skewed or bimodal column on an archetype, in both themes.
 
 ### U6b-07 · Relationships tab
-- **Status:** done (2026-10-30) · **Size:** M · **Depends on:** U6b-01
+- **Status:** done (2026-10-30, #180 `3bd7101`) · **Size:** M · **Depends on:** U6b-01
 - **Notes:** The tab is a summary (strength bar, warning chips, multivariate outliers), heatmap panels capped at the 30 strongest columns, a column browser beside a filterable associations table, and a pair detail that folds in the contingency and group-difference results; the selection and filters are in the URL. `multivariate_outliers` sits in the summary because it measures the columns jointly. Deviations: `CheckCard` stays for Quality and ML Readiness; the pair table scrolls in a box; the fixture store gained the four archetypes; bundle budget 940 KB. Follow-up: the warning chips do not yet narrow the heatmaps (U6b-12).
 - **Carry in from U6-19:** the relationships checklist lines for the `severe_multicollinearity`, `wide`, `all_categorical` and `single_column` archetypes were never built as Playwright tests; they need fixture stores in `frontend/e2e/fixture_store.py`.
 - **Carry in from U6b-03:** the Overview draws bars and a null matrix in CSS (`BarList`, `NullMatrix`); use them where a chart here needs no zoom or export, to keep the chart chunk off the page.
@@ -145,7 +145,8 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off a screenshot of Relationships on titanic and `severe_multicollinearity`, in both themes.
 
 ### U6b-08 · ML Readiness tab
-- **Status:** todo · **Size:** M · **Depends on:** U6b-01
+- **Status:** done (2026-10-31) · **Size:** M · **Depends on:** U6b-01
+- **Notes:** ML Readiness is a gate banner, five traffic-light cards that open their sections (the Quality section and finding-row components, now with an action note under every guidance action), a before/after skewness preview and a ready-features grid. The dictionary is `actionMeta.json`, keyed by `action:method` then method, re-keyed from the old action-name keys; a Python test checks it against the emitted guidance. Deviations: 33 emitted action and method pairs have no note yet (the `uncovered` list) and 5 old entries that `/v2` never emits were dropped; bundle budget 960 KB. Follow-up: write the uncovered notes (U6b-12).
 - **Goal:** ML Readiness answers "is it ready to model, and what preparation does it need?" (inventory: ML Readiness). The gate banner (ready, needs work, not ready, with its caveat when a dimension is unassessed); the five dimension cards; a section per dimension whose expanded rows show the finding, its metrics and its suggested actions, each with *what it does*, *trade-off*, *after this* and a reference link, ported from the old dashboard's 38-entry action dictionary (`15a6ac1^:frontend/src/utils/actionMeta.js`) as a frontend lookup by method (decided in U6b-00); the transformation preview as before and after skewness bars per candidate; ready features.
 - **Assumptions to confirm:** the old dictionary's method keys match the `method` values `/v2` guidance emits (list the mismatches and the methods with no entry); the transformation candidates' names match the dictionary's transform entries.
 - **Steps:** the dictionary, with a test that every emitted method has an entry or is listed as uncovered; the tab and its parts; Playwright tests for the ML readiness checklist lines.
@@ -174,6 +175,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-12 · Screenshot review on the fixture store
 - **Status:** todo · **Size:** M · **Depends on:** U6b-03 to U6b-11
+- **Carry in from U6b-08:** 33 emitted guidance pairs have no action note (`uncovered` in `frontend/src/components/readiness/actionMeta.json`, e.g. `convert:*`, `transform:pca`, `impute:multiple_imputation`); write the notes, or accept the finding's own detail, and shrink the list. The coverage test keeps the list exact.
 - **Carry in from U6b-07:** the Relationships tab's warning chips narrow the column list and pairs table but not the heatmap panels; dim or drop the other columns there.
 - **Carry in from U6b-06:** the Distributions tab's outlier consensus callout has one amber border whether or not the methods agree; colour it by consensus.
 - **Carry in from U6b-04:** the Quality tab's Near-duplicate rows card says "did not run" on every run without that check; hide an absent optional check's card.
