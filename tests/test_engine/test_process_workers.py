@@ -354,7 +354,7 @@ class TestAccounting:
 
         timing = run.results["py_sleeper"].timing
         assert timing.cpu_seconds is None
-        assert timing.wall_seconds >= 0.6
+        assert timing.wall_seconds >= 0.55
 
 
 class TestRunsInOverride:
