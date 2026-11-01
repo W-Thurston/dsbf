@@ -192,12 +192,20 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 - **Acceptance:** The user signs off the full screenshot set, and confirms each of the phase's seven questions can be answered from the dashboard without reading the JSON. (Deferred to U6b-13 by the user.)
 
 ### U6b-12a · Fingerprint scheme for Polars 2.1
-- **Status:** done (2026-10-31) · **Size:** S · **Depends on:** U6b-12
+- **Status:** done (2026-10-31, #192 `89d7fd6`) · **Size:** S · **Depends on:** U6b-12
 - **Notes:** Polars 2.1 is the minimum and fingerprints read `polars-hash-v2:…`; stored `v1` runs read as changed against new ones. The titanic golden snapshot moved by four bootstrap-interval values, from numpy 2.5.4, not Polars. Follow-up: the golden workflow is skipped on pull requests, so a dependency bump can break a snapshot unseen.
 - **Goal:** Take Polars 2.1, whose `Series.hash` differs from 2.0's, without two Polars versions giving one dataset two fingerprints. The scheme tag becomes `polars-hash-v2`, the minimum Polars becomes 2.1 and Dependabot stops ignoring it.
 - **Assumptions to confirm:** the whole suite (unit, integration, golden) passes on Polars 2.1 with only the fingerprint pin changed; no checked-in snapshot or schema carries a fingerprint; a store written under `v1` still opens (its fingerprints only read as changed against new runs, which alpha releases allow, practice 11).
 - **Steps:** bump the tag, the pin and the lower bound; `uv lock`; drop the Dependabot ignore; changelog line; run the tiers.
 - **Acceptance:** CI is green on Polars 2.1; a real run's `run.json` carries a `polars-hash-v2:` fingerprint and compares as unchanged against a second run of the same file.
+
+### U6b-12b · Release readiness checks
+- **Status:** done (2026-11-01) · **Size:** S · **Depends on:** U6b-12a
+- **Notes:** The killed-worker assertion's floor is 0.55 s (20 of 20 passes), Dependabot's uv PRs carry the `golden` label, and the release workflow's build and smoke steps pass locally on `main`. The workflow itself was not run by hand (a TestPyPI upload is permanent). Follow-up: draft the 1.0.0 text at U6b-14.
+- **Goal:** The release's mechanical risks removed before the polish notes arrive: the flaky killed-worker assertion given its tolerance, dependency updates for the Python stack checked against the golden snapshots, and the release workflow shown to still build and install a working wheel.
+- **Assumptions to confirm:** the golden workflow runs on a pull request that carries the `golden` label (it does, per `golden.yml`) and Dependabot can apply that label; `build_dashboard.sh` and `smoke_install.sh` still pass locally on the current tree.
+- **Steps:** loosen `test_a_killed_worker_has_no_cpu_figure` to `>= 0.55`; label Dependabot's uv PRs `golden`; run the build and smoke scripts and record the result.
+- **Acceptance:** the smoke script passes on the wheel built from `main`; Dependabot's config validates; the killed-worker test passes 20 times in a row.
 
 ### U6b-13 · Polish the frontend
 - **Status:** todo · **Size:** L · **Depends on:** U6b-12
@@ -209,7 +217,7 @@ in [`docs/HISTORY.md`](docs/HISTORY.md), and how each review finding stands is r
 
 ### U6b-14 · Release 1.0.0
 - **Status:** todo · **Size:** M · **Depends on:** U6b-13
-- **Carry in from U6-19:** `test_a_killed_worker_has_no_cpu_figure` (`tests/test_engine/test_process_workers.py:357`) failed once on the Python 3.13 full-suite job of #171 (`assert 0.5992 >= 0.6`: the wall time of a worker killed at a 0.6 s timeout, measured on a different clock from the timeout) and passed on rerun. Probable cause, not reproduced: clock jitter. Give the assertion a small tolerance (for example `>= 0.55`) before the release gate relies on the full suite; treat a second failure as a real defect. The wheel smoke script installs `[server]` by `file://` URL because Git Bash on Windows does not convert a path with `[server]` attached; keep that when the script changes.
+- **Carry in from U6-19 (tolerance done in U6b-12b):** `test_a_killed_worker_has_no_cpu_figure` (`tests/test_engine/test_process_workers.py:357`) failed once on the Python 3.13 full-suite job of #171 (`assert 0.5992 >= 0.6`: the wall time of a worker killed at a 0.6 s timeout, measured on a different clock from the timeout) and passed on rerun. Probable cause, not reproduced: clock jitter. Give the assertion a small tolerance (for example `>= 0.55`) before the release gate relies on the full suite; treat a second failure as a real defect. The wheel smoke script installs `[server]` by `file://` URL because Git Bash on Windows does not convert a path with `[server]` attached; keep that when the script changes.
 - **Goal:** Release `1.0.0`. Set the version to `1.0.0` and the classifier to `Development Status :: 5 - Production/Stable`; rename the changelog's `[Unreleased]` section to `[1.0.0]` with its date and link; restore the README's installation text and the example workflow's pin for a stable release (`pip install dsbf`, `dsbf>=1.0,<2`) and remove the preview notes from the README and the standalone-local guide; reword `CLAUDE.md` practice 11 for the stable 1.x guarantee; replace the README screenshot with the signed-off Overview. The user pushes the `v1.0.0` tag after merge (the release workflow builds the dashboard into the wheel, publishes to TestPyPI, installs it back and then publishes to PyPI).
 - **Assumptions to confirm:** the release workflow still matches what U6-19 left; the perf, golden and calibration nightlies are green on `main`.
 - **Steps:** the flaky assertion's tolerance; the version, classifier, changelog, README, guide and `CLAUDE.md` changes; the nightlies run on the release commit.

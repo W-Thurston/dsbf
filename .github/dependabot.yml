@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Python updates move the numbers the golden snapshots hold (a numpy bump shifted
+    # bootstrap intervals), so each of these pull requests runs the golden comparison.
+    labels: [dependencies, "python:uv", golden]
     groups:
       python-minor-and-patch:
         update-types: [minor, patch]
